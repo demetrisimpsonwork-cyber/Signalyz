@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ResultSection from "@/components/ResultSection";
+import UpgradeModal from "@/components/UpgradeModal";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { toast } from "sonner";
 
 const SAMPLE_BULLET = "Managed a team of developers to deliver software projects on time and within budget.";
@@ -28,7 +30,12 @@ const Index = () => {
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ bullet?: string; jd?: string }>({});
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const { user } = useAuth();
+
+  // TODO: replace with real pro check when Stripe is wired up
+  const isPro = false;
+  const { remaining, limitReached, increment } = useDailyUsage(isPro);
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -40,6 +47,12 @@ const Index = () => {
 
   const handleOptimize = async () => {
     if (!validate()) return;
+
+    if (limitReached) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
@@ -50,6 +63,7 @@ const Index = () => {
 
       if (error) throw error;
       setResult(data as OptimizationResult);
+      increment();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -64,12 +78,12 @@ const Index = () => {
   };
 
   return (
-    <div className="container max-w-6xl py-10">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+    <div className="container max-w-6xl py-8">
+      <div className="mb-6 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Optimize your resume bullets
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           AI-powered analysis to match your experience with any job description.
         </p>
       </div>
@@ -100,6 +114,14 @@ const Index = () => {
             />
             {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
           </div>
+
+          {!isPro && (
+            <p className="text-xs font-medium text-muted-foreground">
+              {remaining > 0
+                ? `${remaining} free optimization${remaining !== 1 ? "s" : ""} left today`
+                : "You've used all 3 free optimizations today"}
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             <Button onClick={handleOptimize} disabled={loading} className="gap-2">
@@ -145,6 +167,8 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
   );
 };

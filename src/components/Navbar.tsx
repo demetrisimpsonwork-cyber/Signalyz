@@ -2,8 +2,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
@@ -15,9 +16,11 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
+
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-14 items-center justify-between">
         <Link to="/" className="text-xl font-bold tracking-tight text-foreground">
           Resum<span className="text-primary">ix</span>
         </Link>
@@ -36,21 +39,43 @@ const Navbar = () => {
             </Link>
           )}
           {loading ? null : user ? (
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </Button>
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
+                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
           ) : (
             <Button size="sm" onClick={() => navigate("/auth")}>
+              <User className="mr-2 h-4 w-4" />
               Sign in
             </Button>
           )}
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          {!loading && user && (
+            <Avatar className="h-8 w-8" onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}>
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          {!loading && !user && (
+            <Button size="sm" variant="ghost" onClick={() => navigate("/auth")}>
+              Sign in
+            </Button>
+          )}
+          <button onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -60,11 +85,9 @@ const Navbar = () => {
             <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Optimize</Link>
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
             {user && <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>}
-            {!loading && (user ? (
+            {!loading && user && (
               <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
-            ) : (
-              <Button size="sm" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Sign in</Button>
-            ))}
+            )}
           </div>
         </div>
       )}
