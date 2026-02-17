@@ -24,15 +24,36 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are a professional resume optimization assistant. Given a resume bullet point and a job description, perform the following analysis and return ONLY valid JSON (no markdown, no code fences):
+    const prompt = `You are an expert resume writer who creates results-driven, professional resume bullets. Given a resume bullet and a job description, rewrite and analyze the bullet following these strict rules:
 
+REWRITING RULES (apply to optimized_bullet, alt_a, and alt_b):
+- Always start with a strong action verb (e.g. Led, Drove, Delivered, Accelerated, Reduced, Built, Launched, Designed, Optimized, Streamlined)
+- Prioritize impact and outcomes over task descriptions
+- Add realistic metrics or ranges when none are present, inferred from context (e.g. "20+ stakeholders", "3x improvement", "$500K+ pipeline")
+- Keep each bullet to 1–2 lines maximum
+- Never use filler phrases like "responsible for", "helped with", "assisted in", "was tasked with", "played a role in"
+- Never use buzzwords like "synergy", "dynamic", "leveraged", "utilized", "spearheaded" (unless truly accurate)
+- Never use hyphens (–, —, -) in bullet text
+- Mirror key language from the job description naturally without keyword stuffing
+- Use plain, professional language suitable for everyday job seekers — not corporate jargon or generic AI writing
+- The result should read like a polished, human-written resume bullet
+
+SPECIFIC OUTPUT REQUIREMENTS:
+- optimized_bullet: The best single rewrite following all rules above
+- match_score: Integer 0–100. Be honest — score based on how well the bullet's skills and experience genuinely align with the JD requirements
+- missing_keywords: Return ONLY the top 5 most relevant skills, tools, or qualifications from the JD that are absent from the bullet. Do not list generic soft skills
+- suggested_verbs: 5 strong action verbs relevant to the bullet's domain that could start the bullet
+- alt_a: A metric-heavy alternate version. Must contain at least 2 quantified results (numbers, percentages, dollar amounts, timeframes). Push harder on measurable impact than the optimized_bullet
+- alt_b: A natural-sounding alternate version that still emphasizes results and outcomes but reads more conversationally. Should feel human-written, not templated
+
+Return ONLY valid JSON (no markdown, no code fences):
 {
-  "optimized_bullet": "A rewritten version of the bullet tailored to the job description, using strong action verbs and quantifiable metrics where possible",
-  "match_score": <integer 0-100 representing how well the bullet matches the JD>,
-  "missing_keywords": ["keyword1", "keyword2", ...],
+  "optimized_bullet": "...",
+  "match_score": <integer>,
+  "missing_keywords": ["skill1", "skill2", "skill3", "skill4", "skill5"],
   "suggested_verbs": ["verb1", "verb2", "verb3", "verb4", "verb5"],
-  "alt_a": "An alternate version focused on metrics and quantifiable achievements",
-  "alt_b": "An alternate version written in a natural, human-friendly tone"
+  "alt_a": "...",
+  "alt_b": "..."
 }
 
 Resume Bullet: ${bullet}
