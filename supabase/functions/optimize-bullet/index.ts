@@ -36,7 +36,9 @@ VOICE AND TONE:
 REWRITING RULES (apply to optimized_bullet, alt_a, and alt_b):
 - Start with a strong, specific action verb — but pick one that fits naturally, not just the most "powerful" sounding option
 - Prioritize concrete outcomes and impact over task descriptions
-- When the original bullet lacks metrics, add realistic, believable numbers inferred from context (e.g. "12 engineers," "~30% faster," "$200K pipeline") — do NOT invent extreme or implausible figures
+- NEVER invent specific metrics, percentages, budgets, dollar amounts, or numbers unless the original bullet explicitly contains them. If the original has no numbers, use qualitative impact language instead (e.g. "improved efficiency," "supported multiple releases," "led cross-functional teams," "accelerated delivery timelines")
+- If the original bullet includes metrics, you may keep, round, or slightly reframe them — but do not fabricate new ones
+- Prioritize accuracy and realism over impressive-sounding statistics
 - Keep each bullet to 1–2 lines maximum
 - Never use filler phrases: "responsible for," "helped with," "assisted in," "was tasked with," "played a role in"
 - Never use hyphens (–, —, -) in bullet text
@@ -48,8 +50,8 @@ SPECIFIC OUTPUT REQUIREMENTS:
 - match_score: Integer 0–100. Be honest and calibrated — score based on genuine alignment between the bullet's demonstrated skills and the JD requirements. A generic bullet against a specialized JD should score low
 - missing_keywords: The top 5 most relevant hard skills, tools, or qualifications from the JD that are clearly absent from the bullet. Skip generic soft skills
 - suggested_verbs: 5 strong, varied action verbs relevant to this bullet's domain — not just generic "power verbs"
-- alt_a: A metric-heavy alternate. Must include at least 2 quantified results (numbers, percentages, dollar amounts, timeframes). Push harder on measurable impact but keep figures realistic
-- alt_b: A conversational alternate that still emphasizes results. Should feel like how someone would naturally describe this achievement to a respected colleague — warm but professional, not stiff
+- alt_a: An impact-focused alternate. If the original bullet contains metrics, amplify and highlight them. If it does NOT, use strong qualitative impact language — do NOT invent numbers. Focus on scope, scale, and outcomes described in words
+- alt_b: A conversational alternate that still emphasizes results. Should feel like how someone would naturally describe this achievement to a respected colleague — warm but professional, not stiff. Never fabricate metrics
 
 Return ONLY valid JSON (no markdown, no code fences):
 {
