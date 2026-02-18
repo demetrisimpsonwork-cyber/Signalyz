@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ResultSection from "@/components/ResultSection";
 import UpgradeModal from "@/components/UpgradeModal";
+import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -159,6 +160,8 @@ const Index = () => {
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
               <ResultSection title="Match Score" content={`${result.match_score}%`} />
+              {!isPro && <ProInsightsTeaser />}
+              <ResultSection title="Missing Keywords" content={result.missing_keywords} />
               <ResultSection title="Missing Keywords" content={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
               <ResultSection title="Alternate A — Metric-focused" content={result.alt_a} />
