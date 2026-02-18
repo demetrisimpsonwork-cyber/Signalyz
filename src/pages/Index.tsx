@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ResultSection from "@/components/ResultSection";
+import KeywordChips from "@/components/KeywordChips";
 import UpgradeModal from "@/components/UpgradeModal";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import { Loader2, Sparkles } from "lucide-react";
@@ -15,6 +16,11 @@ const SAMPLE_JD = `We are looking for a Senior Project Manager to lead cross-fun
 You will drive delivery of complex SaaS products, improve sprint velocity, 
 and mentor junior PMs. Required: Agile/Scrum, stakeholder communication, 
 risk management, KPI tracking, CI/CD awareness.`;
+
+const SAMPLE_RESULTS = {
+  sampleA: "Led a cross-functional engineering team through full project lifecycles, consistently delivering on schedule and within budget while aligning priorities with stakeholders.",
+  sampleB: "Coordinated developers across multiple projects, keeping delivery on track and managing scope to meet deadlines and budget targets set by leadership.",
+};
 
 interface OptimizationResult {
   optimized_bullet: string;
@@ -32,6 +38,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ bullet?: string; jd?: string }>({});
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showSamples, setShowSamples] = useState(false);
   const { user } = useAuth();
 
   // TODO: replace with real pro check when Stripe is wired up
@@ -56,6 +63,7 @@ const Index = () => {
 
     setLoading(true);
     setResult(null);
+    setShowSamples(false);
 
     try {
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
@@ -76,6 +84,8 @@ const Index = () => {
     setBullet(SAMPLE_BULLET);
     setJd(SAMPLE_JD);
     setErrors({});
+    setResult(null);
+    setShowSamples(true);
   };
 
   return (
@@ -150,9 +160,19 @@ const Index = () => {
             </div>
           )}
 
-          {!loading && !result && (
+          {!loading && !result && !showSamples && (
             <div className="flex h-60 items-center justify-center rounded-lg border border-dashed bg-card">
               <p className="text-sm text-muted-foreground">Results will appear here</p>
+            </div>
+          )}
+
+          {!loading && !result && showSamples && (
+            <div className="space-y-4">
+              <p className="text-xs font-medium text-muted-foreground">
+                Here's a preview of what optimized bullets look like. Hit Optimize to get your personalized results.
+              </p>
+              <ResultSection title="Sample Version A" content={SAMPLE_RESULTS.sampleA} />
+              <ResultSection title="Sample Version B" content={SAMPLE_RESULTS.sampleB} />
             </div>
           )}
 
@@ -161,9 +181,9 @@ const Index = () => {
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
               <ResultSection title="Match Score" content={`${result.match_score}%`} />
               {!isPro && <ProInsightsTeaser />}
-              <ResultSection title="Missing Keywords" content={result.missing_keywords} />
+              <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
-              <ResultSection title="Alternate A — Metric-focused" content={result.alt_a} />
+              <ResultSection title="Alternate A — Impact-focused" content={result.alt_a} />
               <ResultSection title="Alternate B — Human-natural" content={result.alt_b} />
             </>
           )}
