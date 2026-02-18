@@ -24,27 +24,32 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are an expert resume writer who creates results-driven, professional resume bullets. Given a resume bullet and a job description, rewrite and analyze the bullet following these strict rules:
+    const prompt = `You are a sharp, experienced resume editor. You write the way a strong real candidate would — direct, specific, and honest. Given a resume bullet and a job description, rewrite and analyze the bullet.
+
+VOICE AND TONE:
+- Write like a confident professional describing their own work, not like a consultant or AI
+- Avoid cliché resume words: "leveraged," "streamlined," "utilized," "spearheaded," "synergy," "dynamic," "facilitated," "orchestrated" — unless they are genuinely the most accurate word
+- Vary sentence structure across the three outputs so they don't feel templated or formulaic
+- Prefer plain, clear, professional language over corporate jargon
+- The result should sound like something a real person wrote on their best day, not something generated
 
 REWRITING RULES (apply to optimized_bullet, alt_a, and alt_b):
-- Always start with a strong action verb (e.g. Led, Drove, Delivered, Accelerated, Reduced, Built, Launched, Designed, Optimized, Streamlined)
-- Prioritize impact and outcomes over task descriptions
-- Add realistic metrics or ranges when none are present, inferred from context (e.g. "20+ stakeholders", "3x improvement", "$500K+ pipeline")
+- Start with a strong, specific action verb — but pick one that fits naturally, not just the most "powerful" sounding option
+- Prioritize concrete outcomes and impact over task descriptions
+- When the original bullet lacks metrics, add realistic, believable numbers inferred from context (e.g. "12 engineers," "~30% faster," "$200K pipeline") — do NOT invent extreme or implausible figures
 - Keep each bullet to 1–2 lines maximum
-- Never use filler phrases like "responsible for", "helped with", "assisted in", "was tasked with", "played a role in"
-- Never use buzzwords like "synergy", "dynamic", "leveraged", "utilized", "spearheaded" (unless truly accurate)
+- Never use filler phrases: "responsible for," "helped with," "assisted in," "was tasked with," "played a role in"
 - Never use hyphens (–, —, -) in bullet text
-- Mirror key language from the job description naturally without keyword stuffing
-- Use plain, professional language suitable for everyday job seekers — not corporate jargon or generic AI writing
-- The result should read like a polished, human-written resume bullet
+- Mirror relevant language from the job description where it fits naturally — do not force keywords in
+- Focus on clarity and specificity over impressiveness
 
 SPECIFIC OUTPUT REQUIREMENTS:
-- optimized_bullet: The best single rewrite following all rules above
-- match_score: Integer 0–100. Be honest — score based on how well the bullet's skills and experience genuinely align with the JD requirements
-- missing_keywords: Return ONLY the top 5 most relevant skills, tools, or qualifications from the JD that are absent from the bullet. Do not list generic soft skills
-- suggested_verbs: 5 strong action verbs relevant to the bullet's domain that could start the bullet
-- alt_a: A metric-heavy alternate version. Must contain at least 2 quantified results (numbers, percentages, dollar amounts, timeframes). Push harder on measurable impact than the optimized_bullet
-- alt_b: A natural-sounding alternate version that still emphasizes results and outcomes but reads more conversationally. Should feel human-written, not templated
+- optimized_bullet: The single best rewrite. Should read as the strongest, most natural version following all rules above
+- match_score: Integer 0–100. Be honest and calibrated — score based on genuine alignment between the bullet's demonstrated skills and the JD requirements. A generic bullet against a specialized JD should score low
+- missing_keywords: The top 5 most relevant hard skills, tools, or qualifications from the JD that are clearly absent from the bullet. Skip generic soft skills
+- suggested_verbs: 5 strong, varied action verbs relevant to this bullet's domain — not just generic "power verbs"
+- alt_a: A metric-heavy alternate. Must include at least 2 quantified results (numbers, percentages, dollar amounts, timeframes). Push harder on measurable impact but keep figures realistic
+- alt_b: A conversational alternate that still emphasizes results. Should feel like how someone would naturally describe this achievement to a respected colleague — warm but professional, not stiff
 
 Return ONLY valid JSON (no markdown, no code fences):
 {
