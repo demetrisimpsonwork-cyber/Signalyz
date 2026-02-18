@@ -33,12 +33,16 @@ VOICE AND TONE:
 - Prefer plain, clear, professional language over corporate jargon
 - The result should sound like something a real person wrote on their best day, not something generated
 
+ABSOLUTE METRIC RULES (CRITICAL — FOLLOW STRICTLY):
+- NEVER invent, guess, estimate, or fabricate ANY specific number, percentage, dollar amount, budget figure, team size, or metric that is NOT explicitly present in the original bullet
+- If the original bullet has NO numbers at all, you MUST use qualitative impact language only. Examples: "improved efficiency," "supported multiple releases," "helped reduce delays," "strengthened communication," "led cross-functional teams," "accelerated delivery timelines"
+- Do NOT infer numbers from context. Do NOT add "10+", "20%", "$1M", "5 team members", etc. unless the user wrote those exact figures
+- If the original bullet DOES contain specific numbers, you may keep them, round them slightly, or reframe them — but NEVER change their meaning or scale, and NEVER add additional fabricated numbers alongside them
+- Accuracy and trustworthiness are more important than sounding impressive
+
 REWRITING RULES (apply to optimized_bullet, alt_a, and alt_b):
 - Start with a strong, specific action verb — but pick one that fits naturally, not just the most "powerful" sounding option
 - Prioritize concrete outcomes and impact over task descriptions
-- NEVER invent specific metrics, percentages, budgets, dollar amounts, or numbers unless the original bullet explicitly contains them. If the original has no numbers, use qualitative impact language instead (e.g. "improved efficiency," "supported multiple releases," "led cross-functional teams," "accelerated delivery timelines")
-- If the original bullet includes metrics, you may keep, round, or slightly reframe them — but do not fabricate new ones
-- Prioritize accuracy and realism over impressive-sounding statistics
 - Keep each bullet to 1–2 lines maximum
 - Never use filler phrases: "responsible for," "helped with," "assisted in," "was tasked with," "played a role in"
 - Never use hyphens (–, —, -) in bullet text
@@ -50,7 +54,7 @@ SPECIFIC OUTPUT REQUIREMENTS:
 - match_score: Integer 0–100. Be honest and calibrated — score based on genuine alignment between the bullet's demonstrated skills and the JD requirements. A generic bullet against a specialized JD should score low
 - missing_keywords: The top 5 most relevant hard skills, tools, or qualifications from the JD that are clearly absent from the bullet. Skip generic soft skills
 - suggested_verbs: 5 strong, varied action verbs relevant to this bullet's domain — not just generic "power verbs"
-- alt_a: An impact-focused alternate. If the original bullet contains metrics, amplify and highlight them. If it does NOT, use strong qualitative impact language — do NOT invent numbers. Focus on scope, scale, and outcomes described in words
+- alt_a: An impact-focused alternate. If the original bullet contains metrics, amplify and highlight them. If it does NOT contain any numbers, use strong qualitative impact language — do NOT invent numbers. Focus on scope, scale, and outcomes described in words
 - alt_b: A conversational alternate that still emphasizes results. Should feel like how someone would naturally describe this achievement to a respected colleague — warm but professional, not stiff. Never fabricate metrics
 
 Return ONLY valid JSON (no markdown, no code fences):
