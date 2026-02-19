@@ -108,6 +108,9 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
         {confidenceLevel || config.label}
       </p>
       <p className="mt-0.5 text-xs text-muted-foreground">Based on weighted employer priorities.</p>
+      <p className="mt-2 text-[11px] text-muted-foreground/70 italic">
+        Free shows surface alignment. Pro reveals weighted priority intelligence.
+      </p>
     </div>
   );
 };

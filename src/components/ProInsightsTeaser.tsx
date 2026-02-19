@@ -43,7 +43,7 @@ const ProInsightsTeaser = ({ onTrialStart }: ProInsightsTeaserProps) => {
 
   if (trial.active && trial.remaining > 0) {
     return (
-      <div className="rounded-lg border border-accent bg-accent/30 p-4">
+      <div className="rounded-lg border border-accent bg-accent/30 p-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-accent-foreground" />
           <h3 className="text-sm font-semibold text-accent-foreground">Pro Trial Active</h3>
@@ -56,50 +56,85 @@ const ProInsightsTeaser = ({ onTrialStart }: ProInsightsTeaserProps) => {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Lock className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-primary">Pro Alignment Intelligence</h3>
+    <div className="rounded-xl border bg-card shadow-md overflow-hidden">
+      {/* Header */}
+      <div className="px-5 pt-5 pb-3">
+        <div className="flex items-center gap-2">
+          <Lock className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-primary">Pro Alignment Intelligence™</h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Advanced weighted employer-priority modeling.
+        </p>
       </div>
 
-      <div className="rounded-lg border bg-accent/20 p-5 space-y-4">
+      <div className="px-5 pb-5 space-y-4">
         {/* Benefits */}
         <ul className="space-y-1.5 text-sm text-muted-foreground">
-          <li>• Weighted Priority Breakdown</li>
-          <li>• Advanced Gap Diagnostics</li>
-          <li>• Alignment History Tracking</li>
-          <li>• Deeper Keyword Clustering</li>
-          <li>• Unlimited Alignments</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Weighted Priority Breakdown</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Advanced Gap Diagnostics</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Alignment History Tracking</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Deeper Keyword Clustering</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Unlimited Alignments</li>
         </ul>
 
-        {/* Blurred example preview */}
-        <div className="relative rounded-md border bg-card/60 p-4 select-none" aria-hidden="true">
-          <div className="blur-[4px] opacity-60 space-y-2 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground/70">Top 3 Weighted Priorities:</p>
-            <p>Cross-functional leadership <span className="text-green-600">(High weight)</span></p>
-            <p>Agile framework ownership <span className="text-amber-600">(Medium weight)</span></p>
-            <p>SaaS product lifecycle <span className="text-green-600">(High weight)</span></p>
+        {/* Social proof */}
+        <p className="text-xs text-muted-foreground/80 italic">
+          Most users increase their match score after reviewing Pro gap insights.
+        </p>
+
+        {/* Preview Panel */}
+        <div className="relative rounded-lg border bg-muted/30 overflow-hidden">
+          <p className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            Pro Preview
+          </p>
+
+          {/* Lock badge */}
+          <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-background/80 border px-2 py-0.5">
+            <Lock className="h-2.5 w-2.5 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground font-medium">Locked</span>
+          </div>
+
+          <div className="px-3 pt-1.5 pb-6">
+            {/* Visible lines */}
+            <p className="text-xs font-medium text-foreground/80">Top 3 Weighted Priorities:</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cross-functional leadership <span className="text-green-600 font-medium">(High weight)</span>
+            </p>
+
+            {/* Faded/blurred lines */}
+            <div className="relative mt-1 overflow-hidden" style={{ maxHeight: "3rem" }}>
+              <div className="space-y-1 text-xs text-muted-foreground select-none pointer-events-none">
+                <p>Agile framework ownership <span className="text-amber-600">(Medium weight)</span></p>
+                <p>SaaS product lifecycle <span className="text-green-600">(High weight)</span></p>
+                <p>Stakeholder communication <span className="text-green-600">(High weight)</span></p>
+              </div>
+              {/* Gradient fade overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-muted/95 dark:to-background/95" />
+            </div>
           </div>
         </div>
 
-        {/* CTA */}
-        <Button
-          onClick={() => navigate("/pricing")}
-          className="w-full gap-2 shadow-md hover:brightness-110 transition-all"
-        >
-          Unlock Pro Alignment Intelligence — $9/month
-        </Button>
+        {/* CTA Stack */}
+        <div className="space-y-2 pt-1">
+          <Button
+            onClick={() => navigate("/pricing")}
+            className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
+          >
+            Unlock Pro Alignment Intelligence — $9/month
+          </Button>
 
-        <button
-          onClick={handleStartTrial}
-          className="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors py-1"
-        >
-          Try Pro Free for 3 Alignments
-        </button>
+          <button
+            onClick={handleStartTrial}
+            className="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors py-1"
+          >
+            Try Pro Free for 3 Alignments
+          </button>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Prove alignment with clarity. Cancel anytime.
-        </p>
+          <p className="text-center text-[11px] text-muted-foreground">
+            Cancel anytime. No commitment.
+          </p>
+        </div>
       </div>
     </div>
   );
