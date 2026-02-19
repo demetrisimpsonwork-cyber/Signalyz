@@ -280,7 +280,7 @@ USER_PLAN: ${userPlan}`;
       input_bullet: bullet,
       input_jd: jd,
       optimized_bullet: optimizedBullet,
-      match_score: matchScore,
+      match_score: Math.round(matchScore),
       missing_keywords: missingKeywords,
       suggested_verbs: suggestedVerbs,
       alt_a: altA,
