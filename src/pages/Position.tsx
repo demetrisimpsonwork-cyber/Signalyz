@@ -219,43 +219,54 @@ const LockedRiskCard = ({ category }: { category: string }) => (
 // ─── Progress Steps ───────────────────────────────────────────────────────────
 
 const STEPS = [
-  { label: "Step 1", desc: "Extracting Role DNA & parsing inputs…" },
-  { label: "Step 2", desc: "Repositioning experience & converting commercial value…" },
-  { label: "Step 3", desc: "Generating bullet rewrites, gap strategy & interview intelligence…" },
+  { label: "Extracting employer priority signals", desc: "Parsing the job description to identify what the employer is truly hiring for." },
+  { label: "Mapping experience to role DNA", desc: "Translating your background into role-native commercial language." },
+  { label: "Generating positioning package", desc: "Crafting bullet rewrites, gap strategy, and interview intelligence." },
 ];
+
+
 
 const ProgressCard = ({ activeStep, elapsed }: { activeStep: number; elapsed: number }) => {
   const showReassurance = elapsed >= 18;
   return (
     <div className="rounded-lg border bg-card p-5 space-y-4 animate-fade-in">
-      <p className="text-xs text-muted-foreground">This can take ~30 seconds for large resumes.</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Full resumes usually take 20–40 seconds.</p>
+        <span className="text-[11px] tabular-nums text-muted-foreground">{elapsed}s</span>
+      </div>
       <div className="space-y-3">
         {STEPS.map((step, i) => {
           const done = activeStep > i;
           const active = activeStep === i;
           return (
-            <div key={i} className={`flex items-start gap-3 transition-opacity duration-300 ${active || done ? "opacity-100" : "opacity-35"}`}>
+            <div key={i} className={`flex items-start gap-3 transition-opacity duration-500 ${active || done ? "opacity-100" : "opacity-30"}`}>
               <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors duration-500
                 ${done ? "border-primary bg-primary text-primary-foreground" : active ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
                 {done ? <Check className="h-3 w-3" /> : i + 1}
               </div>
-              <div className="space-y-0.5">
-                <p className={`text-xs font-semibold ${active ? "text-foreground" : done ? "text-primary" : "text-muted-foreground"}`}>{step.label}</p>
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className={`text-xs font-semibold leading-tight ${active ? "text-foreground" : done ? "text-primary" : "text-muted-foreground"}`}>{step.label}</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">{step.desc}</p>
-                {active && <div className="mt-1 h-0.5 w-16 rounded-full bg-primary/20 overflow-hidden"><div className="h-full bg-primary animate-[pulse_1.5s_ease-in-out_infinite] w-full" /></div>}
+                {active && (
+                  <div className="mt-1.5 h-0.5 w-full rounded-full bg-border overflow-hidden">
+                    <div className="h-full bg-primary rounded-full animate-[shimmer_2s_ease-in-out_infinite]" style={{ width: "40%" }} />
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
       {showReassurance && (
-        <div className="rounded-md bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground animate-fade-in">
+        <div className="rounded-md bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground animate-fade-in flex items-center gap-2">
+          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
           Large resumes can take a bit longer. Still processing…
         </div>
       )}
     </div>
   );
 };
+
 
 // ─── Timeout Error Card ───────────────────────────────────────────────────────
 
@@ -307,7 +318,35 @@ const TimeoutErrorCard = ({
 
 const CHAR_LIMIT_TIP = 12000;
 const TIMEOUT_MS = 60000;
-const STEP_TIMINGS = [0, 4000, 14000]; // step 0 at 0s, step 1 at 4s, step 2 at 14s
+// Steps advance at 0s, 12s (step 2 after ~12s), 25s (step 3 after ~25s)
+// Each step internally cycles its label every STEP_CYCLE_MS
+const STEP_TIMINGS = [0, 12000, 25000];
+const STEP_CYCLE_MS = 3000;
+
+// ─── Client-side cache (sessionStorage) ──────────────────────────────────────
+
+async function hashInputs(experience: string, jd: string): Promise<string> {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest("SHA-256", enc.encode(experience + "|||" + jd));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function getCached(key: string): PositioningResult | null {
+  try {
+    const raw = sessionStorage.getItem(`titan_cache_${key}`);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > 30 * 60 * 1000) { sessionStorage.removeItem(`titan_cache_${key}`); return null; }
+    return data as PositioningResult;
+  } catch { return null; }
+}
+
+function setCached(key: string, data: PositioningResult) {
+  try {
+    sessionStorage.setItem(`titan_cache_${key}`, JSON.stringify({ data, ts: Date.now() }));
+  } catch { /* ignore quota errors */ }
+}
+
 
 const Position = () => {
   const [experience, setExperience] = useState("");
@@ -369,6 +408,16 @@ const Position = () => {
 
   const handleRun = async () => {
     if (!validate()) return;
+
+    // ── Client-side cache check ──────────────────────────────────────────────
+    const cacheKey = await hashInputs(experience.trim(), jd.trim());
+    const cached = getCached(cacheKey);
+    if (cached) {
+      setResult(cached);
+      toast.success("Results loaded instantly from cache.", { duration: 2000 });
+      return;
+    }
+
     setLoading(true);
     setTimedOut(false);
     setResult(null);
@@ -391,7 +440,9 @@ const Position = () => {
       completeProgress();
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setResult(data as PositioningResult);
+      const posResult = data as PositioningResult;
+      setCached(cacheKey, posResult);
+      setResult(posResult);
     } catch (err: any) {
       completeProgress();
       if (!timedOut) toast.error(err.message || "Something went wrong. Please try again.");
@@ -399,6 +450,7 @@ const Position = () => {
       setLoading(false);
     }
   };
+
 
   const handleDownload = () => {
     if (!result) return;
