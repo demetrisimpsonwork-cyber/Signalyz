@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ResultSection from "@/components/ResultSection";
 import KeywordChips from "@/components/KeywordChips";
+import MatchScoreCard from "@/components/MatchScoreCard";
+import ExportResults from "@/components/ExportResults";
 import UpgradeModal from "@/components/UpgradeModal";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import { Loader2, Sparkles } from "lucide-react";
@@ -206,11 +208,7 @@ const Index = () => {
           {result && (
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
-              <ResultSection title="Match Score" content={`${result.match_score}%`} />
-              {result.alignment_confidence_level && (
-                <p className="text-xs font-medium text-muted-foreground -mt-2">{result.alignment_confidence_level}</p>
-              )}
-              <p className="text-xs text-muted-foreground -mt-2">Based on weighted employer priorities.</p>
+              <MatchScoreCard score={result.match_score} confidenceLevel={result.alignment_confidence_level} />
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
@@ -222,6 +220,7 @@ const Index = () => {
               {result.gap_suggestions && (
                 <ResultSection title="Gap Suggestions" content={result.gap_suggestions} />
               )}
+              <ExportResults result={result} />
             </>
           )}
         </div>

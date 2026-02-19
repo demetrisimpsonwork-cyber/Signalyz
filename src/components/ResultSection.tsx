@@ -1,5 +1,6 @@
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface ResultSectionProps {
   title: string;
@@ -14,6 +15,7 @@ const ResultSection = ({ title, content }: ResultSectionProps) => {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(displayText);
     setCopied(true);
+    toast.success("Copied to clipboard", { duration: 1500 });
     setTimeout(() => setCopied(false), 1500);
   };
 
@@ -26,7 +28,7 @@ const ResultSection = ({ title, content }: ResultSectionProps) => {
           className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           aria-label={`Copy ${title}`}
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{displayText}</p>
