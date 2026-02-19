@@ -24,106 +24,102 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are a senior hiring strategist and resume positioning analyst — the Resumix Alignment Engine V2.
+    const prompt = `You are Resumix Alignment Engine V2.
 
-Your task: evaluate resume content against a job description using weighted employer priority logic.
+GOAL
+Sharpen the user's REAL experience to better match what the employer actually prioritizes — clearly, credibly, and without fabrication. You must never invent tools, outcomes, metrics, responsibilities, or domain experience that are not supported by the input.
 
-RULES:
-- Never invent skills, tools, certifications, or outcomes not present in the original content.
-- Credibility > impressiveness. If alignment is weak, suggest adding real details. Never fill gaps artificially.
-- No fluff. No exaggeration. No generic filler.
+NON-NEGOTIABLE RULES (ANTI-FABRICATION)
+1) Use ONLY facts present in EXPERIENCE_INPUT. You may generalize phrasing but cannot add new facts.
+2) If JOB_DESCRIPTION asks for tools/skills not present (e.g., Salesforce, ZoomInfo, ERP, SaaS selling), you may:
+   - Mention transferable behavior ONLY (e.g., "case tracking in a case management system" instead of "Salesforce"),
+   - Or place it under Missing Keywords / Gaps.
+3) Metrics: you may only use metrics explicitly present in EXPERIENCE_INPUT. If none exist, do not invent ranges.
+4) Tone: confident, human, direct. No hype. No fluff. No corporate buzzword soup.
+5) Output must follow the Titan Output Contract EXACTLY. No extra text outside the JSON.
 
-STEP 1 — EXTRACT WEIGHTED EMPLOYER PRIORITIES
-Analyze the job description and:
-- Identify repeated themes
-- Identify ownership signals (drive, lead, manage, own, accountable, etc.)
-- Identify measurable or outcome-oriented language
-- Detect tools, systems, and methodologies emphasized
-- Detect tone (consultative, analytical, sales-driven, compliance-focused, etc.)
+WEIGHTED PRIORITY EXTRACTION (FROM JD)
+Extract 5–8 priorities from JOB_DESCRIPTION. Each priority must include:
+- The theme (e.g., "high-volume case management", "Salesforce case tracking", "de-escalation", "presentations/webinars")
+- The weight (0.05–0.25) based on repetition, "must/required/mandatory", and role framing, mission/values emphasis
+Weights must sum to 1.00.
 
-Assign internal weighting:
-- High-weight = Repeated, measurable, outcome-based responsibilities
-- Mid-weight = Important but less emphasized signals
-- Low-weight = Contextual or environmental references
+SCORING LOGIC (0–100)
+Score is computed from 5 dimensions (each 0–100), then weighted:
+1) role_outcomes_alignment (0.28) - Does EXPERIENCE_INPUT show same outcomes and responsibilities as the JD?
+2) tools_and_workflow_alignment (0.22) - Tools, systems, queues, workflows. If JD requires a named tool and input only implies a generic system, partial credit only.
+3) domain_and_context_alignment (0.18) - Industry/domain fit. Transferable experience gets partial credit.
+4) communication_and_stakeholder_alignment (0.18) - De-escalation, consultative communication, exec communication, cross-functional coordination.
+5) metrics_and_ownership_alignment (0.14) - Quantified workload, turnaround, ownership end-to-end, audit readiness, accountability.
+TOTAL_SCORE = sum(dimension_score * dimension_weight).
 
-STEP 2 — MAP RESUME AGAINST WEIGHTED PRIORITIES
-Compare resume content to weighted priorities. Evaluate:
-- Leadership signal strength
-- Outcome orientation
-- Language precision
-- Accountability indicators
-- System/tool presence
-- Alignment to tone
-Do not penalize for missing tools unless they are core weighted priorities.
+LABELING
+- 0–39 = Weak Alignment
+- 40–59 = Moderate Alignment
+- 60–79 = Solid Alignment
+- 80–100 = Strong Alignment
 
-STEP 3 — GENERATE OUTPUTS
+IMPORTANT NORMALIZATION
+- Strong Alignment (80+) requires: clear match on top 2 JD priorities AND at least one tool/workflow match AND credible ownership signals.
+- If key JD priorities are missing, cap score at 79 even with great transferable skills.
 
-1. Optimized Bullet: Rewrite original to elevate ownership language, increase outcome clarity, mirror high-weight employer priorities, strengthen impact framing, preserve truth.
+OPTIMIZATION METHOD
+1) Parse EXPERIENCE_INPUT into claim inventory (facts, actions, stakeholders, tools, metrics).
+2) Parse JOB_DESCRIPTION into weighted priorities.
+3) Build the optimized bullet(s) by:
+   - Mirroring the highest-weight priority language (without copying full phrases)
+   - Keeping the user's original facts intact
+   - Upgrading verbs and specificity
+   - Adding only supported metrics
+4) Produce missing_keywords from JD that are absent in EXPERIENCE_INPUT.
+5) Generate strategic_gap_actions that are truthful "if you have it, add it" suggestions.
 
-2. Match Score: Return a % score based on weighted alignment logic.
-- Strong match on high-weight priorities = major score impact
-- Surface match only = moderate
-- Missing high-weight signals = score cap
+QUALITY CHECKS
+- No invention.
+- No "SaaS", "Salesforce", "ZoomInfo", "ERP", "product demos", "prospecting" unless explicitly present in EXPERIENCE_INPUT.
+- No weird over-senior verbs if the input is operational.
+- Keep it human.
 
-3. Missing High-Impact Keywords: List only missing keywords that are high-weight, meaningfully impactful, and contextually relevant. Do NOT list low-value buzzwords.
-
-4. Suggested Action Verbs: Provide verbs aligned to employer tone, ownership level, and seniority signals. Avoid generic verbs like "helped" or "assisted."
-- Senior/Director/VP: Directed, Drove, Orchestrated, Steered, Mentored, Championed, Spearheaded
-- Mid-level: Guided, Facilitated, Coordinated, Managed, Executed, Streamlined, Implemented
-- Entry/Junior: Supported, Contributed, Developed, Analyzed, Documented
-
-5. Alternate A — Impact-Focused: Rewrite optimized version to maximize measurable framing and executive tone.
-
-6. Alternate B — Human-Natural: Rewrite optimized version to feel natural and recruiter-authentic while preserving alignment.
-
-7. Alignment Intelligence Summary: Explain changes using confident, decisive language. Maximum 3-4 sentences.
-DO NOT use: "Due to absence in original content", "Deprioritized", "AI analysis", "Based on surface alignment"
-Instead use patterns like:
-- "Language was elevated to reflect ownership and accountability signals present in the role."
-- "Framing shifted toward outcome-based delivery to mirror the employer's emphasis on [signal]."
-- "Cross-functional accountability was strengthened to align with stated expectations around [signal]."
-Keep it executive. Clear. No hedging.
-
-8. Strategic Gap Actions: Only list 3-5 additions that would materially increase score. Must be realistic, behavior-based when possible, and never suggest fabricated technical skills.
-Example — instead of "Add Salesforce experience", say "Specify experience documenting actions in Salesforce or similar CRM platforms to reinforce transparency and audit traceability."
-Format as structured bullets. null if alignment is already strong.
-
-9. Top Matched Signal: The highest-weight JD signal the resume content already addresses well.
-10. Top Missing Signal: The highest-weight JD signal that is absent or weak in the resume content.
-
-CONTENT TYPE DETECTION:
-- Single bullet → Bullet Optimization Mode (Action + Context + Outcome + Alignment Signal)
-- Summary paragraph → Summary Mode (Clear identity + JD alignment layer + Credible differentiator)
-- Multiple bullets → Experience Section Mode (Reorder by weighted priority, elevate high-alignment, reduce low-signal content)
-
-BULLET RULES:
-- Remove filler language ("responsible for," "helped with," "assisted in," "was tasked with")
-- Strengthen verbs naturally — pick ones that fit, not the most "powerful" sounding
-- Never use hyphens (–, —, -) in bullet text
-- Keep concise (1-2 lines max), scannable, and credible
-
-ALIGNMENT CONFIDENCE SCORING:
-- alignment_confidence_level: "Strong Alignment", "Solid Alignment", "Moderate Alignment", or "Weak Alignment"
-- Do NOT inflate scores.
-
-Return ONLY valid JSON (no markdown, no code fences):
+TITAN OUTPUT CONTRACT (STRICT JSON)
+Return ONLY this JSON object with EXACT keys:
 {
-  "optimized_bullet": "...",
-  "match_score": <integer 0-100>,
-  "alignment_confidence_level": "Strong Alignment" | "Solid Alignment" | "Moderate Alignment" | "Weak Alignment",
-  "missing_keywords": ["signal1", "signal2", "signal3", "signal4", "signal5"],
-  "suggested_verbs": ["verb1", "verb2", "verb3", "verb4", "verb5"],
-  "alt_a": "...",
-  "alt_b": "...",
-  "alignment_notes": "Concise diagnostic summary, 3-4 sentences max, executive tone.",
-  "gap_suggestions": "Structured bullet format. null if not needed.",
-  "top_matched_signal": "...",
-  "top_missing_signal": "..."
+  "optimized_bullets": [
+    {
+      "text": "string (1 bullet, 18–32 words, ATS-safe, no semicolons, no em dashes)",
+      "used_signals": ["string"],
+      "removed_or_softened": ["string"]
+    }
+  ],
+  "match_score": {
+    "score": number,
+    "label": "Weak Alignment" | "Moderate Alignment" | "Solid Alignment" | "Strong Alignment",
+    "score_rationale": ["string"]
+  },
+  "missing_keywords": ["string"],
+  "suggested_action_verbs": ["string"],
+  "alignment_intelligence_summary": "string (2–4 sentences, plain English)",
+  "strategic_gap_actions": ["string"],
+  "debug": {
+    "mode": "single_bullet",
+    "bullet_count_requested": 1,
+    "extracted_jd_priorities": [
+      { "priority": "string", "weight": number, "evidence": "string" }
+    ],
+    "scoring_breakdown": {
+      "role_outcomes_alignment": number,
+      "tools_and_workflow_alignment": number,
+      "domain_and_context_alignment": number,
+      "communication_and_stakeholder_alignment": number,
+      "metrics_and_ownership_alignment": number
+    }
+  }
 }
 
-Resume Content: ${bullet}
+No markdown. No code fences. No text outside the JSON.
 
-Job Description: ${jd}`;
+EXPERIENCE_INPUT: ${bullet}
+
+JOB_DESCRIPTION: ${jd}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -149,7 +145,51 @@ Job Description: ${jd}`;
     // Strip markdown code fences if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    const result = JSON.parse(content);
+    const titan = JSON.parse(content);
+
+    // Map Titan contract to the shape the frontend expects
+    const optimizedBullet = titan.optimized_bullets?.[0]?.text || "";
+    const matchScore = titan.match_score?.score ?? 0;
+    const confidenceLevel = titan.match_score?.label || "";
+    const missingKeywords = titan.missing_keywords || [];
+    const suggestedVerbs = titan.suggested_action_verbs || [];
+    const alignmentNotes = titan.alignment_intelligence_summary || "";
+    const gapSuggestions = titan.strategic_gap_actions?.length
+      ? titan.strategic_gap_actions.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
+      : null;
+
+    // Build alt_a and alt_b from used_signals context if available
+    // For now pass the optimized bullet as primary — the frontend already shows it
+    const altA = titan.optimized_bullets?.[0]?.text || optimizedBullet;
+    const altB = titan.optimized_bullets?.[1]?.text || optimizedBullet;
+
+    // Derive top signals from debug data
+    const priorities = titan.debug?.extracted_jd_priorities || [];
+    const topMatchedSignal = priorities.length > 0 ? priorities[0].priority : null;
+    const topMissingSignal = missingKeywords.length > 0 ? missingKeywords[0] : null;
+
+    const breakdown = titan.debug?.scoring_breakdown || {};
+    const scoreRationale = titan.match_score?.score_rationale || [];
+
+    const result = {
+      optimized_bullet: optimizedBullet,
+      match_score: matchScore,
+      alignment_confidence_level: confidenceLevel,
+      missing_keywords: missingKeywords,
+      suggested_verbs: suggestedVerbs,
+      alt_a: altA,
+      alt_b: altB,
+      alignment_notes: alignmentNotes,
+      gap_suggestions: gapSuggestions,
+      top_matched_signal: topMatchedSignal,
+      top_missing_signal: topMissingSignal,
+      // New Titan V2 fields
+      score_rationale: scoreRationale,
+      scoring_breakdown: breakdown,
+      extracted_jd_priorities: priorities,
+      used_signals: titan.optimized_bullets?.[0]?.used_signals || [],
+      removed_or_softened: titan.optimized_bullets?.[0]?.removed_or_softened || [],
+    };
 
     // Save to database
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -160,12 +200,12 @@ Job Description: ${jd}`;
       user_id: userId || null,
       input_bullet: bullet,
       input_jd: jd,
-      optimized_bullet: result.optimized_bullet,
-      match_score: result.match_score,
-      missing_keywords: result.missing_keywords,
-      suggested_verbs: result.suggested_verbs,
-      alt_a: result.alt_a,
-      alt_b: result.alt_b,
+      optimized_bullet: optimizedBullet,
+      match_score: matchScore,
+      missing_keywords: missingKeywords,
+      suggested_verbs: suggestedVerbs,
+      alt_a: altA,
+      alt_b: altB,
     }).throwOnError();
 
     return new Response(JSON.stringify(result), {

@@ -7,11 +7,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+interface ScoringBreakdown {
+  role_outcomes_alignment: number;
+  tools_and_workflow_alignment: number;
+  domain_and_context_alignment: number;
+  communication_and_stakeholder_alignment: number;
+  metrics_and_ownership_alignment: number;
+}
+
 interface MatchScoreCardProps {
   score: number;
   confidenceLevel?: string;
   topMatchedSignal?: string;
   topMissingSignal?: string;
+  scoreRationale?: string[];
+  scoringBreakdown?: ScoringBreakdown;
 }
 
 const getScoreConfig = (score: number) => {
@@ -20,18 +30,17 @@ const getScoreConfig = (score: number) => {
   return { label: "Weak Alignment", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
-// Derive approximate sub-scores from the main score for the breakdown display
-const getBreakdown = (score: number) => ({
-  leadership: Math.min(100, Math.round(score + (Math.random() * 10 - 5))),
-  technical: Math.min(100, Math.round(score + (Math.random() * 12 - 6))),
-  keywordCoverage: Math.min(100, Math.round(score + (Math.random() * 8 - 4))),
-  seniority: Math.min(100, Math.round(score + (Math.random() * 10 - 5))),
-});
-
-const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal }: MatchScoreCardProps) => {
+const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal, scoreRationale, scoringBreakdown }: MatchScoreCardProps) => {
   const [copied, setCopied] = useState(false);
   const config = getScoreConfig(score);
-  const [breakdown] = useState(() => getBreakdown(score));
+
+  const breakdown = scoringBreakdown || {
+    role_outcomes_alignment: score,
+    tools_and_workflow_alignment: score,
+    domain_and_context_alignment: score,
+    communication_and_stakeholder_alignment: score,
+    metrics_and_ownership_alignment: score,
+  };
 
   const handleCopy = async () => {
     const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
@@ -68,10 +77,11 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
             <p className="font-semibold text-foreground">How this score was calculated</p>
             <div className="space-y-2">
               {[
-                { label: "Leadership Match", value: breakdown.leadership },
-                { label: "Technical Match", value: breakdown.technical },
-                { label: "Keyword Coverage", value: breakdown.keywordCoverage },
-                { label: "Seniority Signal Match", value: breakdown.seniority },
+                { label: "Role & Outcomes", value: breakdown.role_outcomes_alignment },
+                { label: "Tools & Workflow", value: breakdown.tools_and_workflow_alignment },
+                { label: "Domain & Context", value: breakdown.domain_and_context_alignment },
+                { label: "Communication & Stakeholders", value: breakdown.communication_and_stakeholder_alignment },
+                { label: "Metrics & Ownership", value: breakdown.metrics_and_ownership_alignment },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
