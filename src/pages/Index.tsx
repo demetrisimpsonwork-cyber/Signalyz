@@ -29,6 +29,7 @@ interface OptimizationResult {
   suggested_verbs: string[];
   alt_a: string;
   alt_b: string;
+  alignment_notes?: string;
 }
 
 const Index = () => {
@@ -185,6 +186,9 @@ const Index = () => {
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
               <ResultSection title="Alternate A — Impact-focused" content={result.alt_a} />
               <ResultSection title="Alternate B — Human-natural" content={result.alt_b} />
+              {result.alignment_notes && (
+                <ResultSection title="Pinnacle Alignment Notes" content={result.alignment_notes} />
+              )}
             </>
           )}
         </div>
