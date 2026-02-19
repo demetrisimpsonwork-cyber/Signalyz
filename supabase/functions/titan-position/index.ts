@@ -102,7 +102,39 @@ OUTPUT CONTRACT — Return ONLY this JSON object with EXACT keys. No markdown. N
     "likely_focus_areas": ["string — 2–3 topics the interviewer will probe based on alignment strength and JD emphasis"],
     "likely_objection": "string (1 realistic objection the employer may raise about this candidate)",
     "strategic_angle": "string (1 angle the candidate should proactively emphasize to pre-empt objection and strengthen positioning)"
-  }
+  },
+  "employer_risk_perception": [
+    {
+      "category": "Capability Risk",
+      "rating": "Low | Medium | High",
+      "explanation": "string (2–3 sentences: how the hiring manager evaluates whether this candidate can execute the role — based only on signals present in the resume vs JD requirements)",
+      "mitigation": "string (1 sentence: exact positioning language to reduce perceived risk — no fabrication, no new claims)"
+    },
+    {
+      "category": "Context Risk",
+      "rating": "Low | Medium | High",
+      "explanation": "string (2–3 sentences: whether the candidate has operated in a similar environment, sector, or organisational complexity — signal-based only)",
+      "mitigation": "string (1 sentence: positioning language to close the context gap)"
+    },
+    {
+      "category": "Signal Risk",
+      "rating": "Low | Medium | High",
+      "explanation": "string (2–3 sentences: how clearly the resume projects role identity — ownership language, title alignment, decision authority signals)",
+      "mitigation": "string (1 sentence: positioning language to strengthen signal clarity)"
+    },
+    {
+      "category": "Stability Risk",
+      "rating": "Low | Medium | High",
+      "explanation": "string (2–3 sentences: career consistency, tenure patterns, transition logic — as a hiring manager would read it)",
+      "mitigation": "string (1 sentence: positioning language to frame transitions as intentional, not erratic)"
+    },
+    {
+      "category": "Commercial Impact Risk",
+      "rating": "Low | Medium | High",
+      "explanation": "string (2–3 sentences: revenue ownership, measurable outcomes, scale exposure — gaps a commercial employer would flag immediately)",
+      "mitigation": "string (1 sentence: positioning language to elevate commercial credibility without fabrication)"
+    }
+  ]
 }
 
 Rules for arrays:
@@ -115,6 +147,7 @@ Rules for arrays:
 - bullet_rewrites: 5–7 bullets from most relevant role
 - competitive_risk_signals: exactly 2–4 items (no fabrication — signal gaps only)
 - interview_trajectory.likely_focus_areas: exactly 2–3 items
+- employer_risk_perception: exactly 5 items — one per category above, in order. Rating must be a precise signal read — not aspirational. Mitigation must be positioning language only, never new claims.
 
 RESUME_INPUT: ${experience}
 
