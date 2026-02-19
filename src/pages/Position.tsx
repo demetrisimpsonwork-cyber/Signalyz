@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import AlignmentLoader from "@/components/AlignmentLoader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Sparkles, Copy, Check, Download, Lock, AlertTriangle, RefreshCw } from "lucide-react";
@@ -216,56 +217,6 @@ const LockedRiskCard = ({ category }: { category: string }) => (
   </div>
 );
 
-// ─── Progress Steps ───────────────────────────────────────────────────────────
-
-const STEPS = [
-  { label: "Extracting employer priority signals", desc: "Parsing the job description to identify what the employer is truly hiring for." },
-  { label: "Mapping experience to role DNA", desc: "Translating your background into role-native commercial language." },
-  { label: "Generating positioning package", desc: "Crafting bullet rewrites, gap strategy, and interview intelligence." },
-];
-
-
-
-const ProgressCard = ({ activeStep, elapsed }: { activeStep: number; elapsed: number }) => {
-  const showReassurance = elapsed >= 18;
-  return (
-    <div className="rounded-lg border bg-card p-5 space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Full resumes usually take 20–40 seconds.</p>
-        <span className="text-[11px] tabular-nums text-muted-foreground">{elapsed}s</span>
-      </div>
-      <div className="space-y-3">
-        {STEPS.map((step, i) => {
-          const done = activeStep > i;
-          const active = activeStep === i;
-          return (
-            <div key={i} className={`flex items-start gap-3 transition-opacity duration-500 ${active || done ? "opacity-100" : "opacity-30"}`}>
-              <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors duration-500
-                ${done ? "border-primary bg-primary text-primary-foreground" : active ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
-                {done ? <Check className="h-3 w-3" /> : i + 1}
-              </div>
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <p className={`text-xs font-semibold leading-tight ${active ? "text-foreground" : done ? "text-primary" : "text-muted-foreground"}`}>{step.label}</p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{step.desc}</p>
-                {active && (
-                  <div className="mt-1.5 h-0.5 w-full rounded-full bg-border overflow-hidden">
-                    <div className="h-full bg-primary rounded-full animate-[shimmer_2s_ease-in-out_infinite]" style={{ width: "40%" }} />
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {showReassurance && (
-        <div className="rounded-md bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground animate-fade-in flex items-center gap-2">
-          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-          Large resumes can take a bit longer. Still processing…
-        </div>
-      )}
-    </div>
-  );
-};
 
 
 // ─── Timeout Error Card ───────────────────────────────────────────────────────
@@ -395,8 +346,9 @@ const Position = () => {
 
   const completeProgress = () => {
     clearTimers();
-    setActiveStep(STEPS.length); // all done
+    setActiveStep(3); // 3 steps total — mark all done
   };
+
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -648,9 +600,8 @@ const Position = () => {
 
         {/* Right — Results */}
         <div className="space-y-4">
-          {loading && (
-            <ProgressCard activeStep={activeStep} elapsed={elapsed} />
-          )}
+          {loading && <AlignmentLoader minHeight="320px" />}
+
 
           {timedOut && !loading && (
             <TimeoutErrorCard
