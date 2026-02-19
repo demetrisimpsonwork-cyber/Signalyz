@@ -13,9 +13,10 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 80) return { label: "High Alignment", accent: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 50) return { label: "Moderate Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
-  return { label: "Low Alignment", accent: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-950/30", border: "border-orange-200 dark:border-orange-800" };
+  if (score >= 85) return { label: "High Priority Match", accent: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 70) return { label: "Strong Alignment", accent: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" };
+  if (score >= 50) return { label: "Developing Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
+  return { label: "Low Alignment — Needs Strategic Revision", accent: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-950/30", border: "border-orange-200 dark:border-orange-800" };
 };
 
 const MatchScoreCard = ({ score, confidenceLevel }: MatchScoreCardProps) => {

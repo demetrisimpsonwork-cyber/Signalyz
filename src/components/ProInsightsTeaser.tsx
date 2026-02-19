@@ -9,7 +9,7 @@ const ProInsightsTeaser = () => {
   return (
     <div className="space-y-2">
       {/* Section heading */}
-      <h3 className="text-sm font-semibold text-primary">🔒 Pro Insights</h3>
+      <h3 className="text-sm font-semibold text-primary">🔒 Pro Alignment Intelligence</h3>
 
       <div className="relative overflow-hidden rounded-lg border bg-card p-5 shadow-sm">
         {/* Blurred placeholder content */}
@@ -23,17 +23,14 @@ const ProInsightsTeaser = () => {
         {/* Overlay with CTA */}
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/60 px-6 text-center">
           <p className="mb-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            Unlock advanced ATS-optimized rewrites, detailed keyword explanations, and personalized tips to make your resume stand out.
-          </p>
-          <p className="mb-3 text-xs font-medium text-muted-foreground">
-            Unlock unlimited optimizations and premium insights.
+            Upgrade to Pro Alignment Intelligence — unlock weighted priority breakdowns, advanced gap diagnostics, alignment history tracking, deeper keyword clustering, and unlimited alignments.
           </p>
           <Button
             size="sm"
             onClick={() => navigate("/pricing")}
             className="gap-2 shadow-md hover:brightness-110 transition-all"
           >
-            Upgrade to Pro
+            Upgrade to Pro Intelligence
           </Button>
         </div>
       </div>

@@ -217,10 +217,10 @@ const Index = () => {
               <ResultSection title="Alternate A — Impact-focused" content={result.alt_a} />
               <ResultSection title="Alternate B — Human-natural" content={result.alt_b} />
               {result.alignment_notes && (
-                <ResultSection title="Pinnacle Alignment Notes" content={result.alignment_notes} />
+                <ResultSection title="Alignment Intelligence Summary" content={result.alignment_notes} />
               )}
               {result.gap_suggestions && (
-                <ResultSection title="Gap Suggestions" content={result.gap_suggestions} />
+                <ResultSection title="Strategic Gap Actions" content={result.gap_suggestions} />
               )}
               <ExportResults result={result} />
             </>
