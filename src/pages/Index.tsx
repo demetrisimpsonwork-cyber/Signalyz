@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { toast } from "sonner";
 
 const SAMPLE_BULLET = "Managed a team of developers to deliver software projects on time and within budget.";
@@ -66,7 +67,17 @@ const Index = () => {
   // TODO: replace with real pro check when Stripe is wired up
   const isPro = false;
   const isAdmin = useIsAdmin();
-  const { remaining, limitReached, increment } = useDailyUsage(isPro || isAdmin);
+  const {
+    trialStarted,
+    trialRunsUsed,
+    trialExhausted,
+    isTrialPro,
+    startTrial,
+    incrementTrialRun,
+    TRIAL_LIMIT,
+  } = useReverseTrial();
+  const effectiveIsPro = isPro || isAdmin || isTrialPro;
+  const { remaining, limitReached, increment } = useDailyUsage(effectiveIsPro);
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -79,7 +90,7 @@ const Index = () => {
   const handleOptimize = async () => {
     if (!validate()) return;
 
-    if (limitReached) {
+    if (limitReached && !isTrialPro) {
       setShowUpgrade(true);
       return;
     }
@@ -88,7 +99,7 @@ const Index = () => {
     setResult(null);
     setShowSamples(false);
 
-    const mode = isPro || isAdmin ? "multi_bullet" : "single_bullet";
+    const mode = effectiveIsPro ? "multi_bullet" : "single_bullet";
 
     try {
       const bulletWithContext = additionalContext.trim()
@@ -101,6 +112,7 @@ const Index = () => {
       if (error) throw error;
       setResult(data as OptimizationResult);
       increment();
+      if (isTrialPro) incrementTrialRun();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -179,7 +191,7 @@ const Index = () => {
             {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
           </div>
 
-          {!isPro && (
+          {!effectiveIsPro && (
             <p className="text-xs font-medium text-muted-foreground">
               {remaining > 0
                 ? `${remaining} free alignment${remaining !== 1 ? "s" : ""} left today`
@@ -245,13 +257,13 @@ const Index = () => {
                 scoreRationale={result.score_rationale}
                 scoringBreakdown={result.scoring_breakdown}
               />
-              {!isPro && <ProInsightsTeaser />}
+              {!effectiveIsPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
-              {(isPro || isAdmin) && result.alt_a !== result.optimized_bullet && (
+              {effectiveIsPro && result.alt_a !== result.optimized_bullet && (
                 <ResultSection title="Alternate — Impact-focused" content={result.alt_a} />
               )}
-              {(isPro || isAdmin) && result.alt_b !== result.optimized_bullet && (
+              {effectiveIsPro && result.alt_b !== result.optimized_bullet && (
                 <ResultSection title="Alternate — Human-natural" content={result.alt_b} />
               )}
               {result.alignment_notes && (
@@ -272,7 +284,14 @@ const Index = () => {
         </div>
       </div>
 
-      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      <UpgradeModal
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        trialStarted={trialStarted}
+        trialRunsUsed={trialRunsUsed}
+        trialLimit={TRIAL_LIMIT}
+        onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
+      />
     </div>
   );
 };
