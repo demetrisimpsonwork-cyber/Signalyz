@@ -45,6 +45,9 @@
 
     --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -78,6 +81,9 @@
 
     --success: 152 60% 45%;
     --success-foreground: 220 25% 6%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 25% 6%;
   }
 }
 
