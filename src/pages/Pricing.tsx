@@ -6,7 +6,7 @@ const tiers = [
     name: "Free",
     price: "$0",
     description: "Try it out",
-    features: ["5 optimizations/day", "Basic match scoring", "Keyword analysis"],
+    features: ["3 alignments/day", "Surface match scoring", "Basic keyword analysis"],
     cta: "Get started",
     highlighted: false,
   },

@@ -15,9 +15,8 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 80) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 60) return { label: "Solid Alignment", accent: "text-emerald-600", bg: "bg-emerald-50/70 dark:bg-emerald-950/20", border: "border-emerald-200 dark:border-emerald-800" };
-  if (score >= 40) return { label: "Moderate Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
+  if (score >= 75) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 60) return { label: "Solid Alignment", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
   return { label: "Weak Alignment", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
@@ -66,7 +65,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-80 text-sm space-y-4" side="bottom" align="start">
-            <p className="font-semibold text-foreground">Alignment Breakdown</p>
+            <p className="font-semibold text-foreground">How this score was calculated</p>
             <div className="space-y-2">
               {[
                 { label: "Leadership Match", value: breakdown.leadership },

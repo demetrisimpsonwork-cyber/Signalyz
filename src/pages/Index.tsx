@@ -171,9 +171,9 @@ const Index = () => {
                 ? `${remaining} free alignment${remaining !== 1 ? "s" : ""} left today`
                 : (
                   <>
-                    You've used today's 3 free alignments.
+                    You've used your 3 free precision refinements today.
                     <br />
-                    <span className="text-primary font-semibold">Upgrade for unlimited precision refinements.</span>
+                    <span className="text-primary font-semibold">Upgrade for unlimited intelligent refinements and weighted insight.</span>
                   </>
                 )}
             </p>
