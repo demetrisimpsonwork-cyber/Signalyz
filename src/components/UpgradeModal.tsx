@@ -12,10 +12,26 @@ import { Separator } from "@/components/ui/separator";
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
+  trialStarted?: boolean;
+  trialRunsUsed?: number;
+  trialLimit?: number;
+  onStartTrial?: () => void;
 }
 
-const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
+const UpgradeModal = ({
+  open,
+  onClose,
+  trialStarted = false,
+  trialRunsUsed = 0,
+  trialLimit = 3,
+  onStartTrial,
+}: UpgradeModalProps) => {
   const navigate = useNavigate();
+
+  const handleStartTrial = () => {
+    onStartTrial?.();
+    onClose();
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -98,6 +114,28 @@ const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
             >
               Unlock Full Model
             </Button>
+
+            {!trialStarted && onStartTrial && (
+              <>
+                <div className="flex items-center gap-3">
+                  <Separator className="flex-1" />
+                  <span className="text-xs text-muted-foreground/50">or</span>
+                  <Separator className="flex-1" />
+                </div>
+                <button
+                  onClick={handleStartTrial}
+                  className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                >
+                  Try Pro Free — 3 Strategic Runs
+                  <span className="block text-xs text-muted-foreground/50 mt-0.5">No card required</span>
+                </button>
+              </>
+            )}
+
+            {trialStarted && (
+              <TrialProgress used={trialRunsUsed} limit={trialLimit} />
+            )}
+
             <p className="text-xs text-muted-foreground text-center leading-relaxed">
               Most candidates optimize wording.
               <br />
@@ -115,6 +153,26 @@ const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
         </div>
       </DialogContent>
     </Dialog>
+  );
+};
+
+const TrialProgress = ({ used, limit }: { used: number; limit: number }) => {
+  const pct = Math.min((used / limit) * 100, 100);
+  return (
+    <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2.5 space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Pro Trial</span>
+        <span className="text-xs text-muted-foreground">
+          {used} of {limit} runs used
+        </span>
+      </div>
+      <div className="h-0.5 w-full rounded-full bg-border overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary/60 transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
   );
 };
 
