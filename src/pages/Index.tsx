@@ -35,6 +35,8 @@ interface OptimizationResult {
   alt_b: string;
   alignment_notes?: string;
   gap_suggestions?: string | null;
+  top_matched_signal?: string;
+  top_missing_signal?: string;
 }
 
 const Index = () => {
@@ -210,7 +212,7 @@ const Index = () => {
           {result && (
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
-              <MatchScoreCard score={result.match_score} confidenceLevel={result.alignment_confidence_level} />
+              <MatchScoreCard score={result.match_score} confidenceLevel={result.alignment_confidence_level} topMatchedSignal={result.top_matched_signal} topMissingSignal={result.top_missing_signal} />
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
