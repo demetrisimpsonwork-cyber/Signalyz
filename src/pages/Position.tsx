@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Copy, Check, Download } from "lucide-react";
+import { Loader2, Sparkles, Copy, Check, Download, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useReverseTrial } from "@/hooks/useReverseTrial";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +52,24 @@ interface MatchScoreForecast {
   rationale: string;
 }
 
+interface MarketPositionAssessment {
+  level: "Support-Level" | "Operational-Level" | "Mid-Level Professional" | "Strategic-Level" | "Leadership-Level";
+  explanation: string;
+  under_positioned: boolean;
+  under_positioned_explanation: string;
+}
+
+interface CompetitiveRiskSignal {
+  area: string;
+  explanation: string;
+}
+
+interface InterviewTrajectory {
+  likely_focus_areas: string[];
+  likely_objection: string;
+  strategic_angle: string;
+}
+
 interface PositioningResult {
   role_dna: RolePillar[];
   repositioning_matrix: RepositioningEntry[];
@@ -59,6 +79,9 @@ interface PositioningResult {
   bullet_rewrites: BulletRewrite[];
   interview_dominance_script: string;
   match_score_forecast: MatchScoreForecast;
+  market_position_assessment?: MarketPositionAssessment;
+  competitive_risk_signals?: CompetitiveRiskSignal[];
+  interview_trajectory?: InterviewTrajectory;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -87,17 +110,24 @@ const Section = ({
   children,
   copyText,
   badge,
+  proLabel,
 }: {
   title: string;
   children: React.ReactNode;
   copyText?: string;
   badge?: React.ReactNode;
+  proLabel?: boolean;
 }) => (
   <div className="rounded-lg border bg-card p-4 space-y-3">
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {badge}
+        {proLabel && (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
+            Pro
+          </span>
+        )}
       </div>
       {copyText && <CopyButton text={copyText} label={title} />}
     </div>
@@ -122,6 +152,38 @@ const weightColor = (w: string) => {
   return "bg-muted text-muted-foreground";
 };
 
+const levelColor = (level: string) => {
+  if (level === "Leadership-Level") return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400";
+  if (level === "Strategic-Level") return "bg-primary/10 text-primary";
+  if (level === "Mid-Level Professional") return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+  return "bg-muted text-muted-foreground";
+};
+
+// ─── Blurred Pro Teaser ───────────────────────────────────────────────────────
+
+const LockedSection = ({ title }: { title: string }) => (
+  <div className="rounded-lg border bg-card overflow-hidden relative">
+    <div className="p-4 space-y-3 select-none pointer-events-none" aria-hidden>
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+      <div className="space-y-2 blur-sm opacity-60">
+        <div className="h-3 w-3/4 rounded bg-muted" />
+        <div className="h-3 w-full rounded bg-muted" />
+        <div className="h-3 w-2/3 rounded bg-muted" />
+        <div className="h-3 w-5/6 rounded bg-muted" />
+        <div className="h-3 w-1/2 rounded bg-muted" />
+      </div>
+    </div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-card/60 backdrop-blur-[2px]">
+      <Lock className="h-4 w-4 text-muted-foreground" />
+      <p className="text-xs font-medium text-foreground text-center px-6">
+        Unlock Strategic Interview Forecasting with Pro
+      </p>
+    </div>
+  </div>
+);
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const Position = () => {
@@ -130,6 +192,12 @@ const Position = () => {
   const [result, setResult] = useState<PositioningResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ experience?: string; jd?: string }>({});
+
+  const isAdmin = useIsAdmin();
+  const { isTrialPro } = useReverseTrial();
+  // TODO: replace with real pro check when Stripe is wired up
+  const isPro = false;
+  const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -202,6 +270,37 @@ const Position = () => {
       `  After:  ${result.match_score_forecast.after_percent}%`,
       `  Rationale: ${result.match_score_forecast.rationale}`,
     ];
+
+    if (result.market_position_assessment) {
+      const mpa = result.market_position_assessment;
+      lines.push(
+        "",
+        "9. MARKET POSITION ASSESSMENT",
+        `  Level: ${mpa.level}`,
+        `  ${mpa.explanation}`,
+        ...(mpa.under_positioned ? [`  Under-Positioned: ${mpa.under_positioned_explanation}`] : [])
+      );
+    }
+
+    if (result.competitive_risk_signals?.length) {
+      lines.push("", "10. COMPETITIVE RISK SIGNALS");
+      result.competitive_risk_signals.forEach((s) => {
+        lines.push(`  • ${s.area}: ${s.explanation}`);
+      });
+    }
+
+    if (effectiveIsPro && result.interview_trajectory) {
+      const it = result.interview_trajectory;
+      lines.push(
+        "",
+        "11. INTERVIEW TRAJECTORY PREVIEW",
+        "  Likely Focus Areas:",
+        ...it.likely_focus_areas.map((f) => `    • ${f}`),
+        `  Likely Objection: ${it.likely_objection}`,
+        `  Strategic Angle: ${it.strategic_angle}`
+      );
+    }
+
     const blob = new Blob([lines.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -230,7 +329,7 @@ const Position = () => {
           {[
             { step: "Extract Role DNA", desc: "Identifies the 5 core identity pillars the employer is actually hiring for." },
             { step: "Reposition Your Experience", desc: "Maps your real background into role-native commercial language — no fabrication." },
-            { step: "Get Your Full Package", desc: "Elite bullet rewrites, gap mitigation strategy, and a 5-sentence interview dominance script." },
+            { step: "Get Your Full Package", desc: "Elite bullet rewrites, gap mitigation strategy, market position assessment, and interview intelligence." },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
@@ -283,7 +382,7 @@ const Position = () => {
             Generate Positioning Package
           </Button>
           <p className="text-xs text-muted-foreground">
-            Takes 25–40 seconds. 8-section output. Zero fabrication.
+            Takes 25–40 seconds. 11-section output. Zero fabrication.
           </p>
         </div>
 
@@ -300,7 +399,7 @@ const Position = () => {
 
           {!loading && !result && (
             <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
-              <p className="text-sm text-muted-foreground">Your 8-section positioning package will appear here</p>
+              <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
             </div>
           )}
 
@@ -430,7 +529,7 @@ const Position = () => {
 
               {/* 8 — Match Score Forecast */}
               <Section title="8. Match Score Forecast">
-                  <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6">
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Before</p>
                     <span className="text-2xl font-bold text-destructive">{result.match_score_forecast.before_percent}%</span>
@@ -443,6 +542,92 @@ const Position = () => {
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-1">{result.match_score_forecast.rationale}</p>
               </Section>
+
+              {/* ── STRATEGIC AUTHORITY LAYER ── */}
+
+              {/* 9 — Market Position Assessment (always visible) */}
+              {result.market_position_assessment && (
+                <Section title="9. Market Position Assessment">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${levelColor(result.market_position_assessment.level)}`}>
+                        {result.market_position_assessment.level}
+                      </span>
+                      {result.market_position_assessment.under_positioned && (
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive uppercase tracking-wide">
+                          Under-positioned
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {result.market_position_assessment.explanation}
+                    </p>
+                    {result.market_position_assessment.under_positioned && result.market_position_assessment.under_positioned_explanation && (
+                      <div className="rounded-md border border-destructive/20 bg-destructive/5 p-3">
+                        <p className="text-xs text-destructive/80 leading-relaxed">
+                          {result.market_position_assessment.under_positioned_explanation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </Section>
+              )}
+
+              {/* 10 — Competitive Risk Signals (free: 1–2, pro: all) */}
+              {result.competitive_risk_signals && result.competitive_risk_signals.length > 0 && (
+                <Section title="10. Competitive Risk Signals">
+                  <div className="space-y-2">
+                    {(effectiveIsPro
+                      ? result.competitive_risk_signals
+                      : result.competitive_risk_signals.slice(0, 2)
+                    ).map((s, i) => (
+                      <div key={i} className="rounded-md border bg-background p-3 space-y-1">
+                        <p className="text-xs font-semibold text-foreground">{s.area}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{s.explanation}</p>
+                      </div>
+                    ))}
+                    {!effectiveIsPro && result.competitive_risk_signals.length > 2 && (
+                      <p className="text-[11px] text-muted-foreground pt-1">
+                        {result.competitive_risk_signals.length - 2} additional risk signal{result.competitive_risk_signals.length - 2 !== 1 ? "s" : ""} available on Pro.
+                      </p>
+                    )}
+                  </div>
+                </Section>
+              )}
+
+              {/* 11 — Interview Trajectory (pro: full, free: locked) */}
+              {result.interview_trajectory && (
+                effectiveIsPro ? (
+                  <Section title="11. Interview Trajectory Preview" proLabel>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
+                          Likely Focus Areas
+                        </p>
+                        <BulletList items={result.interview_trajectory.likely_focus_areas} />
+                      </div>
+                      <div className="rounded-md border bg-background p-3 space-y-1">
+                        <p className="text-[10px] uppercase tracking-wide text-destructive/70 font-medium">
+                          Likely Objection
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {result.interview_trajectory.likely_objection}
+                        </p>
+                      </div>
+                      <div className="rounded-md border bg-background p-3 space-y-1">
+                        <p className="text-[10px] uppercase tracking-wide text-primary font-medium">
+                          Strategic Angle to Emphasize
+                        </p>
+                        <p className="text-xs text-foreground leading-relaxed">
+                          {result.interview_trajectory.strategic_angle}
+                        </p>
+                      </div>
+                    </div>
+                  </Section>
+                ) : (
+                  <LockedSection title="11. Interview Trajectory Preview" />
+                )
+              )}
 
               {/* Download */}
               <div className="flex items-center gap-3 pt-2">

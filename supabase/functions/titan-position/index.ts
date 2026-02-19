@@ -85,6 +85,23 @@ OUTPUT CONTRACT — Return ONLY this JSON object with EXACT keys. No markdown. N
     "before_percent": number,
     "after_percent": number,
     "rationale": "string (2–3 sentences explaining what changed and why the after score is justified)"
+  },
+  "market_position_assessment": {
+    "level": "Support-Level | Operational-Level | Mid-Level Professional | Strategic-Level | Leadership-Level",
+    "explanation": "string (2–3 sentences: why this level — based on ownership language, impact framing, scope signals, decision authority in the resume)",
+    "under_positioned": boolean,
+    "under_positioned_explanation": "string (if under_positioned is true: how the candidate is under-positioned relative to the JD — else empty string)"
+  },
+  "competitive_risk_signals": [
+    {
+      "area": "string (e.g. Commercial Impact Clarity, Revenue Ownership Signals, Leadership Visibility, Technical Depth, Strategic Decision Authority, Presentation Authority)",
+      "explanation": "string (1–2 sentences: where a stronger competing candidate would outperform — signal gap only, no fabrication)"
+    }
+  ],
+  "interview_trajectory": {
+    "likely_focus_areas": ["string — 2–3 topics the interviewer will probe based on alignment strength and JD emphasis"],
+    "likely_objection": "string (1 realistic objection the employer may raise about this candidate)",
+    "strategic_angle": "string (1 angle the candidate should proactively emphasize to pre-empt objection and strengthen positioning)"
   }
 }
 
@@ -96,6 +113,8 @@ Rules for arrays:
 - gap_strategy.perception_gaps: 2–4 items max
 - gap_strategy.mitigation: one entry per gap identified
 - bullet_rewrites: 5–7 bullets from most relevant role
+- competitive_risk_signals: exactly 2–4 items (no fabrication — signal gaps only)
+- interview_trajectory.likely_focus_areas: exactly 2–3 items
 
 RESUME_INPUT: ${experience}
 
