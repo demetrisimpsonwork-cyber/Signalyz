@@ -11,8 +11,8 @@ interface ScoringBreakdown {
   role_outcomes_alignment: number;
   tools_and_workflow_alignment: number;
   domain_and_context_alignment: number;
-  communication_and_stakeholder_alignment: number;
-  metrics_and_ownership_alignment: number;
+  context_and_scale_alignment: number;
+  communication_and_leadership_alignment: number;
 }
 
 interface MatchScoreCardProps {
@@ -25,9 +25,10 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 75) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 60) return { label: "Solid Alignment", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
-  return { label: "Weak Alignment", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
+  if (score >= 80) return { label: "Strong", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 65) return { label: "Solid", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
+  if (score >= 50) return { label: "Moderate", accent: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" };
+  return { label: "Weak", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
 const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal, scoreRationale, scoringBreakdown }: MatchScoreCardProps) => {
@@ -38,8 +39,8 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
     role_outcomes_alignment: score,
     tools_and_workflow_alignment: score,
     domain_and_context_alignment: score,
-    communication_and_stakeholder_alignment: score,
-    metrics_and_ownership_alignment: score,
+    context_and_scale_alignment: score,
+    communication_and_leadership_alignment: score,
   };
 
   const handleCopy = async () => {
@@ -80,8 +81,8 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
                 { label: "Role & Outcomes", value: breakdown.role_outcomes_alignment },
                 { label: "Tools & Workflow", value: breakdown.tools_and_workflow_alignment },
                 { label: "Domain & Context", value: breakdown.domain_and_context_alignment },
-                { label: "Communication & Stakeholders", value: breakdown.communication_and_stakeholder_alignment },
-                { label: "Metrics & Ownership", value: breakdown.metrics_and_ownership_alignment },
+                { label: "Context & Scale", value: breakdown.context_and_scale_alignment },
+                { label: "Communication & Leadership", value: breakdown.communication_and_leadership_alignment },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{item.label}</span>

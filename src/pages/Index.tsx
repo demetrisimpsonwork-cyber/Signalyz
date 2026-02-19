@@ -30,8 +30,8 @@ interface ScoringBreakdown {
   role_outcomes_alignment: number;
   tools_and_workflow_alignment: number;
   domain_and_context_alignment: number;
-  communication_and_stakeholder_alignment: number;
-  metrics_and_ownership_alignment: number;
+  context_and_scale_alignment: number;
+  communication_and_leadership_alignment: number;
 }
 
 interface OptimizationResult {
