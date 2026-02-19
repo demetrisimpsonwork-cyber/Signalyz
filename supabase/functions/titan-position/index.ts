@@ -153,6 +153,9 @@ RESUME_INPUT: ${experience}
 
 JOB_DESCRIPTION_INPUT: ${jd}`;
 
+    console.log("Sending request to AI gateway...");
+    console.log("Prompt length (chars):", prompt.length);
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -160,14 +163,17 @@ JOB_DESCRIPTION_INPUT: ${jd}`;
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.65,
       }),
     });
 
+    console.log("AI gateway status:", aiRes.status);
+
     if (!aiRes.ok) {
       const errText = await aiRes.text();
+      console.error("AI gateway error body:", errText);
       if (aiRes.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429,
@@ -184,14 +190,26 @@ JOB_DESCRIPTION_INPUT: ${jd}`;
     }
 
     const aiData = await aiRes.json();
+    console.log("AI response received, finish_reason:", aiData.choices?.[0]?.finish_reason);
     let content = aiData.choices?.[0]?.message?.content || "";
+
+    if (!content) {
+      console.error("Empty content from AI. Full response:", JSON.stringify(aiData));
+      throw new Error("AI returned empty content. Please try again.");
+    }
 
     // Strip markdown code fences if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    const titan = JSON.parse(content);
+    let titan;
+    try {
+      titan = JSON.parse(content);
+    } catch (parseErr) {
+      console.error("JSON parse failed. Content preview:", content.slice(0, 500));
+      throw new Error("Failed to parse AI response as JSON. Please try again.");
+    }
 
-    return new Response(JSON.stringify(titan), {
+    return new Response(JSON.stringify(titan as Record<string, unknown>), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
