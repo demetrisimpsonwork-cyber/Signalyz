@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -19,52 +19,99 @@ const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md text-center">
-        <DialogHeader className="items-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Sparkles className="h-6 w-6 text-primary" />
-          </div>
-          <DialogTitle className="text-xl">Unlock Deeper Alignment Intelligence</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            You've used your 3 free precision refinements today. Upgrade for unlimited intelligent alignment.
+      <DialogContent className="max-w-md">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+            Unlock Employer Priority Intelligence™
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
+            You're viewing a strategic preview.
+            <br />
+            Upgrade to access the full employer decision model.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="text-left space-y-2">
-          <p className="text-sm font-medium text-foreground">What You Unlock with Pro:</p>
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2"><span className="mt-0.5 text-primary">•</span>Expanded Gap Intelligence — clearer skill gaps + how to close them</li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 text-primary">•</span>Deeper Employer Signal Breakdown</li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 text-primary">•</span>Alignment History Tracking</li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 text-primary">•</span>Unlimited Refinements</li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 text-primary">•</span>Priority Processing</li>
-          </ul>
+        <div className="mt-4 grid grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Free Tier</p>
+            <ul className="space-y-2">
+              {[
+                "One aligned bullet",
+                "Overall alignment score",
+                "Surface-level gap indicators",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Pro</p>
+            <ul className="space-y-2">
+              {[
+                "Multi-bullet strategic alignment",
+                "Weighted employer priority breakdown",
+                "Risk perception flags",
+                "Positioning angle analysis",
+                "Gap severity classification",
+                "Interview leverage insights",
+                "Unlimited strategic runs",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-foreground">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        <div className="mt-2 flex flex-col gap-2">
-          <Button
-            size="lg"
-            className="w-full gap-2"
-            onClick={() => {
-              onClose();
-              navigate("/pricing");
-            }}
-          >
-            <Sparkles className="h-4 w-4" />
-            Unlock Pro Intelligence
-          </Button>
-          <Button variant="ghost" size="sm" className="text-muted-foreground/70" onClick={onClose}>
-            Maybe later
-          </Button>
-        </div>
+        <Separator className="my-5" />
 
-        <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">
-            Only $9/month — built for serious job seekers. Cancel anytime.
-          </p>
-          <p className="text-xs italic text-muted-foreground/60">
-            Most users upgrade within their first week.
-          </p>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Hiring managers don't scan resumes.
+          <br />
+          They evaluate risk and signal strength.
+          <br />
+          <span className="text-foreground font-medium">Resumix shows you what they actually see.</span>
+        </p>
+
+        <Separator className="my-5" />
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-bold text-foreground">Employer Priority Intelligence™</p>
+            <p className="text-xs text-muted-foreground mt-0.5">$9/month — cancel anytime</p>
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                onClose();
+                navigate("/pricing");
+              }}
+            >
+              Unlock Full Model
+            </Button>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              Most candidates optimize wording.
+              <br />
+              Strategic candidates optimize perception.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground/50 hover:text-muted-foreground"
+              onClick={onClose}
+            >
+              Continue with free tier
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
