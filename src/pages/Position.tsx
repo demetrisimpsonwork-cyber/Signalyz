@@ -5,27 +5,63 @@ import { Loader2, Sparkles, Copy, Check, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface InterviewScript {
-  pitch_30s: string;
-  pivot_90s: string;
-  why_choose_you: string;
-  biggest_gap: string;
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface RolePillar {
+  pillar: string;
+  weight: "High" | "Medium" | "Low";
+  description: string;
 }
 
-interface BridgeSection {
-  why_it_translates: string[];
+interface RepositioningEntry {
+  pillar: string;
+  matching_experience: string;
+  role_native_language: string;
+  transferable_complexity: string;
+}
+
+interface CommercialConversion {
+  original_framing: string;
+  commercial_reframe: string;
+  quantified_impact: string;
+}
+
+interface GapMitigation {
+  gap: string;
+  resume_edit: string;
+  interview_narrative: string;
+  micro_credential: string;
+}
+
+interface GapStrategy {
+  hard_gaps: string[];
   perception_gaps: string[];
-  interview_narrative: string[];
+  mitigation: GapMitigation[];
+}
+
+interface BulletRewrite {
+  original: string;
+  rewritten: string;
+}
+
+interface MatchScoreForecast {
+  before_percent: number;
+  after_percent: number;
+  rationale: string;
 }
 
 interface PositioningResult {
-  professional_summary: string;
-  winning_angle: string;
-  cover_letter: string;
-  strategic_bridge: BridgeSection;
-  interview_script: InterviewScript;
-  positioning_intelligence: string;
+  role_dna: RolePillar[];
+  repositioning_matrix: RepositioningEntry[];
+  commercial_value_conversion: CommercialConversion[];
+  gap_strategy: GapStrategy;
+  optimized_summary: string;
+  bullet_rewrites: BulletRewrite[];
+  interview_dominance_script: string;
+  match_score_forecast: MatchScoreForecast;
 }
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const CopyButton = ({ text, label }: { text: string; label: string }) => {
   const [copied, setCopied] = useState(false);
@@ -46,10 +82,23 @@ const CopyButton = ({ text, label }: { text: string; label: string }) => {
   );
 };
 
-const Section = ({ title, children, copyText }: { title: string; children: React.ReactNode; copyText?: string }) => (
-  <div className="rounded-lg border bg-card p-4 space-y-2">
-    <div className="flex items-center justify-between">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+const Section = ({
+  title,
+  children,
+  copyText,
+  badge,
+}: {
+  title: string;
+  children: React.ReactNode;
+  copyText?: string;
+  badge?: React.ReactNode;
+}) => (
+  <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {badge}
+      </div>
       {copyText && <CopyButton text={copyText} label={title} />}
     </div>
     {children}
@@ -60,22 +109,20 @@ const BulletList = ({ items }: { items: string[] }) => (
   <ul className="space-y-1.5 mt-1">
     {items.map((item, i) => (
       <li key={i} className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
-        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary opacity-60" />
+        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary opacity-60" />
         {item}
       </li>
     ))}
   </ul>
 );
 
-const ScriptBlock = ({ label, content }: { label: string; content: string }) => (
-  <div className="space-y-1">
-    <div className="flex items-center justify-between">
-      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">{label}</p>
-      <CopyButton text={content} label={label} />
-    </div>
-    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{content}</p>
-  </div>
-);
+const weightColor = (w: string) => {
+  if (w === "High") return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400";
+  if (w === "Medium") return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+  return "bg-muted text-muted-foreground";
+};
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 const Position = () => {
   const [experience, setExperience] = useState("");
@@ -112,46 +159,48 @@ const Position = () => {
 
   const handleDownload = () => {
     if (!result) return;
-    const bridge = result.strategic_bridge;
-    const script = result.interview_script;
-    const lines = [
-      "RESUMIX — STRATEGIC POSITIONING ENGINE",
-      "=======================================",
+    const lines: string[] = [
+      "RESUMIX — STRATEGIC POSITIONING ENGINE (ROLE DNA)",
+      "===================================================",
       "",
-      "PROFESSIONAL SUMMARY",
-      result.professional_summary,
+      "1. ROLE DNA EXTRACTION",
+      ...result.role_dna.map((p) => `  [${p.weight}] ${p.pillar}: ${p.description}`),
       "",
-      "WINNING ANGLE",
-      result.winning_angle,
+      "2. EXPERIENCE REPOSITIONING MATRIX",
+      ...result.repositioning_matrix.map(
+        (m) =>
+          `  ${m.pillar}\n  → Real Experience: ${m.matching_experience}\n  → Role Language: ${m.role_native_language}\n  → Transferable Complexity: ${m.transferable_complexity}`
+      ),
       "",
-      "COVER LETTER",
-      result.cover_letter,
+      "3. COMMERCIAL VALUE CONVERSION",
+      ...result.commercial_value_conversion.map(
+        (c) => `  Original: ${c.original_framing}\n  Reframe: ${c.commercial_reframe}\n  Impact: ${c.quantified_impact}`
+      ),
       "",
-      "STRATEGIC BRIDGE ANALYSIS",
-      "Why It Translates:",
-      ...bridge.why_it_translates.map((b) => `  • ${b}`),
-      "",
+      "4. GAP STRATEGY",
+      "Hard Gaps:",
+      ...result.gap_strategy.hard_gaps.map((g) => `  • ${g}`),
       "Perception Gaps:",
-      ...bridge.perception_gaps.map((b) => `  • ${b}`),
+      ...result.gap_strategy.perception_gaps.map((g) => `  • ${g}`),
+      "Mitigation:",
+      ...result.gap_strategy.mitigation.map(
+        (m) =>
+          `  Gap: ${m.gap}\n  Resume Edit: ${m.resume_edit}\n  Interview: ${m.interview_narrative}\n  Credential: ${m.micro_credential}`
+      ),
       "",
-      "Interview Narrative:",
-      ...bridge.interview_narrative.map((b) => `  • ${b}`),
+      "5. OPTIMIZED SUMMARY",
+      result.optimized_summary,
       "",
-      "INTERVIEW POSITIONING SCRIPTS",
-      "30-Second Pitch:",
-      script.pitch_30s,
+      "6. BULLET REWRITES",
+      ...result.bullet_rewrites.map((b) => `  Before: ${b.original}\n  After:  ${b.rewritten}`),
       "",
-      "90-Second Pivot Explanation:",
-      script.pivot_90s,
+      "7. INTERVIEW DOMINANCE SCRIPT",
+      result.interview_dominance_script,
       "",
-      "Why Should We Choose You?",
-      script.why_choose_you,
-      "",
-      "What Is Your Biggest Gap?",
-      script.biggest_gap,
-      "",
-      "POSITIONING INTELLIGENCE",
-      result.positioning_intelligence,
+      "8. MATCH SCORE FORECAST",
+      `  Before: ${result.match_score_forecast.before_percent}%`,
+      `  After:  ${result.match_score_forecast.after_percent}%`,
+      `  Rationale: ${result.match_score_forecast.rationale}`,
     ];
     const blob = new Blob([lines.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -165,21 +214,23 @@ const Position = () => {
 
   return (
     <div className="container max-w-6xl py-8">
+      {/* Header */}
       <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Strategic Positioning Engine
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Reposition your real experience into the strongest commercially relevant narrative — executive summary, cover letter, strategic bridge, and interview scripts. Zero fabrication.
+          Shifts perceived identity — not keyword density. Role DNA extraction, commercial value conversion, gap mitigation, elite bullet rewrites, and interview scripts. Zero fabrication.
         </p>
       </div>
 
+      {/* Steps */}
       <div className="mb-10 mx-auto max-w-2xl">
-        <ol className="space-y-5">
+        <ol className="space-y-4">
           {[
-            { step: "Reframe Your Experience", desc: "Elevate task-based descriptions into value-based business language." },
-            { step: "Bridge Domain Gaps", desc: "Translate regulated, public sector, or operations backgrounds into commercial language." },
-            { step: "Get Your Full Package", desc: "Executive summary, cover letter, strategic bridge analysis, and ready-to-use interview scripts." },
+            { step: "Extract Role DNA", desc: "Identifies the 5 core identity pillars the employer is actually hiring for." },
+            { step: "Reposition Your Experience", desc: "Maps your real background into role-native commercial language — no fabrication." },
+            { step: "Get Your Full Package", desc: "Elite bullet rewrites, gap mitigation strategy, and a 5-sentence interview dominance script." },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
@@ -200,13 +251,13 @@ const Position = () => {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Your Resume / Experience</label>
             <p className="mb-1.5 text-xs text-muted-foreground">
-              Paste your full resume, summary, or key experience section. More context yields stronger output.
+              Paste your full resume, summary, or most relevant role. More context yields stronger output.
             </p>
             <Textarea
               placeholder="Paste your experience here..."
               value={experience}
               onChange={(e) => { setExperience(e.target.value); setErrors((p) => ({ ...p, experience: undefined })); }}
-              rows={8}
+              rows={9}
               className={errors.experience ? "border-destructive" : ""}
             />
             {errors.experience && <p className="mt-1 text-xs text-destructive">{errors.experience}</p>}
@@ -215,13 +266,13 @@ const Position = () => {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Target Job Description</label>
             <p className="mb-1.5 text-xs text-muted-foreground">
-              Paste the full job description. We'll extract the employer's priorities and mission language.
+              Paste the full job description. We extract the employer's identity priorities, not just keywords.
             </p>
             <Textarea
               placeholder="Paste the job description..."
               value={jd}
               onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
-              rows={8}
+              rows={9}
               className={errors.jd ? "border-destructive" : ""}
             />
             {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
@@ -232,79 +283,168 @@ const Position = () => {
             Generate Positioning Package
           </Button>
           <p className="text-xs text-muted-foreground">
-            Takes 20–30 seconds. Executive-level output. Zero fabrication.
+            Takes 25–40 seconds. 8-section output. Zero fabrication.
           </p>
         </div>
 
         {/* Right — Results */}
         <div className="space-y-4">
           {loading && (
-            <div className="flex h-72 items-center justify-center rounded-lg border bg-card">
+            <div className="flex h-80 items-center justify-center rounded-lg border bg-card">
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="text-sm">Generating your positioning package…</span>
+                <span className="text-sm">Extracting Role DNA and repositioning your experience…</span>
               </div>
             </div>
           )}
 
           {!loading && !result && (
-            <div className="flex h-72 items-center justify-center rounded-lg border border-dashed bg-card">
-              <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
+            <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
+              <p className="text-sm text-muted-foreground">Your 8-section positioning package will appear here</p>
             </div>
           )}
 
           {result && (
             <>
-              <Section title="Professional Summary" copyText={result.professional_summary}>
-                <p className="text-sm leading-relaxed text-muted-foreground">{result.professional_summary}</p>
-              </Section>
-
-              <Section title="Winning Angle" copyText={result.winning_angle}>
-                <p className="text-sm leading-relaxed text-muted-foreground">{result.winning_angle}</p>
-              </Section>
-
-              <Section title="Cover Letter — Pinnacle Format" copyText={result.cover_letter}>
-                <div className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                  {result.cover_letter}
+              {/* 1 — Role DNA */}
+              <Section title="1. Role DNA Extraction">
+                <div className="space-y-2">
+                  {result.role_dna.map((p, i) => (
+                    <div key={i} className="rounded-md border bg-background p-3 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground">{p.pillar}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${weightColor(p.weight)}`}>
+                          {p.weight}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
+                    </div>
+                  ))}
                 </div>
               </Section>
 
-              <Section title="Strategic Bridge Analysis">
+              {/* 2 — Repositioning Matrix */}
+              <Section title="2. Experience Repositioning Matrix">
+                <div className="space-y-3">
+                  {result.repositioning_matrix.map((m, i) => (
+                    <div key={i} className="rounded-md border bg-background p-3 space-y-2">
+                      <p className="text-xs font-semibold text-foreground">{m.pillar}</p>
+                      <div className="grid grid-cols-1 gap-1">
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Real Experience</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">{m.matching_experience}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wide text-primary font-medium">Role-Native Language</span>
+                          <p className="text-xs text-foreground mt-0.5">{m.role_native_language}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Transferable Complexity</span>
+                          <p className="text-xs text-muted-foreground mt-0.5 italic">{m.transferable_complexity}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+
+              {/* 3 — Commercial Value */}
+              <Section title="3. Commercial Value Conversion">
+                <div className="space-y-3">
+                  {result.commercial_value_conversion.map((c, i) => (
+                    <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-[10px] uppercase tracking-wide font-medium text-muted-foreground shrink-0 mt-0.5">Was:</span>
+                        <p className="text-xs text-muted-foreground line-through">{c.original_framing}</p>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-[10px] uppercase tracking-wide font-medium text-primary shrink-0 mt-0.5">Now:</span>
+                        <p className="text-xs text-foreground font-medium">{c.commercial_reframe}</p>
+                      </div>
+                      {c.quantified_impact && (
+                        <p className="text-[11px] text-muted-foreground italic">{c.quantified_impact}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Section>
+
+              {/* 4 — Gap Strategy */}
+              <Section title="4. Gap Strategy">
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Why It Translates</p>
-                    <BulletList items={result.strategic_bridge.why_it_translates} />
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Hard Gaps</p>
+                    <BulletList items={result.gap_strategy.hard_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Perception Gaps</p>
-                    <BulletList items={result.strategic_bridge.perception_gaps} />
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Perception Gaps</p>
+                    <BulletList items={result.gap_strategy.perception_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Interview Narrative</p>
-                    <BulletList items={result.strategic_bridge.interview_narrative} />
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Mitigation</p>
+                    <div className="space-y-2">
+                      {result.gap_strategy.mitigation.map((m, i) => (
+                        <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
+                          <p className="text-xs font-semibold text-foreground">{m.gap}</p>
+                          <p className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">Resume:</span> {m.resume_edit}</p>
+                          <p className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">Interview:</span> {m.interview_narrative}</p>
+                          {m.micro_credential !== "N/A" && (
+                            <p className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">Credential:</span> {m.micro_credential}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </Section>
 
-              <Section title="Interview Positioning Scripts">
-                <div className="space-y-4">
-                  <ScriptBlock label="30-Second Pitch" content={result.interview_script.pitch_30s} />
-                  <div className="border-t pt-3">
-                    <ScriptBlock label="90-Second Pivot Explanation" content={result.interview_script.pivot_90s} />
-                  </div>
-                  <div className="border-t pt-3">
-                    <ScriptBlock label="Why Should We Choose You?" content={result.interview_script.why_choose_you} />
-                  </div>
-                  <div className="border-t pt-3">
-                    <ScriptBlock label="What Is Your Biggest Gap?" content={result.interview_script.biggest_gap} />
-                  </div>
+              {/* 5 — Optimized Summary */}
+              <Section title="5. Optimized Summary (Rebuilt Identity)" copyText={result.optimized_summary}>
+                <p className="text-sm leading-relaxed text-muted-foreground">{result.optimized_summary}</p>
+              </Section>
+
+              {/* 6 — Bullet Rewrites */}
+              <Section title="6. Bullet Rewrites (Elite Version)">
+                <div className="space-y-3">
+                  {result.bullet_rewrites.map((b, i) => (
+                    <div key={i} className="rounded-md border bg-background p-3 space-y-2">
+                      <p className="text-[11px] text-muted-foreground line-through leading-relaxed">{b.original}</p>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <div className="flex-1 flex items-start justify-between gap-2">
+                          <p className="text-xs font-medium text-foreground leading-relaxed">{b.rewritten}</p>
+                          <CopyButton text={b.rewritten} label={`Bullet ${i + 1}`} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Section>
 
-              <Section title="Positioning Intelligence">
-                <p className="text-sm leading-relaxed text-muted-foreground">{result.positioning_intelligence}</p>
+              {/* 7 — Interview Dominance Script */}
+              <Section title="7. Interview Dominance Script" copyText={result.interview_dominance_script}>
+                <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+                  {result.interview_dominance_script}
+                </p>
               </Section>
 
+              {/* 8 — Match Score Forecast */}
+              <Section title="8. Match Score Forecast">
+                  <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Before</p>
+                    <span className="text-2xl font-bold text-destructive">{result.match_score_forecast.before_percent}%</span>
+                  </div>
+                  <div className="flex-1 h-px bg-border" />
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">After</p>
+                    <span className="text-2xl font-bold text-primary">{result.match_score_forecast.after_percent}%</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1">{result.match_score_forecast.rationale}</p>
+              </Section>
+
+              {/* Download */}
               <div className="flex items-center gap-3 pt-2">
                 <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
                   <Download className="h-3.5 w-3.5" />

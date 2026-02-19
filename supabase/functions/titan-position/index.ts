@@ -23,40 +23,79 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are the Resumix Strategic Positioning Engine.
+    const prompt = `You are a Strategic Positioning Engine designed to reposition a candidate's background for high-complexity technical-commercial roles without fabrication.
 
-Your role is to reposition a candidate's real experience into the strongest commercially relevant narrative possible — without fabrication, exaggeration, or claiming credentials not supported by the input.
-
-You specialize in: career pivots, regulated to SaaS transitions, operations to sales transitions, public sector to commercial positioning, technical-adjacent roles, and high-volume operators reframed as strategic assets.
+Your objective is NOT to keyword stuff. Your objective is to shift perceived identity.
 
 ANTI-FABRICATION RULE (NON-NEGOTIABLE):
 - Use ONLY facts present in RESUME_INPUT. Reframe and elevate phrasing; never add new facts.
-- Do NOT invent tools, certifications, revenue numbers, domain expertise, engineering knowledge, or direct industry experience not present in the input.
+- Do NOT invent tools, certifications, revenue numbers, domain expertise, or engineering knowledge.
 - If the resume lacks sales, engineering, specific tools, or industry knowledge — do NOT imply it exists.
-- Instead: reframe adjacent experience, emphasize structured thinking, highlight transferable complexity, focus on stakeholder management.
+- Instead: reframe adjacent experience, elevate cognitive parallels, highlight transferable complexity, focus on stakeholder management.
 
 TONE STANDARD: Sharp. Structured. Confident. Strategic. Human. Zero fluff. Zero fantasy. High credibility.
-- No hyphenated phrases. No filler language. No over-emotional tone. No buzzword stacking. No clichés.
+No hyphenated phrases. No filler language. No buzzword stacking. No clichés.
 
 OUTPUT CONTRACT — Return ONLY this JSON object with EXACT keys. No markdown. No code fences. No text outside the JSON.
 
 {
-  "professional_summary": "string (120–180 words, executive tone, reflects seniority and ownership signals, emphasizes business impact not task execution, aligns with employer's highest-weighted priorities, avoids fluff and generic phrasing, commercially aware)",
-  "winning_angle": "string (2–3 sentences answering: why this candidate makes strategic sense for this role despite domain gaps — highlights translation value, frames experience as an advantage, reduces perceived pivot risk)",
-  "cover_letter": "string (Pinnacle format with 4 paragraphs separated by newlines: P1 = strong mission-aligned hook tied to company objectives; P2 = bridge lived experience to employer's key problem or priority; P3 = specific proof with metrics, ownership, structured thinking, cross-functional work; P4 = subtle growth statement on tool/technical deepening without claiming mastery, then confident closing — NO fabricated achievements)",
-  "strategic_bridge": {
-    "why_it_translates": ["string — bullet explaining logical experience mapping to role"],
-    "perception_gaps": ["string — realistic gap a hiring manager may notice"],
-    "interview_narrative": ["string — how to verbally frame the pivot in interviews"]
+  "role_dna": [
+    {
+      "pillar": "string (pillar name)",
+      "weight": "High | Medium | Low",
+      "description": "string (1 sentence explaining what employer is prioritising here)"
+    }
+  ],
+  "repositioning_matrix": [
+    {
+      "pillar": "string (matches role_dna pillar name)",
+      "matching_experience": "string (real experience from resume that maps here)",
+      "role_native_language": "string (reframed in role vocabulary — no fabrication)",
+      "transferable_complexity": "string (what cognitive or operational complexity transfers)"
+    }
+  ],
+  "commercial_value_conversion": [
+    {
+      "original_framing": "string (how candidate currently describes this)",
+      "commercial_reframe": "string (converted to revenue-protective or revenue-supporting language)",
+      "quantified_impact": "string (metric or scope if available, else leave as contextual scale)"
+    }
+  ],
+  "gap_strategy": {
+    "hard_gaps": ["string — factual gap: degree, certification, industry experience"],
+    "perception_gaps": ["string — soft gap: sales ownership, revenue accountability, seniority signals"],
+    "mitigation": [
+      {
+        "gap": "string (the gap being addressed)",
+        "resume_edit": "string (exact language change for resume)",
+        "interview_narrative": "string (how to verbally frame it)",
+        "micro_credential": "string (optional course or credential to signal intent — or 'N/A')"
+      }
+    ]
   },
-  "interview_script": {
-    "pitch_30s": "string (30-second positioning pitch — direct, strategic, controlled, non-defensive)",
-    "pivot_90s": "string (90-second pivot explanation — honest, strategic framing of career transition)",
-    "why_choose_you": "string (response to 'Why should we choose you?' — confident, evidence-based, non-generic)",
-    "biggest_gap": "string (response to 'What is your biggest gap?' — honest, reframed constructively, shows self-awareness and growth mindset)"
-  },
-  "positioning_intelligence": "string (2–3 sentences explaining the strategic repositioning choices made and why they increase perceived fit)"
+  "optimized_summary": "string (120–180 words — professional summary rebuilt so candidate reads as a technical-commercial operator: ownership signals, business impact, employer priority alignment, no fluff)",
+  "bullet_rewrites": [
+    {
+      "original": "string (original bullet or responsibility)",
+      "rewritten": "string (elite rewrite: project ownership, commercial language, timeline/deliverable framing — max 35 words)"
+    }
+  ],
+  "interview_dominance_script": "string (5-sentence positioning narrative bridging into: target sectors from JD — confident, structured, non-defensive, no insecurity framing)",
+  "match_score_forecast": {
+    "before_percent": number,
+    "after_percent": number,
+    "rationale": "string (2–3 sentences explaining what changed and why the after score is justified)"
+  }
 }
+
+Rules for arrays:
+- role_dna: exactly 5 pillars extracted from JD
+- repositioning_matrix: one entry per role_dna pillar (5 total)
+- commercial_value_conversion: 3–5 most impactful conversions
+- gap_strategy.hard_gaps: 1–3 items max
+- gap_strategy.perception_gaps: 2–4 items max
+- gap_strategy.mitigation: one entry per gap identified
+- bullet_rewrites: 5–7 bullets from most relevant role
 
 RESUME_INPUT: ${experience}
 
@@ -71,7 +110,7 @@ JOB_DESCRIPTION_INPUT: ${jd}`;
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
+        temperature: 0.65,
       }),
     });
 
