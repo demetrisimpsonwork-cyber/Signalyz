@@ -93,10 +93,10 @@ const Index = () => {
     <div className="container max-w-6xl py-8">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Optimize your resume bullets
+          Let's align your experience to the role.
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          AI-powered analysis to match your experience with any job description.
+          Strategic resume alignment powered by weighted employer-priority analysis.
         </p>
       </div>
 
@@ -104,9 +104,10 @@ const Index = () => {
         {/* Left — Inputs */}
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Resume bullet</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
+            <p className="mb-1.5 text-xs text-muted-foreground">Paste a bullet, summary, or short section from your resume.</p>
             <Textarea
-              placeholder="Paste one resume bullet..."
+              placeholder="Paste a bullet, summary, or short section..."
               value={bullet}
               onChange={(e) => { setBullet(e.target.value); setErrors((p) => ({ ...p, bullet: undefined })); }}
               rows={4}
@@ -116,7 +117,8 @@ const Index = () => {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Job description</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">The Role You're Applying For</label>
+            <p className="mb-1.5 text-xs text-muted-foreground">Paste the job description. We'll analyze what matters most.</p>
             <Textarea
               placeholder="Paste the job description..."
               value={jd}
@@ -138,15 +140,14 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <Button onClick={handleOptimize} disabled={loading} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Optimize
+              Run Alignment
             </Button>
             <Button variant="ghost" size="sm" onClick={fillSample}>
               Try sample
             </Button>
           </div>
-
           <p className="text-xs text-muted-foreground">
-            Paste a single bullet point and the target JD. We'll analyze keyword fit, suggest stronger verbs, and rewrite alternatives.
+            Takes 10 seconds. No fabrication. No fluff.
           </p>
         </div>
 
@@ -181,6 +182,7 @@ const Index = () => {
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
               <ResultSection title="Match Score" content={`${result.match_score}%`} />
+              <p className="text-xs text-muted-foreground -mt-2">Based on weighted employer priorities.</p>
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
