@@ -11,6 +11,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
 
 const SAMPLE_BULLET = "Managed a team of developers to deliver software projects on time and within budget.";
@@ -48,7 +49,8 @@ const Index = () => {
 
   // TODO: replace with real pro check when Stripe is wired up
   const isPro = false;
-  const { remaining, limitReached, increment } = useDailyUsage(isPro);
+  const isAdmin = useIsAdmin();
+  const { remaining, limitReached, increment } = useDailyUsage(isPro || isAdmin);
 
   const validate = () => {
     const errs: typeof errors = {};
