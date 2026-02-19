@@ -88,12 +88,14 @@ const Index = () => {
     setResult(null);
     setShowSamples(false);
 
+    const mode = isPro || isAdmin ? "multi_bullet" : "single_bullet";
+
     try {
       const bulletWithContext = additionalContext.trim()
         ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
         : bullet.trim();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null },
+        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode },
       });
 
       if (error) throw error;
@@ -246,8 +248,12 @@ const Index = () => {
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
-              <ResultSection title="Alternate A — Impact-focused" content={result.alt_a} />
-              <ResultSection title="Alternate B — Human-natural" content={result.alt_b} />
+              {(isPro || isAdmin) && result.alt_a !== result.optimized_bullet && (
+                <ResultSection title="Alternate — Impact-focused" content={result.alt_a} />
+              )}
+              {(isPro || isAdmin) && result.alt_b !== result.optimized_bullet && (
+                <ResultSection title="Alternate — Human-natural" content={result.alt_b} />
+              )}
               {result.alignment_notes && (
                 <ResultSection title="Alignment Intelligence Summary" content={result.alignment_notes} />
               )}

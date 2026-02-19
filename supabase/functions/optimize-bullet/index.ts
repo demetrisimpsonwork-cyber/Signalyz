@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bullet, jd, userId } = await req.json();
+    const { bullet, jd, userId, mode = "single_bullet" } = await req.json();
 
     if (!bullet || !jd) {
       return new Response(JSON.stringify({ error: "Missing bullet or jd" }), {
@@ -142,7 +142,9 @@ RULES:
 
 EXPERIENCE_INPUT: ${bullet}
 
-JOB_DESCRIPTION: ${jd}`;
+JOB_DESCRIPTION: ${jd}
+
+MODE: ${mode}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -181,10 +183,9 @@ JOB_DESCRIPTION: ${jd}`;
       ? titan.strategic_gap_actions.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
       : null;
 
-    // Build alt_a and alt_b from used_signals context if available
-    // For now pass the optimized bullet as primary — the frontend already shows it
-    const altA = titan.optimized_bullets?.[0]?.text || optimizedBullet;
-    const altB = titan.optimized_bullets?.[1]?.text || optimizedBullet;
+    // In multi_bullet mode: [0]=primary, [1]=impact, [2]=human
+    const altA = titan.optimized_bullets?.[1]?.text || optimizedBullet;
+    const altB = titan.optimized_bullets?.[2]?.text || optimizedBullet;
 
     // Derive top signals from debug data
     const priorities = titan.debug?.extracted_jd_priorities || [];
