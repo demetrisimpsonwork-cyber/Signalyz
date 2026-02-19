@@ -8,6 +8,7 @@ import ExportResults from "@/components/ExportResults";
 import UpgradeModal from "@/components/UpgradeModal";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
+import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +36,18 @@ interface ScoringBreakdown {
   communication_and_leadership_alignment: number;
 }
 
+interface ISIPillar {
+  name: string;
+  score: number;
+  explanation: string;
+  improvement_lever: string;
+}
+
+interface IdentityStrengthIndexData {
+  total_score: number;
+  pillars: ISIPillar[];
+}
+
 interface OptimizationResult {
   optimized_bullet: string;
   match_score: number;
@@ -51,6 +64,7 @@ interface OptimizationResult {
   scoring_breakdown?: ScoringBreakdown;
   used_signals?: string[];
   removed_or_softened?: string[];
+  identity_strength_index?: IdentityStrengthIndexData;
 }
 
 const Index = () => {
@@ -258,6 +272,13 @@ const Index = () => {
                 scoringBreakdown={result.scoring_breakdown}
               />
               {!effectiveIsPro && <ProInsightsTeaser />}
+              {result.identity_strength_index && (
+                <IdentityStrengthIndex
+                  data={result.identity_strength_index}
+                  isPro={effectiveIsPro}
+                  onUpgrade={() => setShowUpgrade(true)}
+                />
+              )}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
               {effectiveIsPro && result.alt_a !== result.optimized_bullet && (

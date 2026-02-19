@@ -114,6 +114,35 @@ Return ONLY this JSON object with EXACT keys:
   "strategic_gap_actions": ["string (2–3 for free, up to 5 for pro — actionable, truthful, behavior-based)"],
   "weighted_priority_commentary": ${userPlan === "pro" ? '"string (pro only: 3–5 sentences explaining how JD priorities were weighted and which signals drove the score)"' : 'null'},
   "strategic_bridge_analysis": ${userPlan === "pro" ? '{ "why_it_translates": "string", "perception_gaps": ["string"], "interview_narrative": "string" }' : 'null'},
+  "identity_strength_index": {
+    "total_score": number (0–100, sum of 4 pillar scores),
+    "pillars": [
+      {
+        "name": "Role Signal Clarity",
+        "score": number (0–25, strict signal read — not aspirational),
+        "explanation": "string (2–3 sentences: how clearly the resume projects role identity aligned to this JD — based only on observable signals)",
+        "improvement_lever": "string (one concise, actionable positioning change — no fabrication)"
+      },
+      {
+        "name": "Commercial Framing Power",
+        "score": number (0–25),
+        "explanation": "string (2–3 sentences: how effectively the resume frames commercial impact, revenue ownership, and measurable outcomes relative to JD requirements)",
+        "improvement_lever": "string"
+      },
+      {
+        "name": "Risk Compression Strength",
+        "score": number (0–25),
+        "explanation": "string (2–3 sentences: how well the resume reduces perceived hiring risk — stability, ownership signals, context match, transition logic)",
+        "improvement_lever": "string"
+      },
+      {
+        "name": "Narrative Cohesion",
+        "score": number (0–25),
+        "explanation": "string (2–3 sentences: how coherent and consistent the career narrative is relative to the JD — does the arc logically lead to this role?)",
+        "improvement_lever": "string"
+      }
+    ]
+  },
   "debug": {
     "mode": "${mode}",
     "user_plan": "${userPlan}",
@@ -213,6 +242,7 @@ USER_PLAN: ${userPlan}`;
       // Pro-only
       weighted_priority_commentary: weightedPriorityCommentary,
       strategic_bridge_analysis: strategicBridgeAnalysis,
+      identity_strength_index: titan.identity_strength_index || null,
     };
 
     // Save to database
