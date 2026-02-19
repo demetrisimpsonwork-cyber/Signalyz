@@ -1,6 +1,12 @@
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 interface KeywordChipsProps {
   keywords: string[];
@@ -18,7 +24,19 @@ const KeywordChips = ({ keywords }: KeywordChipsProps) => {
 
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h3 className="text-sm font-semibold text-foreground">Missing Keywords</h3>
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold text-foreground">Missing Keywords</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[220px]">
+              <p className="text-xs">Pro analyzes keyword clusters and weighting, not just presence.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {keywords.map((keyword, i) => (
           <button

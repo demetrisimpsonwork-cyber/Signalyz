@@ -168,8 +168,14 @@ const Index = () => {
           {!isPro && (
             <p className="text-xs font-medium text-muted-foreground">
               {remaining > 0
-                ? `${remaining} free optimization${remaining !== 1 ? "s" : ""} left today`
-                : "You've used all 3 free optimizations today"}
+                ? `${remaining} free alignment${remaining !== 1 ? "s" : ""} left today`
+                : (
+                  <>
+                    You've used today's 3 free alignments.
+                    <br />
+                    <span className="text-primary font-semibold">Upgrade for unlimited precision refinements.</span>
+                  </>
+                )}
             </p>
           )}
 
