@@ -70,6 +70,13 @@ interface InterviewTrajectory {
   strategic_angle: string;
 }
 
+interface RiskPerceptionItem {
+  category: string;
+  rating: "Low" | "Medium" | "High";
+  explanation: string;
+  mitigation: string;
+}
+
 interface PositioningResult {
   role_dna: RolePillar[];
   repositioning_matrix: RepositioningEntry[];
@@ -82,6 +89,7 @@ interface PositioningResult {
   market_position_assessment?: MarketPositionAssessment;
   competitive_risk_signals?: CompetitiveRiskSignal[];
   interview_trajectory?: InterviewTrajectory;
+  employer_risk_perception?: RiskPerceptionItem[];
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -159,9 +167,17 @@ const levelColor = (level: string) => {
   return "bg-muted text-muted-foreground";
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const riskRatingColor = (r: string) => {
+  if (r === "High") return "bg-destructive/10 text-destructive";
+  if (r === "Medium") return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+  return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400";
+};
+
 // ─── Blurred Pro Teaser ───────────────────────────────────────────────────────
 
-const LockedSection = ({ title }: { title: string }) => (
+const LockedSection = ({ title, lockLabel = "Unlock Strategic Interview Forecasting with Pro" }: { title: string; lockLabel?: string }) => (
   <div className="rounded-lg border bg-card overflow-hidden relative">
     <div className="p-4 space-y-3 select-none pointer-events-none" aria-hidden>
       <div className="flex items-center gap-2">
@@ -177,9 +193,25 @@ const LockedSection = ({ title }: { title: string }) => (
     </div>
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-card/60 backdrop-blur-[2px]">
       <Lock className="h-4 w-4 text-muted-foreground" />
-      <p className="text-xs font-medium text-foreground text-center px-6">
-        Unlock Strategic Interview Forecasting with Pro
-      </p>
+      <p className="text-xs font-medium text-foreground text-center px-6">{lockLabel}</p>
+    </div>
+  </div>
+);
+
+const LockedRiskCard = ({ category }: { category: string }) => (
+  <div className="rounded-md border bg-background overflow-hidden relative">
+    <div className="p-3 space-y-2 select-none pointer-events-none blur-sm opacity-50" aria-hidden>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-foreground">{category}</span>
+        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-muted text-muted-foreground">Medium</span>
+      </div>
+      <div className="h-2.5 w-full rounded bg-muted" />
+      <div className="h-2.5 w-4/5 rounded bg-muted" />
+      <div className="h-2 w-2/3 rounded bg-muted mt-1" />
+    </div>
+    <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-card/70 backdrop-blur-[1px]">
+      <Lock className="h-3 w-3 text-muted-foreground" />
+      <span className="text-[11px] text-muted-foreground font-medium">Pro</span>
     </div>
   </div>
 );
@@ -299,6 +331,17 @@ const Position = () => {
         `  Likely Objection: ${it.likely_objection}`,
         `  Strategic Angle: ${it.strategic_angle}`
       );
+    }
+
+    if (result.employer_risk_perception?.length) {
+      lines.push("", "12. EMPLOYER RISK PERCEPTION ANALYSIS");
+      const visibleItems = effectiveIsPro ? result.employer_risk_perception : result.employer_risk_perception.slice(0, 1);
+      visibleItems.forEach((r) => {
+        lines.push(`  ${r.category} — ${r.rating} Risk`);
+        lines.push(`  ${r.explanation}`);
+        lines.push(`  Mitigation: ${r.mitigation}`);
+        lines.push("");
+      });
     }
 
     const blob = new Blob([lines.join("\n")], { type: "text/plain" });
@@ -627,6 +670,43 @@ const Position = () => {
                 ) : (
                   <LockedSection title="11. Interview Trajectory Preview" />
                 )
+              )}
+
+              {/* 12 — Employer Risk Perception Analysis */}
+              {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
+                <Section title="12. Employer Risk Perception Analysis" proLabel>
+                  <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                    How a hiring manager reads perceived risk across five evaluation dimensions. Based strictly on resume signals vs. JD requirements.
+                  </p>
+                  <div className="space-y-2">
+                    {result.employer_risk_perception.map((item, i) => {
+                      const isVisible = effectiveIsPro || i === 0;
+                      if (!isVisible) {
+                        return <LockedRiskCard key={i} category={item.category} />;
+                      }
+                      return (
+                        <div key={i} className="rounded-md border bg-background p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-foreground">{item.category}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskRatingColor(item.rating)}`}>
+                              {item.rating} Risk
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{item.explanation}</p>
+                          <div className="pt-1 border-t border-border/50">
+                            <p className="text-[10px] uppercase tracking-wide text-primary font-medium mb-0.5">Mitigation</p>
+                            <p className="text-xs text-foreground leading-relaxed">{item.mitigation}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {!effectiveIsPro && (
+                      <p className="text-[11px] text-muted-foreground pt-1">
+                        4 additional risk dimensions available on Pro.
+                      </p>
+                    )}
+                  </div>
+                </Section>
               )}
 
               {/* Download */}
