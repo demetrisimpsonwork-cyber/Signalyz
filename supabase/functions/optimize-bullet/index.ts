@@ -6,6 +6,46 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MODELS = [
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite",
+  "openai/gpt-5-mini",
+];
+
+async function callAI(apiKey: string, prompt: string): Promise<string> {
+  for (const model of MODELS) {
+    console.log(`Trying model: ${model}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    try {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
+      });
+      clearTimeout(timeout);
+      console.log(`${model} status:`, aiRes.status);
+      if (aiRes.ok) {
+        const data = await aiRes.json();
+        const content = data.choices?.[0]?.message?.content || "";
+        if (content) { console.log(`Success: ${model}`); return content; }
+      } else {
+        const err = await aiRes.text();
+        console.error(`${model} error:`, err);
+        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
+      }
+    } catch (e) {
+      clearTimeout(timeout);
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+      console.error(`${model} threw:`, msg);
+    }
+  }
+  throw new Error("Service temporarily unavailable. Please try again in a moment.");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -170,30 +210,16 @@ JOB_DESCRIPTION: ${jd}
 
 USER_PLAN: ${userPlan}`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const errText = await aiRes.text();
-      throw new Error(`AI API error: ${errText}`);
-    }
-
-    const aiData = await aiRes.json();
-    let content = aiData.choices?.[0]?.message?.content || "";
-
-    // Strip markdown code fences if present
+    let content = await callAI(apiKey, prompt);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    const titan = JSON.parse(content);
+    let titan: Record<string, unknown>;
+    try {
+      titan = JSON.parse(content);
+    } catch {
+      console.error("JSON parse failed. Preview:", content.slice(0, 300));
+      throw new Error("Failed to parse AI response. Please try again.");
+    }
 
     // Map Titan contract to the shape the frontend expects
     const optimizedBullet = titan.optimized_bullets?.[0]?.text || "";
@@ -265,9 +291,10 @@ USER_PLAN: ${userPlan}`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const message = err instanceof Error ? err.message : String(err);
+    const status = message.includes("Rate limits") ? 429 : message.includes("Usage limit") ? 402 : 500;
+    return new Response(JSON.stringify({ error: message }), {
+      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
