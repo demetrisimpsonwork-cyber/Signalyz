@@ -5,17 +5,25 @@ import { Loader2, Sparkles, Copy, Check, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface InterviewScript {
+  pitch_30s: string;
+  pivot_90s: string;
+  why_choose_you: string;
+  biggest_gap: string;
+}
+
 interface BridgeSection {
   why_it_translates: string[];
   perception_gaps: string[];
   interview_narrative: string[];
-  winning_angle: string;
 }
 
 interface PositioningResult {
   professional_summary: string;
-  strategic_bridge: BridgeSection;
+  winning_angle: string;
   cover_letter: string;
+  strategic_bridge: BridgeSection;
+  interview_script: InterviewScript;
   positioning_intelligence: string;
 }
 
@@ -52,11 +60,21 @@ const BulletList = ({ items }: { items: string[] }) => (
   <ul className="space-y-1.5 mt-1">
     {items.map((item, i) => (
       <li key={i} className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
-      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary opacity-60" />
+        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary opacity-60" />
         {item}
       </li>
     ))}
   </ul>
+);
+
+const ScriptBlock = ({ label, content }: { label: string; content: string }) => (
+  <div className="space-y-1">
+    <div className="flex items-center justify-between">
+      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">{label}</p>
+      <CopyButton text={content} label={label} />
+    </div>
+    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{content}</p>
+  </div>
 );
 
 const Position = () => {
@@ -95,14 +113,21 @@ const Position = () => {
   const handleDownload = () => {
     if (!result) return;
     const bridge = result.strategic_bridge;
+    const script = result.interview_script;
     const lines = [
-      "RESUMIX — TITAN POSITIONING ENGINE V1",
-      "======================================",
+      "RESUMIX — STRATEGIC POSITIONING ENGINE",
+      "=======================================",
       "",
       "PROFESSIONAL SUMMARY",
       result.professional_summary,
       "",
-      "STRATEGIC BRIDGE",
+      "WINNING ANGLE",
+      result.winning_angle,
+      "",
+      "COVER LETTER",
+      result.cover_letter,
+      "",
+      "STRATEGIC BRIDGE ANALYSIS",
       "Why It Translates:",
       ...bridge.why_it_translates.map((b) => `  • ${b}`),
       "",
@@ -112,10 +137,18 @@ const Position = () => {
       "Interview Narrative:",
       ...bridge.interview_narrative.map((b) => `  • ${b}`),
       "",
-      `Winning Angle: ${bridge.winning_angle}`,
+      "INTERVIEW POSITIONING SCRIPTS",
+      "30-Second Pitch:",
+      script.pitch_30s,
       "",
-      "COVER LETTER",
-      result.cover_letter,
+      "90-Second Pivot Explanation:",
+      script.pivot_90s,
+      "",
+      "Why Should We Choose You?",
+      script.why_choose_you,
+      "",
+      "What Is Your Biggest Gap?",
+      script.biggest_gap,
       "",
       "POSITIONING INTELLIGENCE",
       result.positioning_intelligence,
@@ -134,10 +167,10 @@ const Position = () => {
     <div className="container max-w-6xl py-8">
       <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Titan Positioning Engine
+          Strategic Positioning Engine
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Strategically reposition your real experience to match the employer's business model, mission, and role seniority — with a full summary and cover letter. No fabrication.
+          Reposition your real experience into the strongest commercially relevant narrative — executive summary, cover letter, strategic bridge, and interview scripts. Zero fabrication.
         </p>
       </div>
 
@@ -145,8 +178,8 @@ const Position = () => {
         <ol className="space-y-5">
           {[
             { step: "Reframe Your Experience", desc: "Elevate task-based descriptions into value-based business language." },
-            { step: "Bridge Domain Gaps", desc: "Translate public sector, operations, or other backgrounds into the employer's language." },
-            { step: "Generate Your Positioning Package", desc: "Receive an executive summary, strategic narrative, and tailored cover letter." },
+            { step: "Bridge Domain Gaps", desc: "Translate regulated, public sector, or operations backgrounds into commercial language." },
+            { step: "Get Your Full Package", desc: "Executive summary, cover letter, strategic bridge analysis, and ready-to-use interview scripts." },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
@@ -165,15 +198,15 @@ const Position = () => {
         {/* Left — Inputs */}
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Your Resume / Experience</label>
             <p className="mb-1.5 text-xs text-muted-foreground">
-              Paste your resume summary, a few bullets, or a short section. The more context, the better.
+              Paste your full resume, summary, or key experience section. More context yields stronger output.
             </p>
             <Textarea
               placeholder="Paste your experience here..."
               value={experience}
               onChange={(e) => { setExperience(e.target.value); setErrors((p) => ({ ...p, experience: undefined })); }}
-              rows={7}
+              rows={8}
               className={errors.experience ? "border-destructive" : ""}
             />
             {errors.experience && <p className="mt-1 text-xs text-destructive">{errors.experience}</p>}
@@ -182,13 +215,13 @@ const Position = () => {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Target Job Description</label>
             <p className="mb-1.5 text-xs text-muted-foreground">
-              Paste the full job description. We'll extract priorities and mission language.
+              Paste the full job description. We'll extract the employer's priorities and mission language.
             </p>
             <Textarea
               placeholder="Paste the job description..."
               value={jd}
               onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
-              rows={7}
+              rows={8}
               className={errors.jd ? "border-destructive" : ""}
             />
             {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
@@ -199,7 +232,7 @@ const Position = () => {
             Generate Positioning Package
           </Button>
           <p className="text-xs text-muted-foreground">
-            Takes 15–20 seconds. Executive-level. Zero fabrication.
+            Takes 20–30 seconds. Executive-level output. Zero fabrication.
           </p>
         </div>
 
@@ -222,11 +255,18 @@ const Position = () => {
 
           {result && (
             <>
-              <Section
-                title="Professional Summary"
-                copyText={result.professional_summary}
-              >
+              <Section title="Professional Summary" copyText={result.professional_summary}>
                 <p className="text-sm leading-relaxed text-muted-foreground">{result.professional_summary}</p>
+              </Section>
+
+              <Section title="Winning Angle" copyText={result.winning_angle}>
+                <p className="text-sm leading-relaxed text-muted-foreground">{result.winning_angle}</p>
+              </Section>
+
+              <Section title="Cover Letter — Pinnacle Format" copyText={result.cover_letter}>
+                <div className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                  {result.cover_letter}
+                </div>
               </Section>
 
               <Section title="Strategic Bridge Analysis">
@@ -243,19 +283,21 @@ const Position = () => {
                     <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Interview Narrative</p>
                     <BulletList items={result.strategic_bridge.interview_narrative} />
                   </div>
-                  <div className="rounded-md bg-secondary/50 px-3 py-2">
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1">Winning Angle</p>
-                    <p className="text-sm text-muted-foreground">{result.strategic_bridge.winning_angle}</p>
-                  </div>
                 </div>
               </Section>
 
-              <Section
-                title="Cover Letter — Pinnacle Format"
-                copyText={result.cover_letter}
-              >
-                <div className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                  {result.cover_letter}
+              <Section title="Interview Positioning Scripts">
+                <div className="space-y-4">
+                  <ScriptBlock label="30-Second Pitch" content={result.interview_script.pitch_30s} />
+                  <div className="border-t pt-3">
+                    <ScriptBlock label="90-Second Pivot Explanation" content={result.interview_script.pivot_90s} />
+                  </div>
+                  <div className="border-t pt-3">
+                    <ScriptBlock label="Why Should We Choose You?" content={result.interview_script.why_choose_you} />
+                  </div>
+                  <div className="border-t pt-3">
+                    <ScriptBlock label="What Is Your Biggest Gap?" content={result.interview_script.biggest_gap} />
+                  </div>
                 </div>
               </Section>
 
@@ -266,7 +308,7 @@ const Position = () => {
               <div className="flex items-center gap-3 pt-2">
                 <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
                   <Download className="h-3.5 w-3.5" />
-                  Download Package
+                  Download Full Package
                 </Button>
               </div>
             </>
