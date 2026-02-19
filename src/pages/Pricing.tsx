@@ -14,9 +14,9 @@ const tiers = [
     name: "Pro",
     price: "$9",
     period: "/mo",
-    description: "For active job seekers",
-    features: ["Unlimited optimizations", "Advanced AI rewriting", "Dashboard & history", "Priority support"],
-    cta: "Upgrade to Pro",
+    description: "For serious job seekers",
+    features: ["Unlimited refinements", "Expanded Gap Intelligence", "Deeper Employer Signal Breakdown", "Alignment History Tracking", "Priority Processing"],
+    cta: "Unlock Pro Intelligence",
     highlighted: true,
   },
 ];
