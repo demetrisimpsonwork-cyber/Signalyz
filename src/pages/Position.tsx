@@ -170,9 +170,9 @@ const levelColor = (level: string) => {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const riskRatingColor = (r: string) => {
-  if (r === "High") return "bg-destructive/10 text-destructive";
-  if (r === "Medium") return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
-  return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400";
+  if (r === "High") return "bg-destructive/10 text-destructive border border-destructive/20";
+  if (r === "Medium") return "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40";
+  return "bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800/40";
 };
 
 // ─── Blurred Pro Teaser ───────────────────────────────────────────────────────
@@ -199,19 +199,19 @@ const LockedSection = ({ title, lockLabel = "Unlock Strategic Interview Forecast
 );
 
 const LockedRiskCard = ({ category }: { category: string }) => (
-  <div className="rounded-md border bg-background overflow-hidden relative">
-    <div className="p-3 space-y-2 select-none pointer-events-none blur-sm opacity-50" aria-hidden>
+  <div className="rounded-md border bg-background overflow-hidden relative min-h-[88px]">
+    <div className="p-4 space-y-2 select-none pointer-events-none blur-sm opacity-40" aria-hidden>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-foreground">{category}</span>
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-muted text-muted-foreground">Medium</span>
+        <span className="rounded-sm px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase bg-muted text-muted-foreground">MEDIUM</span>
       </div>
+      <p className="text-xs font-semibold text-foreground">{category}</p>
       <div className="h-2.5 w-full rounded bg-muted" />
       <div className="h-2.5 w-4/5 rounded bg-muted" />
-      <div className="h-2 w-2/3 rounded bg-muted mt-1" />
+      <div className="h-2 w-1/2 rounded bg-muted" />
     </div>
-    <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-card/70 backdrop-blur-[1px]">
-      <Lock className="h-3 w-3 text-muted-foreground" />
-      <span className="text-[11px] text-muted-foreground font-medium">Pro</span>
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-[2px]">
+      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-[11px] text-muted-foreground font-medium tracking-wide">PRO ONLY</span>
     </div>
   </div>
 );
@@ -465,8 +465,60 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 2 — Repositioning Matrix */}
-              <Section title="2. Experience Repositioning Matrix">
+              {/* 2 — Employer Risk Perception Analysis */}
+              {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
+                <Section title="2. Employer Risk Perception Analysis™" proLabel>
+                  <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed">
+                    Simulation of how a hiring manager evaluates perceived candidate risk. Grounded strictly in resume signals relative to JD requirements.
+                  </p>
+                  <div className="space-y-3">
+                    {result.employer_risk_perception.map((item, i) => {
+                      const isVisible = effectiveIsPro || i === 0;
+                      if (!isVisible) {
+                        return <LockedRiskCard key={i} category={item.category} />;
+                      }
+                      return (
+                        <div key={i} className="rounded-md border bg-background overflow-hidden">
+                          {/* Badge row */}
+                          <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-1">
+                              <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase ${riskRatingColor(item.rating)}`}>
+                                {item.rating} RISK
+                              </span>
+                              <p className="text-xs font-semibold text-foreground mt-1">{item.category}</p>
+                            </div>
+                          </div>
+                          {/* Explanation */}
+                          <div className="px-4 pb-3">
+                            <p className="text-xs text-muted-foreground leading-relaxed">{item.explanation}</p>
+                          </div>
+                          {/* Positioning Mitigation */}
+                          <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
+                            <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
+                              Positioning Mitigation
+                            </p>
+                            <p className="text-xs text-foreground leading-relaxed">{item.mitigation}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!effectiveIsPro && (
+                    <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-3">
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        4 risk dimensions — Context, Signal, Stability, and Commercial Impact — are restricted to Pro.
+                      </p>
+                      <Button size="sm" className="gap-1.5 text-xs h-8 px-3">
+                        <Lock className="h-3 w-3" />
+                        Unlock Full Employer Intelligence
+                      </Button>
+                    </div>
+                  )}
+                </Section>
+              )}
+
+              {/* 3 — Repositioning Matrix */}
+              <Section title="3. Experience Repositioning Matrix">
                 <div className="space-y-3">
                   {result.repositioning_matrix.map((m, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
@@ -490,8 +542,8 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 3 — Commercial Value */}
-              <Section title="3. Commercial Value Conversion">
+              {/* 4 — Commercial Value */}
+              <Section title="4. Commercial Value Conversion">
                 <div className="space-y-3">
                   {result.commercial_value_conversion.map((c, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
@@ -511,8 +563,8 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 4 — Gap Strategy */}
-              <Section title="4. Gap Strategy">
+              {/* 5 — Gap Strategy */}
+              <Section title="5. Gap Strategy">
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Hard Gaps</p>
@@ -540,13 +592,13 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 5 — Optimized Summary */}
-              <Section title="5. Optimized Summary (Rebuilt Identity)" copyText={result.optimized_summary}>
+              {/* 6 — Optimized Summary */}
+              <Section title="6. Optimized Summary (Rebuilt Identity)" copyText={result.optimized_summary}>
                 <p className="text-sm leading-relaxed text-muted-foreground">{result.optimized_summary}</p>
               </Section>
 
-              {/* 6 — Bullet Rewrites */}
-              <Section title="6. Bullet Rewrites (Elite Version)">
+              {/* 7 — Bullet Rewrites */}
+              <Section title="7. Bullet Rewrites (Elite Version)">
                 <div className="space-y-3">
                   {result.bullet_rewrites.map((b, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
@@ -563,15 +615,15 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 7 — Interview Dominance Script */}
-              <Section title="7. Interview Dominance Script" copyText={result.interview_dominance_script}>
+              {/* 8 — Interview Dominance Script */}
+              <Section title="8. Interview Dominance Script" copyText={result.interview_dominance_script}>
                 <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
                   {result.interview_dominance_script}
                 </p>
               </Section>
 
-              {/* 8 — Match Score Forecast */}
-              <Section title="8. Match Score Forecast">
+              {/* 9 — Match Score Forecast */}
+              <Section title="9. Match Score Forecast">
                 <div className="flex items-center gap-6">
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Before</p>
@@ -588,9 +640,9 @@ const Position = () => {
 
               {/* ── STRATEGIC AUTHORITY LAYER ── */}
 
-              {/* 9 — Market Position Assessment (always visible) */}
+              {/* 10 — Market Position Assessment (always visible) */}
               {result.market_position_assessment && (
-                <Section title="9. Market Position Assessment">
+                <Section title="10. Market Position Assessment">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${levelColor(result.market_position_assessment.level)}`}>
@@ -616,9 +668,9 @@ const Position = () => {
                 </Section>
               )}
 
-              {/* 10 — Competitive Risk Signals (free: 1–2, pro: all) */}
+              {/* 11 — Competitive Risk Signals (free: 1–2, pro: all) */}
               {result.competitive_risk_signals && result.competitive_risk_signals.length > 0 && (
-                <Section title="10. Competitive Risk Signals">
+                <Section title="11. Competitive Risk Signals">
                   <div className="space-y-2">
                     {(effectiveIsPro
                       ? result.competitive_risk_signals
@@ -638,10 +690,10 @@ const Position = () => {
                 </Section>
               )}
 
-              {/* 11 — Interview Trajectory (pro: full, free: locked) */}
+              {/* 12 — Interview Trajectory (pro: full, free: locked) */}
               {result.interview_trajectory && (
                 effectiveIsPro ? (
-                  <Section title="11. Interview Trajectory Preview" proLabel>
+                  <Section title="12. Interview Trajectory Preview" proLabel>
                     <div className="space-y-3">
                       <div>
                         <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
@@ -668,45 +720,8 @@ const Position = () => {
                     </div>
                   </Section>
                 ) : (
-                  <LockedSection title="11. Interview Trajectory Preview" />
+                  <LockedSection title="12. Interview Trajectory Preview" />
                 )
-              )}
-
-              {/* 12 — Employer Risk Perception Analysis */}
-              {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
-                <Section title="12. Employer Risk Perception Analysis" proLabel>
-                  <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                    How a hiring manager reads perceived risk across five evaluation dimensions. Based strictly on resume signals vs. JD requirements.
-                  </p>
-                  <div className="space-y-2">
-                    {result.employer_risk_perception.map((item, i) => {
-                      const isVisible = effectiveIsPro || i === 0;
-                      if (!isVisible) {
-                        return <LockedRiskCard key={i} category={item.category} />;
-                      }
-                      return (
-                        <div key={i} className="rounded-md border bg-background p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-foreground">{item.category}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskRatingColor(item.rating)}`}>
-                              {item.rating} Risk
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{item.explanation}</p>
-                          <div className="pt-1 border-t border-border/50">
-                            <p className="text-[10px] uppercase tracking-wide text-primary font-medium mb-0.5">Mitigation</p>
-                            <p className="text-xs text-foreground leading-relaxed">{item.mitigation}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {!effectiveIsPro && (
-                      <p className="text-[11px] text-muted-foreground pt-1">
-                        4 additional risk dimensions available on Pro.
-                      </p>
-                    )}
-                  </div>
-                </Section>
               )}
 
               {/* Download */}
