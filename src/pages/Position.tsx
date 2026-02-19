@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Copy, Check, Download, Lock } from "lucide-react";
+import { Loader2, Sparkles, Copy, Check, Download, Lock, AlertTriangle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -216,20 +216,148 @@ const LockedRiskCard = ({ category }: { category: string }) => (
   </div>
 );
 
+// ─── Progress Steps ───────────────────────────────────────────────────────────
+
+const STEPS = [
+  { label: "Step 1", desc: "Extracting Role DNA & parsing inputs…" },
+  { label: "Step 2", desc: "Repositioning experience & converting commercial value…" },
+  { label: "Step 3", desc: "Generating bullet rewrites, gap strategy & interview intelligence…" },
+];
+
+const ProgressCard = ({ activeStep, elapsed }: { activeStep: number; elapsed: number }) => {
+  const showReassurance = elapsed >= 18;
+  return (
+    <div className="rounded-lg border bg-card p-5 space-y-4 animate-fade-in">
+      <p className="text-xs text-muted-foreground">This can take ~30 seconds for large resumes.</p>
+      <div className="space-y-3">
+        {STEPS.map((step, i) => {
+          const done = activeStep > i;
+          const active = activeStep === i;
+          return (
+            <div key={i} className={`flex items-start gap-3 transition-opacity duration-300 ${active || done ? "opacity-100" : "opacity-35"}`}>
+              <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors duration-500
+                ${done ? "border-primary bg-primary text-primary-foreground" : active ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
+                {done ? <Check className="h-3 w-3" /> : i + 1}
+              </div>
+              <div className="space-y-0.5">
+                <p className={`text-xs font-semibold ${active ? "text-foreground" : done ? "text-primary" : "text-muted-foreground"}`}>{step.label}</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{step.desc}</p>
+                {active && <div className="mt-1 h-0.5 w-16 rounded-full bg-primary/20 overflow-hidden"><div className="h-full bg-primary animate-[pulse_1.5s_ease-in-out_infinite] w-full" /></div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showReassurance && (
+        <div className="rounded-md bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground animate-fade-in">
+          Large resumes can take a bit longer. Still processing…
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Timeout Error Card ───────────────────────────────────────────────────────
+
+const TimeoutErrorCard = ({
+  onRetry,
+  experienceLen,
+  jdLen,
+}: {
+  onRetry: () => void;
+  experienceLen: number;
+  jdLen: number;
+}) => {
+  const handleCopyDebug = () => {
+    const info = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      route: "/position",
+      resume_chars: experienceLen,
+      jd_chars: jdLen,
+    }, null, 2);
+    navigator.clipboard.writeText(info);
+    toast.success("Debug info copied");
+  };
+  return (
+    <div className="rounded-lg border border-destructive/30 bg-card p-5 space-y-4 animate-fade-in">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">Generation timed out</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            This took longer than 60 seconds. This can happen with very large resumes or high server load. Try again — it usually works on the second attempt.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <Button size="sm" onClick={onRetry} className="gap-1.5 h-8 text-xs">
+          <RefreshCw className="h-3 w-3" />
+          Retry
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleCopyDebug} className="gap-1.5 h-8 text-xs">
+          <Copy className="h-3 w-3" />
+          Copy Debug Info
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+const CHAR_LIMIT_TIP = 12000;
+const TIMEOUT_MS = 60000;
+const STEP_TIMINGS = [0, 4000, 14000]; // step 0 at 0s, step 1 at 4s, step 2 at 14s
 
 const Position = () => {
   const [experience, setExperience] = useState("");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<PositioningResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [errors, setErrors] = useState<{ experience?: string; jd?: string }>({});
+
+  const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const elapsedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   const isAdmin = useIsAdmin();
   const { isTrialPro } = useReverseTrial();
   // TODO: replace with real pro check when Stripe is wired up
   const isPro = false;
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
+
+  const clearTimers = () => {
+    stepTimers.current.forEach(clearTimeout);
+    stepTimers.current = [];
+    if (elapsedTimer.current) { clearInterval(elapsedTimer.current); elapsedTimer.current = null; }
+    if (timeoutTimer.current) { clearTimeout(timeoutTimer.current); timeoutTimer.current = null; }
+  };
+
+  const startProgressTimers = () => {
+    setActiveStep(0);
+    setElapsed(0);
+    startTimeRef.current = Date.now();
+
+    // Elapsed counter (seconds)
+    elapsedTimer.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+
+    // Step transitions
+    STEP_TIMINGS.forEach((delay, i) => {
+      const t = setTimeout(() => setActiveStep(i), delay);
+      stepTimers.current.push(t);
+    });
+  };
+
+  const completeProgress = () => {
+    clearTimers();
+    setActiveStep(STEPS.length); // all done
+  };
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -242,16 +370,31 @@ const Position = () => {
   const handleRun = async () => {
     if (!validate()) return;
     setLoading(true);
+    setTimedOut(false);
     setResult(null);
+    clearTimers();
+    startProgressTimers();
+
+    // Client-side 60s timeout
+    timeoutTimer.current = setTimeout(() => {
+      setLoading(false);
+      setTimedOut(true);
+      clearTimers();
+    }, TIMEOUT_MS);
+
     try {
       const { data, error } = await supabase.functions.invoke("titan-position", {
         body: { experience: experience.trim(), jd: jd.trim() },
       });
+      clearTimeout(timeoutTimer.current!);
+      timeoutTimer.current = null;
+      completeProgress();
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setResult(data as PositioningResult);
     } catch (err: any) {
-      toast.error(err.message || "Something went wrong. Please try again.");
+      completeProgress();
+      if (!timedOut) toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -391,7 +534,12 @@ const Position = () => {
         {/* Left — Inputs */}
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Your Resume / Experience</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="block text-sm font-medium text-foreground">Your Resume / Experience</label>
+              <span className={`text-[11px] tabular-nums ${experience.length > CHAR_LIMIT_TIP ? "text-warning font-medium" : "text-muted-foreground"}`}>
+                {experience.length.toLocaleString()} chars
+              </span>
+            </div>
             <p className="mb-1.5 text-xs text-muted-foreground">
               Paste your full resume, summary, or most relevant role. More context yields stronger output.
             </p>
@@ -400,13 +548,24 @@ const Position = () => {
               value={experience}
               onChange={(e) => { setExperience(e.target.value); setErrors((p) => ({ ...p, experience: undefined })); }}
               rows={9}
+              disabled={loading}
               className={errors.experience ? "border-destructive" : ""}
             />
             {errors.experience && <p className="mt-1 text-xs text-destructive">{errors.experience}</p>}
+            {experience.length > CHAR_LIMIT_TIP && (
+              <p className="mt-1 text-[11px] text-warning leading-relaxed">
+                💡 For best speed, paste your most recent 1–2 roles or a shortened resume.
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Target Job Description</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="block text-sm font-medium text-foreground">Target Job Description</label>
+              <span className={`text-[11px] tabular-nums ${jd.length > CHAR_LIMIT_TIP ? "text-warning font-medium" : "text-muted-foreground"}`}>
+                {jd.length.toLocaleString()} chars
+              </span>
+            </div>
             <p className="mb-1.5 text-xs text-muted-foreground">
               Paste the full job description. We extract the employer's identity priorities, not just keywords.
             </p>
@@ -415,9 +574,15 @@ const Position = () => {
               value={jd}
               onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
               rows={9}
+              disabled={loading}
               className={errors.jd ? "border-destructive" : ""}
             />
             {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
+            {jd.length > CHAR_LIMIT_TIP && (
+              <p className="mt-1 text-[11px] text-warning leading-relaxed">
+                💡 For best speed, paste your most recent 1–2 roles or a shortened resume.
+              </p>
+            )}
           </div>
 
           <Button onClick={handleRun} disabled={loading} className="gap-2">
@@ -432,15 +597,18 @@ const Position = () => {
         {/* Right — Results */}
         <div className="space-y-4">
           {loading && (
-            <div className="flex h-80 items-center justify-center rounded-lg border bg-card">
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="text-sm">Extracting Role DNA and repositioning your experience…</span>
-              </div>
-            </div>
+            <ProgressCard activeStep={activeStep} elapsed={elapsed} />
           )}
 
-          {!loading && !result && (
+          {timedOut && !loading && (
+            <TimeoutErrorCard
+              onRetry={handleRun}
+              experienceLen={experience.length}
+              jdLen={jd.length}
+            />
+          )}
+
+          {!loading && !timedOut && !result && (
             <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
               <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
             </div>
