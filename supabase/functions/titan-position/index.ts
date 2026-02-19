@@ -5,14 +5,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODELS = [
+// Model router: use Pro for large inputs (>10k chars combined), Flash otherwise
+const MODELS_LARGE = [
+  "google/gemini-2.5-pro",
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+];
+const MODELS_SMALL = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
   "openai/gpt-5-mini",
 ];
+const LARGE_INPUT_THRESHOLD = 10000;
 
-async function callAI(apiKey: string, prompt: string): Promise<string> {
-  for (const model of MODELS) {
+// Simple in-memory result cache (keyed by SHA-256 of inputs)
+const resultCache = new Map<string, { data: string; ts: number }>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async function hashInputs(experience: string, jd: string): Promise<string> {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest("SHA-256", enc.encode(experience + "|||" + jd));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function callAI(apiKey: string, prompt: string, inputLen: number): Promise<string> {
+  const models = inputLen > LARGE_INPUT_THRESHOLD ? MODELS_LARGE : MODELS_SMALL;
+  console.log(`Input length: ${inputLen} → using ${inputLen > LARGE_INPUT_THRESHOLD ? "LARGE (Pro)" : "SMALL (Flash)"} model set`);
+
+  for (const model of models) {
     console.log(`Trying model: ${model}`);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
@@ -58,6 +78,18 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+
+    // ── Cache lookup ──────────────────────────────────────────────────────────
+    const cacheKey = await hashInputs(experience, jd);
+    const cached = resultCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      console.log("Cache HIT:", cacheKey.slice(0, 8));
+      return new Response(cached.data, {
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT" },
+      });
+    }
+
+    const inputLen = experience.length + jd.length;
 
     const prompt = `You are a Strategic Positioning Engine. Reposition a candidate's resume for a target role WITHOUT fabrication — only reframe real facts.
 
@@ -108,7 +140,7 @@ RESUME: ${experience}
 
 JOB DESCRIPTION: ${jd}`;
 
-    let content = await callAI(apiKey, prompt);
+    let content = await callAI(apiKey, prompt, inputLen);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     let titan: Record<string, unknown>;
@@ -119,13 +151,30 @@ JOB DESCRIPTION: ${jd}`;
       throw new Error("Failed to parse AI response. Please try again.");
     }
 
-    return new Response(JSON.stringify(titan), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const responseBody = JSON.stringify(titan);
+
+    // ── Cache store ───────────────────────────────────────────────────────────
+    resultCache.set(cacheKey, { data: responseBody, ts: Date.now() });
+    // Keep cache bounded to 50 entries, evict oldest
+    if (resultCache.size > 50) {
+      const oldest = [...resultCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0][0];
+      resultCache.delete(oldest);
+    }
+
+    return new Response(responseBody, {
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "MISS" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    console.error("titan-position error:", message);
     const status = message.includes("Rate limits") ? 429 : message.includes("Usage limit") ? 402 : 500;
-    return new Response(JSON.stringify({ error: message }), {
+    const friendly =
+      status === 429 ? "Too many requests. Please wait a moment and try again." :
+      status === 402 ? "Usage limit reached. Please add credits to continue." :
+      message.includes("unavailable") ? "Our AI service is temporarily busy. Please try again in a moment." :
+      message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
+      "Something went wrong generating your package. Please try again.";
+    return new Response(JSON.stringify({ error: friendly, detail: message }), {
       status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
