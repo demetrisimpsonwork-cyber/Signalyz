@@ -57,6 +57,23 @@ ALIGNMENT CONFIDENCE SCORING:
 Match Score must reflect weighted signal overlap, ownership consistency, tool/method match, contextual alignment depth. Do NOT inflate scores.
 Include an alignment_confidence_level: "Strong Alignment", "Solid Alignment", "Moderate Alignment", or "Weak Alignment".
 
+ALIGNMENT INTELLIGENCE SUMMARY (alignment_notes):
+Write in a concise, diagnostic, analytical tone. Maximum 3-4 sentences.
+Use this structure: "Language was elevated from [original framing] to [refined framing] to reflect the role's [seniority/ownership] level. Emphasis placed on [high-weight signal 1] and [high-weight signal 2], which are primary signals in the job description. [One sentence on what was preserved or deprioritized]."
+This must feel like diagnostic intelligence, not commentary. No filler. No praise. Pure analysis.
+
+STRATEGIC GAP ACTIONS (gap_suggestions):
+Only include if alignment is moderate or weak. Use this exact structured format:
+"To reach 'Strong Alignment,' consider adding:\\n• [Specific missing signal 1]\\n• [Specific missing signal 2]\\n• [Specific missing signal 3]\\n\\nThese additions would strengthen alignment with the role's highest-weighted priorities."
+Keep it tactical, actionable, direct. No paragraphs. Bullet format only.
+
+SUGGESTED VERB TIERING BY SENIORITY:
+Detect seniority level from the job description signals.
+If senior/director/VP level → bias verbs toward: Directed, Drove, Orchestrated, Steered, Mentored, Championed, Spearheaded
+If mid-level → bias verbs toward: Guided, Facilitated, Coordinated, Managed, Executed, Streamlined, Implemented
+If entry/junior level → bias verbs toward: Supported, Contributed, Assisted, Developed, Analyzed, Documented
+Always pick verbs that match the detected seniority context.
+
 AUTHENTICITY CHECK:
 After refinement, internally evaluate: Does this sound like a real human describing real work? If it feels overly polished or templated → simplify.
 
@@ -80,8 +97,10 @@ Return ONLY valid JSON (no markdown, no code fences):
   "suggested_verbs": ["verb1", "verb2", "verb3", "verb4", "verb5"],
   "alt_a": "...",
   "alt_b": "...",
-  "alignment_notes": "2-3 sentences explaining what was strategically adjusted and why.",
-  "gap_suggestions": "Only if alignment is moderate or weak. Guidance on what real detail would strengthen the match. null if not needed."
+  "alignment_notes": "Concise diagnostic summary, 3-4 sentences max, analytical tone.",
+  "gap_suggestions": "Structured bullet format as specified above. null if not needed.",
+  "top_matched_signal": "The highest-weight JD signal that the resume content already addresses well.",
+  "top_missing_signal": "The highest-weight JD signal that is absent or weak in the resume content."
 }
 
 Resume Content: ${bullet}

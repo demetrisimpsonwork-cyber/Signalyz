@@ -10,16 +10,18 @@ import {
 interface MatchScoreCardProps {
   score: number;
   confidenceLevel?: string;
+  topMatchedSignal?: string;
+  topMissingSignal?: string;
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 85) return { label: "High Priority Match", accent: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 70) return { label: "Strong Alignment", accent: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" };
-  if (score >= 50) return { label: "Developing Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
-  return { label: "Low Alignment — Needs Strategic Revision", accent: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-950/30", border: "border-orange-200 dark:border-orange-800" };
+  if (score >= 85) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 70) return { label: "Solid Alignment", accent: "text-green-600", bg: "bg-green-50/70 dark:bg-green-950/20", border: "border-green-200 dark:border-green-800" };
+  if (score >= 50) return { label: "Moderate Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
+  return { label: "Weak Alignment", accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
-const MatchScoreCard = ({ score, confidenceLevel }: MatchScoreCardProps) => {
+const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal }: MatchScoreCardProps) => {
   const [copied, setCopied] = useState(false);
   const config = getScoreConfig(score);
 
@@ -54,14 +56,21 @@ const MatchScoreCard = ({ score, confidenceLevel }: MatchScoreCardProps) => {
               <Info className="h-3.5 w-3.5 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity self-center" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 text-sm" side="bottom" align="start">
+          <PopoverContent className="w-80 text-sm space-y-3" side="bottom" align="start">
             <p className="text-muted-foreground leading-relaxed">
-              Alignment is calculated based on weighted employer priorities, keyword emphasis, ownership level signals, and contextual matching.
+              Your score reflects how closely your experience aligns with the employer's highest-weighted priorities. Scores above 75% indicate strong signal match.
             </p>
-            {score < 80 && (
-              <p className="mt-2 text-muted-foreground leading-relaxed">
-                Gaps detected in high-priority signals such as methodology, scope, or measurable outcomes.
-              </p>
+            {topMatchedSignal && (
+              <div>
+                <p className="text-xs font-medium text-green-600">✓ Top Matched Signal</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{topMatchedSignal}</p>
+              </div>
+            )}
+            {topMissingSignal && (
+              <div>
+                <p className="text-xs font-medium text-amber-600">✗ Top Missing Signal</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{topMissingSignal}</p>
+              </div>
             )}
           </PopoverContent>
         </Popover>
