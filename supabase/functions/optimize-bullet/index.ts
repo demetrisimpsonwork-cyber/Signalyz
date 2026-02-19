@@ -24,77 +24,69 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are Alignment Engine Titan V2.
+    const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
-Your role:
-Analyze a user's experience against a job description and produce strategically aligned resume bullet rewrites without fabrication.
+    const prompt = `You are Alignment Engine V2 (Titan).
 
-CRITICAL RULES:
-- Do not invent tools, metrics, software, or experience.
-- Do not add outcomes not supported by the input.
-- You may reframe, elevate, and strategically reposition transferable skills.
-- You may translate domain language (public sector → SaaS, operations → sales, compliance → pipeline, etc.).
+Your function is to analyze resume experience against a job description and generate structured alignment output without fabrication.
+
+YOU MUST:
+- Never invent tools, metrics, certifications, or domain experience.
+- Only elevate, reframe, and optimize based on provided input.
 - Preserve factual integrity at all times.
 
-INPUTS (provided by the app each run):
+INPUTS:
 - EXPERIENCE_INPUT
 - JOB_DESCRIPTION
-- MODE ("single_bullet" or "multi_bullet")
+- USER_PLAN: ${userPlan}
 
 -------------------------------------
-ALIGNMENT FRAMEWORK (Weighted Internally)
+SCORING MODEL
 -------------------------------------
 
-Evaluate alignment across 5 dimensions:
-1) Role Outcomes & Core Responsibilities (40%) → maps to role_outcomes_alignment
-2) Tools / Workflow / Systems (20%) → maps to tools_and_workflow_alignment
-3) Domain / Industry Signals (15%) → maps to domain_and_context_alignment
-4) Ownership / Seniority Signals (15%) → maps to metrics_and_ownership_alignment
-5) Communication / Collaboration Signals (10%) → maps to communication_and_stakeholder_alignment
+Score across 5 weighted dimensions:
+1) Role Outcomes & Deliverables (30%) → role_outcomes_alignment
+2) Tools & Workflow Signals (20%) → tools_and_workflow_alignment
+3) Domain Alignment (20%) → domain_and_context_alignment
+4) Context & Scale (15%) → context_and_scale_alignment
+5) Communication & Leadership Signals (15%) → communication_and_leadership_alignment
 
-Use these dimensions to determine which signals to elevate.
-
--------------------------------------
-BULLET STYLE RULES
--------------------------------------
-
-optimized_bullets[0] (primary):
-- Direct, weighted to highest employer priorities
-- ATS-safe language
-- No fluff
-
-optimized_bullets[1] (alternate_impact, only if MODE="multi_bullet"):
-- More outcome-driven
-- Emphasize ownership, metrics, delivery, pipeline, revenue, etc.
-- Still factually grounded
-
-optimized_bullets[2] (alternate_human, only if MODE="multi_bullet"):
-- More recruiter-friendly
-- Natural tone
-- Strong clarity
-- Slightly less formal but professional
-
--------------------------------------
-SCORING RULES
--------------------------------------
-
-match_score must reflect weighted alignment strength:
-80–100 = Strong Alignment
-60–79 = Solid Alignment
-40–59 = Moderate Alignment
-Below 40 = Low Alignment
+Alignment Levels:
+- 0–49 = Weak
+- 50–64 = Moderate
+- 65–79 = Solid
+- 80+ = Strong
 
 Do NOT inflate score. Score must reflect realistic fit based on provided experience.
-
-Strong Alignment (80+) requires: clear match on top 2 JD priorities AND at least one tool/workflow match AND credible ownership signals. If key JD priorities are missing, cap score at 79 even with great transferable skills.
+Strong Alignment (80+) requires clear match on top 2 JD priorities AND at least one tool/workflow match AND credible ownership signals.
 
 -------------------------------------
-WEIGHTED PRIORITY EXTRACTION (FROM JD)
+BULLET GENERATION RULES
+-------------------------------------
+
+Bullets must:
+- Be 1–2 lines, not exceed 35 words
+- Use high-signal verbs
+- Avoid exaggeration
+- Reflect only given experience
+- Be ATS-safe (no semicolons, no em dashes)
+
+IF USER_PLAN = "free":
+  optimized_bullets must contain EXACTLY 1 object (primary: direct, ATS-weighted to top JD priorities).
+
+IF USER_PLAN = "pro":
+  optimized_bullets must contain EXACTLY 3 objects:
+  [0] Impact-Focused — metric-forward tone, outcome-driven, emphasize ownership/delivery/revenue
+  [1] Human-Natural — interview-ready, natural professional tone, strong clarity, slightly less formal
+  [2] Keyword-Maximized — ATS-aligned, dense with role-relevant terminology, keyword-optimized
+
+-------------------------------------
+WEIGHTED PRIORITY EXTRACTION
 -------------------------------------
 
 Extract 5–8 priorities from JOB_DESCRIPTION. Each must include:
-- priority theme (e.g., "high-volume case management", "CRM pipeline management", "de-escalation")
-- weight (0.05–0.25) based on repetition, "must/required/mandatory", role framing, and mission emphasis
+- priority theme
+- weight (0.05–0.25) based on repetition, must/required/mandatory signals, role framing
 Weights must sum to 1.00.
 
 -------------------------------------
@@ -105,23 +97,27 @@ Return ONLY this JSON object with EXACT keys:
 {
   "optimized_bullets": [
     {
-      "text": "string (1 bullet, 18–32 words, ATS-safe, no semicolons, no em dashes)",
+      "text": "string",
+      "variant": "primary" | "impact_focused" | "human_natural" | "keyword_maximized",
       "used_signals": ["string"],
       "removed_or_softened": ["string"]
     }
   ],
   "match_score": {
     "score": number,
-    "label": "Weak Alignment" | "Moderate Alignment" | "Solid Alignment" | "Strong Alignment",
+    "label": "Weak" | "Moderate" | "Solid" | "Strong",
     "score_rationale": ["string"]
   },
-  "missing_keywords": ["string (de-duplicated, 3–10 items max, ranked by importance)"],
+  "missing_keywords": ["string (3–10 items max, ranked by importance)"],
   "suggested_action_verbs": ["string (5 items max, aligned to JD tone and ownership level)"],
-  "alignment_intelligence_summary": "string (2–4 sentences: what was elevated, what gaps remain, how transferable skills were repositioned)",
-  "strategic_gap_actions": ["string (actionable, truthful, behavior-based additions)"],
+  "alignment_intelligence_summary": "string (pro: 4–6 sentences; free: 2–3 sentences — what was elevated, what gaps remain, how transferable skills were repositioned)",
+  "strategic_gap_actions": ["string (2–3 for free, up to 5 for pro — actionable, truthful, behavior-based)"],
+  "weighted_priority_commentary": ${userPlan === "pro" ? '"string (pro only: 3–5 sentences explaining how JD priorities were weighted and which signals drove the score)"' : 'null'},
+  "strategic_bridge_analysis": ${userPlan === "pro" ? '{ "why_it_translates": "string", "perception_gaps": ["string"], "interview_narrative": "string" }' : 'null'},
   "debug": {
-    "mode": "single_bullet" | "multi_bullet",
-    "bullet_count_requested": number,
+    "mode": "${mode}",
+    "user_plan": "${userPlan}",
+    "bullet_count_requested": ${userPlan === "pro" ? 3 : 1},
     "extracted_jd_priorities": [
       { "priority": "string", "weight": number, "evidence": "string" }
     ],
@@ -129,22 +125,21 @@ Return ONLY this JSON object with EXACT keys:
       "role_outcomes_alignment": number,
       "tools_and_workflow_alignment": number,
       "domain_and_context_alignment": number,
-      "communication_and_stakeholder_alignment": number,
-      "metrics_and_ownership_alignment": number
+      "context_and_scale_alignment": number,
+      "communication_and_leadership_alignment": number
     }
   }
 }
 
 RULES:
-- If MODE="single_bullet": optimized_bullets must contain exactly 1 object.
-- If MODE="multi_bullet": optimized_bullets must contain exactly 3 objects (primary, impact, human).
 - No markdown. No code fences. No text outside the JSON.
+- weighted_priority_commentary and strategic_bridge_analysis must be null for free plan.
 
 EXPERIENCE_INPUT: ${bullet}
 
 JOB_DESCRIPTION: ${jd}
 
-MODE: ${mode}`;
+USER_PLAN: ${userPlan}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -183,17 +178,20 @@ MODE: ${mode}`;
       ? titan.strategic_gap_actions.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
       : null;
 
-    // In multi_bullet mode: [0]=primary, [1]=impact, [2]=human
+    // Pro plan: [0]=impact_focused, [1]=human_natural, [2]=keyword_maximized
     const altA = titan.optimized_bullets?.[1]?.text || optimizedBullet;
     const altB = titan.optimized_bullets?.[2]?.text || optimizedBullet;
 
-    // Derive top signals from debug data
     const priorities = titan.debug?.extracted_jd_priorities || [];
     const topMatchedSignal = priorities.length > 0 ? priorities[0].priority : null;
     const topMissingSignal = missingKeywords.length > 0 ? missingKeywords[0] : null;
 
     const breakdown = titan.debug?.scoring_breakdown || {};
     const scoreRationale = titan.match_score?.score_rationale || [];
+
+    // Pro-only fields
+    const weightedPriorityCommentary = titan.weighted_priority_commentary || null;
+    const strategicBridgeAnalysis = titan.strategic_bridge_analysis || null;
 
     const result = {
       optimized_bullet: optimizedBullet,
@@ -207,12 +205,14 @@ MODE: ${mode}`;
       gap_suggestions: gapSuggestions,
       top_matched_signal: topMatchedSignal,
       top_missing_signal: topMissingSignal,
-      // New Titan V2 fields
       score_rationale: scoreRationale,
       scoring_breakdown: breakdown,
       extracted_jd_priorities: priorities,
       used_signals: titan.optimized_bullets?.[0]?.used_signals || [],
       removed_or_softened: titan.optimized_bullets?.[0]?.removed_or_softened || [],
+      // Pro-only
+      weighted_priority_commentary: weightedPriorityCommentary,
+      strategic_bridge_analysis: strategicBridgeAnalysis,
     };
 
     // Save to database
