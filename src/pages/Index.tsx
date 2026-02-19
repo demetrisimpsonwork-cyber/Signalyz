@@ -7,6 +7,7 @@ import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
 import UpgradeModal from "@/components/UpgradeModal";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
+import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +48,7 @@ const Index = () => {
   const [errors, setErrors] = useState<{ bullet?: string; jd?: string }>({});
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSamples, setShowSamples] = useState(false);
+  const [additionalContext, setAdditionalContext] = useState("");
   const { user } = useAuth();
 
   // TODO: replace with real pro check when Stripe is wired up
@@ -75,8 +77,11 @@ const Index = () => {
     setShowSamples(false);
 
     try {
+      const bulletWithContext = additionalContext.trim()
+        ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
+        : bullet.trim();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bullet.trim(), jd: jd.trim(), userId: user?.id ?? null },
+        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null },
       });
 
       if (error) throw error;
@@ -223,6 +228,12 @@ const Index = () => {
               )}
               {result.gap_suggestions && (
                 <ResultSection title="Strategic Gap Actions" content={result.gap_suggestions} />
+              )}
+              {result.match_score < 60 && (
+                <WeakAlignmentNudge
+                  additionalContext={additionalContext}
+                  onContextChange={setAdditionalContext}
+                />
               )}
               <ExportResults result={result} />
             </>

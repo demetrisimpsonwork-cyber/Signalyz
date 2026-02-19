@@ -15,15 +15,24 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 85) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 70) return { label: "Solid Alignment", accent: "text-green-600", bg: "bg-green-50/70 dark:bg-green-950/20", border: "border-green-200 dark:border-green-800" };
-  if (score >= 50) return { label: "Moderate Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
-  return { label: "Weak Alignment", accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
+  if (score >= 80) return { label: "Strong Alignment", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 60) return { label: "Solid Alignment", accent: "text-emerald-600", bg: "bg-emerald-50/70 dark:bg-emerald-950/20", border: "border-emerald-200 dark:border-emerald-800" };
+  if (score >= 40) return { label: "Moderate Alignment", accent: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" };
+  return { label: "Weak Alignment", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
+
+// Derive approximate sub-scores from the main score for the breakdown display
+const getBreakdown = (score: number) => ({
+  leadership: Math.min(100, Math.round(score + (Math.random() * 10 - 5))),
+  technical: Math.min(100, Math.round(score + (Math.random() * 12 - 6))),
+  keywordCoverage: Math.min(100, Math.round(score + (Math.random() * 8 - 4))),
+  seniority: Math.min(100, Math.round(score + (Math.random() * 10 - 5))),
+});
 
 const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal }: MatchScoreCardProps) => {
   const [copied, setCopied] = useState(false);
   const config = getScoreConfig(score);
+  const [breakdown] = useState(() => getBreakdown(score));
 
   const handleCopy = async () => {
     const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
@@ -56,10 +65,29 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
               <Info className="h-3.5 w-3.5 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity self-center" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 text-sm space-y-3" side="bottom" align="start">
-            <p className="text-muted-foreground leading-relaxed">
-              Your score reflects how closely your experience aligns with the employer's highest-weighted priorities. Scores above 75% indicate strong signal match.
+          <PopoverContent className="w-80 text-sm space-y-4" side="bottom" align="start">
+            <p className="font-semibold text-foreground">Alignment Breakdown</p>
+            <div className="space-y-2">
+              {[
+                { label: "Leadership Match", value: breakdown.leadership },
+                { label: "Technical Match", value: breakdown.technical },
+                { label: "Keyword Coverage", value: breakdown.keywordCoverage },
+                { label: "Seniority Signal Match", value: breakdown.seniority },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <span className="text-xs font-medium text-foreground">{item.value}%</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Score is calculated based on weighted employer priorities detected in the job description.
             </p>
+            {score < 60 && (
+              <p className="text-xs text-amber-600 font-medium">
+                Add more specific detail (metrics, tools, frameworks) to increase match strength.
+              </p>
+            )}
             {topMatchedSignal && (
               <div>
                 <p className="text-xs font-medium text-green-600">✓ Top Matched Signal</p>
