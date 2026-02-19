@@ -100,6 +100,29 @@ const Index = () => {
         </p>
       </div>
 
+      <div className="mb-10 mx-auto max-w-2xl">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-6">
+          How Resumix Aligns Your Resume
+        </h2>
+        <ol className="space-y-5">
+          {[
+            { step: "Detect Employer Priorities", desc: "Analyze the job description for weighting, ownership level, and repeated themes." },
+            { step: "Map Your Experience", desc: "Compare your real experience against what the employer emphasized." },
+            { step: "Refine for Alignment", desc: "Sharpen wording to naturally mirror high-priority signals — without exaggeration." },
+          ].map((item, i) => (
+            <li key={i} className="flex gap-4">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
+                {i + 1}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-foreground">{item.step}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{item.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Left — Inputs */}
         <div className="space-y-4">
