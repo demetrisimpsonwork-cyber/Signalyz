@@ -38,10 +38,10 @@ const UpgradeModal = ({
       <DialogContent className="max-w-md">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-            Unlock Employer Priority Intelligence™
+            Unlock Employer Intelligence™
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-            You're viewing a strategic preview.
+            You are currently seeing surface-level alignment only.
             <br />
             Upgrade to access the full employer decision model.
           </DialogDescription>
@@ -54,6 +54,7 @@ const UpgradeModal = ({
               {[
                 "One aligned bullet",
                 "Overall alignment score",
+                "Role Signal Clarity only",
                 "Surface-level gap indicators",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -65,13 +66,13 @@ const UpgradeModal = ({
           </div>
 
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Pro</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Employer Intelligence™</p>
             <ul className="space-y-2">
               {[
-                "Multi-bullet strategic alignment",
-                "Weighted employer priority breakdown",
-                "Risk perception flags",
-                "Positioning angle analysis",
+                "Identity Strength Index™ — all 4 pillars",
+                "Employer Risk Perception™",
+                "Multi-bullet strategic variants",
+                "Weighted priority breakdown",
                 "Gap severity classification",
                 "Interview leverage insights",
                 "Unlimited strategic runs",
@@ -99,8 +100,9 @@ const UpgradeModal = ({
 
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-bold text-foreground">Employer Priority Intelligence™</p>
+            <p className="text-sm font-bold text-foreground">Employer Intelligence™</p>
             <p className="text-xs text-muted-foreground mt-0.5">$9/month — cancel anytime</p>
+            <p className="text-[11px] text-muted-foreground/70 italic mt-0.5">Less than one rejected application.</p>
           </div>
 
           <div className="space-y-3">
@@ -112,7 +114,7 @@ const UpgradeModal = ({
                 navigate("/pricing");
               }}
             >
-              Unlock Full Model
+              Unlock Employer Intelligence™
             </Button>
 
             {!trialStarted && onStartTrial && (
