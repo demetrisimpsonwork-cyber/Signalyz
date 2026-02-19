@@ -26,7 +26,7 @@ const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
           </div>
           <DialogTitle className="text-xl">Unlock Deeper Alignment Intelligence</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            You've used your free alignments. Upgrade to access deeper employer signal analysis and competitive-level refinements.
+            You've used your 3 free precision refinements today. Upgrade for unlimited intelligent alignment.
           </DialogDescription>
         </DialogHeader>
 
@@ -60,7 +60,7 @@ const UpgradeModal = ({ open, onClose }: UpgradeModalProps) => {
 
         <div className="space-y-0.5">
           <p className="text-xs text-muted-foreground">
-            Only $7/month — built for serious job seekers. Cancel anytime.
+            Only $9/month — built for serious job seekers. Cancel anytime.
           </p>
           <p className="text-xs italic text-muted-foreground/60">
             Most users upgrade within their first week.

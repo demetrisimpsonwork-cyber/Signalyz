@@ -121,7 +121,7 @@ const ProInsightsTeaser = ({ onTrialStart }: ProInsightsTeaserProps) => {
             onClick={() => navigate("/pricing")}
             className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
           >
-            Unlock Pro Alignment Intelligence — $9/month
+            Unlock Deeper Alignment Intelligence — $9/month
           </Button>
 
           <button
@@ -132,7 +132,10 @@ const ProInsightsTeaser = ({ onTrialStart }: ProInsightsTeaserProps) => {
           </button>
 
           <p className="text-center text-[11px] text-muted-foreground">
-            Cancel anytime. No commitment.
+            See exactly what hiring managers weight most. Cancel anytime.
+          </p>
+          <p className="text-center text-[10px] text-muted-foreground/60">
+            No card required.
           </p>
         </div>
       </div>
