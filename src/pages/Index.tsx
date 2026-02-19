@@ -25,11 +25,13 @@ const SAMPLE_RESULTS = {
 interface OptimizationResult {
   optimized_bullet: string;
   match_score: number;
+  alignment_confidence_level?: string;
   missing_keywords: string[];
   suggested_verbs: string[];
   alt_a: string;
   alt_b: string;
   alignment_notes?: string;
+  gap_suggestions?: string | null;
 }
 
 const Index = () => {
@@ -205,6 +207,9 @@ const Index = () => {
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
               <ResultSection title="Match Score" content={`${result.match_score}%`} />
+              {result.alignment_confidence_level && (
+                <p className="text-xs font-medium text-muted-foreground -mt-2">{result.alignment_confidence_level}</p>
+              )}
               <p className="text-xs text-muted-foreground -mt-2">Based on weighted employer priorities.</p>
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
@@ -213,6 +218,9 @@ const Index = () => {
               <ResultSection title="Alternate B — Human-natural" content={result.alt_b} />
               {result.alignment_notes && (
                 <ResultSection title="Pinnacle Alignment Notes" content={result.alignment_notes} />
+              )}
+              {result.gap_suggestions && (
+                <ResultSection title="Gap Suggestions" content={result.gap_suggestions} />
               )}
             </>
           )}
