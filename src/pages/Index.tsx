@@ -91,12 +91,12 @@ const Index = () => {
 
   return (
     <div className="container max-w-6xl py-8">
-      <div className="mb-6 text-center">
+      <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Let's align your experience to the role.
+          Align your resume to what employers actually prioritize.
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Strategic resume alignment powered by weighted employer-priority analysis.
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Resumix analyzes job descriptions for weighted priorities and refines your real experience to match — clearly, credibly, and without fabrication.
         </p>
       </div>
 
@@ -170,7 +170,7 @@ const Index = () => {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Takes 10 seconds. No fabrication. No fluff.
+            Takes 10 seconds. No fluff. No exaggeration. Just sharper alignment.
           </p>
         </div>
 
