@@ -10,6 +10,7 @@ import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import { Loader2, Sparkles } from "lucide-react";
+import AlignmentLoader from "@/components/AlignmentLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
@@ -235,14 +236,8 @@ const Index = () => {
 
         {/* Right — Results */}
         <div className="space-y-4">
-          {loading && (
-            <div className="flex h-60 items-center justify-center rounded-lg border bg-card">
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="text-sm">Analyzing your bullet…</span>
-              </div>
-            </div>
-          )}
+          {loading && <AlignmentLoader minHeight="260px" />}
+
 
           {!loading && !result && !showSamples && (
             <div className="flex h-60 items-center justify-center rounded-lg border border-dashed bg-card">

@@ -1,0 +1,96 @@
+import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
+
+const STEPS = [
+  "Extracting employer priority signals…",
+  "Mapping your experience to weighted themes…",
+  "Generating strategic positioning insights…",
+];
+
+const STEP_INTERVAL_MS = 3000;
+
+interface AlignmentLoaderProps {
+  /** Minimum height to hold space so layout doesn't jump */
+  minHeight?: string;
+}
+
+const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveIndex((prev) => Math.min(prev + 1, STEPS.length - 1));
+    }, STEP_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div
+      className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in"
+      style={{ minHeight }}
+    >
+      {/* Steps */}
+      <div className="space-y-4 mb-6">
+        {STEPS.map((label, i) => {
+          const done = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <div
+              key={i}
+              className={`flex items-start gap-3 transition-opacity duration-500 ${
+                active || done ? "opacity-100" : "opacity-30"
+              }`}
+            >
+              {/* Step indicator */}
+              <div
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors duration-500 ${
+                  done
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : active
+                    ? "border-primary text-primary"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {done ? <Check className="h-3 w-3" /> : i + 1}
+              </div>
+
+              {/* Label */}
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-sm leading-snug transition-colors duration-300 ${
+                    active
+                      ? "font-semibold text-foreground"
+                      : done
+                      ? "font-medium text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </p>
+
+                {/* Active progress bar */}
+                {active && (
+                  <div className="mt-2 h-0.5 w-full rounded-full bg-border overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{
+                        animation: `loader-fill ${STEP_INTERVAL_MS}ms linear forwards`,
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Helper text */}
+      <p className="text-center text-xs text-muted-foreground leading-relaxed">
+        Full resume + job description analyses typically take 20–40 seconds.
+      </p>
+    </div>
+  );
+};
+
+export default AlignmentLoader;
