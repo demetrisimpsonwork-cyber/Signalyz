@@ -26,6 +26,14 @@ const SAMPLE_RESULTS = {
   sampleB: "Coordinated developers across multiple projects, keeping delivery on track and managing scope to meet deadlines and budget targets set by leadership.",
 };
 
+interface ScoringBreakdown {
+  role_outcomes_alignment: number;
+  tools_and_workflow_alignment: number;
+  domain_and_context_alignment: number;
+  communication_and_stakeholder_alignment: number;
+  metrics_and_ownership_alignment: number;
+}
+
 interface OptimizationResult {
   optimized_bullet: string;
   match_score: number;
@@ -38,6 +46,10 @@ interface OptimizationResult {
   gap_suggestions?: string | null;
   top_matched_signal?: string;
   top_missing_signal?: string;
+  score_rationale?: string[];
+  scoring_breakdown?: ScoringBreakdown;
+  used_signals?: string[];
+  removed_or_softened?: string[];
 }
 
 const Index = () => {
@@ -223,7 +235,14 @@ const Index = () => {
           {result && (
             <>
               <ResultSection title="Optimized Bullet" content={result.optimized_bullet} />
-              <MatchScoreCard score={result.match_score} confidenceLevel={result.alignment_confidence_level} topMatchedSignal={result.top_matched_signal} topMissingSignal={result.top_missing_signal} />
+              <MatchScoreCard
+                score={result.match_score}
+                confidenceLevel={result.alignment_confidence_level}
+                topMatchedSignal={result.top_matched_signal}
+                topMissingSignal={result.top_missing_signal}
+                scoreRationale={result.score_rationale}
+                scoringBreakdown={result.scoring_breakdown}
+              />
               {!isPro && <ProInsightsTeaser />}
               <KeywordChips keywords={result.missing_keywords} />
               <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
