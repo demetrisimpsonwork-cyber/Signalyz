@@ -11,6 +11,27 @@ export interface DirectorDimension {
   risk_signal: string;
 }
 
+export interface SignalDimensionScore {
+  score: number;
+  gap: string;
+  missing: string[];
+}
+
+export interface SignalClassifierResult {
+  target_level_inferred: string;
+  dimension_scores: {
+    commercial: SignalDimensionScore;
+    ownership: SignalDimensionScore;
+    authority: SignalDimensionScore;
+    cross_functional: SignalDimensionScore;
+    lifecycle: SignalDimensionScore;
+    risk: SignalDimensionScore;
+    narrative: SignalDimensionScore;
+  };
+  overall_seniority_alignment: string;
+  top_3_gaps: string[];
+}
+
 export interface DirectorCalibrationResult {
   dimensions: DirectorDimension[];
   director_signal_tier: {
@@ -29,6 +50,7 @@ export interface DirectorCalibrationResult {
     ownership_inflation_patterns: string[];
   };
   recalibration_directives?: string[];
+  signal_classifier?: SignalClassifierResult | null;
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
@@ -92,12 +114,34 @@ const FrictionRow = ({
   </div>
 );
 
+const DIMENSION_LABELS: Record<keyof SignalClassifierResult["dimension_scores"], string> = {
+  commercial: "Commercial Impact Attribution",
+  ownership: "End-to-End Ownership Scope",
+  authority: "Decision Authority",
+  cross_functional: "Cross-Functional Leadership",
+  lifecycle: "Lifecycle Governance",
+  risk: "Risk Compression",
+  narrative: "Narrative Cohesion",
+};
+
+const scoreColor = (score: number) => {
+  if (score >= 18) return "text-green-700 dark:text-green-400";
+  if (score >= 10) return "text-amber-600 dark:text-amber-400";
+  return "text-destructive";
+};
+
+const scoreBarColor = (score: number) => {
+  if (score >= 18) return "bg-green-500 dark:bg-green-400";
+  if (score >= 10) return "bg-amber-500 dark:bg-amber-400";
+  return "bg-destructive";
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResult }) => {
   const [copied, setCopied] = useState(false);
 
-  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives } = result;
+  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier } = result;
 
   const frictionStages = [
     {
@@ -271,6 +315,79 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
               </div>
             ))}
           </div>
+        </BlockShell>
+      )}
+
+      {/* 6 — Signal Classifier */}
+      {signal_classifier && (
+        <BlockShell label="Signal Classifier — Seniority Scoring">
+          {/* Header row */}
+          <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
+                Inferred Level
+              </p>
+              <p className="text-xs font-semibold text-foreground">{signal_classifier.target_level_inferred}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
+                Overall Alignment
+              </p>
+              <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">{signal_classifier.overall_seniority_alignment}</p>
+            </div>
+          </div>
+
+          {/* Dimension scores */}
+          <div className="divide-y divide-border/50">
+            {(Object.keys(DIMENSION_LABELS) as Array<keyof SignalClassifierResult["dimension_scores"]>).map((key) => {
+              const dim = signal_classifier!.dimension_scores[key];
+              const pct = Math.min(100, (dim.score / 25) * 100);
+              return (
+                <div key={key} className="px-4 py-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold text-foreground">{DIMENSION_LABELS[key]}</p>
+                    <span className={`text-xs font-bold tabular-nums ${scoreColor(dim.score)}`}>
+                      {dim.score}<span className="text-muted-foreground font-normal">/25</span>
+                    </span>
+                  </div>
+                  {/* Score bar */}
+                  <div className="h-1 w-full rounded-full bg-muted">
+                    <div
+                      className={`h-1 rounded-full transition-all ${scoreBarColor(dim.score)}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{dim.gap}</p>
+                  {dim.missing.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {dim.missing.map((m, i) => (
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded border border-border/60 text-muted-foreground bg-muted/40">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Top 3 gaps */}
+          {signal_classifier.top_3_gaps.length > 0 && (
+            <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                Top Gaps
+              </p>
+              <ol className="space-y-1.5">
+                {signal_classifier.top_3_gaps.map((gap, i) => (
+                  <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
+                    <span className="shrink-0 font-semibold text-foreground/60">{i + 1}.</span>
+                    {gap}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </BlockShell>
       )}
 
