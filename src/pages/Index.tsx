@@ -18,16 +18,31 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { toast } from "sonner";
 
-const SAMPLE_BULLET = "Managed a team of developers to deliver software projects on time and within budget.";
-const SAMPLE_JD = `We are looking for a Senior Project Manager to lead cross-functional engineering teams. 
-You will drive delivery of complex SaaS products, improve sprint velocity, 
-and mentor junior PMs. Required: Agile/Scrum, stakeholder communication, 
-risk management, KPI tracking, CI/CD awareness.`;
+const SAMPLE_ROLES = [
+  {
+    label: "Senior Product Manager – SaaS Platform",
+    bullet: "Worked with engineering and design to ship new product features and helped define the product roadmap.",
+    jd: `We are looking for a Senior Product Manager to own the end-to-end product lifecycle for our core SaaS platform. You will define strategy, align cross-functional teams across engineering, design, and go-to-market, drive adoption metrics, and present roadmap decisions to executive leadership. Required: B2B SaaS experience, data-driven prioritization, stakeholder influence, OKR frameworks, Agile/Scrum.`,
+    sampleA: "Owned the end-to-end product lifecycle for a core SaaS platform, translating executive strategy into a prioritized roadmap that aligned engineering, design, and GTM stakeholders across three concurrent release cycles.",
+    sampleB: "Defined and drove the product roadmap for a B2B SaaS platform, leading cross-functional alignment between engineering and design while using OKR frameworks to connect feature delivery to adoption and retention outcomes.",
+  },
+  {
+    label: "Technical Project Manager – AI Infrastructure",
+    bullet: "Managed timelines and coordinated between engineering teams to keep AI projects on track.",
+    jd: `We are looking for a Technical Project Manager to lead delivery of large-scale AI infrastructure initiatives. You will manage dependencies across ML, platform, and data engineering teams, track technical risk, and ensure milestone accountability at pace. Required: MLOps or data pipeline experience, technical fluency, cross-team dependency management, risk mitigation, stakeholder reporting.`,
+    sampleA: "Led delivery of AI infrastructure initiatives spanning ML, platform, and data engineering, managing cross-team dependencies and surfacing technical risk to ensure milestone accountability at scale.",
+    sampleB: "Coordinated delivery across ML, data, and platform engineering workstreams on AI infrastructure programs, proactively managing blockers and providing structured progress visibility to senior stakeholders.",
+  },
+  {
+    label: "Group Product Manager – B2B Growth",
+    bullet: "Led a team of PMs and worked on improving revenue metrics and expanding into new customer segments.",
+    jd: `We are looking for a Group Product Manager to lead a team of PMs focused on B2B growth. You will own revenue expansion strategy, build business cases for new market segments, coach direct reports, and operate as a strategic partner to sales and marketing leadership. Required: B2B growth experience, GM-level business acumen, PM leadership, market sizing, executive communication.`,
+    sampleA: "Led a team of PMs owning B2B revenue expansion, developing business cases for new market segments and operating as a strategic partner to sales and marketing leadership to drive measurable ARR growth.",
+    sampleB: "Managed a PM team responsible for B2B growth strategy, translating market opportunities into structured roadmaps and coaching direct reports while maintaining executive alignment on revenue outcomes.",
+  },
+];
 
-const SAMPLE_RESULTS = {
-  sampleA: "Led a cross-functional engineering team through full project lifecycles, consistently delivering on schedule and within budget while aligning priorities with stakeholders.",
-  sampleB: "Coordinated developers across multiple projects, keeping delivery on track and managing scope to meet deadlines and budget targets set by leadership.",
-};
+
 
 interface ScoringBreakdown {
   role_outcomes_alignment: number;
@@ -76,6 +91,7 @@ const Index = () => {
   const [errors, setErrors] = useState<{ bullet?: string; jd?: string }>({});
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSamples, setShowSamples] = useState(false);
+  const [selectedSampleRole, setSelectedSampleRole] = useState(0);
   const [additionalContext, setAdditionalContext] = useState("");
   const { user } = useAuth();
 
@@ -135,34 +151,47 @@ const Index = () => {
     }
   };
 
-  const fillSample = () => {
-    setBullet(SAMPLE_BULLET);
-    setJd(SAMPLE_JD);
+  const fillSample = (roleIndex = selectedSampleRole) => {
+    const role = SAMPLE_ROLES[roleIndex];
+    setBullet(role.bullet);
+    setJd(role.jd);
     setErrors({});
     setResult(null);
     setShowSamples(true);
+    setSelectedSampleRole(roleIndex);
   };
 
   return (
     <div className="container max-w-6xl py-8">
+      {/* Hero */}
       <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Align your resume to what employers actually prioritize.
+          Strategic Resume Intelligence for Product &amp; Project Leaders
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Resumix analyzes job descriptions for weighted priorities and refines your real experience to match — clearly, credibly, and without fabrication.
+          Hiring for PM roles is risk evaluation. Resumix analyzes how your experience is actually perceived — not just how it's written.
         </p>
       </div>
 
+      {/* How it works */}
       <div className="mb-10 mx-auto max-w-2xl">
         <h2 className="text-lg font-semibold tracking-tight text-foreground mb-6">
-          How Resumix Aligns Your Resume
+          How PM Resume Intelligence Works
         </h2>
         <ol className="space-y-5">
           {[
-            { step: "Detect Employer Priorities", desc: "Analyze the job description for weighting, ownership level, and repeated themes." },
-            { step: "Map Your Experience", desc: "Compare your real experience against what the employer emphasized." },
-            { step: "Refine for Alignment", desc: "Sharpen wording to naturally mirror high-priority signals — without exaggeration." },
+            {
+              step: "Detect Employer Priority Signals",
+              desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds.",
+            },
+            {
+              step: "Map Your Experience to Weighted Themes",
+              desc: "Compare how your background reads against each priority signal, identifying where alignment is strong and where perception gaps exist.",
+            },
+            {
+              step: "Refine for Strategic Alignment",
+              desc: "Sharpen language to reflect ownership, decision authority, and measurable outcomes — without fabrication or inflation.",
+            },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
@@ -220,24 +249,32 @@ const Index = () => {
             </p>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button onClick={handleOptimize} disabled={loading} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Run Alignment
             </Button>
-            <Button variant="ghost" size="sm" onClick={fillSample}>
-              Try sample
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Try sample:</span>
+              {SAMPLE_ROLES.map((role, i) => (
+                <button
+                  key={i}
+                  onClick={() => fillSample(i)}
+                  className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {role.label.split(" – ")[0].replace("Senior ", "Sr. ").replace("Group ", "GPM ").replace("Technical ", "TPM ")}
+                </button>
+              ))}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Takes 10 seconds. No fluff. No exaggeration. Just sharper alignment.
+            Takes 10–40 seconds. No fluff. No exaggeration. Just sharper alignment.
           </p>
         </div>
 
         {/* Right — Results */}
         <div className="space-y-4">
           {loading && <AlignmentLoader minHeight="260px" />}
-
 
           {!loading && !result && !showSamples && (
             <div className="flex h-60 items-center justify-center rounded-lg border border-dashed bg-card">
@@ -247,11 +284,16 @@ const Index = () => {
 
           {!loading && !result && showSamples && (
             <div className="space-y-4">
-              <p className="text-xs font-medium text-muted-foreground">
-                Here's a preview of what optimized bullets look like. Hit Optimize to get your personalized results.
-              </p>
-              <ResultSection title="Sample Version A" content={SAMPLE_RESULTS.sampleA} />
-              <ResultSection title="Sample Version B" content={SAMPLE_RESULTS.sampleB} />
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-0.5">
+                  {SAMPLE_ROLES[selectedSampleRole].label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Preview of what aligned positioning looks like for this role. Run Alignment to analyze your own experience.
+                </p>
+              </div>
+              <ResultSection title="Alignment Version A — Strategic Ownership" content={SAMPLE_ROLES[selectedSampleRole].sampleA} />
+              <ResultSection title="Alignment Version B — Cross-functional Depth" content={SAMPLE_ROLES[selectedSampleRole].sampleB} />
             </div>
           )}
 
@@ -313,3 +355,4 @@ const Index = () => {
 };
 
 export default Index;
+
