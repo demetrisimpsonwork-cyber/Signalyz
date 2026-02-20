@@ -11,6 +11,23 @@ export interface DirectorDimension {
   risk_signal: string;
 }
 
+export type UpgradeType =
+  | "commercial_injection"
+  | "ownership_elevation"
+  | "authority_framing"
+  | "cross_functional_leadership"
+  | "lifecycle_governance"
+  | "risk_compression";
+
+export interface GapAnalyzerResult {
+  priority_order: string[];
+  rewrite_targets: Array<{
+    bullet_reference: string;
+    upgrade_type: UpgradeType;
+    reason: string;
+  }>;
+}
+
 export interface SignalDimensionScore {
   score: number;
   gap: string;
@@ -51,9 +68,28 @@ export interface DirectorCalibrationResult {
   };
   recalibration_directives?: string[];
   signal_classifier?: SignalClassifierResult | null;
+  gap_analyzer?: GapAnalyzerResult | null;
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
+
+const UPGRADE_TYPE_LABELS: Record<UpgradeType, string> = {
+  commercial_injection: "Commercial Injection",
+  ownership_elevation: "Ownership Elevation",
+  authority_framing: "Authority Framing",
+  cross_functional_leadership: "Cross-Functional Leadership",
+  lifecycle_governance: "Lifecycle Governance",
+  risk_compression: "Risk Compression",
+};
+
+const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
+  commercial_injection: "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40",
+  ownership_elevation: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/40",
+  authority_framing: "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800/40",
+  cross_functional_leadership: "text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/20 border-cyan-200 dark:border-cyan-800/40",
+  lifecycle_governance: "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40",
+  risk_compression: "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40",
+};
 
 const classificationStyle: Record<DirectorDimension["classification"], string> = {
   "Below Director Threshold": "text-destructive bg-destructive/10",
@@ -141,7 +177,7 @@ const scoreBarColor = (score: number) => {
 const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResult }) => {
   const [copied, setCopied] = useState(false);
 
-  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier } = result;
+  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer } = result;
 
   const frictionStages = [
     {
@@ -388,6 +424,43 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
               </ol>
             </div>
           )}
+        </BlockShell>
+      )}
+
+      {/* 7 — Gap Analyzer */}
+      {gap_analyzer && (
+        <BlockShell label="Gap Analyzer — Upgrade Priority">
+          {/* Priority order */}
+          {gap_analyzer.priority_order.length > 0 && (
+            <div className="px-4 py-3 border-b border-border/60">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                Remediation Priority Order
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {gap_analyzer.priority_order.map((dim, i) => (
+                  <span key={dim} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border border-border/60 bg-muted/40 text-muted-foreground">
+                    <span className="font-bold text-foreground/50">{i + 1}</span>
+                    {dim.replace(/_/g, " ")}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rewrite targets */}
+          <div className="divide-y divide-border/50">
+            {gap_analyzer.rewrite_targets.map((target, i) => (
+              <div key={i} className="px-4 py-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs font-semibold text-foreground leading-relaxed">{target.bullet_reference}</p>
+                  <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type]}`}>
+                    {UPGRADE_TYPE_LABELS[target.upgrade_type]}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
+              </div>
+            ))}
+          </div>
         </BlockShell>
       )}
 

@@ -72,7 +72,48 @@ const SIGNAL_CLASSIFIER_SCHEMA = `Return structured JSON with exactly this schem
   "top_3_gaps": [string, string, string]
 }`;
 
-// ─── PROMPT 3: Director Calibration Engine ───────────────────────────────────
+// ─── PROMPT 3: Gap Analyzer ──────────────────────────────────────────────────
+const GAP_ANALYZER_SYSTEM = `You are a program portfolio strategist evaluating hiring readiness gaps.
+
+Input you will receive:
+- dimension_scores: scored seniority signals across 7 dimensions (0–25 each)
+- target_role_requirements: structured requirements extracted from the job description and resume
+
+Your task:
+1. Determine the priority order of dimensions to address (highest leverage first).
+2. Identify up to 4 specific resume bullets or experience areas to upgrade.
+
+Upgrade types allowed (use exact keys):
+- commercial_injection
+- ownership_elevation
+- authority_framing
+- cross_functional_leadership
+- lifecycle_governance
+- risk_compression
+
+Rules:
+- Choose maximum 4 rewrite_targets.
+- Prioritize highest leverage gaps relative to the target role.
+- Do not rewrite content.
+- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
+
+const GAP_ANALYZER_SCHEMA = `Return structured JSON with exactly this schema:
+{
+  "priority_order": [string],
+  "rewrite_targets": [
+    {
+      "bullet_reference": string,
+      "upgrade_type": "commercial_injection" | "ownership_elevation" | "authority_framing" | "cross_functional_leadership" | "lifecycle_governance" | "risk_compression",
+      "reason": string
+    }
+  ]
+}
+
+CONSTRAINTS:
+- rewrite_targets: 1–4 items maximum
+- priority_order: list dimension keys in order of highest remediation leverage (e.g. ["commercial", "authority", "risk"])`;
+
+// ─── PROMPT 4: Director Calibration Engine ───────────────────────────────────
 const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
 
 Your task is to evaluate a Product Leader's resume, experience section, or bullet against Director-level ownership thresholds.
@@ -336,12 +377,42 @@ serve(async (req) => {
 
     // Parse signal classifier result (non-fatal)
     const classifierClean = classifierRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    let classifierParsed: Record<string, unknown> | null = null;
     try {
-      result.signal_classifier = JSON.parse(classifierClean);
-      console.log("Signal Classifier success. Inferred level:", (result.signal_classifier as Record<string, unknown>).target_level_inferred);
+      classifierParsed = JSON.parse(classifierClean);
+      result.signal_classifier = classifierParsed;
+      console.log("Signal Classifier success. Inferred level:", classifierParsed?.target_level_inferred);
     } catch {
       console.error("Signal Classifier JSON parse failed. Preview:", classifierClean.slice(0, 300));
       result.signal_classifier = null;
+    }
+
+    // ── STEP 4: Gap Analyzer (uses Signal Classifier + Normalizer output) ──────
+    if (classifierParsed) {
+      console.log("Step 4: Running Gap Analyzer");
+      const gapInput = {
+        dimension_scores: classifierParsed.dimension_scores,
+        target_role_requirements: {
+          target_role_title: normalized.target_role_title ?? null,
+          target_seniority_level: normalized.target_seniority_level ?? null,
+          core_requirements: normalized.core_requirements ?? [],
+          leadership_requirements: normalized.leadership_requirements ?? [],
+          commercial_requirements: normalized.commercial_requirements ?? [],
+        },
+      };
+      const gapSystem = `${GAP_ANALYZER_SYSTEM}\n\n${GAP_ANALYZER_SCHEMA}`;
+      const gapUserContent = `INPUT DATA:\n${JSON.stringify(gapInput, null, 2)}`;
+      try {
+        let gapRaw = await callAI(apiKey, gapSystem, gapUserContent);
+        gapRaw = gapRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        result.gap_analyzer = JSON.parse(gapRaw);
+        console.log("Gap Analyzer success.");
+      } catch {
+        console.error("Gap Analyzer failed — non-fatal, skipping.");
+        result.gap_analyzer = null;
+      }
+    } else {
+      result.gap_analyzer = null;
     }
 
     // Attach normalized metadata
