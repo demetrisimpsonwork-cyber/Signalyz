@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export interface DirectorDimension {
   name: string;
-  classification: "Below Director Threshold" | "Near Threshold" | "At Director Threshold";
+  classification: "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold";
   strength_signal: string;
   risk_signal: string;
 }
@@ -18,29 +18,31 @@ export interface DirectorCalibrationResult {
     rationale: string;
   };
   hiring_stage_friction: {
-    recruiter_filter_risk: { level: "Low" | "Moderate" | "High"; observation: string };
-    hiring_manager_friction: { level: "Low" | "Moderate" | "High"; observation: string };
-    executive_skepticism: { level: "Low" | "Moderate" | "High"; observation: string };
+    recruiter_filter_risk: { level: "Low" | "Moderate" | "Elevated"; observation: string };
+    hiring_manager_friction: { level: "Low" | "Moderate" | "Elevated"; observation: string };
+    executive_skepticism: { level: "Low" | "Moderate" | "Elevated"; observation: string };
     primary_friction_stage: "Recruiter Filter" | "Hiring Manager Friction" | "Executive Skepticism";
+    primary_friction_explanation?: string;
   };
   pattern_detection: {
     undersignaling_patterns: string[];
     ownership_inflation_patterns: string[];
   };
+  recalibration_directives?: string[];
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
 
 const classificationStyle: Record<DirectorDimension["classification"], string> = {
   "Below Director Threshold": "text-destructive bg-destructive/10",
-  "Near Threshold": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
+  "Near Director Threshold": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
   "At Director Threshold": "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
 };
 
-const riskLevelStyle: Record<"Low" | "Moderate" | "High", string> = {
+const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
   Low: "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
   Moderate: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
-  High: "text-destructive bg-destructive/10",
+  Elevated: "text-destructive bg-destructive/10",
 };
 
 const tierStyle: Record<DirectorCalibrationResult["director_signal_tier"]["tier"], string> = {
@@ -68,7 +70,7 @@ const FrictionRow = ({
   isPrimary,
 }: {
   stage: string;
-  level: "Low" | "Moderate" | "High";
+  level: "Low" | "Moderate" | "Elevated";
   observation: string;
   isPrimary: boolean;
 }) => (
@@ -95,7 +97,7 @@ const FrictionRow = ({
 const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResult }) => {
   const [copied, setCopied] = useState(false);
 
-  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection } = result;
+  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives } = result;
 
   const frictionStages = [
     {
@@ -120,32 +122,35 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       "DIRECTOR SIGNAL CALIBRATION",
       "============================",
       "",
-      "DIMENSION EVALUATION",
-      ...dimensions.flatMap((d) => [
-        `${d.name}: ${d.classification}`,
-        `  Strength — ${d.strength_signal}`,
-        `  Risk — ${d.risk_signal}`,
-        "",
-      ]),
       "DIRECTOR SIGNAL TIER",
       `Tier: ${director_signal_tier.tier}`,
       `Rationale: ${director_signal_tier.rationale}`,
       "",
-      "HIRING STAGE FRICTION",
+      "DIRECTOR DIMENSION CALIBRATION",
+      ...dimensions.flatMap((d) => [
+        `${d.name}: ${d.classification}`,
+        `  Strength — ${d.strength_signal}`,
+        `  Risk     — ${d.risk_signal}`,
+        "",
+      ]),
+      "HIRING STAGE RISK MAPPING",
       ...frictionStages.map((s) => `${s.stage}: ${s.data.level} — ${s.data.observation}`),
       `Primary Friction Stage: ${hiring_stage_friction.primary_friction_stage}`,
-      "",
-      ...(pattern_detection.undersignaling_patterns.length > 0
-        ? [
-            "UNDERSIGNALING PATTERNS",
-            ...pattern_detection.undersignaling_patterns.map((p) => `— ${p}`),
-            "",
-          ]
+      ...(hiring_stage_friction.primary_friction_explanation
+        ? [hiring_stage_friction.primary_friction_explanation]
         : []),
-      ...(pattern_detection.ownership_inflation_patterns.length > 0
+      "",
+      "SIGNAL INTEGRITY ASSESSMENT",
+      "Undersignaling:",
+      ...pattern_detection.undersignaling_patterns.map((p) => `— ${p}`),
+      "",
+      "Inflation Risk:",
+      ...pattern_detection.ownership_inflation_patterns.map((p) => `— ${p}`),
+      "",
+      ...(recalibration_directives && recalibration_directives.length > 0
         ? [
-            "OWNERSHIP INFLATION PATTERNS",
-            ...pattern_detection.ownership_inflation_patterns.map((p) => `— ${p}`),
+            "DIRECTOR-LEVEL RECALIBRATION DIRECTIVES",
+            ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`),
           ]
         : []),
     ].join("\n");
@@ -172,8 +177,8 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
         </div>
       </BlockShell>
 
-      {/* 2 — Dimension Evaluation */}
-      <BlockShell label="Dimension Evaluation">
+      {/* 2 — Dimension Calibration */}
+      <BlockShell label="Director Dimension Calibration">
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
             <div key={dim.name} className="px-4 py-3 space-y-2.5">
@@ -185,11 +190,11 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Strength Signal</p>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Strength</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{dim.strength_signal}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Risk Signal</p>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Risk</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{dim.risk_signal}</p>
                 </div>
               </div>
@@ -198,8 +203,8 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
         </div>
       </BlockShell>
 
-      {/* 3 — Hiring Stage Friction */}
-      <BlockShell label="Hiring Stage Friction">
+      {/* 3 — Hiring Stage Risk Mapping */}
+      <BlockShell label="Hiring Stage Risk Mapping">
         <div className="divide-y divide-border/50">
           {frictionStages.map((s) => (
             <FrictionRow
@@ -211,43 +216,60 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
             />
           ))}
         </div>
+        {hiring_stage_friction.primary_friction_explanation && (
+          <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+              Primary Friction — Assessment
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {hiring_stage_friction.primary_friction_explanation}
+            </p>
+          </div>
+        )}
       </BlockShell>
 
-      {/* 4 — Pattern Detection */}
-      {(pattern_detection.undersignaling_patterns.length > 0 ||
-        pattern_detection.ownership_inflation_patterns.length > 0) && (
-        <BlockShell label="Pattern Detection">
-          <div className="px-4 py-3 space-y-4">
-            {pattern_detection.undersignaling_patterns.length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                  Undersignaling Patterns
-                </p>
-                <ul className="space-y-1.5">
-                  {pattern_detection.undersignaling_patterns.map((p, i) => (
-                    <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
-                      <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-warning mt-1.5" style={{ background: "hsl(var(--warning, 38 92% 50%))" }} />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
+      {/* 4 — Signal Integrity Assessment */}
+      <BlockShell label="Signal Integrity Assessment">
+        <div className="px-4 py-3 space-y-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+              Undersignaling
+            </p>
+            <ul className="space-y-1.5">
+              {pattern_detection.undersignaling_patterns.map((p, i) => (
+                <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
+                  <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+              Inflation Risk
+            </p>
+            <ul className="space-y-1.5">
+              {pattern_detection.ownership_inflation_patterns.map((p, i) => (
+                <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
+                  <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-destructive" />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </BlockShell>
+
+      {/* 5 — Recalibration Directives */}
+      {recalibration_directives && recalibration_directives.length > 0 && (
+        <BlockShell label="Director-Level Recalibration Directives">
+          <div className="divide-y divide-border/50">
+            {recalibration_directives.map((directive, i) => (
+              <div key={i} className="px-4 py-3 flex gap-3">
+                <span className="shrink-0 mt-0.5 text-[10px] font-bold text-muted-foreground/60 w-4">{i + 1}.</span>
+                <p className="text-xs text-foreground leading-relaxed">{directive}</p>
               </div>
-            )}
-            {pattern_detection.ownership_inflation_patterns.length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                  Ownership Inflation Patterns
-                </p>
-                <ul className="space-y-1.5">
-                  {pattern_detection.ownership_inflation_patterns.map((p, i) => (
-                    <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
-                      <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-destructive mt-1.5" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            ))}
           </div>
         </BlockShell>
       )}
