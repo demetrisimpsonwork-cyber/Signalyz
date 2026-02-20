@@ -339,6 +339,41 @@ const PILLAR_STANDARDS: PillarStandard[] = [
       "If impact is stated in activity terms only → calibration status: Under-Signaled",
     ],
   },
+  {
+    pillarKey: "stability",
+    title: "Pillar 4 — Organizational Influence",
+    calibrationRule: "Senior PM Threshold Standard",
+    seniorThreshold:
+      "A candidate meets Senior PM calibration when cross-functional authority is demonstrated through influence over engineering and GTM direction, navigation of tradeoffs across teams, and communication at the executive level — not coordination or participation.",
+    thresholdCriteria: [
+      "Influences engineering and GTM direction — not just aligns",
+      "Navigates tradeoffs across competing team priorities",
+      "Demonstrates cross-functional authority beyond project coordination",
+      "Communicates and presents at the executive level",
+    ],
+    patterns: [
+      {
+        type: "below",
+        examples: [
+          "Lists stakeholders without influence evidence",
+          '"Collaborated with" — no leadership or decision language',
+          "Coordination described, authority absent",
+        ],
+      },
+      {
+        type: "threshold",
+        examples: [
+          '"Aligned engineering and GTM"',
+          '"Negotiated roadmap tradeoffs"',
+          '"Presented roadmap to executive leadership"',
+        ],
+      },
+    ],
+    signalLogic: [
+      "If executive-facing signal is absent → calibration status: Executive Deficit",
+      "If influence language is limited to coordination → calibration status: Authority Gap",
+    ],
+  },
 ];
 
 const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => {
