@@ -489,6 +489,76 @@ const LockedRiskCard = ({ category }: { category: string }) => (
 
 
 
+const CalibrationLogicSummary = () => (
+  <div className="rounded-md border bg-background overflow-hidden">
+    {/* Header */}
+    <div className="px-4 py-3 border-b border-border/50 bg-muted/20 flex items-center justify-between gap-2">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">
+        Senior PM Calibration Logic
+      </p>
+      <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">
+        Evaluation Standard
+      </span>
+    </div>
+
+    {/* Threshold pass condition */}
+    <div className="px-4 py-3 border-b border-border/40">
+      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
+        Senior PM Calibration — All Four Pillars at Threshold
+      </p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+        {[
+          "Ownership Scope ≥ Threshold",
+          "Strategic Definition ≥ Threshold",
+          "Commercial Impact ≥ Threshold",
+          "Organizational Influence ≥ Threshold",
+        ].map((criterion, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <span className="h-1 w-1 rounded-full bg-green-500 dark:bg-green-400 shrink-0" />
+            <span className="text-[10px] text-muted-foreground">{criterion}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Tier-down logic */}
+    <div className="divide-y divide-border/40">
+      {[
+        {
+          condition: "2+ Pillars Below Threshold",
+          verdict: "Level Gap — 1 Tier Below",
+          severity: "amber",
+        },
+        {
+          condition: "3+ Pillars Below Threshold",
+          verdict: "Execution Bias",
+          severity: "orange",
+        },
+        {
+          condition: "4 Pillars Below Threshold",
+          verdict: "Contributor-Level Calibration",
+          severity: "red",
+        },
+      ].map(({ condition, verdict, severity }) => (
+        <div key={condition} className="px-4 py-2.5 flex items-center justify-between gap-3">
+          <span className="text-[10px] text-muted-foreground">{condition}</span>
+          <span
+            className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
+              severity === "amber"
+                ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
+                : severity === "orange"
+                ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40"
+                : "bg-destructive/10 text-destructive border-destructive/20"
+            }`}
+          >
+            {verdict}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 // ─── Timeout Error Card ───────────────────────────────────────────────────────
 
 const TimeoutErrorCard = ({
@@ -909,10 +979,12 @@ const Position = () => {
               {/* 2 — PM Hiring Calibration Report */}
               {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
                 <Section title="2. PM Hiring Calibration Report" proLabel>
-                  <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed border-l-2 border-border pl-3">
+                  <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed border-l-2 border-border pl-3">
                     Structured evaluation of how each identity pillar reads across hiring stages. Grounded strictly in resume signal relative to JD weighting.
                   </p>
-                  <div className="space-y-3">
+                  <CalibrationLogicSummary />
+                  <div className="space-y-3 mt-3">
+
                     {result.employer_risk_perception.map((item, i) => {
                       const isVisible = effectiveIsPro || i === 0;
                       if (!isVisible) {
