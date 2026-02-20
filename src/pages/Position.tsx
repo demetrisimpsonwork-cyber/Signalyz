@@ -304,6 +304,41 @@ const PILLAR_STANDARDS: PillarStandard[] = [
       "If execution dominates without strategic framing → calibration status: Execution Bias",
     ],
   },
+  {
+    pillarKey: "commercial",
+    title: "Pillar 3 — Commercial Impact",
+    calibrationRule: "Senior PM Threshold Standard",
+    seniorThreshold:
+      "A candidate meets Senior PM calibration when product work is translated into quantified business outcomes — revenue, retention, adoption, or cost — and commercial reasoning is explicit, not implied.",
+    thresholdCriteria: [
+      "Quantifies impact in business terms (revenue, retention, adoption, cost)",
+      "Translates product decisions into measurable business consequences",
+      "Demonstrates commercial reasoning behind prioritization",
+      "Links feature or initiative output to downstream business metrics",
+    ],
+    patterns: [
+      {
+        type: "below",
+        examples: [
+          "Feature shipped — no measurable outcome stated",
+          "Engagement metrics only, no business tie-in",
+          "Output described without consequence",
+        ],
+      },
+      {
+        type: "threshold",
+        examples: [
+          '"Increased retention by X%"',
+          '"Drove revenue growth through…"',
+          '"Reduced churn by…"',
+        ],
+      },
+    ],
+    signalLogic: [
+      "If business consequence is absent from outcomes → calibration status: Commercial Gap",
+      "If impact is stated in activity terms only → calibration status: Under-Signaled",
+    ],
+  },
 ];
 
 const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => {
