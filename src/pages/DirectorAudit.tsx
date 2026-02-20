@@ -44,6 +44,32 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     lines.push("");
   }
 
+  if (result.signal_classifier) {
+    const sc = result.signal_classifier;
+    lines.push("SIGNAL CLASSIFIER — SENIORITY SCORING");
+    lines.push(`Inferred Level: ${sc.target_level_inferred}`);
+    lines.push(`Overall Alignment: ${sc.overall_seniority_alignment}`);
+    lines.push("");
+    const dimLabels: Record<string, string> = {
+      commercial: "Commercial Impact Attribution",
+      ownership: "End-to-End Ownership Scope",
+      authority: "Decision Authority",
+      cross_functional: "Cross-Functional Leadership",
+      lifecycle: "Lifecycle Governance",
+      risk: "Risk Compression",
+      narrative: "Narrative Cohesion",
+    };
+    Object.entries(sc.dimension_scores).forEach(([key, dim]) => {
+      lines.push(`${dimLabels[key] ?? key}: ${dim.score}/25`);
+      lines.push(`  Gap: ${dim.gap}`);
+      if (dim.missing.length) lines.push(`  Missing: ${dim.missing.join(", ")}`);
+    });
+    lines.push("");
+    lines.push("Top Gaps:");
+    sc.top_3_gaps.forEach((g, i) => lines.push(`${i + 1}. ${g}`));
+    lines.push("");
+  }
+
   return lines.join("\n");
 };
 

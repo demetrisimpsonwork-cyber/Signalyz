@@ -34,7 +34,45 @@ const NORMALIZER_SCHEMA = `Return structured JSON with exactly this schema:
   ]
 }`;
 
-// ─── PROMPT 2: Director Calibration Engine ───────────────────────────────────
+// ─── PROMPT 2: Signal Classifier ────────────────────────────────────────────
+const SIGNAL_CLASSIFIER_SYSTEM = `You are a Senior Executive Hiring Manager evaluating seniority signals.
+Evaluate across 7 dimensions:
+1. Commercial Impact Attribution
+2. End-to-End Ownership Scope
+3. Decision Authority
+4. Cross-Functional Leadership
+5. Lifecycle Governance
+6. Risk Compression
+7. Narrative Cohesion
+
+For each dimension:
+- Score 0–25
+- Provide deficiency summary (1–2 sentences)
+- Identify missing signals
+
+Rules:
+- Be strict.
+- Assume Staff-level threshold unless otherwise stated.
+- Do not rewrite.
+- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
+
+const SIGNAL_CLASSIFIER_SCHEMA = `Return structured JSON with exactly this schema:
+{
+  "target_level_inferred": string,
+  "dimension_scores": {
+    "commercial": { "score": number, "gap": string, "missing": [string] },
+    "ownership": { "score": number, "gap": string, "missing": [string] },
+    "authority": { "score": number, "gap": string, "missing": [string] },
+    "cross_functional": { "score": number, "gap": string, "missing": [string] },
+    "lifecycle": { "score": number, "gap": string, "missing": [string] },
+    "risk": { "score": number, "gap": string, "missing": [string] },
+    "narrative": { "score": number, "gap": string, "missing": [string] }
+  },
+  "overall_seniority_alignment": string,
+  "top_3_gaps": [string, string, string]
+}`;
+
+// ─── PROMPT 3: Director Calibration Engine ───────────────────────────────────
 const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
 
 Your task is to evaluate a Product Leader's resume, experience section, or bullet against Director-level ownership thresholds.
@@ -270,26 +308,43 @@ serve(async (req) => {
       normalized = {};
     }
 
-    // ── STEP 2: Director Calibration ────────────────────────────────────────
-    console.log("Step 2: Running Director Calibration");
-    const calibrationUserContent = Object.keys(normalized).length > 0
+    // ── STEPS 2 & 3: Signal Classifier + Director Calibration (parallel) ──────
+    console.log("Steps 2 & 3: Running Signal Classifier and Director Calibration in parallel");
+
+    const sharedContext = Object.keys(normalized).length > 0
       ? `STRUCTURED INPUT (extracted by pre-processor):\n${JSON.stringify(normalized, null, 2)}\n\nRAW RESUME / EXPERIENCE:\n${experience}${jd?.trim() ? `\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}` : ""}`
       : jd?.trim()
         ? `RESUME / EXPERIENCE INPUT:\n${experience}\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}`
         : `RESUME / EXPERIENCE INPUT:\n${experience}`;
 
-    let content = await callAI(apiKey, DIRECTOR_PROMPT, calibrationUserContent);
-    content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const classifierSystem = `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`;
 
+    const [calibrationRaw, classifierRaw] = await Promise.all([
+      callAI(apiKey, DIRECTOR_PROMPT, sharedContext),
+      callAI(apiKey, classifierSystem, sharedContext),
+    ]);
+
+    // Parse calibration result (required)
+    const calibrationClean = calibrationRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     let result: Record<string, unknown>;
     try {
-      result = JSON.parse(content);
+      result = JSON.parse(calibrationClean);
     } catch {
-      console.error("Calibration JSON parse failed. Preview:", content.slice(0, 300));
+      console.error("Calibration JSON parse failed. Preview:", calibrationClean.slice(0, 300));
       throw new Error("Failed to parse AI response. Please try again.");
     }
 
-    // Attach normalized metadata for downstream use (optional, non-breaking)
+    // Parse signal classifier result (non-fatal)
+    const classifierClean = classifierRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    try {
+      result.signal_classifier = JSON.parse(classifierClean);
+      console.log("Signal Classifier success. Inferred level:", (result.signal_classifier as Record<string, unknown>).target_level_inferred);
+    } catch {
+      console.error("Signal Classifier JSON parse failed. Preview:", classifierClean.slice(0, 300));
+      result.signal_classifier = null;
+    }
+
+    // Attach normalized metadata
     result._normalized = normalized;
 
     return new Response(JSON.stringify(result), {
