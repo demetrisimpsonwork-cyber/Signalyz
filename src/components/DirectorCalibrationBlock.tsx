@@ -29,6 +29,11 @@ export interface GapAnalyzerResult {
   }>;
 }
 
+export interface ConsistencyValidatorResult {
+  status: "pass" | "revise";
+  issues: string[];
+}
+
 export interface SignalDimensionScore {
   score: number;
   gap: string;
@@ -70,6 +75,7 @@ export interface DirectorCalibrationResult {
   recalibration_directives?: string[];
   signal_classifier?: SignalClassifierResult | null;
   gap_analyzer?: GapAnalyzerResult | null;
+  consistency_validator?: ConsistencyValidatorResult | null;
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
@@ -178,7 +184,7 @@ const scoreBarColor = (score: number) => {
 const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResult }) => {
   const [copied, setCopied] = useState(false);
 
-  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer } = result;
+  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
   const frictionStages = [
     {
@@ -476,7 +482,41 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
         </BlockShell>
       )}
 
-      {/* Copy */}
+      {/* 8 — Consistency Validator */}
+      {consistency_validator && (
+        <BlockShell label="Consistency Validator">
+          <div className="px-4 py-3 space-y-3">
+            {/* Status badge */}
+            <div className="flex items-center gap-3">
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded ${
+                consistency_validator.status === "pass"
+                  ? "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20"
+                  : "text-destructive bg-destructive/10"
+              }`}>
+                {consistency_validator.status === "pass" ? "✓ Pass" : "⚠ Revise"}
+              </span>
+              <p className="text-xs text-muted-foreground">
+                {consistency_validator.status === "pass"
+                  ? "No material consistency issues detected."
+                  : `${consistency_validator.issues.length} issue${consistency_validator.issues.length !== 1 ? "s" : ""} flagged.`}
+              </p>
+            </div>
+            {/* Issues */}
+            {consistency_validator.issues.length > 0 && (
+              <ul className="space-y-2">
+                {consistency_validator.issues.map((issue, i) => (
+                  <li key={i} className="flex gap-2.5 text-xs text-muted-foreground leading-relaxed">
+                    <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-destructive" />
+                    {issue}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </BlockShell>
+      )}
+
+
       <div className="flex justify-end">
         <button
           onClick={handleCopy}
