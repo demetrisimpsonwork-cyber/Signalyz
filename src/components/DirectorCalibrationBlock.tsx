@@ -25,6 +25,7 @@ export interface GapAnalyzerResult {
     bullet_reference: string;
     upgrade_type: UpgradeType;
     reason: string;
+    rewritten_bullet?: string | null;
   }>;
 }
 
@@ -450,14 +451,25 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
           {/* Rewrite targets */}
           <div className="divide-y divide-border/50">
             {gap_analyzer.rewrite_targets.map((target, i) => (
-              <div key={i} className="px-4 py-3 space-y-2">
+              <div key={i} className="px-4 py-3 space-y-2.5">
+                {/* Header: badge + original bullet */}
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-xs font-semibold text-foreground leading-relaxed">{target.bullet_reference}</p>
                   <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type]}`}>
                     {UPGRADE_TYPE_LABELS[target.upgrade_type]}
                   </span>
                 </div>
+                {/* Gap reason */}
                 <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
+                {/* Rewritten bullet */}
+                {target.rewritten_bullet && (
+                  <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                      Rewritten
+                    </p>
+                    <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
