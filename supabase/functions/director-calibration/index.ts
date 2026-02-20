@@ -411,13 +411,186 @@ async function callAI(
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface RewriteTarget {
+  bullet_reference: string;
+  upgrade_type: string;
+  reason: string;
+  rewritten_bullet?: string | null;
+}
+
+interface GapAnalyzerOutput {
+  priority_order: string[];
+  rewrite_targets: RewriteTarget[];
+}
+
+// ─── JSON helper ─────────────────────────────────────────────────────────────
+
+function parseJSON<T>(raw: string): T {
+  const clean = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+  return JSON.parse(clean) as T;
+}
+
+// ─── Coordinator ─────────────────────────────────────────────────────────────
+
+async function runPipeline(
+  apiKey: string,
+  experience: string,
+  jd: string | undefined,
+): Promise<Record<string, unknown>> {
+
+  // ── 1. Normalizer ───────────────────────────────────────────────────────────
+  console.log("[1/6] Normalizer");
+  let normalized: Record<string, unknown> = {};
+  try {
+    const normInput = jd?.trim()
+      ? `JOB DESCRIPTION:\n${jd.trim()}\n\nRESUME:\n${experience}`
+      : `RESUME:\n${experience}`;
+    const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput);
+    normalized = parseJSON<Record<string, unknown>>(raw);
+    console.log("  → target_role_title:", normalized.target_role_title);
+  } catch (e) {
+    console.error("  ✗ Normalizer failed (non-fatal):", e instanceof Error ? e.message : e);
+  }
+
+  // ── Shared context for downstream prompts ────────────────────────────────────
+  const sharedContext = Object.keys(normalized).length > 0
+    ? `STRUCTURED INPUT (pre-processed):\n${JSON.stringify(normalized, null, 2)}\n\nRESUME:\n${experience}${jd?.trim() ? `\n\nJOB DESCRIPTION:\n${jd.trim()}` : ""}`
+    : jd?.trim()
+      ? `RESUME:\n${experience}\n\nJOB DESCRIPTION:\n${jd.trim()}`
+      : `RESUME:\n${experience}`;
+
+  // ── 2. Signal Classifier + Director Calibration (parallel) ──────────────────
+  console.log("[2/6] Signal Classifier + Director Calibration (parallel)");
+  const [calibrationRaw, classifierRaw] = await Promise.all([
+    callAI(apiKey, DIRECTOR_PROMPT, sharedContext),
+    callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext),
+  ]);
+
+  // Director Calibration is the primary result container (required — throws on failure)
+  let result: Record<string, unknown>;
+  try {
+    result = parseJSON<Record<string, unknown>>(calibrationRaw);
+    console.log("  → Director Calibration: ok");
+  } catch {
+    throw new Error("Failed to parse Director Calibration response. Please try again.");
+  }
+
+  // Signal Classifier (non-fatal)
+  let classifierParsed: Record<string, unknown> | null = null;
+  try {
+    classifierParsed = parseJSON<Record<string, unknown>>(classifierRaw);
+    result.signal_classifier = classifierParsed;
+    console.log("  → Signal Classifier: ok — inferred:", classifierParsed.target_level_inferred);
+  } catch {
+    console.error("  ✗ Signal Classifier parse failed (non-fatal)");
+    result.signal_classifier = null;
+  }
+
+  // ── 3. Gap Analyzer ─────────────────────────────────────────────────────────
+  console.log("[3/6] Gap Analyzer");
+  let gapOutput: GapAnalyzerOutput | null = null;
+  if (classifierParsed) {
+    const gapInput = {
+      dimension_scores: classifierParsed.dimension_scores,
+      target_role_requirements: {
+        target_role_title: normalized.target_role_title ?? null,
+        target_seniority_level: normalized.target_seniority_level ?? null,
+        core_requirements: normalized.core_requirements ?? [],
+        leadership_requirements: normalized.leadership_requirements ?? [],
+        commercial_requirements: normalized.commercial_requirements ?? [],
+      },
+    };
+    try {
+      const raw = await callAI(
+        apiKey,
+        `${GAP_ANALYZER_SYSTEM}\n\n${GAP_ANALYZER_SCHEMA}`,
+        `INPUT DATA:\n${JSON.stringify(gapInput, null, 2)}`,
+      );
+      gapOutput = parseJSON<GapAnalyzerOutput>(raw);
+      result.gap_analyzer = gapOutput;
+      console.log(`  → Gap Analyzer: ok — ${gapOutput.rewrite_targets.length} targets`);
+    } catch {
+      console.error("  ✗ Gap Analyzer failed (non-fatal)");
+      result.gap_analyzer = null;
+    }
+  } else {
+    result.gap_analyzer = null;
+  }
+
+  // ── 4. Rewrite Modules (parallel — one per target) ──────────────────────────
+  console.log("[4/6] Rewrite Modules");
+  let rewrittenTargets: RewriteTarget[] = gapOutput?.rewrite_targets ?? [];
+
+  if (gapOutput?.rewrite_targets?.length) {
+    const jobs = gapOutput.rewrite_targets.map(async (target): Promise<RewriteTarget> => {
+      const modulePrompt = REWRITE_MODULE_PROMPTS[target.upgrade_type];
+      if (!modulePrompt) {
+        console.warn(`  ⚠ No module for upgrade_type="${target.upgrade_type}"`);
+        return { ...target, rewritten_bullet: null };
+      }
+      const userContent = [
+        `ORIGINAL BULLET:\n${target.bullet_reference}`,
+        `UPGRADE CONTEXT:\n${target.reason}`,
+        `RESUME CONTEXT (reference only):\n${experience.slice(0, 1500)}`,
+      ].join("\n\n");
+      try {
+        const raw = await callAI(apiKey, modulePrompt, userContent);
+        const parsed = parseJSON<{ rewritten_bullet?: string }>(raw);
+        console.log(`  → [${target.upgrade_type}]: ok`);
+        return { ...target, rewritten_bullet: parsed.rewritten_bullet ?? null };
+      } catch {
+        console.error(`  ✗ Rewrite module [${target.upgrade_type}] failed (non-fatal)`);
+        return { ...target, rewritten_bullet: null };
+      }
+    });
+    rewrittenTargets = await Promise.all(jobs);
+  }
+
+  // ── 5. Replace bullets in gap_analyzer output ───────────────────────────────
+  console.log("[5/6] Replacing bullets");
+  if (gapOutput && rewrittenTargets.length) {
+    (result.gap_analyzer as Record<string, unknown>).rewrite_targets = rewrittenTargets;
+  }
+
+  // ── 6. Consistency Validator ─────────────────────────────────────────────────
+  console.log("[6/6] Consistency Validator");
+  try {
+    const rewrittenBullets = rewrittenTargets
+      .filter((t) => t.rewritten_bullet)
+      .map((t) => `[${t.upgrade_type}] ${t.rewritten_bullet}`);
+
+    const validatorContent = [
+      `ORIGINAL RESUME:\n${experience}`,
+      jd?.trim() ? `JOB DESCRIPTION:\n${jd.trim()}` : "",
+      rewrittenBullets.length
+        ? `REWRITTEN BULLETS (validate against originals):\n${rewrittenBullets.join("\n")}`
+        : "",
+    ].filter(Boolean).join("\n\n");
+
+    const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
+    result.consistency_validator = parseJSON<{ status: string; issues: string[] }>(raw);
+    console.log("  → status:", (result.consistency_validator as { status: string }).status);
+  } catch {
+    console.error("  ✗ Consistency Validator failed (non-fatal)");
+    result.consistency_validator = null;
+  }
+
+  // ── Return final package ────────────────────────────────────────────────────
+  result._normalized = normalized;
+  return result;
+}
+
+// ─── HTTP handler ─────────────────────────────────────────────────────────────
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { experience, jd } = await req.json();
 
-    if (!experience || !experience.trim()) {
+    if (!experience?.trim()) {
       return new Response(JSON.stringify({ error: "Missing experience input" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -427,145 +600,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    // ── STEP 1: Normalizer ──────────────────────────────────────────────────
-    console.log("Step 1: Running Normalizer");
-    const normalizerUserContent = jd?.trim()
-      ? `JOB DESCRIPTION:\n${jd.trim()}\n\nRESUME:\n${experience}`
-      : `RESUME:\n${experience}`;
-
-    const normalizerPrompt = `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`;
-
-    let normalizedRaw = await callAI(apiKey, normalizerPrompt, normalizerUserContent);
-    normalizedRaw = normalizedRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-
-    let normalized: Record<string, unknown>;
-    try {
-      normalized = JSON.parse(normalizedRaw);
-      console.log("Normalizer success. Target role:", normalized.target_role_title);
-    } catch {
-      console.error("Normalizer JSON parse failed. Preview:", normalizedRaw.slice(0, 300));
-      // Non-fatal: fall back to raw input for Step 2
-      normalized = {};
-    }
-
-    // ── STEPS 2 & 3: Signal Classifier + Director Calibration (parallel) ──────
-    console.log("Steps 2 & 3: Running Signal Classifier and Director Calibration in parallel");
-
-    const sharedContext = Object.keys(normalized).length > 0
-      ? `STRUCTURED INPUT (extracted by pre-processor):\n${JSON.stringify(normalized, null, 2)}\n\nRAW RESUME / EXPERIENCE:\n${experience}${jd?.trim() ? `\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}` : ""}`
-      : jd?.trim()
-        ? `RESUME / EXPERIENCE INPUT:\n${experience}\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}`
-        : `RESUME / EXPERIENCE INPUT:\n${experience}`;
-
-    const classifierSystem = `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`;
-
-    const [calibrationRaw, classifierRaw] = await Promise.all([
-      callAI(apiKey, DIRECTOR_PROMPT, sharedContext),
-      callAI(apiKey, classifierSystem, sharedContext),
-    ]);
-
-    // Parse calibration result (required)
-    const calibrationClean = calibrationRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-    let result: Record<string, unknown>;
-    try {
-      result = JSON.parse(calibrationClean);
-    } catch {
-      console.error("Calibration JSON parse failed. Preview:", calibrationClean.slice(0, 300));
-      throw new Error("Failed to parse AI response. Please try again.");
-    }
-
-    // Parse signal classifier result (non-fatal)
-    const classifierClean = classifierRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-    let classifierParsed: Record<string, unknown> | null = null;
-    try {
-      classifierParsed = JSON.parse(classifierClean);
-      result.signal_classifier = classifierParsed;
-      console.log("Signal Classifier success. Inferred level:", classifierParsed?.target_level_inferred);
-    } catch {
-      console.error("Signal Classifier JSON parse failed. Preview:", classifierClean.slice(0, 300));
-      result.signal_classifier = null;
-    }
-
-    // ── STEP 4: Gap Analyzer (uses Signal Classifier + Normalizer output) ──────
-    if (classifierParsed) {
-      console.log("Step 4: Running Gap Analyzer");
-      const gapInput = {
-        dimension_scores: classifierParsed.dimension_scores,
-        target_role_requirements: {
-          target_role_title: normalized.target_role_title ?? null,
-          target_seniority_level: normalized.target_seniority_level ?? null,
-          core_requirements: normalized.core_requirements ?? [],
-          leadership_requirements: normalized.leadership_requirements ?? [],
-          commercial_requirements: normalized.commercial_requirements ?? [],
-        },
-      };
-      const gapSystem = `${GAP_ANALYZER_SYSTEM}\n\n${GAP_ANALYZER_SCHEMA}`;
-      const gapUserContent = `INPUT DATA:\n${JSON.stringify(gapInput, null, 2)}`;
-      try {
-        let gapRaw = await callAI(apiKey, gapSystem, gapUserContent);
-        gapRaw = gapRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-        result.gap_analyzer = JSON.parse(gapRaw);
-        console.log("Gap Analyzer success.");
-      } catch {
-        console.error("Gap Analyzer failed — non-fatal, skipping.");
-        result.gap_analyzer = null;
-      }
-    } else {
-      result.gap_analyzer = null;
-    }
-
-    // ── STEP 5: Rewrite Modules (parallel, one per gap_analyzer rewrite_target) ─
-    const gapResult = result.gap_analyzer as { rewrite_targets?: Array<{ bullet_reference: string; upgrade_type: string; reason: string }> } | null;
-    if (gapResult?.rewrite_targets?.length) {
-      console.log(`Step 5: Running ${gapResult.rewrite_targets.length} Rewrite Modules in parallel`);
-      const rewriteJobs = gapResult.rewrite_targets.map(async (target) => {
-        const modulePrompt = REWRITE_MODULE_PROMPTS[target.upgrade_type];
-        if (!modulePrompt) return { ...target, rewritten_bullet: null };
-        const userContent = [
-          `ORIGINAL BULLET:\n${target.bullet_reference}`,
-          `UPGRADE CONTEXT:\n${target.reason}`,
-          experience ? `FULL RESUME CONTEXT (for reference):\n${experience.slice(0, 1500)}` : "",
-        ].filter(Boolean).join("\n\n");
-        try {
-          let raw = await callAI(apiKey, modulePrompt, userContent);
-          raw = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-          const parsed = JSON.parse(raw);
-          return { ...target, rewritten_bullet: parsed.rewritten_bullet ?? null };
-        } catch {
-          console.error(`Rewrite module failed for upgrade_type=${target.upgrade_type}`);
-          return { ...target, rewritten_bullet: null };
-        }
-      });
-      (result.gap_analyzer as Record<string, unknown>).rewrite_targets = await Promise.all(rewriteJobs);
-      console.log("Rewrite Modules complete.");
-    }
-
-    // ── STEP 6: Consistency Validator ──────────────────────────────────────────
-    console.log("Step 6: Running Consistency Validator");
-    try {
-      const rewrittenBullets = (gapResult?.rewrite_targets ?? [])
-        .filter((t) => (t as { rewritten_bullet?: string | null }).rewritten_bullet)
-        .map((t) => `[${t.upgrade_type}] ${(t as { rewritten_bullet?: string | null }).rewritten_bullet}`);
-
-      const validatorContent = [
-        `ORIGINAL RESUME / EXPERIENCE:\n${experience}`,
-        jd?.trim() ? `TARGET JOB DESCRIPTION:\n${jd.trim()}` : "",
-        rewrittenBullets.length
-          ? `REWRITTEN BULLETS (validate against originals):\n${rewrittenBullets.join("\n")}`
-          : "",
-      ].filter(Boolean).join("\n\n");
-
-      let validatorRaw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
-      validatorRaw = validatorRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-      result.consistency_validator = JSON.parse(validatorRaw);
-      console.log("Consistency Validator status:", (result.consistency_validator as { status: string }).status);
-    } catch {
-      console.error("Consistency Validator failed — non-fatal, skipping.");
-      result.consistency_validator = null;
-    }
-
-    // Attach normalized metadata
-    result._normalized = normalized;
+    const result = await runPipeline(apiKey, experience.trim(), jd);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -573,7 +608,9 @@ serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("director-calibration error:", message);
-    const status = message.includes("Rate limits") ? 429 : message.includes("Usage limit") ? 402 : 500;
+    const status =
+      message.includes("Rate limits") ? 429 :
+      message.includes("Usage limit") ? 402 : 500;
     const friendly =
       status === 429 ? "Too many requests. Please wait a moment and try again." :
       status === 402 ? "Usage limit reached. Please add credits to continue." :
@@ -581,7 +618,8 @@ serve(async (req) => {
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       "Something went wrong. Please try again.";
     return new Response(JSON.stringify({ error: friendly, detail: message }), {
-      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
