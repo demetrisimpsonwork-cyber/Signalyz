@@ -268,6 +268,42 @@ const PILLAR_STANDARDS: PillarStandard[] = [
       "If no end-to-end ownership language is present → calibration status: Authority Gap",
     ],
   },
+  {
+    pillarKey: "context",
+    title: "Pillar 2 — Strategic Definition",
+    calibrationRule: "Senior PM Threshold Standard",
+    seniorThreshold:
+      "A candidate meets Senior PM calibration when strategic definition is evident: problem framing is self-directed, prioritization is grounded in business objectives, and initiative sequencing connects to market or user strategy — not feature throughput.",
+    thresholdCriteria: [
+      "Defines problem framing — not just solves assigned problems",
+      "Prioritizes based on business objectives and tradeoff logic",
+      "Articulates sequencing rationale with strategic justification",
+      "Connects initiatives to market positioning or user strategy",
+      "Shows evidence of opportunity identification, not just execution",
+    ],
+    patterns: [
+      {
+        type: "below",
+        examples: [
+          "Feature-level execution focus only",
+          "No prioritization logic present",
+          "No business framing or tradeoff evidence",
+        ],
+      },
+      {
+        type: "threshold",
+        examples: [
+          '"Defined success metrics"',
+          '"Prioritized against revenue targets"',
+          '"Sequenced roadmap to align with market strategy"',
+        ],
+      },
+    ],
+    signalLogic: [
+      "If prioritization logic is absent → calibration status: Strategic Deficit",
+      "If execution dominates without strategic framing → calibration status: Execution Bias",
+    ],
+  },
 ];
 
 const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => {
