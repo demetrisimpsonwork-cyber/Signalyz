@@ -113,6 +113,32 @@ CONSTRAINTS:
 - rewrite_targets: 1–4 items maximum
 - priority_order: list dimension keys in order of highest remediation leverage (e.g. ["commercial", "authority", "risk"])`;
 
+// ─── PROMPT 5: Consistency Validator ─────────────────────────────────────────
+const CONSISTENCY_VALIDATOR_SYSTEM = `You validate resume consistency. You do not rewrite. You do not coach.
+
+Check for:
+1. Metrics alignment — Are quantified claims internally consistent (no conflicting numbers, realistic percentages)?
+2. Timeline realism — Do role durations and scope escalations map to plausible career progression?
+3. Scope escalation coherence — Does each role demonstrate logical growth from the previous?
+4. No fabricated claims — Flag any claims that appear structurally implausible or unverifiable without basis.
+5. No internal contradictions — Identify any statements that directly contradict each other.
+
+Rules:
+- Be precise. Only flag real issues, not stylistic concerns.
+- If rewritten bullets are provided, validate them against the original claims.
+- Do not suggest rewrites. Do not encourage. Do not coach.
+- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON:
+{
+  "status": "pass" | "revise",
+  "issues": [string]
+}
+
+CONSTRAINTS:
+- status: "pass" if no material issues found, "revise" if one or more issues require attention
+- issues: empty array [] if status is "pass"; otherwise 1–5 concise issue statements`;
+
 // ─── PROMPT 4: Rewrite Modules ───────────────────────────────────────────────
 const REWRITE_MODULE_PROMPTS: Record<string, string> = {
   commercial_injection: `You elevate resume bullets by adding quantified commercial impact without fabricating facts.
@@ -512,6 +538,30 @@ serve(async (req) => {
       });
       (result.gap_analyzer as Record<string, unknown>).rewrite_targets = await Promise.all(rewriteJobs);
       console.log("Rewrite Modules complete.");
+    }
+
+    // ── STEP 6: Consistency Validator ──────────────────────────────────────────
+    console.log("Step 6: Running Consistency Validator");
+    try {
+      const rewrittenBullets = (gapResult?.rewrite_targets ?? [])
+        .filter((t) => (t as { rewritten_bullet?: string | null }).rewritten_bullet)
+        .map((t) => `[${t.upgrade_type}] ${(t as { rewritten_bullet?: string | null }).rewritten_bullet}`);
+
+      const validatorContent = [
+        `ORIGINAL RESUME / EXPERIENCE:\n${experience}`,
+        jd?.trim() ? `TARGET JOB DESCRIPTION:\n${jd.trim()}` : "",
+        rewrittenBullets.length
+          ? `REWRITTEN BULLETS (validate against originals):\n${rewrittenBullets.join("\n")}`
+          : "",
+      ].filter(Boolean).join("\n\n");
+
+      let validatorRaw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
+      validatorRaw = validatorRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      result.consistency_validator = JSON.parse(validatorRaw);
+      console.log("Consistency Validator status:", (result.consistency_validator as { status: string }).status);
+    } catch {
+      console.error("Consistency Validator failed — non-fatal, skipping.");
+      result.consistency_validator = null;
     }
 
     // Attach normalized metadata

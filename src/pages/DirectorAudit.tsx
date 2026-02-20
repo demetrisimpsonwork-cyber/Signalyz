@@ -87,6 +87,18 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     lines.push("");
   }
 
+  if (result.consistency_validator) {
+    const cv = result.consistency_validator;
+    lines.push("CONSISTENCY VALIDATOR");
+    lines.push(`Status: ${cv.status.toUpperCase()}`);
+    if (cv.issues.length > 0) {
+      cv.issues.forEach((issue, i) => lines.push(`${i + 1}. ${issue}`));
+    } else {
+      lines.push("No material consistency issues detected.");
+    }
+    lines.push("");
+  }
+
   return lines.join("\n");
 };
 
