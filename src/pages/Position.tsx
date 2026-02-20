@@ -213,6 +213,133 @@ const deriveHiringStage = (rating: string): HiringStage => {
   return "Stage 2 — Hiring Manager Authority Audit";
 };
 
+// ─── Pillar Threshold Standards ──────────────────────────────────────────────
+
+interface ThresholdPattern {
+  type: "below" | "threshold";
+  examples: string[];
+}
+
+interface PillarStandard {
+  pillarKey: string; // matches item.category (case-insensitive partial)
+  title: string;
+  calibrationRule: string;
+  seniorThreshold: string;
+  thresholdCriteria: string[];
+  patterns: ThresholdPattern[];
+  signalLogic: string[];
+}
+
+const PILLAR_STANDARDS: PillarStandard[] = [
+  {
+    pillarKey: "capability",
+    title: "Pillar 1 — Ownership Scope",
+    calibrationRule: "Senior PM Threshold Standard",
+    seniorThreshold:
+      "A candidate meets Senior PM calibration when ownership scope is demonstrated end-to-end, roadmap sequencing is self-directed, and accountability is tied to measurable outcomes — not participation.",
+    thresholdCriteria: [
+      "Owns an end-to-end product or major initiative",
+      "Defines roadmap sequencing — not just contributes to it",
+      "Accountable for measurable outcomes",
+      "Demonstrates scope beyond feature execution",
+      "Signals initiative origination",
+    ],
+    patterns: [
+      {
+        type: "below",
+        examples: [
+          '"Worked on roadmap"',
+          '"Contributed to feature delivery"',
+          '"Partnered with PM"',
+        ],
+      },
+      {
+        type: "threshold",
+        examples: [
+          '"Owned product lifecycle"',
+          '"Defined roadmap priorities"',
+          '"Accountable for adoption metrics"',
+          '"Led initiative end-to-end"',
+        ],
+      },
+    ],
+    signalLogic: [
+      "If 3+ threshold signals are absent → calibration status: Under-Signaled",
+      "If no end-to-end ownership language is present → calibration status: Authority Gap",
+    ],
+  },
+];
+
+const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => {
+  const belowPatterns = standard.patterns.find((p) => p.type === "below");
+  const thresholdPatterns = standard.patterns.find((p) => p.type === "threshold");
+
+  return (
+    <div className="mt-3 rounded-md border border-border/70 bg-muted/10 overflow-hidden">
+      {/* Title row */}
+      <div className="px-3 py-2.5 border-b border-border/50 bg-muted/20 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">{standard.title}</p>
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">
+          {standard.calibrationRule}
+        </span>
+      </div>
+
+      {/* Threshold definition */}
+      <div className="px-3 pt-3 pb-2">
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">Threshold Definition</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{standard.seniorThreshold}</p>
+      </div>
+
+      {/* Threshold criteria */}
+      <div className="px-3 py-2 border-t border-border/40">
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">Threshold Criteria</p>
+        <ul className="space-y-1">
+          {standard.thresholdCriteria.map((criterion, i) => (
+            <li key={i} className="flex gap-2 text-[11px] text-muted-foreground leading-snug">
+              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary/50" />
+              {criterion}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Pattern comparison */}
+      <div className="grid grid-cols-2 divide-x divide-border/40 border-t border-border/40">
+        {/* Below threshold */}
+        <div className="px-3 py-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-destructive/70 mb-1.5">Below Threshold</p>
+          <ul className="space-y-1">
+            {belowPatterns?.examples.map((ex, i) => (
+              <li key={i} className="text-[10px] text-muted-foreground leading-snug font-mono">{ex}</li>
+            ))}
+          </ul>
+        </div>
+        {/* Threshold language */}
+        <div className="px-3 py-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-green-700 dark:text-green-400 mb-1.5">Threshold Language</p>
+          <ul className="space-y-1">
+            {thresholdPatterns?.examples.map((ex, i) => (
+              <li key={i} className="text-[10px] text-foreground leading-snug font-mono">{ex}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Signal evaluation logic */}
+      <div className="px-3 py-2.5 border-t border-border/40 bg-muted/20">
+        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Evaluation Logic</p>
+        <ul className="space-y-1">
+          {standard.signalLogic.map((rule, i) => (
+            <li key={i} className="text-[10px] text-muted-foreground leading-snug">
+              <span className="text-foreground font-medium">→ </span>{rule}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 // ─── Blurred Pro Teaser ───────────────────────────────────────────────────────
 
 const LockedSection = ({ title, lockLabel = "Unlock Strategic Interview Forecasting with Pro" }: { title: string; lockLabel?: string }) => (
@@ -717,6 +844,17 @@ const Position = () => {
                             </p>
                             <p className="text-xs text-foreground leading-relaxed">{signalDeficiency}</p>
                           </div>
+                          {/* Pillar Threshold Standard — rendered when available */}
+                          {(() => {
+                            const std = PILLAR_STANDARDS.find((s) =>
+                              item.category.toLowerCase().includes(s.pillarKey)
+                            );
+                            return std ? (
+                              <div className="px-4 pb-4">
+                                <PillarThresholdStandard standard={std} />
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       );
                     })}
