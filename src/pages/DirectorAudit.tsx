@@ -70,6 +70,20 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     lines.push("");
   }
 
+  if (result.gap_analyzer) {
+    const ga = result.gap_analyzer;
+    lines.push("GAP ANALYZER — UPGRADE PRIORITY");
+    if (ga.priority_order.length) {
+      lines.push(`Priority Order: ${ga.priority_order.join(" → ")}`);
+      lines.push("");
+    }
+    ga.rewrite_targets.forEach((t, i) => {
+      lines.push(`${i + 1}. [${t.upgrade_type}] ${t.bullet_reference}`);
+      lines.push(`   Reason: ${t.reason}`);
+    });
+    lines.push("");
+  }
+
   return lines.join("\n");
 };
 
