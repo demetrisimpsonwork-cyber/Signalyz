@@ -79,9 +79,9 @@ const PillarCard = ({ pillar }: { pillar: ISIPillar }) => (
     </div>
     <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
       <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
-        Improvement Lever
+        Threshold Requirement
       </p>
-      <p className="text-xs text-foreground leading-relaxed">{pillar.improvement_lever}</p>
+      <p className="text-xs text-foreground leading-relaxed">Senior PM threshold requires {pillar.improvement_lever.replace(/^[Ii]f possible[,]?\s*/i, "").replace(/^[Aa]dd\s/i, "").replace(/^[Ii]nclude\s/i, "").replace(/^[Cc]onsider\s/i, "")}</p>
     </div>
   </div>
 );

@@ -11,6 +11,7 @@ import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import { Loader2, Sparkles } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
+import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
@@ -437,11 +438,13 @@ const Index = () => {
               {effectiveIsPro && result.alt_b !== result.optimized_bullet && (
                 <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={result.alt_b} />
               )}
-              {result.alignment_notes && (
-                <ResultSection title="Calibration Summary" content={result.alignment_notes} />
-              )}
-              {result.gap_suggestions && (
-                <ResultSection title="Signal Deficiency Classification" content={result.gap_suggestions} />
+              {(result.alignment_notes || result.gap_suggestions) && (
+                <LevelDeterminationBlock
+                  score={result.match_score}
+                  alignmentNotes={result.alignment_notes}
+                  gapSuggestions={result.gap_suggestions}
+                  confidenceLevel={result.alignment_confidence_level}
+                />
               )}
               {result.match_score < 60 && (
                 <WeakAlignmentNudge
