@@ -113,7 +113,80 @@ CONSTRAINTS:
 - rewrite_targets: 1–4 items maximum
 - priority_order: list dimension keys in order of highest remediation leverage (e.g. ["commercial", "authority", "risk"])`;
 
-// ─── PROMPT 4: Director Calibration Engine ───────────────────────────────────
+// ─── PROMPT 4: Rewrite Modules ───────────────────────────────────────────────
+const REWRITE_MODULE_PROMPTS: Record<string, string> = {
+  commercial_injection: `You elevate resume bullets by adding quantified commercial impact without fabricating facts.
+
+Rules:
+- Preserve the original claim exactly.
+- Add measurable commercial impact only if metrics are provided in context.
+- If no metrics are available, insert placeholder: [Insert % or $].
+- Do not add fluff, coaching language, or soft qualifiers.
+- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+
+  ownership_elevation: `You reframe resume bullets to reflect end-to-end product ownership and full lifecycle accountability.
+
+Add signals of:
+- Full-stack ownership (from discovery through delivery)
+- Cross-functional coordination responsibility
+- Post-launch stewardship
+
+Do not fabricate. Preserve all original facts.
+Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+
+  authority_framing: `You rewrite resume bullets to reflect autonomous decision authority and cross-organizational influence.
+
+Add signals of:
+- Escalation resolution
+- Executive partnership
+- Dependency arbitration
+- Decision ownership
+
+Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+
+  cross_functional_leadership: `You reframe resume bullets to surface cross-functional leadership scope and organizational influence.
+
+Inject signals of:
+- Engineering, design, data, legal, finance, or ops alignment
+- Stakeholder mobilization
+- Shared accountability across teams
+
+Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+
+  lifecycle_governance: `You reframe resume bullets to reflect full product lifecycle governance and operational rigor.
+
+Inject signals of:
+- Roadmap ownership
+- Production readiness criteria
+- Planning through launch governance
+- Operational rigor frameworks (e.g., PRDs, OKRs, launch reviews)
+
+Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+
+  risk_compression: `You reframe resume bullets to surface risk identification, mitigation, and outcome accountability.
+
+Inject signals of:
+- Risk modeling
+- Dependency identification
+- Mitigation strategy framing
+- Consequence-aware decision language
+
+Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON: { "rewritten_bullet": string }`,
+};
+
+
 const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
 
 Your task is to evaluate a Product Leader's resume, experience section, or bullet against Director-level ownership thresholds.
@@ -413,6 +486,32 @@ serve(async (req) => {
       }
     } else {
       result.gap_analyzer = null;
+    }
+
+    // ── STEP 5: Rewrite Modules (parallel, one per gap_analyzer rewrite_target) ─
+    const gapResult = result.gap_analyzer as { rewrite_targets?: Array<{ bullet_reference: string; upgrade_type: string; reason: string }> } | null;
+    if (gapResult?.rewrite_targets?.length) {
+      console.log(`Step 5: Running ${gapResult.rewrite_targets.length} Rewrite Modules in parallel`);
+      const rewriteJobs = gapResult.rewrite_targets.map(async (target) => {
+        const modulePrompt = REWRITE_MODULE_PROMPTS[target.upgrade_type];
+        if (!modulePrompt) return { ...target, rewritten_bullet: null };
+        const userContent = [
+          `ORIGINAL BULLET:\n${target.bullet_reference}`,
+          `UPGRADE CONTEXT:\n${target.reason}`,
+          experience ? `FULL RESUME CONTEXT (for reference):\n${experience.slice(0, 1500)}` : "",
+        ].filter(Boolean).join("\n\n");
+        try {
+          let raw = await callAI(apiKey, modulePrompt, userContent);
+          raw = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+          const parsed = JSON.parse(raw);
+          return { ...target, rewritten_bullet: parsed.rewritten_bullet ?? null };
+        } catch {
+          console.error(`Rewrite module failed for upgrade_type=${target.upgrade_type}`);
+          return { ...target, rewritten_bullet: null };
+        }
+      });
+      (result.gap_analyzer as Record<string, unknown>).rewrite_targets = await Promise.all(rewriteJobs);
+      console.log("Rewrite Modules complete.");
     }
 
     // Attach normalized metadata

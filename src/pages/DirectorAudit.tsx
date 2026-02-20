@@ -80,6 +80,9 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     ga.rewrite_targets.forEach((t, i) => {
       lines.push(`${i + 1}. [${t.upgrade_type}] ${t.bullet_reference}`);
       lines.push(`   Reason: ${t.reason}`);
+      if (t.rewritten_bullet) {
+        lines.push(`   Rewritten: ${t.rewritten_bullet}`);
+      }
     });
     lines.push("");
   }
