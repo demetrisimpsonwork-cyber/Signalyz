@@ -33,6 +33,9 @@ const Navbar = () => {
           <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Position
           </Link>
+          <Link to="/director-audit" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Director Audit
+          </Link>
           <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Pricing
           </Link>
@@ -87,6 +90,7 @@ const Navbar = () => {
           <div className="flex flex-col gap-3">
             <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Optimize</Link>
             <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Position</Link>
+            <Link to="/director-audit" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Director Audit</Link>
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
             {user && <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>}
             {!loading && user && (

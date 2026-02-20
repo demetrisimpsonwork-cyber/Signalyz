@@ -49,7 +49,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { experience } = await req.json();
+    const { experience, jd } = await req.json();
 
     if (!experience || !experience.trim()) {
       return new Response(JSON.stringify({ error: "Missing experience input" }), {
@@ -61,7 +61,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are an institutional Director-level signal calibration engine.
+    const DIRECTOR_PROMPT = `You are an institutional Director-level signal calibration engine.
 
 Your task is to classify a Product Leader's resume or bullet against Director-level ownership thresholds.
 
@@ -140,10 +140,13 @@ JSON SCHEMA (return exactly this structure):
 ARRAY SIZES:
 - dimensions: exactly 4 items in order above
 - undersignaling_patterns: 1–3 items (empty array if none detected)
-- ownership_inflation_patterns: 1–3 items (empty array if none detected)
+- ownership_inflation_patterns: 1–3 items (empty array if none detected)`;
 
-RESUME / EXPERIENCE INPUT:
-${experience}`;
+    const userContent = jd?.trim()
+      ? `RESUME / EXPERIENCE INPUT:\n${experience}\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}`
+      : `RESUME / EXPERIENCE INPUT:\n${experience}`;
+
+    const prompt = `${DIRECTOR_PROMPT}\n\n${userContent}`;
 
     let content = await callAI(apiKey, prompt);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
