@@ -71,11 +71,19 @@ interface InterviewTrajectory {
   strategic_angle: string;
 }
 
+type CalibrationStatus = "Aligned" | "Under-Signaled" | "Authority Gap" | "Execution Bias" | "Executive Deficit";
+type HiringStage = "Stage 1 — Recruiter Pattern Match" | "Stage 2 — Hiring Manager Authority Audit" | "Stage 3 — Executive Calibration";
+
 interface RiskPerceptionItem {
   category: string;
   rating: "Low" | "Medium" | "High";
   explanation: string;
   mitigation: string;
+  // PM Hiring Calibration Report fields (mapped from existing data)
+  calibration_status?: CalibrationStatus;
+  panel_read?: string;
+  signal_deficiency?: string;
+  hiring_risk_stage?: HiringStage;
 }
 
 interface PositioningResult {
@@ -174,6 +182,35 @@ const riskRatingColor = (r: string) => {
   if (r === "High") return "bg-destructive/10 text-destructive border border-destructive/20";
   if (r === "Medium") return "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40";
   return "bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800/40";
+};
+
+const calibrationStatusColor = (s: CalibrationStatus) => {
+  if (s === "Aligned") return "bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800/40";
+  if (s === "Under-Signaled") return "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40";
+  if (s === "Authority Gap") return "bg-destructive/10 text-destructive border border-destructive/20";
+  if (s === "Execution Bias") return "bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40";
+  if (s === "Executive Deficit") return "bg-destructive/20 text-destructive border border-destructive/30";
+  return "bg-muted text-muted-foreground border border-border";
+};
+
+// Derive calibration status from rating when not explicitly provided
+const deriveCalibrationStatus = (rating: string, category: string): CalibrationStatus => {
+  if (rating === "Low") return "Aligned";
+  const cat = category.toLowerCase();
+  if (rating === "High") {
+    if (cat.includes("capabilit") || cat.includes("signal")) return "Authority Gap";
+    if (cat.includes("commercial") || cat.includes("impact")) return "Executive Deficit";
+    return "Under-Signaled";
+  }
+  if (cat.includes("context") || cat.includes("stability")) return "Execution Bias";
+  return "Under-Signaled";
+};
+
+// Derive hiring stage from rating
+const deriveHiringStage = (rating: string): HiringStage => {
+  if (rating === "Low") return "Stage 1 — Recruiter Pattern Match";
+  if (rating === "High") return "Stage 3 — Executive Calibration";
+  return "Stage 2 — Hiring Manager Authority Audit";
 };
 
 // ─── Blurred Pro Teaser ───────────────────────────────────────────────────────
@@ -636,11 +673,11 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 2 — Employer Risk Perception Analysis */}
+              {/* 2 — PM Hiring Calibration Report */}
               {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
-                <Section title="2. Employer Risk Perception Analysis™" proLabel>
-                  <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed">
-                    Simulation of how a hiring manager evaluates perceived candidate risk. Grounded strictly in resume signals relative to JD requirements.
+                <Section title="2. PM Hiring Calibration Report" proLabel>
+                  <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed border-l-2 border-border pl-3">
+                    Structured evaluation of how each identity pillar reads across hiring stages. Grounded strictly in resume signal relative to JD weighting.
                   </p>
                   <div className="space-y-3">
                     {result.employer_risk_perception.map((item, i) => {
@@ -648,27 +685,37 @@ const Position = () => {
                       if (!isVisible) {
                         return <LockedRiskCard key={i} category={item.category} />;
                       }
+                      const status = item.calibration_status ?? deriveCalibrationStatus(item.rating, item.category);
+                      const stage = item.hiring_risk_stage ?? deriveHiringStage(item.rating);
+                      const panelRead = item.panel_read ?? item.explanation;
+                      const signalDeficiency = item.signal_deficiency ?? item.mitigation;
                       return (
                         <div key={i} className="rounded-md border bg-background overflow-hidden">
-                          {/* Badge row */}
-                          <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
-                            <div className="flex flex-col gap-1">
-                              <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase ${riskRatingColor(item.rating)}`}>
-                                {item.rating} RISK
+                          {/* Header row */}
+                          <div className="px-4 pt-4 pb-3 space-y-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="text-xs font-semibold text-foreground leading-snug">{item.category}</p>
+                              <span className={`shrink-0 inline-flex items-center rounded-sm px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap ${calibrationStatusColor(status)}`}>
+                                {status}
                               </span>
-                              <p className="text-xs font-semibold text-foreground mt-1">{item.category}</p>
+                            </div>
+                            {/* Hiring Stage */}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Hiring Risk:</span>
+                              <span className="text-[10px] font-semibold text-foreground">{stage}</span>
                             </div>
                           </div>
-                          {/* Explanation */}
-                          <div className="px-4 pb-3">
-                            <p className="text-xs text-muted-foreground leading-relaxed">{item.explanation}</p>
+                          {/* Panel Read */}
+                          <div className="px-4 pb-3 border-t border-border/40 pt-3">
+                            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">Panel Read</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{panelRead}</p>
                           </div>
-                          {/* Positioning Mitigation */}
+                          {/* Signal Deficiency */}
                           <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
-                            <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
-                              Positioning Mitigation
+                            <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1.5">
+                              Primary Signal Deficiency
                             </p>
-                            <p className="text-xs text-foreground leading-relaxed">{item.mitigation}</p>
+                            <p className="text-xs text-foreground leading-relaxed">{signalDeficiency}</p>
                           </div>
                         </div>
                       );
@@ -677,7 +724,7 @@ const Position = () => {
                   {!effectiveIsPro && (
                     <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-3">
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        4 risk dimensions — Context, Signal, Stability, and Commercial Impact — are restricted to Pro.
+                        4 calibration pillars — Context, Signal, Stability, and Commercial Impact — are restricted to Employer Intelligence™.
                       </p>
                       <Button size="sm" className="gap-1.5 text-xs h-8 px-3">
                         <Lock className="h-3 w-3" />
