@@ -431,18 +431,17 @@ const Index = () => {
                 />
               )}
               <KeywordChips keywords={result.missing_keywords} />
-              <ResultSection title="Suggested Action Verbs" content={result.suggested_verbs} />
               {effectiveIsPro && result.alt_a !== result.optimized_bullet && (
-                <ResultSection title="Alternate — Impact-focused" content={result.alt_a} />
+                <ResultSection title="Repositioned Version A — Ownership Elevation" content={result.alt_a} />
               )}
               {effectiveIsPro && result.alt_b !== result.optimized_bullet && (
-                <ResultSection title="Alternate — Human-natural" content={result.alt_b} />
+                <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={result.alt_b} />
               )}
               {result.alignment_notes && (
-                <ResultSection title="Alignment Intelligence Summary" content={result.alignment_notes} />
+                <ResultSection title="Calibration Summary" content={result.alignment_notes} />
               )}
               {result.gap_suggestions && (
-                <ResultSection title="Strategic Gap Actions" content={result.gap_suggestions} />
+                <ResultSection title="Signal Deficiency Classification" content={result.gap_suggestions} />
               )}
               {result.match_score < 60 && (
                 <WeakAlignmentNudge

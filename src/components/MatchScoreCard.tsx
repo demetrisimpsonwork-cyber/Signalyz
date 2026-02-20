@@ -25,10 +25,10 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 80) return { label: "Strong", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 65) return { label: "Solid", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
-  if (score >= 50) return { label: "Moderate", accent: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" };
-  return { label: "Weak", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
+  if (score >= 80) return { label: "Above Threshold", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 65) return { label: "At Threshold", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
+  if (score >= 50) return { label: "Approaching Threshold", accent: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" };
+  return { label: "Below Threshold", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
 const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal, scoreRationale, scoringBreakdown }: MatchScoreCardProps) => {
@@ -91,22 +91,17 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
               ))}
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Score is calculated based on weighted employer priorities detected in the job description.
+              Score reflects weighted alignment to employer priority signals detected in the job description.
             </p>
-            {score < 60 && (
-              <p className="text-xs text-amber-600 font-medium">
-                Add more specific detail (metrics, tools, frameworks) to increase match strength.
-              </p>
-            )}
             {topMatchedSignal && (
               <div>
-                <p className="text-xs font-medium text-green-600">✓ Top Matched Signal</p>
+                <p className="text-xs font-medium text-foreground">✓ Matched Signal</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{topMatchedSignal}</p>
               </div>
             )}
             {topMissingSignal && (
               <div>
-                <p className="text-xs font-medium text-amber-600">✗ Top Missing Signal</p>
+                <p className="text-xs font-medium text-foreground">✗ Under-Signaled Priority</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{topMissingSignal}</p>
               </div>
             )}
@@ -117,10 +112,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
       <p className={`mt-1 text-xs font-medium ${config.accent}`}>
         {confidenceLevel || config.label}
       </p>
-      <p className="mt-0.5 text-xs text-muted-foreground">Based on weighted employer priorities.</p>
-      <p className="mt-2 text-[11px] text-muted-foreground/70 italic">
-        Free shows surface alignment. Pro reveals weighted priority intelligence.
-      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Weighted employer priority alignment.</p>
     </div>
   );
 };
