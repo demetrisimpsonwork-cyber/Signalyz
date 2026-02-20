@@ -25,7 +25,7 @@ const KeywordChips = ({ keywords }: KeywordChipsProps) => {
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center gap-1.5">
-        <h3 className="text-sm font-semibold text-foreground">Missing Keywords</h3>
+        <h3 className="text-sm font-semibold text-foreground">Under-Signaled Hiring Priorities</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
