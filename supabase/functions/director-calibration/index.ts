@@ -11,57 +11,31 @@ const MODELS = [
   "openai/gpt-5-mini",
 ];
 
-async function callAI(apiKey: string, prompt: string): Promise<string> {
-  for (const model of MODELS) {
-    console.log(`Trying model: ${model}`);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
-    try {
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
-      });
-      clearTimeout(timeout);
-      console.log(`${model} status:`, aiRes.status);
-      if (aiRes.ok) {
-        const data = await aiRes.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        if (content) { console.log(`Success: ${model}`); return content; }
-      } else {
-        const err = await aiRes.text();
-        console.error(`${model} error:`, err);
-        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
-      }
-    } catch (e) {
-      clearTimeout(timeout);
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
-      console.error(`${model} threw:`, msg);
+// ─── PROMPT 1: Normalizer ────────────────────────────────────────────────────
+const NORMALIZER_SYSTEM = `You extract structured data from resumes and job descriptions.
+Do not interpret. Do not score. Extract only.
+Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
+
+const NORMALIZER_SCHEMA = `Return structured JSON with exactly this schema:
+{
+  "target_role_title": string,
+  "target_seniority_level": string,
+  "core_requirements": [string],
+  "leadership_requirements": [string],
+  "technical_requirements": [string],
+  "commercial_requirements": [string],
+  "resume_roles": [
+    {
+      "company": string,
+      "title": string,
+      "duration_years": string,
+      "bullets": [string]
     }
-  }
-  throw new Error("Service temporarily unavailable. Please try again in a moment.");
-}
+  ]
+}`;
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  try {
-    const { experience, jd } = await req.json();
-
-    if (!experience || !experience.trim()) {
-      return new Response(JSON.stringify({ error: "Missing experience input" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
-
-    const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
+// ─── PROMPT 2: Director Calibration Engine ───────────────────────────────────
+const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
 
 Your task is to evaluate a Product Leader's resume, experience section, or bullet against Director-level ownership thresholds.
 
@@ -214,22 +188,109 @@ ARRAY SIZES:
 - undersignaling_patterns: 1–3 items (use ["No material undersignaling detected."] if none)
 - ownership_inflation_patterns: 1–3 items (use ["No inflation risk detected."] if none)`;
 
-    const userContent = jd?.trim()
-      ? `RESUME / EXPERIENCE INPUT:\n${experience}\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}`
-      : `RESUME / EXPERIENCE INPUT:\n${experience}`;
+// ─── AI caller ───────────────────────────────────────────────────────────────
+async function callAI(
+  apiKey: string,
+  systemPrompt: string,
+  userContent: string,
+): Promise<string> {
+  for (const model of MODELS) {
+    console.log(`Trying model: ${model}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    try {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+        }),
+      });
+      clearTimeout(timeout);
+      console.log(`${model} status:`, aiRes.status);
+      if (aiRes.ok) {
+        const data = await aiRes.json();
+        const content = data.choices?.[0]?.message?.content || "";
+        if (content) { console.log(`Success: ${model}`); return content; }
+      } else {
+        const err = await aiRes.text();
+        console.error(`${model} error:`, err);
+        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
+      }
+    } catch (e) {
+      clearTimeout(timeout);
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+      console.error(`${model} threw:`, msg);
+    }
+  }
+  throw new Error("Service temporarily unavailable. Please try again in a moment.");
+}
 
-    const prompt = `${DIRECTOR_PROMPT}\n\n${userContent}`;
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    let content = await callAI(apiKey, prompt);
+  try {
+    const { experience, jd } = await req.json();
+
+    if (!experience || !experience.trim()) {
+      return new Response(JSON.stringify({ error: "Missing experience input" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+
+    // ── STEP 1: Normalizer ──────────────────────────────────────────────────
+    console.log("Step 1: Running Normalizer");
+    const normalizerUserContent = jd?.trim()
+      ? `JOB DESCRIPTION:\n${jd.trim()}\n\nRESUME:\n${experience}`
+      : `RESUME:\n${experience}`;
+
+    const normalizerPrompt = `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`;
+
+    let normalizedRaw = await callAI(apiKey, normalizerPrompt, normalizerUserContent);
+    normalizedRaw = normalizedRaw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+    let normalized: Record<string, unknown>;
+    try {
+      normalized = JSON.parse(normalizedRaw);
+      console.log("Normalizer success. Target role:", normalized.target_role_title);
+    } catch {
+      console.error("Normalizer JSON parse failed. Preview:", normalizedRaw.slice(0, 300));
+      // Non-fatal: fall back to raw input for Step 2
+      normalized = {};
+    }
+
+    // ── STEP 2: Director Calibration ────────────────────────────────────────
+    console.log("Step 2: Running Director Calibration");
+    const calibrationUserContent = Object.keys(normalized).length > 0
+      ? `STRUCTURED INPUT (extracted by pre-processor):\n${JSON.stringify(normalized, null, 2)}\n\nRAW RESUME / EXPERIENCE:\n${experience}${jd?.trim() ? `\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}` : ""}`
+      : jd?.trim()
+        ? `RESUME / EXPERIENCE INPUT:\n${experience}\n\nTARGET JOB DESCRIPTION:\n${jd.trim()}`
+        : `RESUME / EXPERIENCE INPUT:\n${experience}`;
+
+    let content = await callAI(apiKey, DIRECTOR_PROMPT, calibrationUserContent);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     let result: Record<string, unknown>;
     try {
       result = JSON.parse(content);
     } catch {
-      console.error("JSON parse failed. Preview:", content.slice(0, 300));
+      console.error("Calibration JSON parse failed. Preview:", content.slice(0, 300));
       throw new Error("Failed to parse AI response. Please try again.");
     }
+
+    // Attach normalized metadata for downstream use (optional, non-breaking)
+    result._normalized = normalized;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
