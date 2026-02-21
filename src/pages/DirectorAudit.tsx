@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Check, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
+import DirectorQARunner from "@/components/DirectorQARunner";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,7 +50,7 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     const sc = result.signal_classifier;
     lines.push("SIGNAL CLASSIFIER — SENIORITY SCORING");
     lines.push(`Inferred Level: ${sc.target_level_inferred}`);
-    lines.push(`Overall Alignment: ${sc.overall_seniority_alignment}`);
+    lines.push(`Overall Alignment: ${sc.overall_seniority_alignment}${sc.total_score != null ? ` (${sc.total_score}/175)` : ""}`);
     lines.push("");
     const dimLabels: Record<string, string> = {
       commercial: "Commercial Impact Attribution",
@@ -61,7 +63,8 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     };
     Object.entries(sc.dimension_scores).forEach(([key, dim]) => {
       lines.push(`${dimLabels[key] ?? key}: ${dim.score}/25`);
-      lines.push(`  Gap: ${dim.gap}`);
+      if (dim.rationale) lines.push(`  Rationale: ${dim.rationale}`);
+      if (dim.evidence_quotes?.length) lines.push(`  Evidence: ${dim.evidence_quotes.join(" | ")}`);
       if (dim.missing.length) lines.push(`  Missing: ${dim.missing.join(", ")}`);
     });
     lines.push("");
@@ -80,9 +83,10 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     ga.rewrite_targets.forEach((t, i) => {
       lines.push(`${i + 1}. [${t.upgrade_type}] ${t.bullet_reference}`);
       lines.push(`   Reason: ${t.reason}`);
-      if (t.rewritten_bullet) {
-        lines.push(`   Rewritten: ${t.rewritten_bullet}`);
-      }
+      if (t.version_a) lines.push(`   A (Upper-bound): ${t.version_a}`);
+      if (t.version_b) lines.push(`   B (Conservative): ${t.version_b}`);
+      if (t.chooser_line) lines.push(`   → ${t.chooser_line}`);
+      if (!t.version_a && t.rewritten_bullet) lines.push(`   Rewritten: ${t.rewritten_bullet}`);
     });
     lines.push("");
   }
@@ -99,6 +103,11 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
     lines.push("");
   }
 
+  if (result.run_id) {
+    lines.push(`Run ID: ${result.run_id}`);
+    if (result._replay) lines.push("(Deterministic Replay)");
+  }
+
   return lines.join("\n");
 };
 
@@ -111,6 +120,7 @@ const DirectorAudit = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ experience?: string }>({});
   const [copied, setCopied] = useState(false);
+  const [deterministic, setDeterministic] = useState(true);
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -130,6 +140,7 @@ const DirectorAudit = () => {
         body: {
           experience: experience.trim(),
           jd: jd.trim() || undefined,
+          deterministic,
         },
       });
 
@@ -169,13 +180,13 @@ const DirectorAudit = () => {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
-          Director Signal Calibration Engine v1.1
+          Director Signal Calibration Engine v{deterministic ? "1.2" : "1.2-fresh"}
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
           Director Audit
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          Institutional classification of Director-level signal maturity. Evaluates ownership scope, strategic leverage, accountability density, and executive signal quality. Detects hiring-stage friction risk. No rewriting. No advice.
+          Institutional classification of Director-level signal maturity. Evaluates ownership scope, strategic leverage, accountability density, and executive signal quality. Detects hiring-stage friction risk.
         </p>
       </div>
 
@@ -232,13 +243,27 @@ const DirectorAudit = () => {
                 />
               </div>
 
+              {/* Deterministic toggle */}
+              <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2.5">
+                <div>
+                  <p className="text-xs font-medium text-foreground">Deterministic Mode</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {deterministic ? "Returns cached results for identical inputs" : "Forces a fresh pipeline run"}
+                  </p>
+                </div>
+                <Switch
+                  checked={deterministic}
+                  onCheckedChange={setDeterministic}
+                />
+              </div>
+
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
                 className="w-full gap-2"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Running Calibration…" : "Run Director Calibration"}
+                {loading ? "Running Calibration…" : deterministic ? "Run Director Calibration" : "Run Fresh Calibration"}
               </Button>
             </div>
           </div>
@@ -260,11 +285,13 @@ const DirectorAudit = () => {
               </div>
             ))}
           </div>
+
+          {/* QA Runner */}
+          <DirectorQARunner />
         </div>
 
         {/* ── Right: Results ───────────────────────────────────────────────── */}
         <div className="space-y-4">
-          {/* Loading state */}
           {loading && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-3">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -275,7 +302,6 @@ const DirectorAudit = () => {
             </div>
           )}
 
-          {/* Empty state */}
           {!loading && !result && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-2 px-6 text-center">
               <p className="text-sm text-muted-foreground">Director calibration report will appear here</p>
@@ -285,10 +311,8 @@ const DirectorAudit = () => {
             </div>
           )}
 
-          {/* Report */}
           {result && !loading && (
             <>
-              {/* Actions bar */}
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground font-medium">Calibration Report</p>
                 <div className="flex items-center gap-2">

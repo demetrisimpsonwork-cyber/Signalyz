@@ -80,6 +80,86 @@ export type Database = {
         }
         Relationships: []
       }
+      run_artifacts: {
+        Row: {
+          created_at: string
+          id: string
+          payload_json: Json
+          run_id: string
+          step_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload_json: Json
+          run_id: string
+          step_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload_json?: Json
+          run_id?: string
+          step_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_artifacts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      runs: {
+        Row: {
+          created_at: string
+          deterministic: boolean
+          final_package: Json | null
+          id: string
+          input_hash: string
+          model_name: string | null
+          overall_seniority_alignment: string | null
+          pct: number | null
+          pipeline_version: string
+          status: string
+          top_3_gaps: Json | null
+          total_score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deterministic?: boolean
+          final_package?: Json | null
+          id?: string
+          input_hash: string
+          model_name?: string | null
+          overall_seniority_alignment?: string | null
+          pct?: number | null
+          pipeline_version?: string
+          status?: string
+          top_3_gaps?: Json | null
+          total_score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deterministic?: boolean
+          final_package?: Json | null
+          id?: string
+          input_hash?: string
+          model_name?: string | null
+          overall_seniority_alignment?: string | null
+          pct?: number | null
+          pipeline_version?: string
+          status?: string
+          top_3_gaps?: Json | null
+          total_score?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
