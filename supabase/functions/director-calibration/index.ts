@@ -481,6 +481,27 @@ async function runPipeline(
   let classifierParsed: Record<string, unknown> | null = null;
   try {
     classifierParsed = parseJSON<Record<string, unknown>>(classifierRaw);
+
+    // ── Deterministic override: overall alignment + top 3 gaps ──
+    if (classifierParsed?.dimension_scores) {
+      const scores = classifierParsed.dimension_scores as Record<string, { score: number; gap: string }>;
+      const total = Object.values(scores).reduce((sum, d) => sum + d.score, 0);
+      const pct = (total / 175) * 100; // 7 dimensions × 25 max each
+
+      classifierParsed.overall_seniority_alignment =
+        pct >= 80 ? "Strong Alignment" :
+        pct >= 60 ? "Moderate Alignment" :
+        pct >= 40 ? "Partial Alignment" : "Weak Alignment";
+      classifierParsed.total_score = total;
+
+      classifierParsed.top_3_gaps = Object.entries(scores)
+        .sort(([, a], [, b]) => a.score - b.score)
+        .slice(0, 3)
+        .map(([, d]) => d.gap);
+
+      console.log(`  → Deterministic scoring: ${total}/175 (${pct.toFixed(1)}%) → ${classifierParsed.overall_seniority_alignment}`);
+    }
+
     result.signal_classifier = classifierParsed;
     console.log("  → Signal Classifier: ok — inferred:", classifierParsed.target_level_inferred);
   } catch {
