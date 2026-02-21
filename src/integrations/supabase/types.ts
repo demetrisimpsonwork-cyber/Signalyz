@@ -114,9 +114,12 @@ export type Database = {
       }
       runs: {
         Row: {
+          changes_diff: Json | null
           created_at: string
           deterministic: boolean
+          export_ready: boolean
           final_package: Json | null
+          final_resume_text: string | null
           id: string
           input_hash: string
           model_name: string | null
@@ -129,9 +132,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          changes_diff?: Json | null
           created_at?: string
           deterministic?: boolean
+          export_ready?: boolean
           final_package?: Json | null
+          final_resume_text?: string | null
           id?: string
           input_hash: string
           model_name?: string | null
@@ -144,9 +150,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          changes_diff?: Json | null
           created_at?: string
           deterministic?: boolean
+          export_ready?: boolean
           final_package?: Json | null
+          final_resume_text?: string | null
           id?: string
           input_hash?: string
           model_name?: string | null

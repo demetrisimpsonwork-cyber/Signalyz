@@ -1,4 +1,4 @@
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Download, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -62,6 +62,15 @@ export interface SignalClassifierResult {
   top_3_gaps: string[];
 }
 
+export interface ExportBuilderResult {
+  final_resume_text: string;
+  changes_diff: Array<{
+    original_bullet: string;
+    revised_bullet: string;
+    gap_fixed: string;
+  }>;
+}
+
 export interface DirectorCalibrationResult {
   dimensions: DirectorDimension[];
   director_signal_tier: {
@@ -83,6 +92,7 @@ export interface DirectorCalibrationResult {
   signal_classifier?: SignalClassifierResult | null;
   gap_analyzer?: GapAnalyzerResult | null;
   consistency_validator?: ConsistencyValidatorResult | null;
+  export_builder?: ExportBuilderResult | null;
   run_id?: string;
   pipeline_version?: string;
   _replay?: boolean;
@@ -527,6 +537,67 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
                 ))}
               </ul>
             )}
+          </div>
+        </BlockShell>
+      )}
+
+      {/* 9 — Export Builder */}
+      {result.export_builder && (
+        <BlockShell label="Export Builder — ATS Resume">
+          <div className="px-4 py-3 space-y-4">
+            {/* Changes diff */}
+            {result.export_builder.changes_diff.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  Changes ({result.export_builder.changes_diff.length})
+                </p>
+                <div className="space-y-2">
+                  {result.export_builder.changes_diff.map((diff, i) => (
+                    <div key={i} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2.5 space-y-1.5">
+                      <div className="flex items-start gap-2">
+                        <span className="shrink-0 text-[10px] font-semibold text-destructive mt-0.5">−</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed line-through">{diff.original_bullet}</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="shrink-0 text-[10px] font-semibold text-green-600 dark:text-green-400 mt-0.5">+</span>
+                        <p className="text-xs text-foreground leading-relaxed">{diff.revised_bullet}</p>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/70 pl-4">Gap fixed: {diff.gap_fixed}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Download / Copy buttons */}
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(result.export_builder!.final_resume_text);
+                  toast.success("ATS resume copied to clipboard", { duration: 1500 });
+                }}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <FileText className="h-3 w-3" />
+                Copy Resume
+              </button>
+              <button
+                onClick={() => {
+                  const blob = new Blob([result.export_builder!.final_resume_text], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "resume-calibrated.txt";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Download started", { duration: 1500 });
+                }}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <Download className="h-3 w-3" />
+                Download .txt
+              </button>
+            </div>
           </div>
         </BlockShell>
       )}

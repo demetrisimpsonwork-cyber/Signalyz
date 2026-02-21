@@ -183,6 +183,44 @@ Return JSON:
   "issues": [string]
 }`;
 
+// ─── PROMPT 7: Export Builder ────────────────────────────────────────────────
+const EXPORT_BUILDER_SYSTEM = `You build an ATS-safe plain text resume from structured data.
+
+You will receive:
+- Original resume text
+- Rewritten bullets with their original versions
+- Normalizer output (structured roles, skills, etc.)
+
+Your task:
+1. Reconstruct a clean, ATS-safe plain text resume with this structure:
+   [Name]
+   [Contact line]
+   Summary
+   Skills
+   Experience (with rewritten bullets inserted in place of originals)
+   Education
+
+2. Build a changes_diff array showing each bullet replacement.
+
+Rules:
+- Preserve all original content that was NOT rewritten.
+- Insert rewritten bullets (version_a by default) in place of originals.
+- If you cannot identify the name/contact/education from the resume, use placeholder "[Not provided]".
+- Do not add any content not in the original resume or rewrites.
+- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+Return JSON:
+{
+  "final_resume_text": string,
+  "changes_diff": [
+    {
+      "original_bullet": string,
+      "revised_bullet": string,
+      "gap_fixed": string
+    }
+  ]
+}`;
+
 // ─── PROMPT 4: Rewrite Modules (Dual A/B) ───────────────────────────────────
 const REWRITE_MODULE_PROMPTS: Record<string, string> = {
   commercial_injection: `You elevate resume bullets by adding quantified commercial impact.
@@ -748,7 +786,7 @@ async function runPipeline(
   await storeArtifact(supabase, runId, "step_5_bullet_replacement", { rewrite_targets: rewrittenTargets });
 
   // ── 6. Consistency Validator ────────────────────────────────────────────────
-  console.log("[6/6] Consistency Validator");
+  console.log("[6/7] Consistency Validator");
   try {
     const rewrittenBullets = rewrittenTargets
       .filter((t) => t.version_a || t.rewritten_bullet)
@@ -772,10 +810,46 @@ async function runPipeline(
     result.consistency_validator = null;
   }
 
+  // ── 7. Export Builder ──────────────────────────────────────────────────────
+  console.log("[7/7] Export Builder");
+  let exportReady = false;
+  try {
+    const rewriteContext = rewrittenTargets
+      .filter((t) => t.version_a || t.rewritten_bullet)
+      .map((t) => JSON.stringify({
+        original: t.bullet_reference,
+        rewritten: t.version_a || t.rewritten_bullet,
+        upgrade_type: t.upgrade_type,
+      }))
+      .join("\n");
+
+    const exportInput = [
+      `ORIGINAL RESUME:\n${experience}`,
+      Object.keys(normalized).length > 0
+        ? `NORMALIZER OUTPUT:\n${JSON.stringify(normalized, null, 2)}`
+        : "",
+      rewriteContext
+        ? `REWRITTEN BULLETS:\n${rewriteContext}`
+        : "",
+    ].filter(Boolean).join("\n\n");
+
+    const raw = await callAI(apiKey, EXPORT_BUILDER_SYSTEM, exportInput);
+    const exportParsed = parseJSON<{ final_resume_text: string; changes_diff: Array<{ original_bullet: string; revised_bullet: string; gap_fixed: string }> }>(raw);
+    result.export_builder = exportParsed;
+    exportReady = true;
+    console.log(`  → Export Builder: ok — ${exportParsed.changes_diff.length} changes`);
+    await storeArtifact(supabase, runId, "step_7_export_builder", { raw, parsed: exportParsed });
+  } catch {
+    console.error("  ✗ Export Builder failed (non-fatal)");
+    result.export_builder = null;
+  }
+
   // ── Finalize run record ─────────────────────────────────────────────────────
   const sc = classifierParsed as Record<string, unknown> | null;
   const totalScore = (sc?.total_score as number) ?? null;
   const pctVal = totalScore !== null ? Number(((totalScore / 175) * 100).toFixed(1)) : null;
+
+  const exportData = result.export_builder as { final_resume_text?: string; changes_diff?: unknown[] } | null;
 
   await supabase.from("runs").update({
     status: "completed",
@@ -785,6 +859,9 @@ async function runPipeline(
     overall_seniority_alignment: (sc?.overall_seniority_alignment as string) ?? null,
     top_3_gaps: (sc?.top_3_gaps as string[]) ?? null,
     model_name: MODELS[0],
+    final_resume_text: exportData?.final_resume_text ?? null,
+    changes_diff: exportData?.changes_diff ?? null,
+    export_ready: exportReady,
   }).eq("id", runId);
 
   result._normalized = normalized;
