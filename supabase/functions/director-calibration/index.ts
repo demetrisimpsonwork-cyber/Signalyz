@@ -1,15 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const PIPELINE_VERSION = "1.2";
+
 const MODELS = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
   "openai/gpt-5-mini",
 ];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getSupabaseAdmin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+}
+
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function parseJSON<T>(raw: string): T {
+  const clean = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+  return JSON.parse(clean) as T;
+}
 
 // ─── PROMPT 1: Normalizer ────────────────────────────────────────────────────
 const NORMALIZER_SYSTEM = `You extract structured data from resumes and job descriptions.
@@ -34,9 +57,21 @@ const NORMALIZER_SCHEMA = `Return structured JSON with exactly this schema:
   ]
 }`;
 
-// ─── PROMPT 2: Signal Classifier ────────────────────────────────────────────
+// ─── PROMPT 2: Signal Classifier (STRICT v2) ────────────────────────────────
+const GAP_LABEL_ENUM = [
+  "no_commercial_attribution",
+  "limited_ownership_scope",
+  "weak_decision_authority",
+  "missing_cross_functional_leadership",
+  "incomplete_lifecycle_governance",
+  "absent_risk_framing",
+  "fragmented_narrative",
+] as const;
+
 const SIGNAL_CLASSIFIER_SYSTEM = `You are a Senior Executive Hiring Manager evaluating seniority signals.
-Evaluate across 7 dimensions:
+You MUST return STRICT JSON only. No prose, no markdown, no explanation — only valid JSON.
+
+Evaluate across exactly 7 dimensions:
 1. Commercial Impact Attribution
 2. End-to-End Ownership Scope
 3. Decision Authority
@@ -45,32 +80,46 @@ Evaluate across 7 dimensions:
 6. Risk Compression
 7. Narrative Cohesion
 
-For each dimension:
-- Score 0–25
-- Provide deficiency summary (1–2 sentences)
-- Identify missing signals
+For each dimension you MUST provide:
+- score: integer 0–25 (no decimals)
+- gap_label: one of: ${GAP_LABEL_ENUM.map(g => `"${g}"`).join(", ")}
+- evidence_quotes: array of 1–3 SHORT direct quotes from the resume text that support the score
+- rationale: string, max 240 characters, explaining the score
 
-Rules:
-- Be strict.
-- Assume Staff-level threshold unless otherwise stated.
-- Do not rewrite.
-- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
+LEVEL ANCHORS (Staff-level threshold):
+Staff requires ALL of:
+- Portfolio governance across multiple product lines
+- Cross-org dependency orchestration
+- Trade-off arbitration between competing priorities
+- Measurable business impact attribution (revenue, cost, retention)
+
+SCORING CONSTRAINTS:
+- If evidence is missing for a dimension, score MUST be <= 12.
+- If the resume shows only execution (not strategy/ownership), cap at 15.
+- Score 20+ only with clear evidence of Staff-level anchors.
+
+Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
 
 const SIGNAL_CLASSIFIER_SCHEMA = `Return structured JSON with exactly this schema:
 {
   "target_level_inferred": string,
   "dimension_scores": {
-    "commercial": { "score": number, "gap": string, "missing": [string] },
-    "ownership": { "score": number, "gap": string, "missing": [string] },
-    "authority": { "score": number, "gap": string, "missing": [string] },
-    "cross_functional": { "score": number, "gap": string, "missing": [string] },
-    "lifecycle": { "score": number, "gap": string, "missing": [string] },
-    "risk": { "score": number, "gap": string, "missing": [string] },
-    "narrative": { "score": number, "gap": string, "missing": [string] }
-  },
-  "overall_seniority_alignment": string,
-  "top_3_gaps": [string, string, string]
-}`;
+    "commercial": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "ownership": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "authority": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "cross_functional": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "lifecycle": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "risk": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string },
+    "narrative": { "score": number, "gap_label": string, "evidence_quotes": [string], "rationale": string }
+  }
+}
+
+CONSTRAINTS:
+- score: integer 0–25
+- gap_label: must be one of the fixed enum values provided
+- evidence_quotes: 1–3 items, each a short direct quote from resume
+- rationale: max 240 characters
+- Do NOT include overall_seniority_alignment or top_3_gaps — these are computed server-side`;
 
 // ─── PROMPT 3: Gap Analyzer ──────────────────────────────────────────────────
 const GAP_ANALYZER_SYSTEM = `You are a program portfolio strategist evaluating hiring readiness gaps.
@@ -111,107 +160,131 @@ const GAP_ANALYZER_SCHEMA = `Return structured JSON with exactly this schema:
 
 CONSTRAINTS:
 - rewrite_targets: 1–4 items maximum
-- priority_order: list dimension keys in order of highest remediation leverage (e.g. ["commercial", "authority", "risk"])`;
+- priority_order: list dimension keys in order of highest remediation leverage`;
 
 // ─── PROMPT 5: Consistency Validator ─────────────────────────────────────────
 const CONSISTENCY_VALIDATOR_SYSTEM = `You validate resume consistency. You do not rewrite. You do not coach.
 
 Check for:
-1. Metrics alignment — Are quantified claims internally consistent (no conflicting numbers, realistic percentages)?
+1. Metrics alignment — Are quantified claims internally consistent?
 2. Timeline realism — Do role durations and scope escalations map to plausible career progression?
-3. Scope escalation coherence — Does each role demonstrate logical growth from the previous?
-4. No fabricated claims — Flag any claims that appear structurally implausible or unverifiable without basis.
-5. No internal contradictions — Identify any statements that directly contradict each other.
+3. Scope escalation coherence — Does each role demonstrate logical growth?
+4. No fabricated claims — Flag structurally implausible claims.
+5. No internal contradictions.
 
 Rules:
 - Be precise. Only flag real issues, not stylistic concerns.
 - If rewritten bullets are provided, validate them against the original claims.
-- Do not suggest rewrites. Do not encourage. Do not coach.
 - Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
 
 Return JSON:
 {
   "status": "pass" | "revise",
   "issues": [string]
-}
+}`;
 
-CONSTRAINTS:
-- status: "pass" if no material issues found, "revise" if one or more issues require attention
-- issues: empty array [] if status is "pass"; otherwise 1–5 concise issue statements`;
-
-// ─── PROMPT 4: Rewrite Modules ───────────────────────────────────────────────
+// ─── PROMPT 4: Rewrite Modules (Dual A/B) ───────────────────────────────────
 const REWRITE_MODULE_PROMPTS: Record<string, string> = {
-  commercial_injection: `You elevate resume bullets by adding quantified commercial impact without fabricating facts.
+  commercial_injection: `You elevate resume bullets by adding quantified commercial impact.
+
+Produce TWO versions:
+Version A ("Upper-bound Truth"): The strongest credible phrasing assuming the person owned the decision and drove the outcome. Maximize commercial attribution.
+Version B ("Conservative Truth"): A careful phrasing assuming the person supported execution rather than owning authority. Still metric-forward but scope-limited.
 
 Rules:
-- Preserve the original claim exactly.
-- Add measurable commercial impact only if metrics are provided in context.
-- If no metrics are available, insert placeholder: [Insert % or $].
-- Do not add fluff, coaching language, or soft qualifiers.
-- Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+- Preserve original claim facts exactly.
+- No generic phrases like "proactively identified" or "spearheaded initiatives".
+- Keep bullets metric-forward and scope-specific.
+- If no metrics available, insert placeholder: [Insert % or $].
+- Return ONLY valid JSON — no markdown, no code fences.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you owned the commercial decision or drove the revenue outcome; use B if you supported execution within a broader initiative."
+}`,
 
-  ownership_elevation: `You reframe resume bullets to reflect end-to-end product ownership and full lifecycle accountability.
+  ownership_elevation: `You reframe resume bullets to reflect end-to-end product ownership.
 
-Add signals of:
-- Full-stack ownership (from discovery through delivery)
-- Cross-functional coordination responsibility
-- Post-launch stewardship
+Produce TWO versions:
+Version A ("Upper-bound Truth"): Strongest credible phrasing — full-stack ownership from discovery through delivery, cross-functional coordination, post-launch stewardship.
+Version B ("Conservative Truth"): Careful phrasing — contributed to lifecycle phases but did not solely own.
 
-Do not fabricate. Preserve all original facts.
-Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+No generic phrases. Keep scope-specific. Do not fabricate.
+Return ONLY valid JSON.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you owned the product end-to-end across discovery, delivery, and post-launch; use B if you contributed to specific lifecycle phases."
+}`,
 
-  authority_framing: `You rewrite resume bullets to reflect autonomous decision authority and cross-organizational influence.
+  authority_framing: `You rewrite resume bullets to reflect autonomous decision authority.
 
-Add signals of:
-- Escalation resolution
-- Executive partnership
-- Dependency arbitration
-- Decision ownership
+Produce TWO versions:
+Version A ("Upper-bound Truth"): Strongest credible phrasing — escalation resolution, executive partnership, dependency arbitration, decision ownership.
+Version B ("Conservative Truth"): Careful phrasing — influenced decisions, provided recommendations, supported executive review.
 
-Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+No generic phrases. Keep scope-specific. Do not fabricate.
+Return ONLY valid JSON.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you made the final call or arbitrated the tradeoff; use B if you influenced the decision through analysis or recommendation."
+}`,
 
-  cross_functional_leadership: `You reframe resume bullets to surface cross-functional leadership scope and organizational influence.
+  cross_functional_leadership: `You reframe resume bullets to surface cross-functional leadership scope.
 
-Inject signals of:
-- Engineering, design, data, legal, finance, or ops alignment
-- Stakeholder mobilization
-- Shared accountability across teams
+Produce TWO versions:
+Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Mobilized stakeholders. Shared accountability.
+Version B ("Conservative Truth"): Coordinated with cross-functional partners. Participated in alignment. Supported stakeholder communication.
 
-Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+No generic phrases. Keep scope-specific. Do not fabricate.
+Return ONLY valid JSON.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you led the cross-functional alignment and were accountable for the outcome; use B if you coordinated with partners in a supporting capacity."
+}`,
 
-  lifecycle_governance: `You reframe resume bullets to reflect full product lifecycle governance and operational rigor.
+  lifecycle_governance: `You reframe resume bullets to reflect full product lifecycle governance.
 
-Inject signals of:
-- Roadmap ownership
-- Production readiness criteria
-- Planning through launch governance
-- Operational rigor frameworks (e.g., PRDs, OKRs, launch reviews)
+Produce TWO versions:
+Version A ("Upper-bound Truth"): Owned roadmap, production readiness, planning-through-launch governance, operational rigor frameworks.
+Version B ("Conservative Truth"): Contributed to roadmap inputs, participated in launch reviews, supported operational processes.
 
-Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+No generic phrases. Keep scope-specific. Do not fabricate.
+Return ONLY valid JSON.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you owned the roadmap and governed the full planning-to-launch cycle; use B if you contributed inputs and supported governance processes."
+}`,
 
-  risk_compression: `You reframe resume bullets to surface risk identification, mitigation, and outcome accountability.
+  risk_compression: `You reframe resume bullets to surface risk identification and mitigation.
 
-Inject signals of:
-- Risk modeling
-- Dependency identification
-- Mitigation strategy framing
-- Consequence-aware decision language
+Produce TWO versions:
+Version A ("Upper-bound Truth"): Risk modeling, dependency identification, mitigation strategy ownership, consequence-aware decision language.
+Version B ("Conservative Truth"): Flagged risks, contributed to mitigation plans, supported risk review processes.
 
-Do not fabricate. Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+No generic phrases. Keep scope-specific. Do not fabricate.
+Return ONLY valid JSON.
 
-Return JSON: { "rewritten_bullet": string }`,
+Return JSON:
+{
+  "version_a": string,
+  "version_b": string,
+  "chooser_line": "Use A if you owned the risk model and drove mitigation decisions; use B if you identified risks and supported the mitigation process."
+}`,
 };
-
 
 const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
 
@@ -366,6 +439,40 @@ ARRAY SIZES:
 - undersignaling_patterns: 1–3 items (use ["No material undersignaling detected."] if none)
 - ownership_inflation_patterns: 1–3 items (use ["No inflation risk detected."] if none)`;
 
+// ─── QA Fixtures ─────────────────────────────────────────────────────────────
+const QA_FIXTURES = [
+  {
+    name: "Strong Director",
+    experience: `VP Product, Acme Corp (2020–2024)
+• Owned $45M product portfolio spanning 3 product lines, 4 engineering teams (28 engineers), design, and data science.
+• Drove 32% YoY revenue growth by restructuring pricing tiers and launching enterprise self-serve; reduced CAC by 18%.
+• Arbitrated cross-org trade-offs between platform reliability and feature velocity, aligning CTO and CFO on quarterly investment priorities.
+• Governed full product lifecycle from discovery through post-launch, including production readiness reviews and OKR-driven roadmap planning.
+• Modeled and mitigated churn risk across SMB segment, compressing 90-day churn from 14% to 8.5% through targeted intervention framework.`,
+    jd: `Director of Product Management — Enterprise Platform. Requires: portfolio governance, cross-org stakeholder management, P&L ownership, staff-level leadership.`,
+  },
+  {
+    name: "Senior IC",
+    experience: `Senior Product Manager, Beta Inc (2021–2024)
+• Managed backlog for mobile payments feature, collaborating with 1 engineering squad of 6.
+• Wrote PRDs and user stories for checkout flow redesign.
+• Participated in sprint planning and retrospectives.
+• Supported QA testing and helped triage production bugs.
+• Presented feature demos to product leadership during monthly reviews.`,
+    jd: `Director of Product — Payments Platform. Requires: P&L accountability, multi-team leadership, executive stakeholder management, strategic roadmap ownership.`,
+  },
+  {
+    name: "Emerging Director",
+    experience: `Senior Product Manager → Product Lead, Gamma Tech (2019–2024)
+• Led 2 cross-functional squads (12 people) delivering marketplace matching platform; increased GMV 22% in 12 months.
+• Owned roadmap for seller experience vertical, presenting quarterly plans to VP Product and CEO.
+• Coordinated with legal, finance, and ops on regulatory compliance for 3 new market launches.
+• Introduced production readiness checklist adopted across product org (8 teams).
+• Identified and escalated platform scalability risk; partnered with CTO to secure $2M infrastructure investment.`,
+    jd: `Director of Product — Marketplace. Requires: multi-squad leadership, roadmap authority, executive communication, commercial impact ownership.`,
+  },
+];
+
 // ─── AI caller ───────────────────────────────────────────────────────────────
 async function callAI(
   apiKey: string,
@@ -417,6 +524,10 @@ interface RewriteTarget {
   bullet_reference: string;
   upgrade_type: string;
   reason: string;
+  version_a?: string | null;
+  version_b?: string | null;
+  chooser_line?: string | null;
+  // Legacy compat
   rewritten_bullet?: string | null;
 }
 
@@ -425,11 +536,23 @@ interface GapAnalyzerOutput {
   rewrite_targets: RewriteTarget[];
 }
 
-// ─── JSON helper ─────────────────────────────────────────────────────────────
+// ─── Artifact storage helper ─────────────────────────────────────────────────
 
-function parseJSON<T>(raw: string): T {
-  const clean = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-  return JSON.parse(clean) as T;
+async function storeArtifact(
+  supabase: ReturnType<typeof createClient>,
+  runId: string,
+  stepName: string,
+  payload: unknown,
+) {
+  try {
+    await supabase.from("run_artifacts").insert({
+      run_id: runId,
+      step_name: stepName,
+      payload_json: payload,
+    });
+  } catch (e) {
+    console.error(`Failed to store artifact ${stepName}:`, e);
+  }
 }
 
 // ─── Coordinator ─────────────────────────────────────────────────────────────
@@ -438,7 +561,44 @@ async function runPipeline(
   apiKey: string,
   experience: string,
   jd: string | undefined,
+  deterministic: boolean = true,
 ): Promise<Record<string, unknown>> {
+  const supabase = getSupabaseAdmin();
+  const inputHash = await sha256(
+    (experience || "") + "|" + (jd || "") + "|" + PIPELINE_VERSION
+  );
+
+  // ── Deterministic replay check ──────────────────────────────────────────────
+  if (deterministic) {
+    const { data: cached } = await supabase
+      .from("runs")
+      .select("id, final_package")
+      .eq("input_hash", inputHash)
+      .eq("status", "completed")
+      .eq("deterministic", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (cached?.final_package) {
+      console.log("Deterministic replay: returning cached run", cached.id);
+      return { ...(cached.final_package as Record<string, unknown>), run_id: cached.id, _replay: true };
+    }
+  }
+
+  // ── Create run record ───────────────────────────────────────────────────────
+  const { data: runRow } = await supabase
+    .from("runs")
+    .insert({
+      input_hash: inputHash,
+      deterministic,
+      pipeline_version: PIPELINE_VERSION,
+      status: "running",
+    })
+    .select("id")
+    .single();
+
+  const runId = runRow?.id ?? crypto.randomUUID();
 
   // ── 1. Normalizer ───────────────────────────────────────────────────────────
   console.log("[1/6] Normalizer");
@@ -450,11 +610,12 @@ async function runPipeline(
     const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput);
     normalized = parseJSON<Record<string, unknown>>(raw);
     console.log("  → target_role_title:", normalized.target_role_title);
+    await storeArtifact(supabase, runId, "step_1_normalizer", { raw, parsed: normalized });
   } catch (e) {
     console.error("  ✗ Normalizer failed (non-fatal):", e instanceof Error ? e.message : e);
   }
 
-  // ── Shared context for downstream prompts ────────────────────────────────────
+  // ── Shared context ──────────────────────────────────────────────────────────
   const sharedContext = Object.keys(normalized).length > 0
     ? `STRUCTURED INPUT (pre-processed):\n${JSON.stringify(normalized, null, 2)}\n\nRESUME:\n${experience}${jd?.trim() ? `\n\nJOB DESCRIPTION:\n${jd.trim()}` : ""}`
     : jd?.trim()
@@ -468,11 +629,12 @@ async function runPipeline(
     callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext),
   ]);
 
-  // Director Calibration is the primary result container (required — throws on failure)
+  // Director Calibration (required)
   let result: Record<string, unknown>;
   try {
     result = parseJSON<Record<string, unknown>>(calibrationRaw);
     console.log("  → Director Calibration: ok");
+    await storeArtifact(supabase, runId, "step_2_calibration", { raw: calibrationRaw, parsed: result });
   } catch {
     throw new Error("Failed to parse Director Calibration response. Please try again.");
   }
@@ -484,9 +646,9 @@ async function runPipeline(
 
     // ── Deterministic override: overall alignment + top 3 gaps ──
     if (classifierParsed?.dimension_scores) {
-      const scores = classifierParsed.dimension_scores as Record<string, { score: number; gap: string }>;
+      const scores = classifierParsed.dimension_scores as Record<string, { score: number; gap_label: string; evidence_quotes?: string[]; rationale?: string }>;
       const total = Object.values(scores).reduce((sum, d) => sum + d.score, 0);
-      const pct = (total / 175) * 100; // 7 dimensions × 25 max each
+      const pct = (total / 175) * 100;
 
       classifierParsed.overall_seniority_alignment =
         pct >= 80 ? "Strong Alignment" :
@@ -497,13 +659,14 @@ async function runPipeline(
       classifierParsed.top_3_gaps = Object.entries(scores)
         .sort(([, a], [, b]) => a.score - b.score)
         .slice(0, 3)
-        .map(([, d]) => d.gap);
+        .map(([, d]) => d.gap_label || "unknown");
 
       console.log(`  → Deterministic scoring: ${total}/175 (${pct.toFixed(1)}%) → ${classifierParsed.overall_seniority_alignment}`);
     }
 
     result.signal_classifier = classifierParsed;
     console.log("  → Signal Classifier: ok — inferred:", classifierParsed.target_level_inferred);
+    await storeArtifact(supabase, runId, "step_2_classifier", { raw: classifierRaw, parsed: classifierParsed });
   } catch {
     console.error("  ✗ Signal Classifier parse failed (non-fatal)");
     result.signal_classifier = null;
@@ -532,6 +695,7 @@ async function runPipeline(
       gapOutput = parseJSON<GapAnalyzerOutput>(raw);
       result.gap_analyzer = gapOutput;
       console.log(`  → Gap Analyzer: ok — ${gapOutput.rewrite_targets.length} targets`);
+      await storeArtifact(supabase, runId, "step_3_gap_analyzer", { raw, parsed: gapOutput });
     } catch {
       console.error("  ✗ Gap Analyzer failed (non-fatal)");
       result.gap_analyzer = null;
@@ -540,8 +704,8 @@ async function runPipeline(
     result.gap_analyzer = null;
   }
 
-  // ── 4. Rewrite Modules (parallel — one per target) ──────────────────────────
-  console.log("[4/6] Rewrite Modules");
+  // ── 4. Rewrite Modules (parallel, dual A/B) ────────────────────────────────
+  console.log("[4/6] Rewrite Modules (dual A/B)");
   let rewrittenTargets: RewriteTarget[] = gapOutput?.rewrite_targets ?? [];
 
   if (gapOutput?.rewrite_targets?.length) {
@@ -549,7 +713,7 @@ async function runPipeline(
       const modulePrompt = REWRITE_MODULE_PROMPTS[target.upgrade_type];
       if (!modulePrompt) {
         console.warn(`  ⚠ No module for upgrade_type="${target.upgrade_type}"`);
-        return { ...target, rewritten_bullet: null };
+        return { ...target, version_a: null, version_b: null, chooser_line: null };
       }
       const userContent = [
         `ORIGINAL BULLET:\n${target.bullet_reference}`,
@@ -558,29 +722,37 @@ async function runPipeline(
       ].join("\n\n");
       try {
         const raw = await callAI(apiKey, modulePrompt, userContent);
-        const parsed = parseJSON<{ rewritten_bullet?: string }>(raw);
-        console.log(`  → [${target.upgrade_type}]: ok`);
-        return { ...target, rewritten_bullet: parsed.rewritten_bullet ?? null };
+        const parsed = parseJSON<{ version_a?: string; version_b?: string; chooser_line?: string; rewritten_bullet?: string }>(raw);
+        console.log(`  → [${target.upgrade_type}]: ok (A/B)`);
+        return {
+          ...target,
+          version_a: parsed.version_a ?? parsed.rewritten_bullet ?? null,
+          version_b: parsed.version_b ?? null,
+          chooser_line: parsed.chooser_line ?? null,
+          rewritten_bullet: parsed.version_a ?? parsed.rewritten_bullet ?? null,
+        };
       } catch {
         console.error(`  ✗ Rewrite module [${target.upgrade_type}] failed (non-fatal)`);
-        return { ...target, rewritten_bullet: null };
+        return { ...target, version_a: null, version_b: null, chooser_line: null };
       }
     });
     rewrittenTargets = await Promise.all(jobs);
+    await storeArtifact(supabase, runId, "step_4_rewrites", rewrittenTargets);
   }
 
-  // ── 5. Replace bullets in gap_analyzer output ───────────────────────────────
+  // ── 5. Replace bullets ──────────────────────────────────────────────────────
   console.log("[5/6] Replacing bullets");
   if (gapOutput && rewrittenTargets.length) {
     (result.gap_analyzer as Record<string, unknown>).rewrite_targets = rewrittenTargets;
   }
+  await storeArtifact(supabase, runId, "step_5_bullet_replacement", { rewrite_targets: rewrittenTargets });
 
-  // ── 6. Consistency Validator ─────────────────────────────────────────────────
+  // ── 6. Consistency Validator ────────────────────────────────────────────────
   console.log("[6/6] Consistency Validator");
   try {
     const rewrittenBullets = rewrittenTargets
-      .filter((t) => t.rewritten_bullet)
-      .map((t) => `[${t.upgrade_type}] ${t.rewritten_bullet}`);
+      .filter((t) => t.version_a || t.rewritten_bullet)
+      .map((t) => `[${t.upgrade_type}] A: ${t.version_a || t.rewritten_bullet}${t.version_b ? ` | B: ${t.version_b}` : ""}`);
 
     const validatorContent = [
       `ORIGINAL RESUME:\n${experience}`,
@@ -591,15 +763,33 @@ async function runPipeline(
     ].filter(Boolean).join("\n\n");
 
     const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
-    result.consistency_validator = parseJSON<{ status: string; issues: string[] }>(raw);
-    console.log("  → status:", (result.consistency_validator as { status: string }).status);
+    const cvParsed = parseJSON<{ status: string; issues: string[] }>(raw);
+    result.consistency_validator = cvParsed;
+    console.log("  → status:", cvParsed.status);
+    await storeArtifact(supabase, runId, "step_6_consistency_validator", { raw, parsed: cvParsed });
   } catch {
     console.error("  ✗ Consistency Validator failed (non-fatal)");
     result.consistency_validator = null;
   }
 
-  // ── Return final package ────────────────────────────────────────────────────
+  // ── Finalize run record ─────────────────────────────────────────────────────
+  const sc = classifierParsed as Record<string, unknown> | null;
+  const totalScore = (sc?.total_score as number) ?? null;
+  const pctVal = totalScore !== null ? Number(((totalScore / 175) * 100).toFixed(1)) : null;
+
+  await supabase.from("runs").update({
+    status: "completed",
+    final_package: result,
+    total_score: totalScore,
+    pct: pctVal,
+    overall_seniority_alignment: (sc?.overall_seniority_alignment as string) ?? null,
+    top_3_gaps: (sc?.top_3_gaps as string[]) ?? null,
+    model_name: MODELS[0],
+  }).eq("id", runId);
+
   result._normalized = normalized;
+  result.run_id = runId;
+  result.pipeline_version = PIPELINE_VERSION;
   return result;
 }
 
@@ -609,8 +799,44 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { experience, jd } = await req.json();
+    const body = await req.json();
+    const { experience, jd, deterministic = true, qa_mode = false } = body;
 
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+
+    // ── QA Mode: run all 3 fixtures ──────────────────────────────────────────
+    if (qa_mode) {
+      console.log("=== QA MODE: Running 3 fixtures ===");
+      const results = [];
+      for (const fixture of QA_FIXTURES) {
+        try {
+          const r = await runPipeline(apiKey, fixture.experience, fixture.jd, true);
+          results.push({
+            name: fixture.name,
+            run_id: r.run_id,
+            total_score: (r.signal_classifier as Record<string, unknown>)?.total_score ?? null,
+            top_3_gaps: (r.signal_classifier as Record<string, unknown>)?.top_3_gaps ?? [],
+            replay: r._replay ?? false,
+            status: "ok",
+          });
+        } catch (e) {
+          results.push({
+            name: fixture.name,
+            run_id: null,
+            total_score: null,
+            top_3_gaps: [],
+            replay: false,
+            status: e instanceof Error ? e.message : "error",
+          });
+        }
+      }
+      return new Response(JSON.stringify({ qa_results: results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
       return new Response(JSON.stringify({ error: "Missing experience input" }), {
         status: 400,
@@ -618,10 +844,7 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
-
-    const result = await runPipeline(apiKey, experience.trim(), jd);
+    const result = await runPipeline(apiKey, experience.trim(), jd, deterministic);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

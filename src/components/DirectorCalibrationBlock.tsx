@@ -25,6 +25,9 @@ export interface GapAnalyzerResult {
     bullet_reference: string;
     upgrade_type: UpgradeType;
     reason: string;
+    version_a?: string | null;
+    version_b?: string | null;
+    chooser_line?: string | null;
     rewritten_bullet?: string | null;
   }>;
 }
@@ -37,6 +40,9 @@ export interface ConsistencyValidatorResult {
 export interface SignalDimensionScore {
   score: number;
   gap: string;
+  gap_label?: string;
+  evidence_quotes?: string[];
+  rationale?: string;
   missing: string[];
 }
 
@@ -52,6 +58,7 @@ export interface SignalClassifierResult {
     narrative: SignalDimensionScore;
   };
   overall_seniority_alignment: string;
+  total_score?: number;
   top_3_gaps: string[];
 }
 
@@ -76,6 +83,9 @@ export interface DirectorCalibrationResult {
   signal_classifier?: SignalClassifierResult | null;
   gap_analyzer?: GapAnalyzerResult | null;
   consistency_validator?: ConsistencyValidatorResult | null;
+  run_id?: string;
+  pipeline_version?: string;
+  _replay?: boolean;
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
@@ -187,21 +197,9 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
   const frictionStages = [
-    {
-      stage: "Recruiter Filter Risk",
-      key: "Recruiter Filter" as const,
-      data: hiring_stage_friction.recruiter_filter_risk,
-    },
-    {
-      stage: "Hiring Manager Friction",
-      key: "Hiring Manager Friction" as const,
-      data: hiring_stage_friction.hiring_manager_friction,
-    },
-    {
-      stage: "Executive Skepticism",
-      key: "Executive Skepticism" as const,
-      data: hiring_stage_friction.executive_skepticism,
-    },
+    { stage: "Recruiter Filter Risk", key: "Recruiter Filter" as const, data: hiring_stage_friction.recruiter_filter_risk },
+    { stage: "Hiring Manager Friction", key: "Hiring Manager Friction" as const, data: hiring_stage_friction.hiring_manager_friction },
+    { stage: "Executive Skepticism", key: "Executive Skepticism" as const, data: hiring_stage_friction.executive_skepticism },
   ];
 
   const handleCopy = async () => {
@@ -223,9 +221,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       "HIRING STAGE RISK MAPPING",
       ...frictionStages.map((s) => `${s.stage}: ${s.data.level} — ${s.data.observation}`),
       `Primary Friction Stage: ${hiring_stage_friction.primary_friction_stage}`,
-      ...(hiring_stage_friction.primary_friction_explanation
-        ? [hiring_stage_friction.primary_friction_explanation]
-        : []),
+      ...(hiring_stage_friction.primary_friction_explanation ? [hiring_stage_friction.primary_friction_explanation] : []),
       "",
       "SIGNAL INTEGRITY ASSESSMENT",
       "Undersignaling:",
@@ -234,12 +230,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       "Inflation Risk:",
       ...pattern_detection.ownership_inflation_patterns.map((p) => `— ${p}`),
       "",
-      ...(recalibration_directives && recalibration_directives.length > 0
-        ? [
-            "DIRECTOR-LEVEL RECALIBRATION DIRECTIVES",
-            ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`),
-          ]
-        : []),
+      ...(recalibration_directives?.length ? ["DIRECTOR-LEVEL RECALIBRATION DIRECTIVES", ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`)] : []),
     ].join("\n");
 
     await navigator.clipboard.writeText(lines);
@@ -250,6 +241,18 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
 
   return (
     <div className="space-y-3">
+      {/* Run ID + Replay badge */}
+      {result.run_id && (
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
+          <span>Run: {result.run_id.slice(0, 8)}</span>
+          {result._replay && (
+            <span className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider">
+              Replay
+            </span>
+          )}
+          {result.pipeline_version && <span>v{result.pipeline_version}</span>}
+        </div>
+      )}
 
       {/* 1 — Director Signal Tier */}
       <BlockShell label="Director Signal Tier">
@@ -294,23 +297,13 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       <BlockShell label="Hiring Stage Risk Mapping">
         <div className="divide-y divide-border/50">
           {frictionStages.map((s) => (
-            <FrictionRow
-              key={s.stage}
-              stage={s.stage}
-              level={s.data.level}
-              observation={s.data.observation}
-              isPrimary={hiring_stage_friction.primary_friction_stage === s.key}
-            />
+            <FrictionRow key={s.stage} stage={s.stage} level={s.data.level} observation={s.data.observation} isPrimary={hiring_stage_friction.primary_friction_stage === s.key} />
           ))}
         </div>
         {hiring_stage_friction.primary_friction_explanation && (
           <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">
-              Primary Friction — Assessment
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {hiring_stage_friction.primary_friction_explanation}
-            </p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Primary Friction — Assessment</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{hiring_stage_friction.primary_friction_explanation}</p>
           </div>
         )}
       </BlockShell>
@@ -319,9 +312,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       <BlockShell label="Signal Integrity Assessment">
         <div className="px-4 py-3 space-y-4">
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-              Undersignaling
-            </p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Undersignaling</p>
             <ul className="space-y-1.5">
               {pattern_detection.undersignaling_patterns.map((p, i) => (
                 <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
@@ -332,9 +323,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
             </ul>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-              Inflation Risk
-            </p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Inflation Risk</p>
             <ul className="space-y-1.5">
               {pattern_detection.ownership_inflation_patterns.map((p, i) => (
                 <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
@@ -364,19 +353,20 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       {/* 6 — Signal Classifier */}
       {signal_classifier && (
         <BlockShell label="Signal Classifier — Seniority Scoring">
-          {/* Header row */}
+          {/* Header */}
           <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
-                Inferred Level
-              </p>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Inferred Level</p>
               <p className="text-xs font-semibold text-foreground">{signal_classifier.target_level_inferred}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
-                Overall Alignment
-              </p>
-              <p className="text-xs text-muted-foreground max-w-[240px] leading-relaxed">{signal_classifier.overall_seniority_alignment}</p>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Overall Alignment</p>
+              <div className="flex items-center gap-2 justify-end">
+                {signal_classifier.total_score != null && (
+                  <span className="text-xs font-bold tabular-nums text-foreground">{signal_classifier.total_score}/175</span>
+                )}
+                <p className="text-xs text-muted-foreground">{signal_classifier.overall_seniority_alignment}</p>
+              </div>
             </div>
           </div>
 
@@ -393,20 +383,32 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
                       {dim.score}<span className="text-muted-foreground font-normal">/25</span>
                     </span>
                   </div>
-                  {/* Score bar */}
                   <div className="h-1 w-full rounded-full bg-muted">
-                    <div
-                      className={`h-1 rounded-full transition-all ${scoreBarColor(dim.score)}`}
-                      style={{ width: `${pct}%` }}
-                    />
+                    <div className={`h-1 rounded-full transition-all ${scoreBarColor(dim.score)}`} style={{ width: `${pct}%` }} />
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{dim.gap}</p>
+                  {/* Rationale (new v2 field) */}
+                  {dim.rationale && (
+                    <p className="text-xs text-muted-foreground leading-relaxed">{dim.rationale}</p>
+                  )}
+                  {/* Legacy gap field fallback */}
+                  {!dim.rationale && dim.gap && (
+                    <p className="text-xs text-muted-foreground leading-relaxed">{dim.gap}</p>
+                  )}
+                  {/* Evidence quotes */}
+                  {dim.evidence_quotes && dim.evidence_quotes.length > 0 && (
+                    <div className="space-y-1 pt-0.5">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Evidence</p>
+                      {dim.evidence_quotes.map((q, i) => (
+                        <p key={i} className="text-[11px] text-muted-foreground/80 italic leading-relaxed pl-2 border-l-2 border-border/60">
+                          "{q}"
+                        </p>
+                      ))}
+                    </div>
+                  )}
                   {dim.missing.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-0.5">
                       {dim.missing.map((m, i) => (
-                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded border border-border/60 text-muted-foreground bg-muted/40">
-                          {m}
-                        </span>
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded border border-border/60 text-muted-foreground bg-muted/40">{m}</span>
                       ))}
                     </div>
                   )}
@@ -418,9 +420,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
           {/* Top 3 gaps */}
           {signal_classifier.top_3_gaps.length > 0 && (
             <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                Top Gaps
-              </p>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Top Gaps</p>
               <ol className="space-y-1.5">
                 {signal_classifier.top_3_gaps.map((gap, i) => (
                   <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
@@ -434,15 +434,12 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
         </BlockShell>
       )}
 
-      {/* 7 — Gap Analyzer */}
+      {/* 7 — Gap Analyzer with A/B rewrites */}
       {gap_analyzer && (
         <BlockShell label="Gap Analyzer — Upgrade Priority">
-          {/* Priority order */}
           {gap_analyzer.priority_order.length > 0 && (
             <div className="px-4 py-3 border-b border-border/60">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                Remediation Priority Order
-              </p>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Remediation Priority Order</p>
               <div className="flex flex-wrap gap-1.5">
                 {gap_analyzer.priority_order.map((dim, i) => (
                   <span key={dim} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border border-border/60 bg-muted/40 text-muted-foreground">
@@ -454,28 +451,48 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
             </div>
           )}
 
-          {/* Rewrite targets */}
           <div className="divide-y divide-border/50">
             {gap_analyzer.rewrite_targets.map((target, i) => (
               <div key={i} className="px-4 py-3 space-y-2.5">
-                {/* Header: badge + original bullet */}
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-xs font-semibold text-foreground leading-relaxed">{target.bullet_reference}</p>
                   <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type]}`}>
                     {UPGRADE_TYPE_LABELS[target.upgrade_type]}
                   </span>
                 </div>
-                {/* Gap reason */}
                 <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
-                {/* Rewritten bullet */}
-                {target.rewritten_bullet && (
+
+                {/* A/B Rewrites */}
+                {(target.version_a || target.version_b) ? (
+                  <div className="space-y-2">
+                    {target.version_a && (
+                      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                        <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400">
+                          A — Upper-bound Truth
+                        </p>
+                        <p className="text-xs text-foreground leading-relaxed">{target.version_a}</p>
+                      </div>
+                    )}
+                    {target.version_b && (
+                      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                        <p className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 dark:text-blue-400">
+                          B — Conservative Truth
+                        </p>
+                        <p className="text-xs text-foreground leading-relaxed">{target.version_b}</p>
+                      </div>
+                    )}
+                    {target.chooser_line && (
+                      <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed pl-3 border-l-2 border-border/40">
+                        {target.chooser_line}
+                      </p>
+                    )}
+                  </div>
+                ) : target.rewritten_bullet ? (
                   <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Rewritten
-                    </p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Rewritten</p>
                     <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
@@ -486,7 +503,6 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
       {consistency_validator && (
         <BlockShell label="Consistency Validator">
           <div className="px-4 py-3 space-y-3">
-            {/* Status badge */}
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded ${
                 consistency_validator.status === "pass"
@@ -501,7 +517,6 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
                   : `${consistency_validator.issues.length} issue${consistency_validator.issues.length !== 1 ? "s" : ""} flagged.`}
               </p>
             </div>
-            {/* Issues */}
             {consistency_validator.issues.length > 0 && (
               <ul className="space-y-2">
                 {consistency_validator.issues.map((issue, i) => (
@@ -515,7 +530,6 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
           </div>
         </BlockShell>
       )}
-
 
       <div className="flex justify-end">
         <button
