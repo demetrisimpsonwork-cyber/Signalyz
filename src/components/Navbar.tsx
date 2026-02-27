@@ -28,13 +28,10 @@ const Navbar = () => {
         {/* Desktop */}
         <div className="hidden items-center gap-6 md:flex">
           <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Optimize
+            Align
           </Link>
           <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Position
-          </Link>
-          <Link to="/director-audit" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Director Audit
           </Link>
           <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Pricing
@@ -88,9 +85,8 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="border-t bg-card px-4 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-3">
-            <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Optimize</Link>
+            <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Align</Link>
             <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Position</Link>
-            <Link to="/director-audit" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Director Audit</Link>
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
             {user && <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>}
             {!loading && user && (

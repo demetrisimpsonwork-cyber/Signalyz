@@ -234,6 +234,13 @@ Rules:
 - No generic phrases like "proactively identified" or "spearheaded initiatives".
 - Keep bullets metric-forward and scope-specific.
 - If no metrics available, insert placeholder: [Insert % or $].
+- Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
+- Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+- Lead with evidence before claims — numbers, systems, ownership, outcomes first.
+- Use operational language describing what was built, owned, fixed, or decided.
+- Write like a capable professional explaining work to a peer, not a resume template.
+- Remove adjective stacking and motivational tone entirely.
+- Every bullet must sound like a specific human wrote it about a specific job, specific system, and specific outcome.
 - Return ONLY valid JSON — no markdown, no code fences.
 
 Return JSON:
@@ -250,6 +257,10 @@ Version A ("Upper-bound Truth"): Strongest credible phrasing — full-stack owne
 Version B ("Conservative Truth"): Careful phrasing — contributed to lifecycle phases but did not solely own.
 
 No generic phrases. Keep scope-specific. Do not fabricate.
+Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
+Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+Lead with evidence before claims. Use operational language. Write like a peer, not a template.
+Remove adjective stacking and motivational tone entirely. Every bullet must sound specific.
 Return ONLY valid JSON.
 
 Return JSON:
@@ -266,6 +277,10 @@ Version A ("Upper-bound Truth"): Strongest credible phrasing — escalation reso
 Version B ("Conservative Truth"): Careful phrasing — influenced decisions, provided recommendations, supported executive review.
 
 No generic phrases. Keep scope-specific. Do not fabricate.
+Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
+Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+Lead with evidence before claims. Use operational language. Write like a peer, not a template.
+Remove adjective stacking and motivational tone entirely. Every bullet must sound specific.
 Return ONLY valid JSON.
 
 Return JSON:
@@ -282,6 +297,10 @@ Version A ("Upper-bound Truth"): Led alignment across engineering, design, data,
 Version B ("Conservative Truth"): Coordinated with cross-functional partners. Participated in alignment. Supported stakeholder communication.
 
 No generic phrases. Keep scope-specific. Do not fabricate.
+Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
+Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+Lead with evidence before claims. Use operational language. Write like a peer, not a template.
+Remove adjective stacking and motivational tone entirely. Every bullet must sound specific.
 Return ONLY valid JSON.
 
 Return JSON:
@@ -298,6 +317,10 @@ Version A ("Upper-bound Truth"): Owned roadmap, production readiness, planning-t
 Version B ("Conservative Truth"): Contributed to roadmap inputs, participated in launch reviews, supported operational processes.
 
 No generic phrases. Keep scope-specific. Do not fabricate.
+Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
+Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+Lead with evidence before claims. Use operational language. Write like a peer, not a template.
+Remove adjective stacking and motivational tone entirely. Every bullet must sound specific.
 Return ONLY valid JSON.
 
 Return JSON:
@@ -314,6 +337,10 @@ Version A ("Upper-bound Truth"): Risk modeling, dependency identification, mitig
 Version B ("Conservative Truth"): Flagged risks, contributed to mitigation plans, supported risk review processes.
 
 No generic phrases. Keep scope-specific. Do not fabricate.
+Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
+Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+Lead with evidence before claims. Use operational language. Write like a peer, not a template.
+Remove adjective stacking and motivational tone entirely. Every bullet must sound specific.
 Return ONLY valid JSON.
 
 Return JSON:

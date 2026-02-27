@@ -204,6 +204,15 @@ RULES:
 - No markdown. No code fences. No text outside the JSON.
 - weighted_priority_commentary and strategic_bridge_analysis must be null for free plan.
 
+WRITING STYLE CONSTRAINTS (apply to ALL generated bullets):
+- Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
+- Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
+- Lead with evidence before claims — numbers, systems, ownership, outcomes first.
+- Use operational language describing what was built, owned, fixed, or decided.
+- Write like a capable professional explaining work to a peer, not a resume template.
+- Remove adjective stacking and motivational tone entirely.
+- Every bullet must sound like a specific human wrote it about a specific job, specific system, and specific outcome.
+
 EXPERIENCE_INPUT: ${bullet}
 
 JOB_DESCRIPTION: ${jd}
