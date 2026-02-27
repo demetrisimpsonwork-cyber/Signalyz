@@ -42,35 +42,35 @@ const SIGNAL_LEVEL_STYLES: Record<SignalLevel, string> = {
 
 const SAMPLE_ROLES: SampleRole[] = [
   {
-    label: "Senior Product Manager – SaaS Platform",
-    bullet: "Worked with engineering and design to ship new product features and helped define the product roadmap.",
-    jd: `We are looking for a Senior Product Manager to own the end-to-end product lifecycle for our core SaaS platform. You will define strategy, align cross-functional teams across engineering, design, and go-to-market, drive adoption metrics, and present roadmap decisions to executive leadership. Required: B2B SaaS experience, data-driven prioritization, stakeholder influence, OKR frameworks, Agile/Scrum.`,
-    sampleA: "Owned the end-to-end product lifecycle for a core SaaS platform, translating executive strategy into a prioritized roadmap that aligned engineering, design, and GTM stakeholders across three concurrent release cycles.",
-    sampleB: "Defined and drove the product roadmap for a B2B SaaS platform, leading cross-functional alignment between engineering and design while using OKR frameworks to connect feature delivery to adoption and retention outcomes.",
+    label: "Customer Success Manager",
+    bullet: "Managed a book of business and helped customers adopt the product while resolving support issues.",
+    jd: `We are looking for a Customer Success Manager to own post-sale client relationships across a portfolio of mid-market accounts. You will drive adoption, reduce churn, identify expansion opportunities, and serve as the primary point of contact. Required: SaaS customer success experience, renewal ownership, QBR facilitation, CRM fluency, cross-functional coordination with product and support.`,
+    sampleA: "Owned post-sale relationships across 45 mid-market accounts ($3.2M ARR), driving product adoption through structured onboarding sequences and quarterly business reviews that surfaced expansion opportunities.",
+    sampleB: "Managed a portfolio of mid-market accounts, coordinating onboarding, renewal conversations, and escalation resolution while maintaining 92% gross retention across two renewal cycles.",
     perceptionSnapshot: {
       "Strategic Ownership Signal": "Low",
-      "Cross-Functional Authority": "Moderate",
+      "Cross-Functional Authority": "Low",
       "Business Impact Clarity": "Low",
       "Seniority Weight": "Moderate",
     },
     roleWeightsMost: [
-      "End-to-end lifecycle ownership — not feature contribution",
-      "Executive-facing roadmap accountability",
-      "Cross-functional alignment across engineering, design, and GTM",
-      "Adoption and retention as measurable outcomes",
+      "Portfolio ownership with renewal and expansion accountability",
+      "Proactive adoption driving — not reactive support",
+      "QBR facilitation and executive-facing communication",
+      "Churn reduction as a measurable outcome",
     ],
     perceptionInsights: [
-      '"Worked with" positions you as a collaborator, not a decision-maker — hiring managers read this as participation, not ownership.',
-      '"Helped define" dilutes authority. Roles at this seniority expect you to have owned or driven roadmap direction independently.',
-      "The absence of outcomes (adoption, retention, revenue) leaves impact invisible — the role explicitly weights data-driven results.",
+      '"Managed a book of business" signals administrative assignment — this role expects portfolio ownership with revenue accountability.',
+      '"Helped customers adopt" reads as support behavior. CSM roles at this level require structured adoption programs and measurable engagement outcomes.',
+      '"Resolving support issues" positions you as reactive. The JD weights proactive relationship management and expansion identification.',
     ],
   },
   {
-    label: "Technical Project Manager – AI Infrastructure",
-    bullet: "Managed timelines and coordinated between engineering teams to keep AI projects on track.",
-    jd: `We are looking for a Technical Project Manager to lead delivery of large-scale AI infrastructure initiatives. You will manage dependencies across ML, platform, and data engineering teams, track technical risk, and ensure milestone accountability at pace. Required: MLOps or data pipeline experience, technical fluency, cross-team dependency management, risk mitigation, stakeholder reporting.`,
-    sampleA: "Led delivery of AI infrastructure initiatives spanning ML, platform, and data engineering, managing cross-team dependencies and surfacing technical risk to ensure milestone accountability at scale.",
-    sampleB: "Coordinated delivery across ML, data, and platform engineering workstreams on AI infrastructure programs, proactively managing blockers and providing structured progress visibility to senior stakeholders.",
+    label: "Operations Lead",
+    bullet: "Oversaw daily operations and coordinated across teams to improve efficiency and meet deadlines.",
+    jd: `We are looking for an Operations Lead to own end-to-end operational workflows across logistics, fulfillment, and vendor management. You will build scalable processes, manage cross-functional dependencies, and drive measurable efficiency improvements. Required: process design, vendor negotiations, KPI ownership, team leadership, operational reporting to senior management.`,
+    sampleA: "Built and owned end-to-end fulfillment workflows across 3 distribution channels, reducing cycle time by 28% through process redesign and vendor SLA renegotiation while reporting operational KPIs to the VP of Operations weekly.",
+    sampleB: "Coordinated logistics and fulfillment operations across multiple vendor relationships, implementing process improvements that reduced order-to-delivery time and improving cross-team visibility through structured reporting cadences.",
     perceptionSnapshot: {
       "Strategic Ownership Signal": "Low",
       "Cross-Functional Authority": "Low",
@@ -78,39 +78,39 @@ const SAMPLE_ROLES: SampleRole[] = [
       "Seniority Weight": "Low",
     },
     roleWeightsMost: [
-      "Technical risk identification and mitigation — not just status tracking",
-      "Cross-team dependency management across ML, platform, and data engineering",
-      "Milestone accountability at scale with senior stakeholder visibility",
-      "Technical fluency sufficient to engage with MLOps and data pipeline complexity",
+      "Process ownership and scalable system design — not coordination",
+      "Measurable efficiency outcomes tied to KPIs",
+      "Vendor management with negotiation accountability",
+      "Operational reporting to senior leadership",
     ],
     perceptionInsights: [
-      '"Managed timelines" signals administrative coordination — this role requires evidence of owning delivery risk, not scheduling.',
-      '"Coordinated between teams" reads as facilitation. The JD expects dependency ownership and proactive risk surfacing.',
-      '"Keep projects on track" implies reactive behavior. Employers at this level want to see how you anticipated and resolved blockers before they became delays.',
+      '"Oversaw daily operations" signals supervision rather than system ownership. The role expects process design and scalable workflow construction.',
+      '"Coordinated across teams" reads as facilitation. Operations Lead roles require dependency management and accountability for throughput.',
+      '"Improve efficiency" without metrics or method signals aspiration rather than delivery.',
     ],
   },
   {
-    label: "Group Product Manager – B2B Growth",
-    bullet: "Led a team of PMs and worked on improving revenue metrics and expanding into new customer segments.",
-    jd: `We are looking for a Group Product Manager to lead a team of PMs focused on B2B growth. You will own revenue expansion strategy, build business cases for new market segments, coach direct reports, and operate as a strategic partner to sales and marketing leadership. Required: B2B growth experience, GM-level business acumen, PM leadership, market sizing, executive communication.`,
-    sampleA: "Led a team of PMs owning B2B revenue expansion, developing business cases for new market segments and operating as a strategic partner to sales and marketing leadership to drive measurable ARR growth.",
-    sampleB: "Managed a PM team responsible for B2B growth strategy, translating market opportunities into structured roadmaps and coaching direct reports while maintaining executive alignment on revenue outcomes.",
+    label: "Marketing Manager",
+    bullet: "Ran marketing campaigns and worked with the design team to create content for social media and email.",
+    jd: `We are looking for a Marketing Manager to own demand generation strategy across digital channels. You will plan and execute integrated campaigns, manage marketing budget allocation, analyze funnel performance, and partner with sales to optimize lead quality. Required: B2B demand gen experience, marketing automation (HubSpot/Marketo), budget ownership, funnel analytics, content strategy.`,
+    sampleA: "Owned demand generation across paid, organic, and email channels with $180K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month and reduced CPL by 22% through funnel-stage optimization.",
+    sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes and reporting campaign performance to marketing leadership monthly.",
     perceptionSnapshot: {
-      "Strategic Ownership Signal": "Moderate",
+      "Strategic Ownership Signal": "Low",
       "Cross-Functional Authority": "Low",
-      "Business Impact Clarity": "Moderate",
-      "Seniority Weight": "Moderate",
+      "Business Impact Clarity": "Low",
+      "Seniority Weight": "Low",
     },
     roleWeightsMost: [
-      "Revenue expansion strategy — including business case construction and market sizing",
-      "PM team leadership with coaching and performance accountability",
-      "Strategic partnership with sales and marketing at a leadership level",
-      "Executive communication on growth outcomes and segment opportunities",
+      "Demand generation strategy ownership — not campaign execution",
+      "Budget accountability with ROI measurement",
+      "Funnel analytics and conversion optimization",
+      "Sales partnership on lead quality and handoff",
     ],
     perceptionInsights: [
-      '"Worked on improving revenue metrics" signals involvement rather than ownership — GPM roles expect strategy authorship and accountability for ARR outcomes.',
-      '"Expanding into new customer segments" without a business case framing signals execution, not GM-level thinking. The role weighs market sizing and commercial rigor.',
-      "PM team leadership reads credibly, but without coaching or performance context, it risks being perceived as headcount management rather than talent development.",
+      '"Ran marketing campaigns" signals task execution. Marketing Manager roles expect strategy ownership and budget accountability.',
+      '"Worked with the design team" positions you as a requester, not a strategist. The role requires integrated campaign planning across channels.',
+      'No mention of metrics, budget, or funnel impact leaves commercial value invisible.',
     ],
   },
 ];
@@ -271,10 +271,10 @@ const Index = () => {
       {/* Hero */}
       <div className="mb-6 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Strategic Resume Intelligence for Product &amp; Project Leaders
+          You already qualify. You just don't read like it yet.
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Hiring for PM roles is risk evaluation. Resumix analyzes how your experience is actually perceived — not just how it's written.
+          Most candidates optimize wording. Strategic candidates optimize perception.
         </p>
       </div>
 
@@ -366,6 +366,30 @@ const Index = () => {
       {/* ── PM Alignment Mode ───────────────────────────────────────────────── */}
       {mode === "alignment" && (
         <>
+          {/* Before/After comparison */}
+          <div className="mb-12 mx-auto max-w-3xl">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground mb-6 text-center">
+              Same experience. Different signal.
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-lg border border-border bg-card p-5 space-y-3 opacity-80">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">How most candidates write it</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Managed cases and resolved customer issues while maintaining documentation.
+                </p>
+              </div>
+              <div className="rounded-lg border border-primary/30 bg-card p-5 space-y-3 shadow-[0_0_20px_-8px_hsl(var(--primary)/0.2)]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">After Resumix calibration</p>
+                <p className="text-sm text-foreground leading-relaxed">
+                  Own end-to-end resolution workflows for 40–70 concurrent cases, resolving 8–15 daily with full SLA accountability and audit-ready documentation — eliminating rework cycles through structured QA protocols.
+                </p>
+              </div>
+            </div>
+            <p className="text-center text-sm text-muted-foreground mt-5">
+              Same person. Same job. The signal was always there.
+            </p>
+          </div>
+
           {/* How it works */}
           <div className="mb-10 mx-auto max-w-2xl">
             <h2 className="text-lg font-semibold tracking-tight text-foreground mb-6">
@@ -404,9 +428,8 @@ const Index = () => {
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
-                <p className="mb-1.5 text-xs text-muted-foreground">Paste a bullet, summary, or short section from your resume.</p>
                 <Textarea
-                  placeholder="Paste a bullet, summary, or short section..."
+                  placeholder="Paste a resume bullet, summary, or short experience section here..."
                   value={bullet}
                   onChange={(e) => { setBullet(e.target.value); setErrors((p) => ({ ...p, bullet: undefined })); }}
                   rows={4}
@@ -416,10 +439,9 @@ const Index = () => {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">The Role You're Applying For</label>
-                <p className="mb-1.5 text-xs text-muted-foreground">Paste the job description. We'll analyze what matters most.</p>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Target Role</label>
                 <Textarea
-                  placeholder="Paste the job description..."
+                  placeholder="Paste the full job description you're targeting..."
                   value={jd}
                   onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
                   rows={6}
@@ -455,13 +477,13 @@ const Index = () => {
                       onClick={() => fillSample(i)}
                       className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {r.label.split(" – ")[0].replace("Senior ", "Sr. ").replace("Group ", "GPM ").replace("Technical ", "TPM ")}
+                      {r.label}
                     </button>
                   ))}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Takes 10–40 seconds. No fluff. No exaggeration. Just sharper alignment.
+              <p className="text-[11px] text-muted-foreground/70">
+                Zero fabrication — we only work with what you give us.
               </p>
             </div>
 
