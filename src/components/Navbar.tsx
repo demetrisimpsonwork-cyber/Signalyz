@@ -27,54 +27,30 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Align
-          </Link>
-          <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Position
-          </Link>
-          <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Pricing
-          </Link>
+          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Align</Link>
+          <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Position</Link>
+          <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
           {user && (
-            <Link to="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              Dashboard
-            </Link>
+            <Link to="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Dashboard</Link>
           )}
           {loading ? null : user ? (
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
-                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{initials}</AvatarFallback>
               </Avatar>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                <LogOut className="mr-2 h-4 w-4" />Sign out
               </Button>
             </div>
           ) : (
             <Button size="sm" onClick={() => navigate("/auth")}>
-              <User className="mr-2 h-4 w-4" />
-              Sign in
+              <User className="mr-2 h-4 w-4" />Sign in
             </Button>
           )}
         </div>
 
         {/* Mobile toggle */}
         <div className="flex items-center gap-2 md:hidden">
-          {!loading && user && (
-            <Avatar className="h-8 w-8" onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}>
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          )}
-          {!loading && !user && (
-            <Button size="sm" variant="ghost" onClick={() => navigate("/auth")}>
-              Sign in
-            </Button>
-          )}
           <button onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -88,9 +64,17 @@ const Navbar = () => {
             <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Align</Link>
             <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Position</Link>
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
-            {user && <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>}
+            {!loading && !user && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Sign in</Button>
+                <Button size="sm" className="w-full" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Get Started</Button>
+              </>
+            )}
             {!loading && user && (
-              <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
+              <>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
+                <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
+              </>
             )}
           </div>
         </div>
