@@ -6,6 +6,7 @@ import KeywordChips from "@/components/KeywordChips";
 import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
 import UpgradeModal from "@/components/UpgradeModal";
+import ResumeBuilder from "@/components/ResumeBuilder";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
@@ -196,8 +197,16 @@ const Index = () => {
 
   const validate = () => {
     const errs: typeof errors = {};
-    if (!bullet.trim()) errs.bullet = "Please paste a resume bullet.";
-    if (!jd.trim()) errs.jd = "Please paste a job description.";
+    if (!bullet.trim()) {
+      errs.bullet = "Please paste your experience.";
+    } else if (bullet.trim().length < 20) {
+      errs.bullet = "Experience must be at least 20 characters.";
+    }
+    if (!jd.trim()) {
+      errs.jd = "Please paste a job description.";
+    } else if (jd.trim().length < 20) {
+      errs.jd = "Job description must be at least 20 characters.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -335,7 +344,7 @@ const Index = () => {
       {/* How it works */}
       <section className="py-16 container max-w-2xl">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8">
-          How PM Resume Intelligence Works
+          How Resumix Works
         </h2>
         <ol className="space-y-6">
           {[
@@ -379,8 +388,9 @@ const Index = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Director Signal Calibration
+              Executive Signal Audit
             </button>
+            <span className="text-[10px] text-muted-foreground ml-1 hidden sm:inline">For Director-level and above targeting.</span>
           </div>
         </div>
 
@@ -607,6 +617,17 @@ const Index = () => {
                         onContextChange={setAdditionalContext}
                       />
                     )}
+
+                    {/* Resume Builder — Pro gated */}
+                    <ResumeBuilder
+                      experience={bullet}
+                      jd={jd}
+                      calibratedBullet={result.optimized_bullet}
+                      originalBullet={bullet}
+                      matchScore={result.match_score}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
 
                     {/* Section 3: Export */}
                     <ExportResults result={result} />

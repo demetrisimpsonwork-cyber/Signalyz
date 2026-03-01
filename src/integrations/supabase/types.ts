@@ -169,6 +169,36 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_tracking: {
+        Row: {
+          alignment_count: number
+          created_at: string
+          id: string
+          ip_address: string
+          updated_at: string
+          usage_date: string
+          user_id: string | null
+        }
+        Insert: {
+          alignment_count?: number
+          created_at?: string
+          id?: string
+          ip_address: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string | null
+        }
+        Update: {
+          alignment_count?: number
+          created_at?: string
+          id?: string
+          ip_address?: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

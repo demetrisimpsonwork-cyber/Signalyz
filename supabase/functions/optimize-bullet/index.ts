@@ -3,8 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const DAILY_FREE_LIMIT = 3;
 
 const MODELS = [
   "google/gemini-2.5-flash",
@@ -46,6 +48,24 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
 
+function sanitizeInput(input: string): string {
+  // Strip common prompt injection patterns
+  return input
+    .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)/gi, "")
+    .replace(/system\s*:\s*/gi, "")
+    .replace(/you\s+are\s+now\s+/gi, "")
+    .replace(/act\s+as\s+/gi, "")
+    .replace(/pretend\s+(you\s+are|to\s+be)\s+/gi, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .trim();
+}
+
+function getClientIP(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || "unknown";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,17 +74,78 @@ serve(async (req) => {
   try {
     const { bullet, jd, userId, mode = "single_bullet" } = await req.json();
 
-    if (!bullet || !jd) {
-      return new Response(JSON.stringify({ error: "Missing bullet or jd" }), {
+    // --- Input validation ---
+    if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
+      return new Response(JSON.stringify({ error: "Missing or invalid bullet or jd fields." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const trimmedBullet = bullet.trim();
+    const trimmedJd = jd.trim();
+
+    if (trimmedBullet.length < 20) {
+      return new Response(JSON.stringify({ error: "Experience input must be at least 20 characters." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (trimmedJd.length < 20) {
+      return new Response(JSON.stringify({ error: "Target role input must be at least 20 characters." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize inputs
+    const cleanBullet = sanitizeInput(trimmedBullet);
+    const cleanJd = sanitizeInput(trimmedJd);
+
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+
+    // --- Server-side rate limiting for free users ---
     const userPlan = mode === "multi_bullet" ? "pro" : "free";
+
+    if (userPlan === "free") {
+      const clientIP = getClientIP(req);
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Check existing usage
+      const { data: existing } = await sb
+        .from("usage_tracking")
+        .select("id, alignment_count")
+        .eq("ip_address", clientIP)
+        .eq("usage_date", today)
+        .maybeSingle();
+
+      if (existing && existing.alignment_count >= DAILY_FREE_LIMIT) {
+        return new Response(JSON.stringify({
+          error: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Pro for unlimited alignments.`,
+          limit_reached: true,
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Increment or insert usage
+      if (existing) {
+        await sb
+          .from("usage_tracking")
+          .update({ alignment_count: existing.alignment_count + 1, user_id: userId || null, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await sb
+          .from("usage_tracking")
+          .insert({ ip_address: clientIP, user_id: userId || null, usage_date: today, alignment_count: 1 });
+      }
+    }
 
     const prompt = `You are Alignment Engine V2 (Titan).
 
@@ -213,9 +294,9 @@ WRITING STYLE CONSTRAINTS (apply to ALL generated bullets):
 - Remove adjective stacking and motivational tone entirely.
 - Every bullet must sound like a specific human wrote it about a specific job, specific system, and specific outcome.
 
-EXPERIENCE_INPUT: ${bullet}
+EXPERIENCE_INPUT: ${cleanBullet}
 
-JOB_DESCRIPTION: ${jd}
+JOB_DESCRIPTION: ${cleanJd}
 
 USER_PLAN: ${userPlan}`;
 
@@ -241,7 +322,6 @@ USER_PLAN: ${userPlan}`;
       ? titan.strategic_gap_actions.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
       : null;
 
-    // Pro plan: [0]=impact_focused, [1]=human_natural, [2]=keyword_maximized
     const altA = titan.optimized_bullets?.[1]?.text || optimizedBullet;
     const altB = titan.optimized_bullets?.[2]?.text || optimizedBullet;
 
@@ -252,7 +332,6 @@ USER_PLAN: ${userPlan}`;
     const breakdown = titan.debug?.scoring_breakdown || {};
     const scoreRationale = titan.match_score?.score_rationale || [];
 
-    // Pro-only fields
     const weightedPriorityCommentary = titan.weighted_priority_commentary || null;
     const strategicBridgeAnalysis = titan.strategic_bridge_analysis || null;
 
@@ -273,21 +352,16 @@ USER_PLAN: ${userPlan}`;
       extracted_jd_priorities: priorities,
       used_signals: titan.optimized_bullets?.[0]?.used_signals || [],
       removed_or_softened: titan.optimized_bullets?.[0]?.removed_or_softened || [],
-      // Pro-only
       weighted_priority_commentary: weightedPriorityCommentary,
       strategic_bridge_analysis: strategicBridgeAnalysis,
       identity_strength_index: titan.identity_strength_index || null,
     };
 
     // Save to database
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
-
     await sb.from("optimizations").insert({
       user_id: userId || null,
-      input_bullet: bullet,
-      input_jd: jd,
+      input_bullet: cleanBullet,
+      input_jd: cleanJd,
       optimized_bullet: optimizedBullet,
       match_score: Math.round(matchScore),
       missing_keywords: missingKeywords,
@@ -301,7 +375,7 @@ USER_PLAN: ${userPlan}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const status = message.includes("Rate limits") ? 429 : message.includes("Usage limit") ? 402 : 500;
+    const status = message.includes("Rate limits") || message.includes("Daily free limit") ? 429 : message.includes("Usage limit") ? 402 : 500;
     return new Response(JSON.stringify({ error: message }), {
       status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
