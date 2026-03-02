@@ -180,10 +180,10 @@ const DirectorAudit = () => {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
-          Director Signal Calibration Engine v{deterministic ? "1.2" : "1.2-fresh"}
+         Executive Signal Audit Engine v{deterministic ? "1.2" : "1.2-fresh"}
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-          Director Audit
+          Executive Signal Audit
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
           Institutional classification of Director-level signal maturity. Evaluates ownership scope, strategic leverage, accountability density, and executive signal quality. Detects hiring-stage friction risk.
@@ -263,7 +263,7 @@ const DirectorAudit = () => {
                 className="w-full gap-2"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Running Calibration…" : deterministic ? "Run Director Calibration" : "Run Fresh Calibration"}
+                {loading ? "Running Calibration…" : deterministic ? "Run Executive Audit" : "Run Fresh Calibration"}
               </Button>
             </div>
           </div>
@@ -304,7 +304,7 @@ const DirectorAudit = () => {
 
           {!loading && !result && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-2 px-6 text-center">
-              <p className="text-sm text-muted-foreground">Director calibration report will appear here</p>
+              <p className="text-sm text-muted-foreground">Executive audit report will appear here</p>
               <p className="text-xs text-muted-foreground/60">
                 Dimension evaluation · Director signal tier · Hiring friction · Pattern detection
               </p>

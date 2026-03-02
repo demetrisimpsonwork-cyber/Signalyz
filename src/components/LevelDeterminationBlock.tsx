@@ -25,7 +25,7 @@ const deriveCurrentSignalLevel = (score: number): string => {
 };
 
 const deriveTierGap = (score: number): string => {
-  if (score >= 80) return "None — Senior PM signal criteria met";
+  if (score >= 80) return "None — senior-level signal criteria met";
   if (score >= 65) return "Marginal — signal deficiencies present in secondary dimensions";
   if (score >= 50) return "One Tier — threshold requirements unmet across core dimensions";
   return "Two or More Tiers — core signal dimensions under-represented";
@@ -41,16 +41,16 @@ const deriveClassificationConfidence = (score: number): string => {
 
 const deriveOwnershipVerdict = (score: number, confidence: "High" | "Moderate" | "Low"): string => {
   if (confidence === "High") {
-    if (score >= 80) return "Candidate demonstrates end-to-end ownership consistent with Senior PM threshold. Signal is unambiguous.";
-    return "Candidate signal falls below Senior PM threshold. Ownership scope is insufficient for this classification.";
+    if (score >= 80) return "Candidate demonstrates end-to-end ownership consistent with senior-level threshold. Signal is unambiguous.";
+    return "Candidate signal falls below senior-level threshold. Ownership scope is insufficient for this classification.";
   }
   if (confidence === "Moderate") {
-    if (score >= 65) return "Candidate signal is broadly consistent with Senior PM threshold, though secondary dimensions require reinforcement.";
-    return "Candidate signal does not yet satisfy Senior PM threshold requirements. Key ownership dimensions remain under-represented.";
+    if (score >= 65) return "Candidate signal is broadly consistent with senior-level threshold, though secondary dimensions require reinforcement.";
+    return "Candidate signal does not yet satisfy senior-level threshold requirements. Key ownership dimensions remain under-represented.";
   }
   // Low confidence
-  if (score >= 50) return "Available signal suggests partial alignment with Senior PM standards. Classification may shift with additional evidence.";
-  return "Signal density is insufficient to confirm Senior PM calibration. Current evidence indicates threshold deficiency.";
+  if (score >= 50) return "Available signal suggests partial alignment with senior-level standards. Classification may shift with additional evidence.";
+  return "Signal density is insufficient to confirm senior-level calibration. Current evidence indicates threshold deficiency.";
 };
 
 // ─── Primary deficiency extraction ───────────────────────────────────────────
@@ -103,24 +103,24 @@ const extractPrimaryDeficiency = (raw: string): { name: string; status: string; 
 
 const deriveStrategicPriority = (score: number, deficiencyName: string | null): string => {
   if (deficiencyName === "Ownership Scope" || score < 50) {
-    return "Senior PM threshold requires explicit end-to-end ownership language — scope, lifecycle, and decision authority must be stated, not implied.";
+    return "Senior-level threshold requires explicit end-to-end ownership language — scope, lifecycle, and decision authority must be stated, not implied.";
   }
   if (deficiencyName === "Commercial Impact") {
-    return "Senior PM threshold requires quantified business outcomes directly tied to product decisions. Revenue, retention, or adoption impact must appear with attribution.";
+    return "Senior-level threshold requires quantified business outcomes directly tied to decisions. Revenue, retention, or adoption impact must appear with attribution.";
   }
   if (deficiencyName === "Strategic Definition") {
-    return "Senior PM threshold requires evidence of problem framing and prioritization logic — roadmap sequencing must reflect strategic rationale, not feature enumeration.";
+    return "Senior-level threshold requires evidence of problem framing and prioritization logic — sequencing must reflect strategic rationale, not task enumeration.";
   }
   if (deficiencyName === "Cross-Functional Authority") {
-    return "Senior PM threshold requires cross-functional influence at a decision-making level. Collaboration language must be replaced with alignment ownership and negotiation evidence.";
+    return "Senior-level threshold requires cross-functional influence at a decision-making level. Collaboration language must be replaced with alignment ownership and negotiation evidence.";
   }
   if (deficiencyName === "Executive Signal") {
-    return "Senior PM threshold requires executive-facing communication signals — board-level reporting, strategic narrative ownership, or executive alignment must be present.";
+    return "Senior-level threshold requires executive-facing communication signals — board-level reporting, strategic narrative ownership, or executive alignment must be present.";
   }
   if (score >= 80) {
-    return "Signal pattern meets Senior PM threshold. Maintain current positioning framework and reinforce commercial attribution in all quantitative claims.";
+    return "Signal pattern meets senior-level threshold. Maintain current positioning framework and reinforce commercial attribution in all quantitative claims.";
   }
-  return "Senior PM threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.";
+  return "Senior-level threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.";
 };
 
 // ─── Hiring risk funnel stage configuration ───────────────────────────────────
@@ -153,7 +153,7 @@ const deriveFunnelStages = (score: number): FunnelStage[] => {
       label: "Hiring Manager Ownership Audit",
       risk: isAbove ? "Low" : isAt ? "Moderate" : "High",
       note: isAbove
-        ? "Ownership signals are explicit and consistent with Senior PM classification."
+        ? "Ownership signals are explicit and consistent with senior-level classification."
         : isAt
         ? "Ownership language is present but may not fully distinguish from IC-level contribution."
         : "Ownership scope is under-represented. Hiring managers may classify candidate as execution-level.",
@@ -176,7 +176,7 @@ const deriveFunnelStages = (score: number): FunnelStage[] => {
         ? "Strategic framing and executive-facing signals are present and consistent."
         : isAt
         ? "Strategic language is detectable but lacks sufficient executive-level evidence."
-        : "No executive strategy signals detected. Candidate may fail calibration at Director or VP level review.",
+        : "No executive strategy signals detected. Candidate may fail calibration at senior review.",
     },
     {
       stage: "Stage 5",
@@ -213,15 +213,15 @@ const thresholdStatusStyle = (status: string) => {
 
 const BlockShell = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="rounded-lg border bg-card overflow-hidden">
-    <div className="px-4 pt-3.5 pb-2.5 border-b border-border/60">
-      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">{label}</p>
+    <div className="px-5 pt-4 pb-3 border-b border-border/60">
+      <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground">{label}</p>
     </div>
     {children}
   </div>
 );
 
 const Row = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
-  <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+  <div className="flex items-start justify-between gap-4 px-5 py-3">
     <p className="text-xs text-muted-foreground shrink-0 w-44">{label}</p>
     <p className={`text-xs text-right leading-relaxed text-foreground ${mono ? "font-medium" : ""}`}>{value}</p>
   </div>
@@ -250,9 +250,9 @@ const LevelDeterminationBlock = ({
   const handleCopyAll = async () => {
     const lines = [
       "TARGET ROLE CALIBRATION",
-      `Inferred Target Level: Senior PM`,
+      `Inferred Target Level: Senior`,
       `Inference Confidence: ${inferenceConfidence}`,
-      `Benchmark Applied: Senior PM Threshold Standard`,
+      `Benchmark Applied: Senior Threshold Standard`,
       "",
       "OWNERSHIP CLASSIFICATION",
       `Current Signal Level: ${signalLevel}`,
@@ -270,7 +270,7 @@ const LevelDeterminationBlock = ({
           ].join("\n")
         : "",
       "",
-      "PM HIRING RISK PROJECTION",
+      "SIGNAL RISK PROJECTION",
       ...funnelStages.map((s) => `${s.stage} — ${s.label}: ${s.risk} — ${s.note}`),
       "",
       "STRATEGIC UPGRADE PRIORITY",
@@ -286,14 +286,14 @@ const LevelDeterminationBlock = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-7">
 
       {/* 1 — Target Role Calibration */}
       <BlockShell label="Target Role Calibration">
         <div className="divide-y divide-border/50">
-          <Row label="Inferred Target Level" value="Senior PM" mono />
+          <Row label="Inferred Target Level" value="Senior" mono />
           <Row label="Inference Confidence" value={inferenceConfidence} />
-          <Row label="Benchmark Applied" value="Senior PM Threshold Standard" />
+          <Row label="Benchmark Applied" value="Senior Threshold Standard" />
         </div>
       </BlockShell>
 
@@ -304,8 +304,8 @@ const LevelDeterminationBlock = ({
           <Row label="Tier Gap" value={tierGap} />
           <Row label="Classification Confidence" value={classificationConfidence} />
         </div>
-        <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Verdict</p>
+        <div className="px-5 py-3.5 border-t border-border/60 bg-muted/20">
+          <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Verdict</p>
           <p className="text-xs text-foreground leading-relaxed">{ownershipVerdict}</p>
         </div>
       </BlockShell>
@@ -313,7 +313,7 @@ const LevelDeterminationBlock = ({
       {/* 3 — Primary Deficiency */}
       {primaryDeficiency && (
         <BlockShell label="Primary Deficiency">
-          <div className="px-4 py-3 space-y-3">
+          <div className="px-5 py-3.5 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-semibold text-foreground">{primaryDeficiency.name}</p>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${thresholdStatusStyle(primaryDeficiency.status)}`}>
@@ -322,11 +322,11 @@ const LevelDeterminationBlock = ({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Observed Pattern</p>
+                <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Observed Pattern</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.pattern}</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Panel Risk</p>
+                <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Panel Risk</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.panelRisk}</p>
               </div>
             </div>
@@ -334,13 +334,13 @@ const LevelDeterminationBlock = ({
         </BlockShell>
       )}
 
-      {/* 4 — PM Hiring Risk Projection */}
-      <BlockShell label="PM Hiring Risk Projection">
+      {/* 4 — Signal Risk Projection */}
+      <BlockShell label="Signal Risk Projection">
         <div className="divide-y divide-border/50">
           {funnelStages.map((s) => {
             const styles = riskStyles[s.risk];
             return (
-              <div key={s.stage} className="px-4 py-3 space-y-1.5">
+              <div key={s.stage} className="px-5 py-3.5 space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] text-muted-foreground font-medium">{s.stage}</p>
@@ -359,7 +359,7 @@ const LevelDeterminationBlock = ({
 
       {/* 5 — Strategic Upgrade Priority */}
       <BlockShell label="Strategic Upgrade Priority">
-        <div className="px-4 py-3">
+        <div className="px-5 py-3.5">
           <p className="text-xs text-foreground leading-relaxed">{strategicPriority}</p>
         </div>
       </BlockShell>

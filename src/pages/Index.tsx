@@ -7,6 +7,7 @@ import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
 import UpgradeModal from "@/components/UpgradeModal";
 import ResumeBuilder from "@/components/ResumeBuilder";
+import ResumeUpload from "@/components/ResumeUpload";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
@@ -51,7 +52,12 @@ const SIGNAL_LEVEL_STYLES: Record<SignalLevel, string> = {
 const SAMPLE_ROLES: SampleRole[] = [
   {
     label: "Customer Success Manager",
-    bullet: "Managed a book of business and helped customers adopt the product while resolving support issues.",
+    bullet: `Customer Success Manager — SaaS Platform (2021–2024)
+• Managed a book of 35+ accounts and handled day-to-day client communication
+• Ran onboarding calls for new customers and walked them through the product
+• Prepared materials for quarterly business reviews and joined calls with AEs
+• Responded to support tickets and escalated issues to engineering when needed
+• Tracked renewal dates and followed up with clients approaching contract end`,
     jd: `We are looking for a Customer Success Manager to own post-sale client relationships across a portfolio of mid-market accounts. You will drive adoption, reduce churn, identify expansion opportunities, and serve as the primary point of contact. Required: SaaS customer success experience, renewal ownership, QBR facilitation, CRM fluency, cross-functional coordination with product and support.`,
     sampleA: "Owned post-sale relationships across 45 mid-market accounts ($3.2M ARR), driving product adoption through structured onboarding sequences and quarterly business reviews that surfaced expansion opportunities.",
     sampleB: "Managed a portfolio of mid-market accounts, coordinating onboarding, renewal conversations, and escalation resolution while maintaining 92% gross retention across two renewal cycles.",
@@ -68,14 +74,19 @@ const SAMPLE_ROLES: SampleRole[] = [
       "Churn reduction as a measurable outcome",
     ],
     perceptionInsights: [
-      '"Managed a book of business" signals administrative assignment — this role expects portfolio ownership with revenue accountability.',
-      '"Helped customers adopt" reads as support behavior. CSM roles at this level require structured adoption programs and measurable engagement outcomes.',
-      '"Resolving support issues" positions you as reactive. The JD weights proactive relationship management and expansion identification.',
+      '"Managed a book of 35+ accounts" signals administrative assignment — this role expects portfolio ownership with revenue accountability.',
+      '"Ran onboarding calls" and "walked them through the product" reads as support behavior. CSM roles at this level require structured adoption programs with measurable engagement outcomes.',
+      '"Responded to support tickets" positions you as reactive. The JD weights proactive relationship management and expansion identification.',
     ],
   },
   {
     label: "Operations Lead",
-    bullet: "Oversaw daily operations and coordinated across teams to improve efficiency and meet deadlines.",
+    bullet: `Operations Lead — Logistics & Fulfillment (2020–2024)
+• Oversaw daily warehouse and fulfillment operations across two locations
+• Created and maintained SOPs for shipping, receiving, and inventory processes
+• Managed relationships with three external vendors and handled contract renewals
+• Coordinated with sales and product teams on inventory forecasting and stock levels
+• Compiled weekly operational reports and presented updates to management`,
     jd: `We are looking for an Operations Lead to own end-to-end operational workflows across logistics, fulfillment, and vendor management. You will build scalable processes, manage cross-functional dependencies, and drive measurable efficiency improvements. Required: process design, vendor negotiations, KPI ownership, team leadership, operational reporting to senior management.`,
     sampleA: "Built and owned end-to-end fulfillment workflows across 3 distribution channels, reducing cycle time by 28% through process redesign and vendor SLA renegotiation while reporting operational KPIs to the VP of Operations weekly.",
     sampleB: "Coordinated logistics and fulfillment operations across multiple vendor relationships, implementing process improvements that reduced order-to-delivery time and improving cross-team visibility through structured reporting cadences.",
@@ -93,13 +104,18 @@ const SAMPLE_ROLES: SampleRole[] = [
     ],
     perceptionInsights: [
       '"Oversaw daily operations" signals supervision rather than system ownership. The role expects process design and scalable workflow construction.',
-      '"Coordinated across teams" reads as facilitation. Operations Lead roles require dependency management and accountability for throughput.',
-      '"Improve efficiency" without metrics or method signals aspiration rather than delivery.',
+      '"Created and maintained SOPs" is documentation work. Operations Lead roles require process architecture that drives measurable efficiency gains.',
+      '"Coordinated with sales and product teams" reads as facilitation. The JD requires dependency management with accountability for throughput.',
     ],
   },
   {
     label: "Marketing Manager",
-    bullet: "Ran marketing campaigns and worked with the design team to create content for social media and email.",
+    bullet: `Marketing Manager — B2B SaaS (2019–2024)
+• Ran email campaigns and social media posts on a weekly content calendar
+• Worked with the design team to create landing pages, blog graphics, and ad creative
+• Helped plan and execute two product launch campaigns per quarter
+• Pulled campaign performance reports from HubSpot and shared with the team
+• Managed the company blog and wrote 2-3 posts per month on industry topics`,
     jd: `We are looking for a Marketing Manager to own demand generation strategy across digital channels. You will plan and execute integrated campaigns, manage marketing budget allocation, analyze funnel performance, and partner with sales to optimize lead quality. Required: B2B demand gen experience, marketing automation (HubSpot/Marketo), budget ownership, funnel analytics, content strategy.`,
     sampleA: "Owned demand generation across paid, organic, and email channels with $180K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month and reduced CPL by 22% through funnel-stage optimization.",
     sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes and reporting campaign performance to marketing leadership monthly.",
@@ -116,9 +132,9 @@ const SAMPLE_ROLES: SampleRole[] = [
       "Sales partnership on lead quality and handoff",
     ],
     perceptionInsights: [
-      '"Ran marketing campaigns" signals task execution. Marketing Manager roles expect strategy ownership and budget accountability.',
+      '"Ran email campaigns and social media posts" signals task execution. Marketing Manager roles expect strategy ownership and budget accountability.',
       '"Worked with the design team" positions you as a requester, not a strategist. The role requires integrated campaign planning across channels.',
-      "No mention of metrics, budget, or funnel impact leaves commercial value invisible.",
+      '"Pulled campaign performance reports" is reporting, not analytics. No mention of funnel optimization, budget, or commercial impact leaves strategic value invisible.',
     ],
   },
 ];
@@ -174,7 +190,7 @@ const Index = () => {
   const [selectedSampleRole, setSelectedSampleRole] = useState(0);
   const [additionalContext, setAdditionalContext] = useState("");
 
-  // Director Calibration state
+  // Executive Audit state
   const [directorExperience, setDirectorExperience] = useState("");
   const [directorResult, setDirectorResult] = useState<DirectorCalibrationResult | null>(null);
   const [directorLoading, setDirectorLoading] = useState(false);
@@ -394,17 +410,17 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Director Calibration Mode */}
+        {/* Executive Signal Audit Mode */}
         {mode === "director" && (
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">
-                  Director Signal Calibration Engine v1.1
+                  Executive Signal Audit Engine v1.1
                 </p>
-                <h2 className="text-base font-semibold text-foreground mb-1">Evaluate Director-Level Signal Maturity</h2>
+                <h2 className="text-base font-semibold text-foreground mb-1">Evaluate Executive-Level Signal Maturity</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Classifies ownership signals against Director-level thresholds. Detects hiring-stage friction risk, undersignaling, and ownership inflation.
+                  Classifies ownership signals against executive-level thresholds. Detects hiring-stage friction risk, undersignaling, and ownership inflation.
                 </p>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Resume or Experience Input</label>
                 <Textarea
@@ -416,14 +432,14 @@ const Index = () => {
               </div>
               <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="gap-2">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                Run Director Calibration
+                Run Executive Audit
               </Button>
             </div>
             <div className="space-y-4">
               {directorLoading && <AlignmentLoader minHeight="260px" />}
               {!directorLoading && !directorResult && (
                 <div className="flex h-60 items-center justify-center rounded-xl border border-dashed bg-card">
-                  <p className="text-sm text-muted-foreground">Director calibration output will appear here</p>
+                  <p className="text-sm text-muted-foreground">Executive audit output will appear here</p>
                 </div>
               )}
               {directorResult && !directorLoading && <DirectorCalibrationBlock result={directorResult} />}
@@ -439,12 +455,18 @@ const Index = () => {
               <div className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
+                  <ResumeUpload
+                    onTextExtracted={(text) => {
+                      setBullet(text);
+                      setErrors((p) => ({ ...p, bullet: undefined }));
+                    }}
+                  />
                   <Textarea
                     placeholder="Paste a resume bullet, summary, or short experience section here..."
                     value={bullet}
                     onChange={(e) => { setBullet(e.target.value); setErrors((p) => ({ ...p, bullet: undefined })); }}
                     rows={4}
-                    className={errors.bullet ? "border-destructive" : ""}
+                    className={`mt-2 ${errors.bullet ? "border-destructive" : ""}`}
                   />
                   {errors.bullet && <p className="mt-1 text-xs text-destructive">{errors.bullet}</p>}
                 </div>
@@ -493,7 +515,7 @@ const Index = () => {
               </div>
 
               {/* Right — Results */}
-              <div className="space-y-4">
+              <div className="space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
                 {!loading && !result && !showSamples && (
@@ -503,13 +525,13 @@ const Index = () => {
                 )}
 
                 {!loading && !result && showSamples && (
-                  <div className="space-y-4">
+                  <div className="space-y-7">
                     <div>
                       <p className="text-xs font-semibold text-foreground mb-0.5">{role.label}</p>
                       <p className="text-xs text-muted-foreground">Diagnostic preview based on the original bullet.</p>
                     </div>
-                    <div className="rounded-xl border bg-card p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-foreground">Perception Snapshot</h3>
+                    <div className="rounded-xl border bg-card p-5 space-y-3">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Perception Snapshot</h3>
                       <p className="text-xs text-muted-foreground">How the original language registers across key hiring signals.</p>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(role.perceptionSnapshot).map(([dimension, level]) => (
@@ -522,8 +544,8 @@ const Index = () => {
                         ))}
                       </div>
                     </div>
-                    <div className="rounded-xl border bg-card p-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">What This Role Actually Weighs Most</h3>
+                    <div className="rounded-xl border bg-card p-5 space-y-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">What This Role Actually Weighs Most</h3>
                       <ul className="space-y-1.5">
                         {role.roleWeightsMost.map((theme, i) => (
                           <li key={i} className="flex gap-2 text-xs text-muted-foreground">
@@ -533,8 +555,8 @@ const Index = () => {
                         ))}
                       </ul>
                     </div>
-                    <div className="rounded-xl border bg-card p-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Perception Insight</h3>
+                    <div className="rounded-xl border bg-card p-5 space-y-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Perception Insight</h3>
                       <ul className="space-y-2">
                         {role.perceptionInsights.map((insight, i) => (
                           <li key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed">{insight}</li>
@@ -550,7 +572,7 @@ const Index = () => {
                   <>
                     {/* Section 1: Signal Diagnosis */}
                     <div className="rounded-xl border bg-card p-6 space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Signal Diagnosis</h3>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Signal Diagnosis</h3>
                       <div className="flex items-baseline gap-3">
                         <span className="text-4xl font-bold text-primary">{result.match_score}%</span>
                         {result.alignment_confidence_level && (
@@ -573,15 +595,15 @@ const Index = () => {
 
                     {/* Section 2: Calibrated Bullets */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Calibrated Bullets</h3>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Calibrated Bullets</h3>
                       <div className="rounded-xl border bg-card p-5 space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Original</p>
+                            <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Original</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">{bullet}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-primary font-medium">Calibrated</p>
+                            <p className="text-[11px] uppercase tracking-[0.15em] text-primary font-medium">Calibrated</p>
                             <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
                           </div>
                         </div>

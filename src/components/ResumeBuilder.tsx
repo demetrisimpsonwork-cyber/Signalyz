@@ -97,7 +97,6 @@ const ResumeBuilder = ({
             },
           },
           children: [
-            // Name
             new Paragraph({
               alignment: AlignmentType.CENTER,
               spacing: { after: 80 },
@@ -110,7 +109,6 @@ const ResumeBuilder = ({
                 }),
               ],
             }),
-            // Contact
             ...(resumeData.email || resumeData.phone
               ? [
                   new Paragraph({
@@ -127,7 +125,6 @@ const ResumeBuilder = ({
                   }),
                 ]
               : []),
-            // Divider
             new Paragraph({
               border: {
                 bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
@@ -135,7 +132,6 @@ const ResumeBuilder = ({
               spacing: { after: 200 },
               children: [],
             }),
-            // Summary heading
             new Paragraph({
               heading: HeadingLevel.HEADING_2,
               spacing: { before: 100, after: 100 },
@@ -159,7 +155,6 @@ const ResumeBuilder = ({
                 }),
               ],
             }),
-            // Experience heading
             new Paragraph({
               heading: HeadingLevel.HEADING_2,
               spacing: { before: 100, after: 100 },
@@ -173,7 +168,6 @@ const ResumeBuilder = ({
                 }),
               ],
             }),
-            // Calibrated bullet
             new Paragraph({
               spacing: { after: 100 },
               bullet: { level: 0 },
@@ -185,7 +179,6 @@ const ResumeBuilder = ({
                 }),
               ],
             }),
-            // Signal Gap Notice
             new Paragraph({
               spacing: { before: 300, after: 100 },
               children: [
@@ -222,7 +215,7 @@ const ResumeBuilder = ({
 
   if (resumeData) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Calibrated Resume Preview
@@ -233,44 +226,53 @@ const ResumeBuilder = ({
           </Button>
         </div>
 
-        {/* Name + Contact */}
-        <div className="text-center border-b border-border pb-4">
-          <p className="text-lg font-bold text-foreground">{resumeData.name}</p>
-          {(resumeData.email || resumeData.phone) && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {[resumeData.email, resumeData.phone].filter(Boolean).join("  |  ")}
-            </p>
-          )}
-        </div>
+        {/* Document-style resume */}
+        <div className="bg-white rounded-sm shadow-[0_2px_20px_-4px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.05)] max-w-[640px] mx-auto">
+          <div className="px-10 py-10 space-y-6" style={{ fontFamily: "'Calibri', 'Segoe UI', sans-serif" }}>
+            {/* Name */}
+            <div className="text-center border-b pb-5" style={{ borderColor: "#e0e0e0" }}>
+              <p className="font-bold text-foreground" style={{ fontSize: "20px", letterSpacing: "0.02em" }}>
+                {resumeData.name}
+              </p>
+              {(resumeData.email || resumeData.phone) && (
+                <p className="mt-1.5 text-muted-foreground" style={{ fontSize: "13px" }}>
+                  {[resumeData.email, resumeData.phone].filter(Boolean).join("  ·  ")}
+                </p>
+              )}
+            </div>
 
-        {/* Summary */}
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-            Professional Summary
-          </p>
-          <p className="text-sm text-foreground leading-relaxed">
-            {resumeData.positioningStatement}
-          </p>
-        </div>
+            {/* Professional Summary */}
+            <div>
+              <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                Professional Summary
+              </p>
+              <p className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                {resumeData.positioningStatement}
+              </p>
+            </div>
 
-        {/* Experience */}
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-            Experience
-          </p>
-          <p className="text-sm text-foreground leading-relaxed pl-4 border-l-2 border-primary/30">
-            {calibratedBullet}
-          </p>
-        </div>
+            {/* Experience */}
+            <div>
+              <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                Experience
+              </p>
+              <div className="pl-4" style={{ borderLeft: "2px solid hsl(var(--primary) / 0.25)" }}>
+                <p className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                  {calibratedBullet}
+                </p>
+              </div>
+            </div>
 
-        {/* Signal Gap Notice */}
-        <div className="space-y-2 rounded-lg bg-muted/30 p-4">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-            Signal Gap Notice
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed italic">
-            {resumeData.signalGapNotice}
-          </p>
+            {/* Signal Gap Notice */}
+            <div className="pt-4" style={{ borderTop: "1px solid #e8e8e8" }}>
+              <p className="font-bold uppercase text-muted-foreground mb-2" style={{ fontSize: "11px", letterSpacing: "0.12em" }}>
+                Signal Gap Notice
+              </p>
+              <p className="text-muted-foreground italic leading-relaxed" style={{ fontSize: "13px" }}>
+                {resumeData.signalGapNotice}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
