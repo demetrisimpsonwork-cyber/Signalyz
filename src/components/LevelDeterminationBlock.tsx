@@ -7,6 +7,7 @@ interface LevelDeterminationBlockProps {
   confidenceLevel?: string;
   alignmentNotes?: string;
   gapSuggestions?: string | null;
+  inferredRoleTitle?: string;
 }
 
 // ─── Inference helpers ────────────────────────────────────────────────────────
@@ -24,8 +25,8 @@ const deriveCurrentSignalLevel = (score: number): string => {
   return "Below Threshold";
 };
 
-const deriveTierGap = (score: number): string => {
-  if (score >= 80) return "None — senior-level signal criteria met";
+const deriveTierGap = (score: number, roleTitle: string): string => {
+  if (score >= 80) return `None — ${roleTitle} signal criteria met`;
   if (score >= 65) return "Marginal — signal deficiencies present in secondary dimensions";
   if (score >= 50) return "One Tier — threshold requirements unmet across core dimensions";
   return "Two or More Tiers — core signal dimensions under-represented";
@@ -37,20 +38,17 @@ const deriveClassificationConfidence = (score: number): string => {
   return "Low — insufficient signal density; classification is provisional";
 };
 
-// ─── Ownership verdict tone adapts to confidence ─────────────────────────────
-
-const deriveOwnershipVerdict = (score: number, confidence: "High" | "Moderate" | "Low"): string => {
+const deriveOwnershipVerdict = (score: number, confidence: "High" | "Moderate" | "Low", roleTitle: string): string => {
   if (confidence === "High") {
-    if (score >= 80) return "Candidate demonstrates end-to-end ownership consistent with senior-level threshold. Signal is unambiguous.";
-    return "Candidate signal falls below senior-level threshold. Ownership scope is insufficient for this classification.";
+    if (score >= 80) return `Candidate demonstrates end-to-end ownership consistent with ${roleTitle} threshold. Signal is unambiguous.`;
+    return `Candidate signal falls below ${roleTitle} threshold. Ownership scope is insufficient for this classification.`;
   }
   if (confidence === "Moderate") {
-    if (score >= 65) return "Candidate signal is broadly consistent with senior-level threshold, though secondary dimensions require reinforcement.";
-    return "Candidate signal does not yet satisfy senior-level threshold requirements. Key ownership dimensions remain under-represented.";
+    if (score >= 65) return `Candidate signal is broadly consistent with ${roleTitle} threshold, though secondary dimensions require reinforcement.`;
+    return `Candidate signal does not yet satisfy ${roleTitle} threshold requirements. Key ownership dimensions remain under-represented.`;
   }
-  // Low confidence
-  if (score >= 50) return "Available signal suggests partial alignment with senior-level standards. Classification may shift with additional evidence.";
-  return "Signal density is insufficient to confirm senior-level calibration. Current evidence indicates threshold deficiency.";
+  if (score >= 50) return `Available signal suggests partial alignment with ${roleTitle} standards. Classification may shift with additional evidence.`;
+  return `Signal density is insufficient to confirm ${roleTitle} calibration. Current evidence indicates threshold deficiency.`;
 };
 
 // ─── Primary deficiency extraction ───────────────────────────────────────────
@@ -101,26 +99,26 @@ const extractPrimaryDeficiency = (raw: string): { name: string; status: string; 
 
 // ─── Strategic upgrade priority ───────────────────────────────────────────────
 
-const deriveStrategicPriority = (score: number, deficiencyName: string | null): string => {
+const deriveStrategicPriority = (score: number, deficiencyName: string | null, roleTitle: string): string => {
   if (deficiencyName === "Ownership Scope" || score < 50) {
-    return "Senior-level threshold requires explicit end-to-end ownership language — scope, lifecycle, and decision authority must be stated, not implied.";
+    return `${roleTitle} threshold requires explicit end-to-end ownership language — scope, lifecycle, and decision authority must be stated, not implied.`;
   }
   if (deficiencyName === "Commercial Impact") {
-    return "Senior-level threshold requires quantified business outcomes directly tied to decisions. Revenue, retention, or adoption impact must appear with attribution.";
+    return `${roleTitle} threshold requires quantified business outcomes directly tied to decisions. Revenue, retention, or adoption impact must appear with attribution.`;
   }
   if (deficiencyName === "Strategic Definition") {
-    return "Senior-level threshold requires evidence of problem framing and prioritization logic — sequencing must reflect strategic rationale, not task enumeration.";
+    return `${roleTitle} threshold requires evidence of problem framing and prioritization logic — sequencing must reflect strategic rationale, not task enumeration.`;
   }
   if (deficiencyName === "Cross-Functional Authority") {
-    return "Senior-level threshold requires cross-functional influence at a decision-making level. Collaboration language must be replaced with alignment ownership and negotiation evidence.";
+    return `${roleTitle} threshold requires cross-functional influence at a decision-making level. Collaboration language must be replaced with alignment ownership and negotiation evidence.`;
   }
   if (deficiencyName === "Executive Signal") {
-    return "Senior-level threshold requires executive-facing communication signals — board-level reporting, strategic narrative ownership, or executive alignment must be present.";
+    return `${roleTitle} threshold requires executive-facing communication signals — board-level reporting, strategic narrative ownership, or executive alignment must be present.`;
   }
   if (score >= 80) {
-    return "Signal pattern meets senior-level threshold. Maintain current positioning framework and reinforce commercial attribution in all quantitative claims.";
+    return `Signal pattern meets ${roleTitle} threshold. Maintain current positioning framework and reinforce commercial attribution in all quantitative claims.`;
   }
-  return "Senior-level threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.";
+  return `${roleTitle} threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.`;
 };
 
 // ─── Hiring risk funnel stage configuration ───────────────────────────────────
@@ -153,7 +151,7 @@ const deriveFunnelStages = (score: number): FunnelStage[] => {
       label: "Hiring Manager Ownership Audit",
       risk: isAbove ? "Low" : isAt ? "Moderate" : "High",
       note: isAbove
-        ? "Ownership signals are explicit and consistent with senior-level classification."
+        ? "Ownership signals are explicit and consistent with target role classification."
         : isAt
         ? "Ownership language is present but may not fully distinguish from IC-level contribution."
         : "Ownership scope is under-represented. Hiring managers may classify candidate as execution-level.",
@@ -200,16 +198,12 @@ const riskStyles: Record<FunnelStage["risk"], { badge: string; bar: string }> = 
   Critical: { badge: "text-destructive bg-destructive/10", bar: "bg-destructive" },
 };
 
-// ─── Threshold status badge ───────────────────────────────────────────────────
-
 const thresholdStatusStyle = (status: string) => {
   if (status === "Below Threshold") return "text-destructive bg-destructive/10";
   if (status === "Approaching Threshold") return "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20";
   if (status === "At Threshold") return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
   return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
 };
-
-// ─── Sub-block wrapper ────────────────────────────────────────────────────────
 
 const BlockShell = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="rounded-lg border bg-card overflow-hidden">
@@ -234,25 +228,28 @@ const LevelDeterminationBlock = ({
   confidenceLevel,
   alignmentNotes,
   gapSuggestions,
+  inferredRoleTitle,
 }: LevelDeterminationBlockProps) => {
   const [copiedAll, setCopiedAll] = useState(false);
 
+  const roleTitle = inferredRoleTitle || "Target Role";
+
   const inferenceConfidence = deriveInferenceConfidence(score);
   const signalLevel = confidenceLevel || deriveCurrentSignalLevel(score);
-  const tierGap = deriveTierGap(score);
+  const tierGap = deriveTierGap(score, roleTitle);
   const classificationConfidence = deriveClassificationConfidence(score);
-  const ownershipVerdict = deriveOwnershipVerdict(score, inferenceConfidence);
+  const ownershipVerdict = deriveOwnershipVerdict(score, inferenceConfidence, roleTitle);
 
   const primaryDeficiency = gapSuggestions ? extractPrimaryDeficiency(gapSuggestions) : null;
-  const strategicPriority = deriveStrategicPriority(score, primaryDeficiency?.name ?? null);
+  const strategicPriority = deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);
   const funnelStages = deriveFunnelStages(score);
 
   const handleCopyAll = async () => {
     const lines = [
       "TARGET ROLE CALIBRATION",
-      `Inferred Target Level: Senior`,
+      `Inferred Target Level: ${roleTitle}`,
       `Inference Confidence: ${inferenceConfidence}`,
-      `Benchmark Applied: Senior Threshold Standard`,
+      `Benchmark Applied: ${roleTitle} Threshold Standard`,
       "",
       "OWNERSHIP CLASSIFICATION",
       `Current Signal Level: ${signalLevel}`,
@@ -287,13 +284,12 @@ const LevelDeterminationBlock = ({
 
   return (
     <div className="space-y-7">
-
       {/* 1 — Target Role Calibration */}
       <BlockShell label="Target Role Calibration">
         <div className="divide-y divide-border/50">
-          <Row label="Inferred Target Level" value="Senior" mono />
+          <Row label="Inferred Target Level" value={roleTitle} mono />
           <Row label="Inference Confidence" value={inferenceConfidence} />
-          <Row label="Benchmark Applied" value="Senior Threshold Standard" />
+          <Row label="Benchmark Applied" value={`${roleTitle} Threshold Standard`} />
         </div>
       </BlockShell>
 

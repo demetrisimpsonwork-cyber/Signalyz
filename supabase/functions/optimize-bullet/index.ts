@@ -60,11 +60,7 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
-function getClientIP(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || req.headers.get("x-real-ip")
-    || "unknown";
-}
+// Session-based tracking replaces IP-based tracking
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -72,7 +68,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bullet, jd, userId, mode = "single_bullet" } = await req.json();
+    const { bullet, jd, userId, mode = "single_bullet", sessionToken } = await req.json();
 
     // --- Input validation ---
     if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
@@ -113,20 +109,32 @@ serve(async (req) => {
     const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
     if (userPlan === "free") {
-      const clientIP = getClientIP(req);
       const today = new Date().toISOString().slice(0, 10);
 
-      // Check existing usage
-      const { data: existing } = await sb
-        .from("usage_tracking")
-        .select("id, alignment_count")
-        .eq("ip_address", clientIP)
-        .eq("usage_date", today)
-        .maybeSingle();
+      // Authenticated users: track by user_id. Guests: track by session token.
+      let existing: { id: string; alignment_count: number } | null = null;
+
+      if (userId) {
+        const { data } = await sb
+          .from("usage_tracking")
+          .select("id, alignment_count")
+          .eq("user_id", userId)
+          .eq("usage_date", today)
+          .maybeSingle();
+        existing = data;
+      } else if (sessionToken) {
+        const { data } = await sb
+          .from("usage_tracking")
+          .select("id, alignment_count")
+          .eq("session_token", sessionToken)
+          .eq("usage_date", today)
+          .maybeSingle();
+        existing = data;
+      }
 
       if (existing && existing.alignment_count >= DAILY_FREE_LIMIT) {
         return new Response(JSON.stringify({
-          error: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Pro for unlimited alignments.`,
+          error: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
           status: 429,
@@ -138,12 +146,18 @@ serve(async (req) => {
       if (existing) {
         await sb
           .from("usage_tracking")
-          .update({ alignment_count: existing.alignment_count + 1, user_id: userId || null, updated_at: new Date().toISOString() })
+          .update({ alignment_count: existing.alignment_count + 1, updated_at: new Date().toISOString() })
           .eq("id", existing.id);
       } else {
         await sb
           .from("usage_tracking")
-          .insert({ ip_address: clientIP, user_id: userId || null, usage_date: today, alignment_count: 1 });
+          .insert({
+            user_id: userId || null,
+            session_token: sessionToken || null,
+            ip_address: null,
+            usage_date: today,
+            alignment_count: 1,
+          });
       }
     }
 
@@ -216,6 +230,7 @@ TITAN OUTPUT CONTRACT (STRICT JSON)
 
 Return ONLY this JSON object with EXACT keys:
 {
+  "inferred_role_title": "string (exact target role title and seniority level inferred from the JD — e.g. 'Senior Customer Success Manager', 'Marketing Manager', 'Operations Lead'. Be specific to the JD. This drives all threshold language.)",
   "optimized_bullets": [
     {
       "text": "string",
@@ -355,6 +370,7 @@ USER_PLAN: ${userPlan}`;
       weighted_priority_commentary: weightedPriorityCommentary,
       strategic_bridge_analysis: strategicBridgeAnalysis,
       identity_strength_index: titan.identity_strength_index || null,
+      inferred_role_title: (titan.inferred_role_title as string) || null,
     };
 
     // Save to database
