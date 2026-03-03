@@ -176,6 +176,17 @@ interface OptimizationResult {
   used_signals?: string[];
   removed_or_softened?: string[];
   identity_strength_index?: IdentityStrengthIndexData;
+  inferred_role_title?: string;
+}
+
+function getSessionToken(): string {
+  const key = "resumix_session_token";
+  let token = localStorage.getItem(key);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(key, token);
+  }
+  return token;
 }
 
 const Index = () => {
@@ -265,13 +276,22 @@ const Index = () => {
       const bulletWithContext = additionalContext.trim()
         ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
         : bullet.trim();
+      const sessionToken = user ? undefined : getSessionToken();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode },
+        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode, sessionToken },
       });
       if (error) throw error;
       setResult(data as OptimizationResult);
       increment();
       if (isTrialPro) incrementTrialRun();
+      // Guest nudge after first alignment
+      if (!user) {
+        toast("Save your results and track your progress", {
+          description: "Create a free account to keep your alignment history.",
+          action: { label: "Sign up", onClick: () => { window.location.href = "/auth"; } },
+          duration: 8000,
+        });
+      }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -622,6 +642,7 @@ const Index = () => {
                         data={result.identity_strength_index}
                         isPro={effectiveIsPro}
                         onUpgrade={() => setShowUpgrade(true)}
+                        inferredRoleTitle={result.inferred_role_title}
                       />
                     )}
                     <KeywordChips keywords={result.missing_keywords} />
@@ -631,6 +652,7 @@ const Index = () => {
                         alignmentNotes={result.alignment_notes}
                         gapSuggestions={result.gap_suggestions}
                         confidenceLevel={result.alignment_confidence_level}
+                        inferredRoleTitle={result.inferred_role_title}
                       />
                     )}
                     {result.match_score < 60 && (

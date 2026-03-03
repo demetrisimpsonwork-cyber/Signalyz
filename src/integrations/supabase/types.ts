@@ -174,7 +174,8 @@ export type Database = {
           alignment_count: number
           created_at: string
           id: string
-          ip_address: string
+          ip_address: string | null
+          session_token: string | null
           updated_at: string
           usage_date: string
           user_id: string | null
@@ -183,7 +184,8 @@ export type Database = {
           alignment_count?: number
           created_at?: string
           id?: string
-          ip_address: string
+          ip_address?: string | null
+          session_token?: string | null
           updated_at?: string
           usage_date?: string
           user_id?: string | null
@@ -192,7 +194,8 @@ export type Database = {
           alignment_count?: number
           created_at?: string
           id?: string
-          ip_address?: string
+          ip_address?: string | null
+          session_token?: string | null
           updated_at?: string
           usage_date?: string
           user_id?: string | null

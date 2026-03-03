@@ -38,24 +38,24 @@ const UpgradeModal = ({
       <DialogContent className="max-w-md">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-            Unlock Employer Intelligence™
+            Unlock Resumix Pro
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
             You are currently seeing surface-level alignment only.
             <br />
-            Upgrade to access the full employer decision model.
+            Upgrade to access the full signal calibration engine.
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4 grid grid-cols-2 gap-6">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Free Tier</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Signal Preview</p>
             <ul className="space-y-2">
               {[
-                "One aligned bullet",
+                "3 alignments per day",
+                "Calibrated bullet (1 version)",
                 "Overall alignment score",
-                "Role Signal Clarity only",
-                "Surface-level gap indicators",
+                "Top signal gap identification",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
@@ -66,16 +66,17 @@ const UpgradeModal = ({
           </div>
 
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Employer Intelligence™</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Resumix Pro</p>
             <ul className="space-y-2">
               {[
+                "Unlimited alignments",
                 "Identity Strength Index™ — all 4 pillars",
-                "Employer Risk Perception™",
-                "Multi-bullet strategic variants",
-                "Weighted priority breakdown",
-                "Gap severity classification",
-                "Interview leverage insights",
-                "Unlimited strategic runs",
+                "Complete Signal Risk Projection",
+                "Multi-variant repositioned bullets",
+                "Build My Calibrated Resume (DOCX)",
+                "Executive Signal Audit access",
+                "Interview Preparation Notice",
+                "Alignment history",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-foreground">
                   <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
@@ -100,9 +101,8 @@ const UpgradeModal = ({
 
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-bold text-foreground">Employer Intelligence™</p>
-            <p className="text-xs text-muted-foreground mt-0.5">$9/month — cancel anytime</p>
-            <p className="text-[11px] text-muted-foreground/70 italic mt-0.5">Less than one rejected application.</p>
+            <p className="text-sm font-bold text-foreground">Resumix Pro — $19/month</p>
+            <p className="text-[11px] text-muted-foreground/70 italic mt-0.5">Less than one rejected application costs you.</p>
           </div>
 
           <div className="space-y-3">
@@ -114,7 +114,7 @@ const UpgradeModal = ({
                 navigate("/pricing");
               }}
             >
-              Unlock Employer Intelligence™
+              Unlock Resumix Pro
             </Button>
 
             {!trialStarted && onStartTrial && (
