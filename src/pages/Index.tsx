@@ -761,8 +761,26 @@ const Index = () => {
 
       {/* Mode toggle + Tool */}
       <section id="alignment-tool" className="py-16 container max-w-6xl">
+        {/* Pipeline progress bar */}
+        <SignalPipelineProgress
+          stages={pipelineStages}
+          onStageClick={(id) => {
+            const tabMap: Record<string, typeof mode> = {
+              alignment: "alignment",
+              report: "director",
+              resume: "calibrated",
+            };
+            const target = tabMap[id];
+            if (target === "calibrated" && !effectiveIsPro) {
+              setShowUpgrade(true);
+              return;
+            }
+            if (target) setMode(target);
+          }}
+        />
+
         {/* Mode toggle — 3 tabs */}
-        <div className="mb-10 flex justify-center">
+        <div className="mb-10 flex justify-center mt-6">
           <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
             <button
               onClick={() => setMode("alignment")}
