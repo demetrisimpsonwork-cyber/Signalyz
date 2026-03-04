@@ -403,6 +403,81 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Match Score Forecast */}
+      <section className="py-16 container max-w-3xl">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">Same resume. Repositioned signal. 30-point lift.</h2>
+          <p className="mt-2 text-sm text-muted-foreground">This is what Resumix does to how hiring managers read your experience.</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] items-center">
+          <div className="text-center space-y-2 p-6 rounded-xl border bg-card">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive">BEFORE</p>
+            <p className="text-5xl font-bold text-destructive tabular-nums">45%</p>
+            <p className="text-xs text-muted-foreground">Framed in procedural and compliance language. Strong experience, wrong signal.</p>
+          </div>
+          <div className="hidden md:flex items-center justify-center">
+            <div className="w-12 h-0.5 bg-primary" />
+            <div className="w-0 h-0 border-t-4 border-b-4 border-l-8 border-transparent border-l-primary" />
+          </div>
+          <div className="flex justify-center md:hidden"><ArrowDown className="h-6 w-6 text-primary" /></div>
+          <div className="text-center space-y-2 p-6 rounded-xl border border-primary/30 bg-card">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
+            <p className="text-5xl font-bold text-primary tabular-nums">75%</p>
+            <p className="text-xs text-muted-foreground">Same experience. Repositioned toward what this role actually weights.</p>
+          </div>
+        </div>
+        <p className="text-center text-xs text-muted-foreground italic mt-6">Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
+        <div className="flex justify-center mt-6">
+          <Button onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })} className="transition-transform hover:scale-[1.03] active:scale-[0.97]">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Run Your Signal Analysis
+          </Button>
+        </div>
+      </section>
+
+      {/* WAS/NOW Transformation Section */}
+      <section className="py-16 container max-w-3xl">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">This is what repositioning looks like.</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Not rewriting. Recalibrating. Every word came from the original resume.</p>
+        </div>
+        <div className="space-y-4">
+          {[
+            {
+              was: "Executed complaint routing and escalation triage across a high-volume state-managed caseload — managing 40-70 concurrent cases with 8-15 resolved daily under strict SLA requirements.",
+              now: "Directed high-volume client issue triage and resolution, ensuring expeditious throughput under stringent service level agreements.",
+              signal: "Ownership language + SLA accountability",
+            },
+            {
+              was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
+              now: "Architected procedural enhancements — intake guides and clarification protocols — that optimized client issue routing, significantly reducing repeat inquiries and elevating first-contact resolution efficiency.",
+              signal: "Strategic authorship + measurable outcome framing",
+            },
+            {
+              was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
+              now: "Advised executive and institutional clientele on complex procedural and regulatory matters, distilling intricate information into actionable guidance that upheld brand standards and compliance.",
+              signal: "Client elevation + brand alignment language",
+            },
+          ].map((card, i) => (
+            <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
+              <p className="text-sm text-muted-foreground line-through leading-relaxed">{card.was}</p>
+              <hr className="border-border/50" />
+              <div className="flex gap-2 items-start">
+                <span className="text-primary mt-0.5">•</span>
+                <p className="text-sm font-medium text-foreground leading-relaxed">{card.now}</p>
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Applied: {card.signal}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication. Every word came from the original.</p>
+        <div className="flex justify-center mt-6">
+          <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+            Run Your Signal Analysis →
+          </Button>
+        </div>
+      </section>
+
       {/* Differentiation Statement */}
       <section className="py-16 bg-[#0F1C2E]">
         <div className="container max-w-2xl text-center">
@@ -475,7 +550,7 @@ const Index = () => {
               onClick={() => setMode("director")}
               className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "director" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              Executive Signal Audit
+              Signal Positioning Report
             </button>
           </div>
         </div>
@@ -495,10 +570,10 @@ const Index = () => {
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Executive Signal Audit Engine</p>
-                <h2 className="text-base font-semibold text-foreground mb-1">Evaluate Executive-Level Signal Maturity</h2>
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
+                <h2 className="text-base font-semibold text-foreground mb-1">Get Your Complete Signal Positioning Report</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Classifies ownership signals against executive-level thresholds. Detects hiring-stage friction risk, undersignaling, and ownership inflation.
+                  Diagnoses where your signal breaks down across every hiring stage and rebuilds your positioning from the threshold up. 11-section output. Zero fabrication.
                 </p>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Resume or Experience Input</label>
                 <Textarea
@@ -508,9 +583,9 @@ const Index = () => {
                   rows={12}
                 />
               </div>
-              <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
+              <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                Run Executive Audit
+                ✦ Run Positioning Report
               </Button>
             </div>
             <div className="space-y-4">
