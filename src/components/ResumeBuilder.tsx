@@ -326,6 +326,11 @@ const ResumeBuilder = ({
         return;
       }
 
+      setParsedExtras({
+        skills: parsed.skillsText,
+        certifications: parsed.certificationsText,
+        education: parsed.educationText,
+      });
       setResumeResult({
         positioning_statement: data.positioning_statement,
         interview_preparation_notice: data.interview_preparation_notice || data.signal_gap_notice || "",
