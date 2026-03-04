@@ -95,17 +95,27 @@ serve(async (req) => {
       has_skills: !!skills,
     }));
 
-    // Input validation
+    // Input validation — flexible, never hard-fail on formatting
     if (!roles || !Array.isArray(roles) || roles.length === 0) {
-      return err(requestId, "INVALID_INPUT", "Please paste your experience bullets so Resumix can calibrate your resume.", { roles_provided: 0 });
+      const totalLen = JSON.stringify(body).length;
+      if (totalLen < 200) {
+        return err(requestId, "INVALID_INPUT", "Please paste your resume text so Resumix can calibrate your signal.", { roles_provided: 0 });
+      }
+      // Best-effort: no roles parsed but there's text — let AI handle it
     }
 
-    const totalBullets = roles.reduce((sum: number, r: any) => sum + ((r.bullets || []).length), 0);
-    if (totalBullets < 2) {
-      return err(requestId, "INVALID_INPUT_RESUME_TOO_SHORT", "Your resume needs at least a few experience bullets for calibration. Paste more of your Experience section.", { total_bullets: totalBullets });
+    const totalBullets = (roles || []).reduce((sum: number, r: any) => sum + ((r.bullets || []).length), 0);
+    // Flexible validation: accept if ANY of these are true
+    const hasEnoughBullets = totalBullets >= 3;
+    const hasLongResponsibilities = (roles || []).some((r: any) => (r.bullets || []).some((b: string) => b.length >= 80));
+    const hasStructuredRole = (roles || []).some((r: any) => r.company && r.title);
+    const experienceValid = hasEnoughBullets || hasLongResponsibilities || hasStructuredRole || totalBullets >= 1;
+
+    if (!experienceValid && (!roles || roles.length === 0)) {
+      return err(requestId, "INVALID_INPUT_RESUME_TOO_SHORT", "Paste more of your Experience section for a stronger calibration.", { total_bullets: totalBullets });
     }
 
-    if (!jd || jd.trim().length < 100) {
+    if (!jd || jd.trim().length < 50) {
       return err(requestId, "INVALID_INPUT_JD_TOO_SHORT", "Please paste more of the job description — include responsibilities and requirements for best results.", { jd_len: (jd || "").length });
     }
 
