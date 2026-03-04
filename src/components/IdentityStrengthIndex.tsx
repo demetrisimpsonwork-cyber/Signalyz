@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 
 interface ISIPillar {
   name: string;
@@ -34,15 +35,40 @@ const scoreBarColor = (score: number, max = 25) => {
   return "bg-destructive";
 };
 
-const totalScoreLabel = (score: number) => {
-  if (score >= 80) return { label: "STRONG", color: "text-green-700 dark:text-green-400", bg: "bg-green-100 dark:bg-green-950/40 border-green-200 dark:border-green-800/40" };
-  if (score >= 60) return { label: "MODERATE", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" };
-  return { label: "WEAK", color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" };
+const totalScoreColor = (score: number) => {
+  if (score >= 70) return "text-green-600 dark:text-green-400";
+  if (score >= 50) return "text-orange-500";
+  return "text-destructive";
 };
+
+const totalScoreLabel = (score: number) => {
+  if (score >= 80) return { label: "STRONG", color: totalScoreColor(score), bg: "bg-green-100 dark:bg-green-950/40 border-green-200 dark:border-green-800/40" };
+  if (score >= 60) return { label: "MODERATE", color: totalScoreColor(score), bg: "bg-amber-100 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" };
+  return { label: "WEAK", color: totalScoreColor(score), bg: "bg-destructive/10 border-destructive/20" };
+};
+
+function useCountUp(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number>();
+  useEffect(() => {
+    if (target <= 0) { setValue(0); return; }
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - (1 - progress) * (1 - progress);
+      setValue(Math.round(eased * target));
+      if (progress < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
+  return value;
+}
 
 const LockedPillar = ({ name }: { name: string }) => (
   <div className="rounded-md border bg-background overflow-hidden relative min-h-[100px]">
-    <div className="p-4 space-y-2 select-none pointer-events-none blur-sm opacity-40" aria-hidden>
+    <div className="p-5 space-y-2 select-none pointer-events-none blur-sm opacity-40" aria-hidden>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-foreground">{name}</p>
         <span className="text-sm font-bold text-muted-foreground">--/25</span>
@@ -52,7 +78,6 @@ const LockedPillar = ({ name }: { name: string }) => (
       </div>
       <div className="h-2.5 w-full rounded bg-muted mt-2" />
       <div className="h-2.5 w-4/5 rounded bg-muted" />
-      <div className="h-2 w-1/2 rounded bg-muted" />
     </div>
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-[2px]">
       <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -63,7 +88,7 @@ const LockedPillar = ({ name }: { name: string }) => (
 
 const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: string }) => (
   <div className="rounded-md border bg-background overflow-hidden">
-    <div className="p-4 space-y-2">
+    <div className="p-5 space-y-2">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-foreground">{pillar.name}</p>
         <span className={`text-sm font-bold tabular-nums ${scoreColor(pillar.score)}`}>
@@ -78,7 +103,7 @@ const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: strin
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed pt-1">{pillar.explanation}</p>
     </div>
-    <div className="px-4 py-3 border-t border-border/60 bg-muted/20">
+    <div className="px-5 py-3 border-t border-border/60 bg-muted/20">
       <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
         Threshold Requirement
       </p>
@@ -92,14 +117,15 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
   const visiblePillars = isPro ? data.pillars : data.pillars.slice(0, 1);
   const lockedPillars = isPro ? [] : data.pillars.slice(1);
   const roleTitle = inferredRoleTitle || "Target Role";
+  const animatedTotal = useCountUp(data.total_score, 1200);
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-4">
+    <div className="rounded-lg border bg-card p-5 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">Identity Strength Index™</h3>
+            <h3 className="text-sm font-semibold text-foreground mt-2" style={{ letterSpacing: "0.02em" }}>Identity Strength Index™</h3>
             {!isPro && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
                 Pro
@@ -110,10 +136,10 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
             Resume identity coherence measured across four signal dimensions.
           </p>
         </div>
-        {/* Total score */}
-        <div className={`shrink-0 rounded-md border px-3 py-2 text-center ${bg}`}>
-          <p className={`text-2xl font-bold tabular-nums leading-none ${color}`}>{data.total_score}</p>
-          <p className="text-[9px] font-semibold tracking-widest mt-0.5 text-muted-foreground uppercase">/100</p>
+        {/* Total score — large animated */}
+        <div className={`shrink-0 rounded-md border px-4 py-3 text-center ${bg}`}>
+          <p className={`font-bold tabular-nums leading-none ${color}`} style={{ fontSize: "48px" }}>{animatedTotal}</p>
+          <p className="text-[9px] font-semibold tracking-widest mt-1 text-muted-foreground uppercase">/100</p>
           <p className={`text-[9px] font-bold tracking-widest mt-1 uppercase ${color}`}>{label}</p>
         </div>
       </div>

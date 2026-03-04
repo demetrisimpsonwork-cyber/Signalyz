@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 const tiers = [
   {
@@ -36,8 +37,18 @@ const tiers = [
 ];
 
 const Pricing = () => {
+  const [showSticky, setShowSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowSticky(window.scrollY > 600);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div className="container max-w-4xl py-20 px-4">
+    <div className="container max-w-4xl py-20 px-4 pb-32 md:pb-20">
       <div className="mb-14 text-center">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
@@ -52,31 +63,31 @@ const Pricing = () => {
             key={tier.name}
             className={`rounded-xl border p-6 sm:p-8 flex flex-col ${
               tier.highlighted
-                ? "border-primary bg-accent shadow-lg"
+                ? "border-primary bg-[#0F1C2E] text-white shadow-lg"
                 : "bg-card"
             }`}
           >
             <div>
-              <h3 className="text-base font-semibold text-foreground tracking-tight">{tier.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{tier.description}</p>
+              <h3 className={`text-base font-semibold tracking-tight ${tier.highlighted ? "text-white" : "text-foreground"}`}>{tier.name}</h3>
+              <p className={`mt-1 text-sm ${tier.highlighted ? "text-white/60" : "text-muted-foreground"}`}>{tier.description}</p>
             </div>
 
             <div className="mt-4">
-              <span className="text-4xl font-bold text-foreground">{tier.price}</span>
-              {tier.period && <span className="text-muted-foreground">{tier.period}</span>}
+              <span className={`text-4xl font-bold ${tier.highlighted ? "text-white" : "text-foreground"}`}>{tier.price}</span>
+              {tier.period && <span className={tier.highlighted ? "text-white/60" : "text-muted-foreground"}>{tier.period}</span>}
             </div>
 
             <ul className="mt-6 space-y-3 flex-1">
               {tier.features.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <li key={f} className={`flex items-start gap-2 text-sm ${tier.highlighted ? "text-white/90" : "text-foreground"}`}>
+                  <Check className={`h-4 w-4 shrink-0 mt-0.5 ${tier.highlighted ? "text-primary" : "text-primary"}`} />
                   {f}
                 </li>
               ))}
             </ul>
 
             <Button
-              className="mt-8 w-full"
+              className={`mt-8 w-full ${tier.highlighted ? "" : ""}`}
               variant={tier.highlighted ? "default" : "outline"}
             >
               {tier.cta}
@@ -95,7 +106,7 @@ const Pricing = () => {
       </p>
 
       {/* Sticky mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3">
+      <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
         <Button className="w-full" size="lg">
           Unlock Resumix Pro — $19/month
         </Button>
