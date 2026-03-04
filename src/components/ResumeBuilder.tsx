@@ -452,6 +452,34 @@ const ResumeBuilder = ({
             ...roleChildren,
             // Independent Projects (separate section)
             ...projectChildren,
+            // Skills
+            ...(parsedExtras.skills ? [
+              sectionHeader("Skills"),
+              new Paragraph({
+                spacing: { after: 200, line: 276 },
+                children: [new TextRun({ text: parsedExtras.skills, size: 21, font: "Calibri" })],
+              }),
+            ] : []),
+            // Education
+            ...(parsedExtras.education ? [
+              sectionHeader("Education"),
+              ...parsedExtras.education.split("\n").filter(Boolean).map(line =>
+                new Paragraph({
+                  spacing: { after: 80, line: 276 },
+                  children: [new TextRun({ text: line, size: 21, font: "Calibri" })],
+                })
+              ),
+            ] : []),
+            // Certifications
+            ...(parsedExtras.certifications ? [
+              sectionHeader("Certifications"),
+              ...parsedExtras.certifications.split("\n").filter(Boolean).map(line =>
+                new Paragraph({
+                  spacing: { after: 80, line: 276 },
+                  children: [new TextRun({ text: line, size: 21, font: "Calibri" })],
+                })
+              ),
+            ] : []),
           ],
         },
       ],
