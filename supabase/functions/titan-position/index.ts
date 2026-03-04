@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Model router: use Pro for large inputs (>10k chars combined), Flash otherwise
@@ -168,16 +168,16 @@ JOB DESCRIPTION: ${jd}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("titan-position error:", message);
-    const status = message.includes("Rate limits") ? 429 : message.includes("Usage limit") ? 402 : 500;
+    console.error("Resumix engine error:", message);
     const friendly =
-      status === 429 ? "Too many requests. Please wait a moment and try again." :
-      status === 402 ? "Usage limit reached. Please add credits to continue." :
+      message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
+      message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
       message.includes("unavailable") ? "Our AI service is temporarily busy. Please try again in a moment." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
-      "Something went wrong generating your package. Please try again.";
-    return new Response(JSON.stringify({ error: friendly, detail: message }), {
-      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      message.includes("aborted") ? "Analysis took too long. Please retry." :
+      "Analysis engine temporarily unavailable. Please try again.";
+    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

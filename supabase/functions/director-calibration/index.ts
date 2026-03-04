@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const PIPELINE_VERSION = "1.2";
@@ -944,31 +944,32 @@ serve(async (req) => {
 
     // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
-      return new Response(JSON.stringify({ error: "Missing experience input" }), {
-        status: 400,
+      console.log("Resumix request rejected: empty experience input");
+      return new Response(JSON.stringify({ status: "error", error: "Insufficient input provided for analysis." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    console.log("Resumix request length:", experience.trim().length);
     const result = await runPipeline(apiKey, experience.trim(), jd, deterministic);
+    console.log("Resumix director-calibration: pipeline complete");
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ status: "success", ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("director-calibration error:", message);
-    const status =
-      message.includes("Rate limits") ? 429 :
-      message.includes("Usage limit") ? 402 : 500;
+    console.error("Resumix engine error:", message);
     const friendly =
-      status === 429 ? "Too many requests. Please wait a moment and try again." :
-      status === 402 ? "Usage limit reached. Please add credits to continue." :
+      message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
+      message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
-      "Something went wrong. Please try again.";
-    return new Response(JSON.stringify({ error: friendly, detail: message }), {
-      status,
+      message.includes("aborted") ? "Analysis took too long. Please retry." :
+      "Analysis engine temporarily unavailable. Please try again.";
+    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

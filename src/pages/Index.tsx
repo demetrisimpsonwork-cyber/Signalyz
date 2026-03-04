@@ -263,6 +263,8 @@ const Index = () => {
         body: { experience: trimmed },
       });
       if (error) throw error;
+      // Handle soft errors returned as 200 with status:"error"
+      if (data?.status === "error") throw new Error(data.error || "Analysis failed");
       if (data?.error) throw new Error(data.error);
       const result = data as DirectorCalibrationResult;
       setDirectorResult(result);
@@ -324,6 +326,8 @@ const Index = () => {
         body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode: engineMode, sessionToken },
       });
       if (error) throw error;
+      // Handle soft errors returned as 200 with status:"error"
+      if (data?.status === "error") throw new Error(data.error || "Analysis failed");
       const res = data as OptimizationResult;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
