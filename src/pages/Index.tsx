@@ -821,6 +821,8 @@ const Index = () => {
                         signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
                         signal_map: result.signal_model?.signal_map || (result as any).signal_map,
                         evidence_ledger: result.signal_model?.evidence_ledger,
+                        career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
+                        hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
                       }}
                       matchScore={result.match_score}
                     />
