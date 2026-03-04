@@ -220,6 +220,8 @@ const ResumeBuilder = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [resumeError, setResumeError] = useState<DebugInfo | null>(null);
+  const lastClickRef = useRef(0);
 
   const handleBuildClick = () => {
     if (!isPro) { onUpgrade(); return; }
@@ -228,11 +230,17 @@ const ResumeBuilder = ({
 
   const handleGenerate = async () => {
     if (!name.trim()) { toast.error("Please enter your name."); return; }
+
+    // 2s debounce
+    const now = Date.now();
+    if (now - lastClickRef.current < 2000) return;
+    lastClickRef.current = now;
+
     setLoading(true);
+    setResumeError(null);
     try {
       const parsed = parseExperience(experience);
 
-      // Separate professional roles from independent projects
       const professionalRoles = parsed.roles.filter(r => !r.isIndependent);
       const independentProjects = parsed.roles.filter(r => r.isIndependent);
 
@@ -250,21 +258,67 @@ const ResumeBuilder = ({
         bullets: r.bullets,
       }));
 
-      // Combine for the API call but mark them separately
       const allRoles = [...proRolesPayload, ...indProjPayload];
 
-      const { data, error } = await supabase.functions.invoke("generate-resume-summary", {
-        body: {
-          roles: allRoles,
-          jd,
-          matchScore,
-          existingSummary: parsed.summaryText || undefined,
-          skills: parsed.skillsText || undefined,
-          certifications: parsed.certificationsText || undefined,
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const payload = {
+        roles: allRoles,
+        jd: jd?.slice(0, 8000) || "",
+        matchScore,
+        existingSummary: parsed.summaryText || undefined,
+        skills: parsed.skillsText || undefined,
+        certifications: parsed.certificationsText || undefined,
+      };
+
+      let rawText = "";
+      let statusCode = 200;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-resume-summary`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+        statusCode = response.status;
+        rawText = await response.text();
+      } catch (networkErr: any) {
+        setResumeError({
+          error_code: "NETWORK_ERROR",
+          message: networkErr?.message || "Network request failed.",
+          status_code: 0,
+        });
+        return;
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        setResumeError({
+          status_code: statusCode,
+          error_code: "INVALID_JSON",
+          message: "The server returned a non-JSON response.",
+          response_snippet: rawText.slice(0, 500),
+        });
+        return;
+      }
+
+      if (statusCode !== 200 || data?.status === "error") {
+        setResumeError({
+          request_id: data?.request_id,
+          status_code: statusCode,
+          error_code: data?.error_code || "UNKNOWN",
+          message: data?.message || data?.error || "Resume calibration failed.",
+          response_snippet: rawText.slice(0, 500),
+        });
+        return;
+      }
 
       setResumeResult({
         positioning_statement: data.positioning_statement,
@@ -274,7 +328,10 @@ const ResumeBuilder = ({
       });
       setShowContactForm(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate calibrated resume.");
+      setResumeError({
+        error_code: "CLIENT_EXCEPTION",
+        message: err?.message || "Failed to generate calibrated resume.",
+      });
     } finally {
       setLoading(false);
     }
