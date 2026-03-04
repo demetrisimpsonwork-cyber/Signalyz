@@ -67,13 +67,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+
   try {
     const { bullet, jd, userId, mode = "single_bullet", sessionToken } = await req.json();
+    const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
-    // --- Input validation ---
+    // --- Structured logging ---
+    console.log(JSON.stringify({
+      event: "request_start",
+      request_id: requestId,
+      function: "optimize-bullet",
+      timestamp: new Date().toISOString(),
+      resume_text_length: typeof bullet === "string" ? bullet.length : 0,
+      jd_text_length: typeof jd === "string" ? jd.length : 0,
+      total_payload_length: (typeof bullet === "string" ? bullet.length : 0) + (typeof jd === "string" ? jd.length : 0),
+      user_plan: userPlan,
+    }));
+
+    // --- Input validation (always 200) ---
     if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
-      return new Response(JSON.stringify({ error: "Missing or invalid bullet or jd fields." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Missing or invalid resume or job description fields." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -82,14 +97,14 @@ serve(async (req) => {
     const trimmedJd = jd.trim();
 
     if (trimmedBullet.length < 20) {
-      return new Response(JSON.stringify({ error: "Experience input must be at least 20 characters." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Experience input must be at least 20 characters." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (trimmedJd.length < 20) {
-      return new Response(JSON.stringify({ error: "Target role input must be at least 20 characters." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Job description must be at least 20 characters." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -106,7 +121,6 @@ serve(async (req) => {
     const sb = createClient(supabaseUrl, supabaseKey);
 
     // --- Server-side rate limiting for free users ---
-    const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
     if (userPlan === "free") {
       const today = new Date().toISOString().slice(0, 10);
@@ -134,10 +148,13 @@ serve(async (req) => {
 
       if (existing && existing.alignment_count >= DAILY_FREE_LIMIT) {
         return new Response(JSON.stringify({
-          error: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
+          status: "error",
+          request_id: requestId,
+          error_code: "RATE_LIMIT",
+          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
-          status: 429,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -578,21 +595,30 @@ USER_PLAN: ${userPlan}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Resumix engine error:", message);
-    // Rate limit still uses 429 so frontend can show upgrade modal
-    if (message.includes("Daily free limit")) {
-      return new Response(JSON.stringify({ status: "error", error: message, limit_reached: true }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const stack = err instanceof Error ? err.stack || "" : "";
+    console.error(JSON.stringify({
+      event: "request_error",
+      request_id: requestId,
+      function: "optimize-bullet",
+      error_message: message,
+      timestamp: new Date().toISOString(),
+    }));
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
+      message.includes("Daily free limit") ? message :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
       "Analysis engine temporarily unavailable. Please try again.";
-    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+    return new Response(JSON.stringify({
+      status: "error",
+      request_id: requestId,
+      error_code: message.includes("Daily free limit") ? "RATE_LIMIT" : "EDGE_EXCEPTION",
+      message: friendly,
+      limit_reached: message.includes("Daily free limit"),
+      details: { error_message: message, error_stack: stack.slice(0, 500) },
+    }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
