@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Info, ChevronDown, ChevronUp, ArrowRight, TrendingUp } from "lucide-react";
+import EvidenceLedger from "@/components/EvidenceLedger";
 import {
   Tooltip,
   TooltipContent,
@@ -77,6 +78,7 @@ export interface SignalDiagnosticData {
     role_identity_clarity?: SignalShift;
     domain_alignment?: SignalShift;
   };
+  evidence_ledger?: Array<{ claim: string; source: string; evidence: string }>;
 }
 
 const STRENGTH_STYLES: Record<string, string> = {
