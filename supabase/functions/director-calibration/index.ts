@@ -8,6 +8,37 @@ const corsHeaders = {
 
 const PIPELINE_VERSION = "1.2";
 
+// ─── Input limits ────────────────────────────────────────────────────────────
+const MAX_RESUME_CHARS = 10000;
+
+function normalizeText(input: string): string {
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function stripResumeHeader(text: string): string {
+  const lines = text.split("\n");
+  let skipUntil = 0;
+  const headerPatterns = [
+    /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,
+    /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,
+    /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,
+    /^\d+\s+\w+\s+(street|st|ave|avenue|blvd|rd|dr)/i,
+    /^(linkedin|github|portfolio)/i,
+    /^(http|www\.)/i,
+  ];
+  for (let i = 0; i < Math.min(lines.length, 6); i++) {
+    const line = lines[i].trim();
+    if (!line) { skipUntil = i + 1; continue; }
+    if (headerPatterns.some(p => p.test(line))) { skipUntil = i + 1; continue; }
+    break;
+  }
+  return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
+}
+
 const MODELS = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
@@ -958,14 +989,27 @@ serve(async (req) => {
     // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
       console.log(JSON.stringify({ event: "validation_error", request_id: requestId, reason: "empty_experience" }));
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Insufficient input provided for analysis." }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: 0 } }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: experience.trim().length }));
-    const result = await runPipeline(apiKey, experience.trim(), jd, deterministic);
+    // Normalize and enforce limits
+    let cleanExperience = normalizeText(stripResumeHeader(experience.trim()));
+    if (cleanExperience.length > MAX_RESUME_CHARS) {
+      cleanExperience = cleanExperience.slice(0, MAX_RESUME_CHARS);
+    }
+
+    if (cleanExperience.length < 100) {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your resume or experience section so Resumix can analyze your signal.", details: { resume_len: cleanExperience.length } }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: cleanExperience.length }));
+    const result = await runPipeline(apiKey, cleanExperience, jd, deterministic);
     console.log(JSON.stringify({ event: "pipeline_complete", request_id: requestId }));
 
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {

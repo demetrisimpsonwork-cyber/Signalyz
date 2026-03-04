@@ -147,6 +147,21 @@ function getSessionToken(): string {
   return token;
 }
 
+// ─── Input normalization (client-side) ─────────────────────────────────────
+const MAX_RESUME_CHARS = 10000;
+const MAX_JD_CHARS = 8000;
+
+function normalizeClientInput(text: string, maxChars: number): { text: string; truncated: boolean } {
+  let cleaned = text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  const truncated = cleaned.length > maxChars;
+  if (truncated) cleaned = cleaned.slice(0, maxChars);
+  return { text: cleaned, truncated };
+}
+
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
   const rafRef = useRef<number>();
@@ -195,6 +210,8 @@ const Index = () => {
   const [directorError, setDirectorError] = useState<string | null>(null);
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
+  const [inputTruncated, setInputTruncated] = useState(false);
+  const lastClickRef = useRef(0);
 
   const { user } = useAuth();
   const isPro = false;
@@ -248,29 +265,35 @@ const Index = () => {
   };
 
   const handleDirectorCalibrate = async () => {
-    const trimmed = directorExperience.trim();
-    if (!trimmed) {
+    // 2s debounce
+    const now = Date.now();
+    if (now - lastClickRef.current < 2000) return;
+    lastClickRef.current = now;
+
+    const normResume = normalizeClientInput(directorExperience.trim(), MAX_RESUME_CHARS);
+    if (!normResume.text) {
       toast.error("Please paste your resume or experience bullets.");
       return;
     }
-    if (trimmed.length < 300) {
+    if (normResume.text.length < 300) {
       setDirectorError("Please paste more of your resume or experience section so Resumix can analyze your signal.");
       return;
     }
+    if (normResume.truncated) setInputTruncated(true);
     setDirectorLoading(true);
     setDirectorResult(null);
     setDirectorError(null);
     console.log("[telemetry] positioning_run_clicked");
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
-        body: { experience: trimmed },
+        body: { experience: normResume.text },
       });
       // Capture debug info from response
       const debug: DebugInfo = {
         request_id: data?.request_id,
         error_code: data?.error_code,
         message: data?.message || data?.error,
-        payload_length: trimmed.length,
+        payload_length: normResume.text.length,
         timestamp: new Date().toISOString(),
         status_code: error ? 500 : 200,
       };
@@ -329,6 +352,11 @@ const Index = () => {
   };
 
   const handleOptimize = async () => {
+    // 2s debounce
+    const now = Date.now();
+    if (now - lastClickRef.current < 2000) return;
+    lastClickRef.current = now;
+
     if (!validate()) return;
     if (limitReached && !isTrialPro) {
       setShowUpgrade(true);
@@ -337,17 +365,25 @@ const Index = () => {
     setLoading(true);
     setResult(null);
     setAlignmentError(null);
+    setInputTruncated(false);
     setShowSamples(false);
     const startTime = Date.now();
     const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
-    const payloadLength = bullet.trim().length + jd.trim().length;
+
+    // Client-side normalization
+    const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
+    const normJd = normalizeClientInput(jd.trim(), MAX_JD_CHARS);
+    if (normResume.truncated || normJd.truncated) {
+      setInputTruncated(true);
+    }
+    const payloadLength = normResume.text.length + normJd.text.length;
     try {
       const bulletWithContext = additionalContext.trim()
-        ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
-        : bullet.trim();
+        ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
+        : normResume.text;
       const sessionToken = user ? undefined : getSessionToken();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode: engineMode, sessionToken },
+        body: { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
       });
 
       // Capture debug info
@@ -773,6 +809,12 @@ const Index = () => {
               {/* Right — Results */}
               <div className="space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
+
+                {!loading && inputTruncated && (
+                  <div className="rounded-md border border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+                    Input trimmed for reliability. Paste Experience + Skills for best results.
+                  </div>
+                )}
 
                 {!loading && !result && alignmentError && (
                   <EngineErrorCard debugInfo={alignmentError} onRetry={handleOptimize} />
