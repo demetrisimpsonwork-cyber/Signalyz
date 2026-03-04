@@ -774,7 +774,11 @@ const Index = () => {
               <div className="space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
-                {!loading && !result && showSamples && (
+                {!loading && !result && alignmentError && (
+                  <EngineErrorCard debugInfo={alignmentError} onRetry={handleOptimize} />
+                )}
+
+                {!loading && !result && !alignmentError && showSamples && (
                   <div className="space-y-7">
                     <div>
                       <p className="text-xs font-semibold text-foreground mb-0.5">{role.label}</p>
