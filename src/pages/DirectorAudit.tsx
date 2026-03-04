@@ -8,12 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import DirectorQARunner from "@/components/DirectorQARunner";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const buildPlainText = (result: DirectorCalibrationResult): string => {
   const lines: string[] = [
-    "DIRECTOR SIGNAL CALIBRATION REPORT",
+    "SIGNAL POSITIONING REPORT",
     "====================================",
     "",
     "DIRECTOR SIGNAL TIER",
@@ -164,15 +166,21 @@ const DirectorAudit = () => {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleDownload = () => {
+  const handleDownloadDocx = async () => {
     if (!result) return;
-    const blob = new Blob([buildPlainText(result)], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "director-calibration-report.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+    const text = buildPlainText(result);
+    const paragraphs = text.split("\n").map(
+      (line) => new Paragraph({
+        spacing: { after: line === "" ? 120 : 40 },
+        children: [new TextRun({ text: line, size: 21, font: "Calibri", bold: line === line.toUpperCase() && line.length > 3 })],
+      })
+    );
+    const doc = new Document({
+      sections: [{ properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } }, children: paragraphs }],
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, "Signal_Positioning_Report.docx");
+    toast.success("DOCX downloaded");
   };
 
   return (
@@ -180,13 +188,13 @@ const DirectorAudit = () => {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
-         Executive Signal Audit Engine
+          Signal Positioning Engine
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-          Executive Signal Audit
+          Signal Positioning Report
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          Institutional classification of Director-level signal maturity. Evaluates ownership scope, strategic leverage, accountability density, and executive signal quality. Detects hiring-stage friction risk.
+          Diagnoses where your signal breaks down across every hiring stage and rebuilds your positioning from the threshold up. 11-section output. Zero fabrication.
         </p>
       </div>
 
@@ -232,7 +240,7 @@ const DirectorAudit = () => {
                   <span className="ml-1.5 text-muted-foreground font-normal">(optional)</span>
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Providing the target JD sharpens dimension calibration against role-specific Director thresholds.
+                  Providing the target JD sharpens dimension calibration against role-specific thresholds.
                 </p>
                 <Textarea
                   id="jd"
@@ -260,10 +268,10 @@ const DirectorAudit = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full gap-2"
+                className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Running Calibration…" : deterministic ? "Run Executive Audit" : "Run Fresh Calibration"}
+                {loading ? "Running Analysis…" : "✦ Run Positioning Report"}
               </Button>
             </div>
           </div>
@@ -295,18 +303,9 @@ const DirectorAudit = () => {
           {loading && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-3">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Running calibration…</p>
+              <p className="text-sm text-muted-foreground">Running positioning analysis…</p>
               <p className="text-xs text-muted-foreground/60">
-                Evaluating four dimensions against Director-level thresholds
-              </p>
-            </div>
-          )}
-
-          {!loading && !result && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-2 px-6 text-center">
-              <p className="text-sm text-muted-foreground">Executive audit report will appear here</p>
-              <p className="text-xs text-muted-foreground/60">
-                Dimension evaluation · Director signal tier · Hiring friction · Pattern detection
+                Evaluating four dimensions against role-specific thresholds
               </p>
             </div>
           )}
@@ -314,7 +313,7 @@ const DirectorAudit = () => {
           {result && !loading && (
             <>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground font-medium">Calibration Report</p>
+                <p className="text-xs text-muted-foreground font-medium">Positioning Report</p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopy}
@@ -323,17 +322,19 @@ const DirectorAudit = () => {
                     {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                     Copy
                   </button>
-                  <button
-                    onClick={handleDownload}
-                    className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    <Download className="h-3 w-3" />
-                    Download .txt
-                  </button>
                 </div>
               </div>
 
               <DirectorCalibrationBlock result={result} />
+
+              {/* Download Full Package — elevated CTA */}
+              <Button
+                onClick={handleDownloadDocx}
+                className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              >
+                <Download className="h-4 w-4" />
+                Download Full Positioning Package
+              </Button>
             </>
           )}
         </div>
