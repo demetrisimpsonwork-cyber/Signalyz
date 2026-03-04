@@ -9,7 +9,7 @@ const corsHeaders = {
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 async function callAI(prompt: string, maxTokens = 4000): Promise<string> {
-  const res = await fetch("https://api.lovable.dev/v1/chat/completions", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -194,24 +194,28 @@ Return ONLY valid JSON, no markdown.`;
       case "cover_letter": {
         const companyName = sanitize(body.companyName || "the company");
         const roleTitle = inferredRole || "this role";
+        const tone = sanitize(body.tone || "confident");
+        const toneInstruction = tone === "strategic"
+          ? "Tone: strategic, measured, institutional. Emphasize foresight and systems thinking."
+          : tone === "direct"
+          ? "Tone: direct, concise, no-nonsense. Lead with facts and outcomes. Minimal ornamentation."
+          : "Tone: precise, confident, professional. No filler. No buzzwords. Every sentence earns its place.";
         const prompt = `Write a professional cover letter for this candidate applying to ${roleTitle} at ${companyName}. Use only experience from the resume — zero fabrication, zero inflation.
-
-Address the user directly in second person throughout. Use 'you' and 'your' — never use the candidate's name or third-person pronouns when referring to the user.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 Top signal gaps: ${alignmentResult.top_missing_signal || "N/A"}
 Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
 
-Structure as exactly 3 paragraphs. Maximum 250 words total.
+Structure as exactly 3 paragraphs. Maximum 250 words total. Write in first person as the candidate.
 
 Paragraph 1 — Open with a declarative statement of professional identity that names the strongest transferable signal for this specific role. Do not open with "I am writing to apply." Do not open with "I am excited." Open with a statement of what the candidate brings — present tense, first person, specific to this role.
 
-Paragraph 2 — Address the primary perception gap head-on in the first sentence, then immediately bridge it using a specific experience from the resume. Do not avoid the gap. Reframe it as a strength. This paragraph should make the hiring manager feel that the gap they were about to worry about has already been thought through.
+Paragraph 2 — Address the primary perception gap head-on in the first sentence, then immediately bridge it using a specific experience from the resume. Do not avoid the gap. Reframe it as a strength.
 
 Paragraph 3 — Connect the candidate's trajectory to what this organization is building or needs right now based on the JD. Close with one confident, forward-looking sentence. Do not close with "Thank you for your consideration." Do not close with "I look forward to hearing from you."
 
-Tone: precise, confident, professional. No filler. No buzzwords. Every sentence earns its place.
+${toneInstruction}
 
 Return a JSON object with: "letter" (the full cover letter text), "strategy_note" (one-line explanation of strategic choices made)
 Return ONLY valid JSON, no markdown.`;
