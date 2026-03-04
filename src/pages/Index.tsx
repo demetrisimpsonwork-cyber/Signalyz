@@ -21,7 +21,10 @@ import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules"
 import type { SignalModel } from "@/types/SignalModel";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
-import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
+import EvidenceLedger from "@/components/EvidenceLedger";
+import type { EvidenceEntry } from "@/components/EvidenceLedger";
+import PositioningLoader from "@/components/PositioningLoader";
+import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
@@ -242,28 +245,50 @@ const Index = () => {
   };
 
   const handleDirectorCalibrate = async () => {
-    if (!directorExperience.trim()) {
+    const trimmed = directorExperience.trim();
+    if (!trimmed) {
       toast.error("Please paste your resume or experience bullets.");
+      return;
+    }
+    if (trimmed.length < 300) {
+      setDirectorError("Please paste more of your resume or experience section so Resumix can analyze your signal.");
       return;
     }
     setDirectorLoading(true);
     setDirectorResult(null);
     setDirectorError(null);
+    console.log("[telemetry] positioning_run_clicked");
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
-        body: { experience: directorExperience.trim() },
+        body: { experience: trimmed },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setDirectorResult(data as DirectorCalibrationResult);
+      const result = data as DirectorCalibrationResult;
+      setDirectorResult(result);
+      console.log("[telemetry] positioning_run_success");
+      // Persist last successful run
+      try {
+        localStorage.setItem("resumix_last_positioning_run", JSON.stringify(result));
+      } catch {}
     } catch (err: any) {
-      const msg = err.message || "Something went wrong. Please try again.";
+      const msg = err.message || "We couldn't complete the analysis. Please try again.";
       setDirectorError(msg);
-      toast.error(msg);
+      console.log("[telemetry] positioning_run_error", msg);
     } finally {
       setDirectorLoading(false);
     }
   };
+
+  // Restore last positioning run on mount
+  useEffect(() => {
+    if (!directorResult) {
+      try {
+        const saved = localStorage.getItem("resumix_last_positioning_run");
+        if (saved) setDirectorResult(JSON.parse(saved));
+      } catch {}
+    }
+  }, []);
 
   const saveToHistory = async (res: OptimizationResult) => {
     if (!user) return;
@@ -582,26 +607,39 @@ const Index = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
-                <h2 className="text-base font-semibold text-foreground mb-1">Get Your Complete Signal Positioning Report</h2>
+                <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Diagnoses where your signal breaks down across every hiring stage and rebuilds your positioning from the threshold up. 11-section output. Zero fabrication.
+                  Then recalibrate it using only the experience you already have. 11-section diagnostic report. Zero fabrication. Private analysis.
                 </p>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Resume or Experience Input</label>
                 <Textarea
-                  placeholder="Paste your resume bullets, summary, or experience section..."
+                  placeholder="Paste your resume, experience section, or key accomplishments. Resumix will analyze how your experience signals value to hiring managers."
                   value={directorExperience}
-                  onChange={(e) => setDirectorExperience(e.target.value)}
+                  onChange={(e) => { setDirectorExperience(e.target.value); setDirectorError(null); }}
                   rows={12}
                 />
+                {directorExperience.trim().length > 0 && directorExperience.trim().length < 300 && (
+                  <p className="text-xs text-muted-foreground mt-1">{directorExperience.trim().length}/300 characters minimum</p>
+                )}
               </div>
               <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                ✦ Run Positioning Report
+                Run Signal Positioning Report
               </Button>
+              <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
             </div>
             <div className="space-y-4">
-              {directorLoading && <AlignmentLoader minHeight="260px" />}
-              {directorResult && !directorLoading && <DirectorCalibrationBlock result={directorResult} />}
+              {directorLoading && <PositioningLoader minHeight="300px" />}
+              {directorError && !directorLoading && (
+                <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
+                  <p className="text-sm text-white leading-relaxed">{directorError}</p>
+                  <Button onClick={handleDirectorCalibrate} variant="outline" className="w-full gap-2 border-white/20 text-white hover:bg-white/10">
+                    <RefreshCw className="h-4 w-4" />
+                    Retry Analysis
+                  </Button>
+                </div>
+              )}
+              {directorResult && !directorLoading && !directorError && <DirectorCalibrationBlock result={directorResult} />}
             </div>
           </div>
         )}
@@ -782,6 +820,7 @@ const Index = () => {
                         transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
                         signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
                         signal_map: result.signal_model?.signal_map || (result as any).signal_map,
+                        evidence_ledger: result.signal_model?.evidence_ledger,
                       }}
                       matchScore={result.match_score}
                     />
@@ -806,24 +845,65 @@ const Index = () => {
                     {/* Section 2: Calibrated Bullets */}
                     <div className="space-y-3">
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
-                      <div className="rounded-xl border bg-card p-5 space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-1">
-                            <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Original</p>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{bullet}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-[11px] uppercase tracking-[0.15em] text-primary font-medium">Calibrated</p>
-                            <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
-                          </div>
-                        </div>
+
+                      {/* Original */}
+                      <div className="rounded-xl border bg-card p-5 space-y-2">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Original Bullet</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{bullet}</p>
                       </div>
+
+                      {/* Variant A — Ownership Elevation */}
+                      <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant A — Ownership Elevation</p>
+                        <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
+                        <div className="pt-2 space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+                          {(result.used_signals && result.used_signals.length > 0) ? (
+                            <ul className="space-y-0.5">
+                              {result.used_signals.map((s, i) => (
+                                <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">Clarified ownership language and aligned terminology with hiring expectations.</p>
+                          )}
+                        </div>
+                        <EvidenceLedger
+                          entries={result.signal_model?.evidence_ledger?.filter(e => e.source === "resume").slice(0, 2).map(e => ({
+                            claim: e.evidence || e.claim,
+                            resume_snippet: e.evidence || e.claim,
+                            source_section: "Resume",
+                            confidence: "High" as const,
+                          }))}
+                        />
+                      </div>
+
+                      {/* Variant B — Outcome / Impact Framing */}
                       {effectiveIsPro && result.alt_a !== result.optimized_bullet && (
-                        <ResultSection title="Repositioned Version A — Ownership Elevation" content={result.alt_a} />
+                        <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
+                          <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
+                          <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
+                          <div className="pt-2 space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+                            <ul className="space-y-0.5">
+                              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Emphasized operational outcome</li>
+                              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Aligned terminology with hiring expectations</li>
+                            </ul>
+                          </div>
+                          <EvidenceLedger
+                            entries={result.signal_model?.evidence_ledger?.filter(e => e.source === "resume").slice(0, 2).map(e => ({
+                              claim: e.evidence || e.claim,
+                              resume_snippet: e.evidence || e.claim,
+                              source_section: "Resume",
+                              confidence: "High" as const,
+                            }))}
+                          />
+                        </div>
                       )}
-                      {effectiveIsPro && result.alt_b !== result.optimized_bullet && (
-                        <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={result.alt_b} />
+                      {effectiveIsPro && result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
+                        <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
                       )}
+
                       <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
                         Repositioned using only language from your original resume. No experience was invented.
                       </p>
@@ -914,13 +994,13 @@ const Index = () => {
           <AccordionItem value="fabrication">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Resumix make things up?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Never. Resumix only works with what you give it. The engine repositions your real experience using stronger language and role-native framing — it never fabricates skills, roles, or accomplishments you don't have.
+              No. Resumix never invents experience, metrics, or achievements. All insights are derived from the information you provide.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="chatgpt">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT rewrites. Resumix calibrates. We analyze your signal against institutional hiring thresholds, identify where your profile breaks down at each hiring stage, and reconstruct your positioning from the threshold up.
+              ChatGPT generates text. Resumix models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply rewriting resumes, Resumix diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="ats">
