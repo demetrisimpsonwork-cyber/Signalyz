@@ -5,6 +5,7 @@ import { Loader2, Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
+import { parseResumeIntake, type ResumeIntakeResult } from "@/lib/resumeIntake";
 import {
   Document,
   Packer,
@@ -245,34 +246,40 @@ const ResumeBuilder = ({
     setLoading(true);
     setResumeError(null);
     try {
-      const parsed = parseExperience(experience);
+      // Use new format-agnostic intake parser
+      const intake = parseResumeIntake(experience);
 
-      const professionalRoles = parsed.roles.filter(r => !r.isIndependent);
-      const independentProjects = parsed.roles.filter(r => r.isIndependent);
+      // If completely empty, show error
+      if (intake.status === "error") {
+        setResumeError({
+          error_code: "INVALID_INPUT",
+          message: intake.warnings[0] || "Please paste your resume text.",
+        });
+        return;
+      }
 
-      const proRolesPayload = professionalRoles.map((r) => ({
-        company: r.company || r.title || "Experience",
-        title: r.title || "",
-        date_range: r.dateRange || "",
-        bullets: r.bullets,
+      // Map intake experience to roles payload
+      const allRoles = intake.sections.experience.map((exp) => ({
+        company: exp.company || exp.role_title || "Experience",
+        title: exp.role_title || "",
+        date_range: [exp.start_date, exp.end_date].filter(Boolean).join(" - "),
+        bullets: exp.responsibilities,
       }));
 
-      const indProjPayload = independentProjects.map((r) => ({
-        company: r.company || r.title || "Project",
-        title: r.title || "",
-        date_range: r.dateRange || "",
-        bullets: r.bullets,
-      }));
-
-      const allRoles = [...proRolesPayload, ...indProjPayload];
+      // If no roles extracted at all, still send with best-effort
+      if (allRoles.length === 0) {
+        // Fallback: treat entire text as one block of bullets
+        const lines = experience.split("\n").map(l => l.trim()).filter(l => l.length > 10);
+        allRoles.push({ company: "Experience", title: "", date_range: "", bullets: lines.slice(0, 30) });
+      }
 
       const payload = {
         roles: allRoles,
         jd: jd?.slice(0, 8000) || "",
         matchScore,
-        existingSummary: parsed.summaryText || undefined,
-        skills: parsed.skillsText || undefined,
-        certifications: parsed.certificationsText || undefined,
+        existingSummary: intake.sections.summary || undefined,
+        skills: intake.sections.skills.join(", ") || undefined,
+        certifications: intake.sections.certifications.join("\n") || undefined,
       };
 
       let rawText = "";
@@ -327,9 +334,9 @@ const ResumeBuilder = ({
       }
 
       setParsedExtras({
-        skills: parsed.skillsText,
-        certifications: parsed.certificationsText,
-        education: parsed.educationText,
+        skills: intake.sections.skills.join(", "),
+        certifications: intake.sections.certifications.join("\n"),
+        education: intake.sections.education.join("\n"),
       });
       setResumeResult({
         positioning_statement: data.positioning_statement,
