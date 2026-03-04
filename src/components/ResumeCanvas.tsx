@@ -14,27 +14,28 @@ const EditableText = ({
   editMode,
   onUpdate,
   className = "",
-  tag: Tag = "p",
+  style,
 }: {
   value: string;
   path: string;
   editMode: boolean;
   onUpdate: (path: string, value: any) => void;
   className?: string;
-  tag?: "p" | "h1" | "h2" | "span";
+  style?: React.CSSProperties;
 }) => {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   if (!editMode) {
-    return <Tag className={className}>{value || "\u00A0"}</Tag>;
+    return <div className={className} style={style}>{value || "\u00A0"}</div>;
   }
 
   return (
-    <Tag
-      ref={ref as any}
+    <div
+      ref={ref}
       contentEditable
       suppressContentEditableWarning
-      className={`${className} outline-none ring-1 ring-transparent hover:ring-primary/30 focus:ring-primary/50 rounded px-0.5 transition-all cursor-text`}
+      className={`${className} outline-none ring-1 ring-transparent hover:ring-blue-300 focus:ring-blue-400 rounded px-0.5 transition-all cursor-text`}
+      style={style}
       onBlur={() => {
         if (ref.current) onUpdate(path, ref.current.textContent || "");
       }}
@@ -102,9 +103,8 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
           path="header.name"
           editMode={editMode}
           onUpdate={onUpdate}
-          tag="h1"
           className="font-bold tracking-tight"
-          style-prop={{ fontSize: "24px", color: "#1A1A2E" }}
+          style={{ fontSize: "24px", color: "#1A1A2E" }}
         />
         {resume.header.title && (
           <EditableText
@@ -112,11 +112,11 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
             path="header.title"
             editMode={editMode}
             onUpdate={onUpdate}
-            className="text-sm mt-1"
-            style-prop={{ color: "#4B5563" }}
+            className="mt-1"
+            style={{ fontSize: "14px", color: "#4B5563" }}
           />
         )}
-        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap text-xs" style={{ color: "#6B7280" }}>
+        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap" style={{ fontSize: "11px", color: "#6B7280" }}>
           {[resume.header.location, resume.header.email, resume.header.phone, resume.header.linkedin]
             .filter(Boolean)
             .map((item, i, arr) => (
@@ -138,8 +138,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
             path="summary"
             editMode={editMode}
             onUpdate={onUpdate}
-            className="text-xs leading-relaxed"
-            style-prop={{ fontSize: "11.5px", lineHeight: "1.7" }}
+            style={{ fontSize: "11.5px", lineHeight: "1.7" }}
           />
         </div>
       )}
@@ -152,8 +151,8 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
             {resume.core_competencies.map((comp, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium"
-                style={{ borderColor: "#D1D5DB", color: "#374151" }}
+                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5"
+                style={{ borderColor: "#D1D5DB", color: "#374151", fontSize: "10px", fontWeight: 500 }}
               >
                 {editMode ? (
                   <span
@@ -185,9 +184,10 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                   onChange={(e) => setNewCompetency(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addCompetency()}
                   placeholder="Add..."
-                  className="border rounded-full px-2 py-0.5 text-[10px] w-20 outline-none focus:border-primary"
+                  className="border rounded-full px-2 py-0.5 w-20 outline-none"
+                  style={{ fontSize: "10px" }}
                 />
-                <button onClick={addCompetency} className="text-primary hover:text-primary/80">
+                <button onClick={addCompetency} style={{ color: "hsl(174, 62%, 40%)" }}>
                   <Plus className="h-3 w-3" />
                 </button>
               </span>
@@ -210,8 +210,8 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                       path={`experience.${ei}.title`}
                       editMode={editMode}
                       onUpdate={onUpdate}
-                      className="text-xs font-bold"
-                      style-prop={{ fontSize: "12px" }}
+                      className="font-bold"
+                      style={{ fontSize: "12px" }}
                     />
                     {exp.company && (
                       <EditableText
@@ -219,8 +219,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                         path={`experience.${ei}.company`}
                         editMode={editMode}
                         onUpdate={onUpdate}
-                        className="text-xs"
-                        style-prop={{ fontSize: "11px", color: "#4B5563" }}
+                        style={{ fontSize: "11px", color: "#4B5563" }}
                       />
                     )}
                   </div>
@@ -230,8 +229,8 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                       path={`experience.${ei}.dates`}
                       editMode={editMode}
                       onUpdate={onUpdate}
-                      className="text-xs shrink-0"
-                      style-prop={{ fontSize: "10px", color: "#6B7280" }}
+                      className="shrink-0"
+                      style={{ fontSize: "10px", color: "#6B7280" }}
                     />
                   )}
                 </div>
@@ -239,7 +238,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                   {exp.bullets.map((bullet, bi) => (
                     <li
                       key={bi}
-                      className={`text-xs leading-relaxed flex gap-1.5 ${editMode ? "outline-none hover:bg-blue-50/50 rounded px-1 -mx-1 cursor-text" : ""}`}
+                      className={`flex gap-1.5 ${editMode ? "outline-none rounded px-1 -mx-1 cursor-text" : ""}`}
                       contentEditable={editMode}
                       suppressContentEditableWarning
                       onBlur={(e) => {
@@ -277,20 +276,19 @@ const ResumeCanvas = ({ resume, editMode, onUpdate }: ResumeCanvasProps) => {
                     path={`education.${i}.degree`}
                     editMode={editMode}
                     onUpdate={onUpdate}
-                    className="text-xs font-medium"
-                    style-prop={{ fontSize: "11px" }}
+                    className="font-medium"
+                    style={{ fontSize: "11px" }}
                   />
                   <EditableText
                     value={edu.institution}
                     path={`education.${i}.institution`}
                     editMode={editMode}
                     onUpdate={onUpdate}
-                    className="text-xs"
-                    style-prop={{ fontSize: "10.5px", color: "#6B7280" }}
+                    style={{ fontSize: "10.5px", color: "#6B7280" }}
                   />
                 </div>
                 {edu.year && (
-                  <span className="text-xs shrink-0" style={{ fontSize: "10px", color: "#6B7280" }}>
+                  <span className="shrink-0" style={{ fontSize: "10px", color: "#6B7280" }}>
                     {edu.year}
                   </span>
                 )}
