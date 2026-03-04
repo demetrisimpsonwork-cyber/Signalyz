@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
 import { Textarea } from "@/components/ui/textarea";
+import ResumePasteQuality from "@/components/ResumePasteQuality";
+import { parseResumeIntake, getPasteQuality, type PasteQuality } from "@/lib/resumeIntake";
 import ResultSection from "@/components/ResultSection";
 import KeywordChips from "@/components/KeywordChips";
 import MatchScoreCard from "@/components/MatchScoreCard";
@@ -715,6 +717,11 @@ const Index = () => {
                   onChange={(e) => { setDirectorExperience(e.target.value); setDirectorError(null); }}
                   rows={12}
                 />
+                {directorExperience.trim().length > 20 && (
+                  <div className="mt-1.5">
+                    <ResumePasteQuality quality={getPasteQuality(parseResumeIntake(directorExperience))} />
+                  </div>
+                )}
                 {directorExperience.trim().length > 0 && directorExperience.trim().length < 300 && (
                   <p className="text-xs text-muted-foreground mt-1">{directorExperience.trim().length}/300 characters minimum</p>
                 )}
@@ -762,6 +769,11 @@ const Index = () => {
                     rows={4}
                     className={`mt-2 ${errors.bullet ? "border-destructive" : ""}`}
                   />
+                  {bullet.trim().length > 20 && (
+                    <div className="mt-1.5">
+                      <ResumePasteQuality quality={getPasteQuality(parseResumeIntake(bullet))} />
+                    </div>
+                  )}
                   {errors.bullet && <p className="mt-1 text-xs text-destructive">{errors.bullet}</p>}
                 </div>
                 <div>
