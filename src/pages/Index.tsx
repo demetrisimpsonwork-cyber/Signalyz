@@ -436,7 +436,7 @@ const Index = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">
-                  Executive Signal Audit Engine v1.1
+                  Executive Signal Audit Engine
                 </p>
                 <h2 className="text-base font-semibold text-foreground mb-1">Evaluate Executive-Level Signal Maturity</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">

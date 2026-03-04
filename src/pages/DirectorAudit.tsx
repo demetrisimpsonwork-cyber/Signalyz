@@ -180,7 +180,7 @@ const DirectorAudit = () => {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
-         Executive Signal Audit Engine v{deterministic ? "1.2" : "1.2-fresh"}
+         Executive Signal Audit Engine
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
           Executive Signal Audit
