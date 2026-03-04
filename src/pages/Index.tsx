@@ -740,11 +740,26 @@ const Index = () => {
                           <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
                         )}
                       </div>
-                      {result.top_missing_signal && (
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Top gap:</span> {result.top_missing_signal}
-                        </p>
-                      )}
+
+                      {/* Structured diagnosis insights */}
+                      <div className="space-y-2 border-t border-border/40 pt-3">
+                        {result.top_missing_signal && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">Top gap:</span> {result.top_missing_signal}
+                          </p>
+                        )}
+                        {(result as any).executive_insight_summary?.primary_strength && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">Primary strength:</span> {(result as any).executive_insight_summary.primary_strength}
+                          </p>
+                        )}
+                        {(result as any).executive_insight_summary?.strategic_repositioning_opportunity && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-primary">Repositioning opportunity:</span> {(result as any).executive_insight_summary.strategic_repositioning_opportunity}
+                          </p>
+                        )}
+                      </div>
+
                       {result.score_rationale && result.score_rationale.length > 0 && (
                         <ul className="space-y-1">
                           {result.score_rationale.map((r, i) => (
@@ -764,6 +779,7 @@ const Index = () => {
                         executive_insight_summary: (result as any).executive_insight_summary,
                         transferable_signal_detection: (result as any).transferable_signal_detection,
                         signal_shift_estimates: (result as any).signal_shift_estimates,
+                        signal_map: (result as any).signal_map,
                       }}
                       matchScore={result.match_score}
                     />
@@ -806,6 +822,9 @@ const Index = () => {
                       {effectiveIsPro && result.alt_b !== result.optimized_bullet && (
                         <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={result.alt_b} />
                       )}
+                      <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
+                        Repositioned using only language from your original resume. No experience was invented.
+                      </p>
                     </div>
 
                     {!effectiveIsPro && <ProInsightsTeaser />}

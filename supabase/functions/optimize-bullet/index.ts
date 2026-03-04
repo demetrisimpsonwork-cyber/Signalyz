@@ -327,6 +327,7 @@ Return ONLY this JSON object with EXACT keys:
   ],
   "executive_insight_summary": {
     "primary_insight": "string (one sentence — what the resume strongly signals and where it under-signals)",
+    "primary_strength": "string (one sentence — the strongest signal the resume currently projects)",
     "why_it_matters": "string (one sentence — why this matters for the target role)",
     "strategic_repositioning_opportunity": "string (one sentence — specific reframing opportunity)"
   },
@@ -334,6 +335,14 @@ Return ONLY this JSON object with EXACT keys:
     "detected_capability": "string (the transferable capability found in the resume)",
     "why_it_transfers": "string (how this capability maps to the target role)",
     "elevation_opportunity": "string (how to reframe this for stronger alignment)"
+  },
+  "signal_map": {
+    "role_identity": number (0-25),
+    "ownership_framing": number (0-25),
+    "commercial_impact": number (0-25),
+    "domain_expertise": number (0-25),
+    "stakeholder_influence": number (0-25),
+    "operational_execution": number (0-25)
   },
   "signal_shift_estimates": {
     "ownership_signal": { "before": number, "after": number },
@@ -441,6 +450,7 @@ USER_PLAN: ${userPlan}`;
       executive_insight_summary: titan.executive_insight_summary || null,
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
+      signal_map: titan.signal_map || null,
     };
 
     // Save to database
