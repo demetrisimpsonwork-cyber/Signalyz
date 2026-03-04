@@ -334,9 +334,9 @@ const ResumeBuilder = ({
       }
 
       setParsedExtras({
-        skills: parsed.skillsText,
-        certifications: parsed.certificationsText,
-        education: parsed.educationText,
+        skills: intake.sections.skills.join(", "),
+        certifications: intake.sections.certifications.join("\n"),
+        education: intake.sections.education.join("\n"),
       });
       setResumeResult({
         positioning_statement: data.positioning_statement,
