@@ -658,7 +658,7 @@ USER_PLAN: ${userPlan}`;
       alt_b: altB,
     }).throwOnError();
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
