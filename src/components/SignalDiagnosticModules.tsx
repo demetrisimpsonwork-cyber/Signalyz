@@ -610,7 +610,9 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     data.signal_alignment_analysis?.length ||
     data.hiring_pipeline_simulation?.length ||
     data.signal_shift_estimates ||
-    data.signal_map;
+    data.signal_map ||
+    data.career_signal_map ||
+    data.hiring_signal_benchmark;
 
   if (!hasAny) return null;
 
@@ -652,6 +654,16 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
       {/* Signal Shift Visualization */}
       {data.signal_shift_estimates && (
         <SignalShiftVisualization data={data.signal_shift_estimates} />
+      )}
+
+      {/* Career Signal Map */}
+      {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+        <CareerSignalMap data={data.career_signal_map} />
+      )}
+
+      {/* Hiring Signal Benchmark */}
+      {data.hiring_signal_benchmark && data.hiring_signal_benchmark.user_score != null && (
+        <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
       )}
     </div>
   );
