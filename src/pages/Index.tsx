@@ -18,6 +18,7 @@ import InterviewIntelligence from "@/components/InterviewIntelligence";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
 import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
 import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
+import type { SignalModel } from "@/types/SignalModel";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
@@ -129,6 +130,7 @@ interface OptimizationResult {
   removed_or_softened?: string[];
   identity_strength_index?: IdentityStrengthIndexData;
   inferred_role_title?: string;
+  signal_model?: SignalModel;
 }
 
 function getSessionToken(): string {
