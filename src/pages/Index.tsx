@@ -16,6 +16,8 @@ import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
+import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
+import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
