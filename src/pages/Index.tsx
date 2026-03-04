@@ -18,6 +18,7 @@ import InterviewIntelligence from "@/components/InterviewIntelligence";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
 import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
 import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
+import type { SignalModel } from "@/types/SignalModel";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
@@ -129,6 +130,7 @@ interface OptimizationResult {
   removed_or_softened?: string[];
   identity_strength_index?: IdentityStrengthIndexData;
   inferred_role_title?: string;
+  signal_model?: SignalModel;
 }
 
 function getSessionToken(): string {
@@ -268,10 +270,10 @@ const Index = () => {
     try {
       await supabase.from("alignment_history").insert({
         user_id: user.id,
-        inferred_role: res.inferred_role_title || "",
+        inferred_role: res.signal_model?.role?.title || res.inferred_role_title || "",
         score: res.match_score,
         strength_label: getStrengthLabel(res.match_score),
-        top_gap: res.top_missing_signal || null,
+        top_gap: res.signal_model?.gaps?.[0] || res.top_missing_signal || null,
         full_result_json: res as any,
       });
     } catch {}
@@ -741,21 +743,21 @@ const Index = () => {
                         )}
                       </div>
 
-                      {/* Structured diagnosis insights */}
+                      {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
-                        {result.top_missing_signal && (
+                        {(result.signal_model?.gaps?.[0] || result.top_missing_signal) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Top gap:</span> {result.top_missing_signal}
+                            <span className="font-medium text-foreground">Top gap:</span> {result.signal_model?.gaps?.[0] || result.top_missing_signal}
                           </p>
                         )}
-                        {(result as any).executive_insight_summary?.primary_strength && (
+                        {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Primary strength:</span> {(result as any).executive_insight_summary.primary_strength}
+                            <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
                           </p>
                         )}
-                        {(result as any).executive_insight_summary?.strategic_repositioning_opportunity && (
+                        {(result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-primary">Repositioning opportunity:</span> {(result as any).executive_insight_summary.strategic_repositioning_opportunity}
+                            <span className="font-medium text-primary">Repositioning opportunity:</span> {result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity}
                           </p>
                         )}
                       </div>
@@ -772,14 +774,14 @@ const Index = () => {
                     {/* Signal Diagnostic Modules */}
                     <SignalDiagnosticModules
                       data={{
-                        jd_signal_extraction: (result as any).jd_signal_extraction,
-                        resume_signal_profile: (result as any).resume_signal_profile,
-                        signal_alignment_analysis: (result as any).signal_alignment_analysis,
-                        hiring_pipeline_simulation: (result as any).hiring_pipeline_simulation,
-                        executive_insight_summary: (result as any).executive_insight_summary,
-                        transferable_signal_detection: (result as any).transferable_signal_detection,
-                        signal_shift_estimates: (result as any).signal_shift_estimates,
-                        signal_map: (result as any).signal_map,
+                        jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
+                        resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
+                        signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
+                        hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
+                        executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
+                        transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
+                        signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
+                        signal_map: result.signal_model?.signal_map || (result as any).signal_map,
                       }}
                       matchScore={result.match_score}
                     />
