@@ -31,6 +31,7 @@ interface ParsedResume {
   summaryText: string;
   skillsText: string;
   certificationsText: string;
+  educationText: string;
   contactLines: string[];
   otherSections: { heading: string; content: string }[];
 }
@@ -62,8 +63,9 @@ function parseExperience(text: string): ParsedResume {
   let summaryLines: string[] = [];
   let skillsLines: string[] = [];
   let certLines: string[] = [];
+  let educationLines: string[] = [];
   let contactLines: string[] = [];
-  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" | "projects" = "none";
+  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" | "projects" | "education" = "none";
 
   const datePattern = /(\d{4})\s*[-–—]\s*(present|\d{4}|current)/i;
   const sectionHeaders = /^(professional\s+summary|summary|core\s+competencies|skills|certifications?|independent\s+projects?|education|experience|work\s+experience)/i;
@@ -96,6 +98,7 @@ function parseExperience(text: string): ParsedResume {
       if (sectionName.includes("skill") || sectionName.includes("competen")) { currentSection = "skills"; continue; }
       if (sectionName.includes("certif")) { currentSection = "certs"; continue; }
       if (sectionName.includes("independent") || sectionName.includes("project")) { currentSection = "projects"; continue; }
+      if (sectionName.includes("education")) { currentSection = "education"; continue; }
       if (sectionName.includes("experience") || sectionName.includes("work")) { currentSection = "experience"; continue; }
       currentSection = "none";
       continue;
@@ -105,6 +108,7 @@ function parseExperience(text: string): ParsedResume {
     if (currentSection === "summary") { summaryLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
     if (currentSection === "skills") { skillsLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
     if (currentSection === "certs") { certLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
+    if (currentSection === "education") { educationLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
 
     // Detect role headers (lines with date ranges that aren't bullets)
     const isBullet = /^[•\-*]\s/.test(line);
@@ -171,6 +175,7 @@ function parseExperience(text: string): ParsedResume {
     summaryText: summaryLines.join(" ").trim(),
     skillsText: skillsLines.join(", ").trim(),
     certificationsText: certLines.join("\n").trim(),
+    educationText: educationLines.join("\n").trim(),
     contactLines,
     otherSections: [],
   };
@@ -215,6 +220,7 @@ const ResumeBuilder = ({
 }: ResumeBuilderProps) => {
   const [loading, setLoading] = useState(false);
   const [resumeResult, setResumeResult] = useState<ResumeResult | null>(null);
+  const [parsedExtras, setParsedExtras] = useState<{ skills: string; certifications: string; education: string }>({ skills: "", certifications: "", education: "" });
   const [showContactForm, setShowContactForm] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -320,6 +326,11 @@ const ResumeBuilder = ({
         return;
       }
 
+      setParsedExtras({
+        skills: parsed.skillsText,
+        certifications: parsed.certificationsText,
+        education: parsed.educationText,
+      });
       setResumeResult({
         positioning_statement: data.positioning_statement,
         interview_preparation_notice: data.interview_preparation_notice || data.signal_gap_notice || "",
@@ -441,6 +452,34 @@ const ResumeBuilder = ({
             ...roleChildren,
             // Independent Projects (separate section)
             ...projectChildren,
+            // Skills
+            ...(parsedExtras.skills ? [
+              sectionHeader("Skills"),
+              new Paragraph({
+                spacing: { after: 200, line: 276 },
+                children: [new TextRun({ text: parsedExtras.skills, size: 21, font: "Calibri" })],
+              }),
+            ] : []),
+            // Education
+            ...(parsedExtras.education ? [
+              sectionHeader("Education"),
+              ...parsedExtras.education.split("\n").filter(Boolean).map(line =>
+                new Paragraph({
+                  spacing: { after: 80, line: 276 },
+                  children: [new TextRun({ text: line, size: 21, font: "Calibri" })],
+                })
+              ),
+            ] : []),
+            // Certifications
+            ...(parsedExtras.certifications ? [
+              sectionHeader("Certifications"),
+              ...parsedExtras.certifications.split("\n").filter(Boolean).map(line =>
+                new Paragraph({
+                  spacing: { after: 80, line: 276 },
+                  children: [new TextRun({ text: line, size: 21, font: "Calibri" })],
+                })
+              ),
+            ] : []),
           ],
         },
       ],
@@ -546,6 +585,45 @@ const ResumeBuilder = ({
                     );
                   })}
                 </div>
+              </div>
+            )}
+            {/* Skills */}
+            {parsedExtras.skills && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Skills
+                </p>
+                <p className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                  {parsedExtras.skills}
+                </p>
+              </div>
+            )}
+
+            {/* Education */}
+            {parsedExtras.education && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Education
+                </p>
+                {parsedExtras.education.split("\n").filter(Boolean).map((line, i) => (
+                  <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* Certifications */}
+            {parsedExtras.certifications && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Certifications
+                </p>
+                {parsedExtras.certifications.split("\n").filter(Boolean).map((line, i) => (
+                  <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                    {line}
+                  </p>
+                ))}
               </div>
             )}
           </div>
