@@ -156,6 +156,9 @@ export type Database = {
       }
       runs: {
         Row: {
+          calibrated_resume: Json | null
+          calibrated_resume_at: string | null
+          calibrated_resume_edited: Json | null
           changes_diff: Json | null
           created_at: string
           deterministic: boolean
@@ -174,6 +177,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          calibrated_resume?: Json | null
+          calibrated_resume_at?: string | null
+          calibrated_resume_edited?: Json | null
           changes_diff?: Json | null
           created_at?: string
           deterministic?: boolean
@@ -192,6 +198,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          calibrated_resume?: Json | null
+          calibrated_resume_at?: string | null
+          calibrated_resume_edited?: Json | null
           changes_diff?: Json | null
           created_at?: string
           deterministic?: boolean
