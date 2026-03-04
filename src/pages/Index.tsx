@@ -11,7 +11,14 @@ import ResumeUpload from "@/components/ResumeUpload";
 import ProInsightsTeaser from "@/components/ProInsightsTeaser";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
-import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote } from "lucide-react";
+import SignalGapActions from "@/components/SignalGapActions";
+import CalibratedSummary from "@/components/CalibratedSummary";
+import ATSSignalPanel from "@/components/ATSSignalPanel";
+import InterviewIntelligence from "@/components/InterviewIntelligence";
+import CoverLetterEngine from "@/components/CoverLetterEngine";
+import LinkedInSignalTab from "@/components/LinkedInSignalTab";
+import OnboardingModal from "@/components/OnboardingModal";
+import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
@@ -56,71 +63,29 @@ const SAMPLE_ROLES: SampleRole[] = [
     jd: `We are looking for a Customer Success Manager to own a portfolio of 50-75 mid-market accounts. You will drive retention, lead QBRs, identify expansion opportunities, and serve as the primary relationship owner. Required: CRM experience, proven renewal track record, strong written communication.`,
     sampleA: "Owned post-sale relationships across 45 mid-market accounts ($3.2M ARR), driving product adoption through structured onboarding sequences and quarterly business reviews that surfaced expansion opportunities.",
     sampleB: "Managed a portfolio of mid-market accounts, coordinating onboarding, renewal conversations, and escalation resolution while maintaining 92% gross retention across two renewal cycles.",
-    perceptionSnapshot: {
-      "Strategic Ownership Signal": "Low",
-      "Cross-Functional Authority": "Low",
-      "Business Impact Clarity": "Low",
-      "Seniority Weight": "Moderate",
-    },
-    roleWeightsMost: [
-      "Portfolio ownership with renewal and expansion accountability",
-      "Proactive adoption driving — not reactive support",
-      "QBR facilitation and executive-facing communication",
-      "Churn reduction as a measurable outcome",
-    ],
-    perceptionInsights: [
-      '"Managed a portfolio of 45 SMB accounts" signals administrative assignment — this role expects portfolio ownership with revenue accountability.',
-      '"Led quarterly business reviews" reads as facilitation, not strategic ownership. CSM roles at this level require structured adoption programs with measurable engagement outcomes.',
-      '"Collaborated with product and support teams" positions you as a participant. The JD weights proactive relationship management and expansion identification.',
-    ],
+    perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Moderate" },
+    roleWeightsMost: ["Portfolio ownership with renewal and expansion accountability", "Proactive adoption driving — not reactive support", "QBR facilitation and executive-facing communication", "Churn reduction as a measurable outcome"],
+    perceptionInsights: ['"Managed a portfolio of 45 SMB accounts" signals administrative assignment — this role expects portfolio ownership with revenue accountability.', '"Led quarterly business reviews" reads as facilitation, not strategic ownership.', '"Collaborated with product and support teams" positions you as a participant.'],
   },
   {
     label: "Operations Lead",
     bullet: `Oversaw daily operations for a 12-person remote support team — managing scheduling, workflow distribution, and SLA compliance across three product lines. Redesigned the ticket routing process to reduce misassignment rate and improve first-contact resolution. Maintained vendor relationships with three external service partners, negotiating SLAs and reviewing monthly performance against agreed benchmarks. Reported weekly operational metrics to senior leadership and flagged process gaps with proposed solutions.`,
     jd: `Seeking an Operations Lead to manage day-to-day team workflows, own vendor relationships, and drive process improvement across our support infrastructure. Must be comfortable with data reporting, cross-functional coordination, and managing remote teams.`,
-    sampleA: "Built and owned end-to-end fulfillment workflows across 3 distribution channels, reducing cycle time by 28% through process redesign and vendor SLA renegotiation while reporting operational KPIs to the VP of Operations weekly.",
-    sampleB: "Coordinated logistics and fulfillment operations across multiple vendor relationships, implementing process improvements that reduced order-to-delivery time and improving cross-team visibility through structured reporting cadences.",
-    perceptionSnapshot: {
-      "Strategic Ownership Signal": "Low",
-      "Cross-Functional Authority": "Low",
-      "Business Impact Clarity": "Low",
-      "Seniority Weight": "Low",
-    },
-    roleWeightsMost: [
-      "Process ownership and scalable system design — not coordination",
-      "Measurable efficiency outcomes tied to KPIs",
-      "Vendor management with negotiation accountability",
-      "Operational reporting to senior leadership",
-    ],
-    perceptionInsights: [
-      '"Oversaw daily operations" signals supervision rather than system ownership. The role expects process design and scalable workflow construction.',
-      '"Redesigned the ticket routing process" is closer to ownership language but lacks measurable outcomes. Operations Lead roles require process architecture that drives measurable efficiency gains.',
-      '"Reported weekly operational metrics" reads as compliance, not leadership. The JD requires dependency management with accountability for throughput.',
-    ],
+    sampleA: "Built and owned end-to-end fulfillment workflows across 3 distribution channels, reducing cycle time by 28% through process redesign and vendor SLA renegotiation.",
+    sampleB: "Coordinated logistics and fulfillment operations across multiple vendor relationships, implementing process improvements that reduced order-to-delivery time.",
+    perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Low" },
+    roleWeightsMost: ["Process ownership and scalable system design", "Measurable efficiency outcomes tied to KPIs", "Vendor management with negotiation accountability", "Operational reporting to senior leadership"],
+    perceptionInsights: ['"Oversaw daily operations" signals supervision rather than system ownership.', '"Redesigned the ticket routing process" lacks measurable outcomes.', '"Reported weekly operational metrics" reads as compliance, not leadership.'],
   },
   {
     label: "Marketing Manager",
     bullet: `Led integrated campaigns across email, paid social, and organic channels for a B2B SaaS company targeting HR and finance decision-makers. Managed a $120K quarterly campaign budget and reported ROI to VP of Marketing monthly. Built and maintained the content calendar, coordinating with design, product, and sales to align messaging. Tracked funnel performance in HubSpot — identifying drop-off points and testing variations to improve conversion rates.`,
     jd: `Looking for a Marketing Manager to own demand generation strategy across digital channels. Plan and execute integrated campaigns, manage budget allocation, analyze funnel performance, partner with sales to optimize lead quality. Required: B2B demand gen, HubSpot/Marketo, budget ownership, funnel analytics.`,
-    sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month and reduced CPL by 22% through funnel-stage optimization.",
-    sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes and reporting campaign performance to marketing leadership monthly.",
-    perceptionSnapshot: {
-      "Strategic Ownership Signal": "Moderate",
-      "Cross-Functional Authority": "Low",
-      "Business Impact Clarity": "Moderate",
-      "Seniority Weight": "Low",
-    },
-    roleWeightsMost: [
-      "Demand generation strategy ownership — not campaign execution",
-      "Budget accountability with ROI measurement",
-      "Funnel analytics and conversion optimization",
-      "Sales partnership on lead quality and handoff",
-    ],
-    perceptionInsights: [
-      '"Led integrated campaigns" signals execution ownership, but "led" needs to be reinforced with strategic framing. Marketing Manager roles expect strategy ownership and budget accountability.',
-      '"Managed a $120K quarterly campaign budget" is strong commercial signal but needs outcome attribution. The role requires integrated campaign planning across channels with measurable ROI.',
-      '"Tracked funnel performance in HubSpot" is reporting, not analytics ownership. No mention of conversion optimization strategy leaves strategic value partially visible.',
-    ],
+    sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month.",
+    sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes.",
+    perceptionSnapshot: { "Strategic Ownership Signal": "Moderate", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Moderate", "Seniority Weight": "Low" },
+    roleWeightsMost: ["Demand generation strategy ownership", "Budget accountability with ROI measurement", "Funnel analytics and conversion optimization", "Sales partnership on lead quality"],
+    perceptionInsights: ['"Led integrated campaigns" signals execution ownership but needs strategic framing.', '"Managed a $120K quarterly campaign budget" is strong but needs outcome attribution.', '"Tracked funnel performance in HubSpot" is reporting, not analytics ownership.'],
   },
 ];
 
@@ -174,8 +139,6 @@ function getSessionToken(): string {
   return token;
 }
 
-// ─── Animated count-up hook ──────────────────────────────────────────────────
-
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
   const rafRef = useRef<number>();
@@ -186,7 +149,6 @@ function useCountUp(target: number, duration = 1200) {
     const step = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out quad
       const eased = 1 - (1 - progress) * (1 - progress);
       setValue(Math.round(eased * target));
       if (progress < 1) rafRef.current = requestAnimationFrame(step);
@@ -198,8 +160,14 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
+function getStrengthLabel(score: number): string {
+  if (score >= 70) return "Strong";
+  if (score >= 50) return "Solid";
+  return "Weak";
+}
+
 const Index = () => {
-  const [mode, setMode] = useState<"alignment" | "director">("alignment");
+  const [mode, setMode] = useState<"alignment" | "linkedin" | "director">("alignment");
   const [bullet, setBullet] = useState("");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -210,6 +178,7 @@ const Index = () => {
   const [selectedSampleRole, setSelectedSampleRole] = useState(0);
   const [additionalContext, setAdditionalContext] = useState("");
   const [scoreRevealed, setScoreRevealed] = useState(false);
+  const [analysisTime, setAnalysisTime] = useState(0);
 
   // Executive Audit state
   const [directorExperience, setDirectorExperience] = useState("");
@@ -230,11 +199,10 @@ const Index = () => {
     TRIAL_LIMIT,
   } = useReverseTrial();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
-  const { remaining, limitReached, increment } = useDailyUsage(effectiveIsPro);
+  const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
 
   const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
 
-  // Reset scoreRevealed when result changes
   useEffect(() => {
     if (result) {
       setScoreRevealed(false);
@@ -246,17 +214,27 @@ const Index = () => {
   const validate = () => {
     const errs: typeof errors = {};
     if (!bullet.trim()) {
-      errs.bullet = "Add your experience and target role to run your signal analysis.";
-    } else if (bullet.trim().length < 20) {
+      errs.bullet = "Add your resume to continue";
+      setErrors(errs);
+      return false;
+    }
+    if (bullet.trim().length < 20) {
       errs.bullet = "Experience must be at least 20 characters.";
+      setErrors(errs);
+      return false;
     }
     if (!jd.trim()) {
-      errs.jd = "Add your experience and target role to run your signal analysis.";
-    } else if (jd.trim().length < 20) {
-      errs.jd = "Job description must be at least 20 characters.";
+      errs.jd = "Add the job description to continue";
+      setErrors(errs);
+      return false;
     }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    if (jd.trim().length < 20) {
+      errs.jd = "Job description must be at least 20 characters.";
+      setErrors(errs);
+      return false;
+    }
+    setErrors({});
+    return true;
   };
 
   const handleDirectorCalibrate = async () => {
@@ -283,6 +261,20 @@ const Index = () => {
     }
   };
 
+  const saveToHistory = async (res: OptimizationResult) => {
+    if (!user) return;
+    try {
+      await supabase.from("alignment_history").insert({
+        user_id: user.id,
+        inferred_role: res.inferred_role_title || "",
+        score: res.match_score,
+        strength_label: getStrengthLabel(res.match_score),
+        top_gap: res.top_missing_signal || null,
+        full_result_json: res as any,
+      });
+    } catch {}
+  };
+
   const handleOptimize = async () => {
     if (!validate()) return;
     if (limitReached && !isTrialPro) {
@@ -292,20 +284,25 @@ const Index = () => {
     setLoading(true);
     setResult(null);
     setShowSamples(false);
-    const mode = effectiveIsPro ? "multi_bullet" : "single_bullet";
+    const startTime = Date.now();
+    const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
     try {
       const bulletWithContext = additionalContext.trim()
         ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
         : bullet.trim();
       const sessionToken = user ? undefined : getSessionToken();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode, sessionToken },
+        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode: engineMode, sessionToken },
       });
       if (error) throw error;
-      setResult(data as OptimizationResult);
+      const res = data as OptimizationResult;
+      setResult(res);
+      setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       increment();
       if (isTrialPro) incrementTrialRun();
-      // Guest nudge after first alignment
+      // Save to history
+      saveToHistory(res);
+      // Guest nudge
       if (!user) {
         toast("Save your results and track your progress", {
           description: "Create a free account to keep your alignment history.",
@@ -315,6 +312,8 @@ const Index = () => {
       }
     } catch (err: any) {
       const msg = err.message || "Something went wrong. Please try again.";
+      // Error card in results area
+      setResult(null);
       if (msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("timed out")) {
         toast.error("Signal analysis is taking longer than expected. Hang tight — complex resumes take up to 60 seconds.");
       } else {
@@ -337,8 +336,12 @@ const Index = () => {
 
   const role = SAMPLE_ROLES[selectedSampleRole];
 
+  const usedCount = DAILY_FREE_LIMIT - remaining;
+
   return (
     <div className="min-h-screen">
+      <OnboardingModal />
+
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
@@ -351,7 +354,7 @@ const Index = () => {
           </p>
           <Button
             size="lg"
-            className="mt-8"
+            className="mt-8 transition-transform hover:scale-[1.03] active:scale-[0.97]"
             onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}
           >
             <Sparkles className="h-4 w-4 mr-2" />
@@ -363,9 +366,7 @@ const Index = () => {
       {/* Before/After Transformation Showcase */}
       <section className="py-16 container max-w-3xl">
         <div className="text-center mb-10">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Same experience. Different signal.
-          </h2>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
           <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
@@ -375,7 +376,6 @@ const Index = () => {
               Managed customer inquiries and helped resolve issues for business clients while maintaining documentation.
             </p>
           </div>
-          {/* Arrow for mobile */}
           <div className="flex justify-center md:hidden">
             <ArrowDown className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -386,9 +386,7 @@ const Index = () => {
             </p>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Zero fabrication. Every word came from the original.
-        </p>
+        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication. Every word came from the original.</p>
       </section>
 
       {/* Testimonial */}
@@ -405,19 +403,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Differentiation Statement — dark background */}
+      {/* Differentiation Statement */}
       <section className="py-16 bg-[#0F1C2E]">
         <div className="container max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">
-            This isn't resume tailoring.
-          </h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
           <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
-            Most tools rewrite your bullets. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and rebuilds your positioning from the threshold up. You can't get this from a ChatGPT prompt.
+            Most tools rewrite your bullets. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and rebuilds your positioning from the threshold up.
           </p>
         </div>
       </section>
 
-      {/* Feature Cards with icons */}
+      {/* Feature Cards */}
       <section className="py-16 container max-w-3xl">
         <div className="grid gap-7 md:grid-cols-3">
           {[
@@ -436,9 +432,7 @@ const Index = () => {
 
       {/* How it works */}
       <section className="py-16 container max-w-2xl">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 mt-4" style={{ letterSpacing: "0.02em" }}>
-          How Resumix Works
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 mt-4" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
         <ol className="space-y-7">
           {[
             { step: "Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
@@ -446,9 +440,7 @@ const Index = () => {
             { step: "Refine for Strategic Alignment", desc: "Sharpen language to reflect ownership, decision authority, and measurable outcomes — without fabrication or inflation." },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium text-muted-foreground">
-                {i + 1}
-              </span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium text-muted-foreground">{i + 1}</span>
               <div>
                 <p className="text-sm font-medium text-foreground">{item.step}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
@@ -460,40 +452,50 @@ const Index = () => {
 
       {/* Mode toggle + Tool */}
       <section id="alignment-tool" className="py-16 container max-w-6xl">
-        {/* Mode toggle */}
+        {/* Mode toggle — 3 tabs */}
         <div className="mb-10 flex justify-center">
           <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
             <button
               onClick={() => setMode("alignment")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
-                mode === "alignment"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "alignment" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               Alignment Engine
             </button>
             <button
+              onClick={() => {
+                if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                setMode("linkedin");
+              }}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "linkedin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              LinkedIn Signal
+              {!effectiveIsPro && <Lock className="h-3 w-3" />}
+            </button>
+            <button
               onClick={() => setMode("director")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
-                mode === "director"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "director" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               Executive Signal Audit
             </button>
           </div>
         </div>
 
+        {/* LinkedIn Signal Tab */}
+        {mode === "linkedin" && (
+          <div className="max-w-2xl mx-auto">
+            <LinkedInSignalTab
+              experience={bullet}
+              inferredRole={result?.inferred_role_title || ""}
+            />
+          </div>
+        )}
+
         {/* Executive Signal Audit Mode */}
         {mode === "director" && (
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">
-                  Executive Signal Audit Engine
-                </p>
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Executive Signal Audit Engine</p>
                 <h2 className="text-base font-semibold text-foreground mb-1">Evaluate Executive-Level Signal Maturity</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                   Classifies ownership signals against executive-level thresholds. Detects hiring-stage friction risk, undersignaling, and ownership inflation.
@@ -506,18 +508,13 @@ const Index = () => {
                   rows={12}
                 />
               </div>
-              <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="gap-2">
+              <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Run Executive Audit
               </Button>
             </div>
             <div className="space-y-4">
               {directorLoading && <AlignmentLoader minHeight="260px" />}
-              {!directorLoading && !directorResult && (
-                <div className="flex h-60 items-center justify-center rounded-xl border border-dashed bg-card">
-                  <p className="text-sm text-muted-foreground">Executive audit output will appear here</p>
-                </div>
-              )}
               {directorResult && !directorLoading && <DirectorCalibrationBlock result={directorResult} />}
             </div>
           </div>
@@ -558,47 +555,39 @@ const Index = () => {
                   {errors.jd && <p className="mt-1 text-xs text-destructive">{errors.jd}</p>}
                 </div>
 
-                {!effectiveIsPro && (
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {remaining > 0
-                      ? `${remaining} alignment${remaining !== 1 ? "s" : ""} remaining today`
-                      : <>You've used your 3 free alignments today.<br /><span className="text-primary font-semibold">Upgrade for unlimited alignments.</span></>
-                    }
-                  </p>
-                )}
-
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Button onClick={handleOptimize} disabled={loading} className="gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    Run Alignment
-                  </Button>
+                  {!effectiveIsPro && limitReached ? (
+                    <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                      Upgrade to Pro for Unlimited Alignments
+                    </Button>
+                  ) : (
+                    <Button onClick={handleOptimize} disabled={loading} className="gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      Run Alignment
+                    </Button>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">Try sample:</span>
                     {SAMPLE_ROLES.map((r, i) => (
-                      <button
-                        key={i}
-                        onClick={() => fillSample(i)}
-                        className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
+                      <button key={i} onClick={() => fillSample(i)} className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors">
                         {r.label}
                       </button>
                     ))}
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  Zero fabrication — we only work with what you give us.
-                </p>
+
+                {/* Free tier counter */}
+                {!effectiveIsPro && (
+                  <p className="text-xs text-muted-foreground">
+                    {usedCount} of {DAILY_FREE_LIMIT} free alignments used today
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground/70">Zero fabrication — we only work with what you give us.</p>
               </div>
 
               {/* Right — Results */}
               <div className="space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
-
-                {!loading && !result && !showSamples && (
-                  <div className="flex h-60 items-center justify-center rounded-xl border border-dashed bg-card">
-                    <p className="text-sm text-muted-foreground">Results will appear here</p>
-                  </div>
-                )}
 
                 {!loading && !result && showSamples && (
                   <div className="space-y-7">
@@ -608,14 +597,11 @@ const Index = () => {
                     </div>
                     <div className="rounded-xl border bg-card p-5 space-y-3">
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Snapshot</h3>
-                      <p className="text-xs text-muted-foreground">How the original language registers across key hiring signals.</p>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(role.perceptionSnapshot).map(([dimension, level]) => (
                           <div key={dimension} className="rounded-md border bg-background p-2.5 space-y-1">
                             <p className="text-xs text-muted-foreground leading-tight">{dimension}</p>
-                            <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${SIGNAL_LEVEL_STYLES[level]}`}>
-                              {level}
-                            </span>
+                            <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${SIGNAL_LEVEL_STYLES[level]}`}>{level}</span>
                           </div>
                         ))}
                       </div>
@@ -625,8 +611,7 @@ const Index = () => {
                       <ul className="space-y-1.5">
                         {role.roleWeightsMost.map((theme, i) => (
                           <li key={i} className="flex gap-2 text-xs text-muted-foreground">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50 mt-1.5" />
-                            {theme}
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50 mt-1.5" />{theme}
                           </li>
                         ))}
                       </ul>
@@ -646,6 +631,13 @@ const Index = () => {
 
                 {result && (
                   <>
+                    {/* Analysis banner */}
+                    {analysisTime > 0 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
+                      </p>
+                    )}
+
                     {/* Section 1: Signal Diagnosis with glow */}
                     <div className={`rounded-xl border bg-card p-6 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2" style={{ letterSpacing: "0.15em" }}>Signal Diagnosis</h3>
@@ -675,6 +667,23 @@ const Index = () => {
                       )}
                     </div>
 
+                    {/* Calibrated Summary */}
+                    <CalibratedSummary
+                      experience={bullet}
+                      jd={jd}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
+
+                    {/* Signal Gap Actions */}
+                    <SignalGapActions
+                      experience={bullet}
+                      jd={jd}
+                      alignmentResult={result as any}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
+
                     {/* Section 2: Calibrated Bullets */}
                     <div className="space-y-3">
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
@@ -699,6 +708,7 @@ const Index = () => {
                     </div>
 
                     {!effectiveIsPro && <ProInsightsTeaser />}
+
                     {result.identity_strength_index && (
                       <IdentityStrengthIndex
                         data={result.identity_strength_index}
@@ -708,6 +718,15 @@ const Index = () => {
                       />
                     )}
                     <KeywordChips keywords={result.missing_keywords} />
+
+                    {/* ATS Signal Panel */}
+                    <ATSSignalPanel
+                      experience={bullet}
+                      jd={jd}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
+
                     {(result.alignment_notes || result.gap_suggestions) && (
                       <LevelDeterminationBlock
                         score={result.match_score}
@@ -724,6 +743,18 @@ const Index = () => {
                       />
                     )}
 
+                    {/* Interview Intelligence */}
+                    <InterviewIntelligence
+                      experience={bullet}
+                      jd={jd}
+                      alignmentResult={result as any}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
+
+                    {/* Export — Copy Calibration Report above Resume Builder */}
+                    <ExportResults result={result} />
+
                     {/* Resume Builder — Pro gated */}
                     <ResumeBuilder
                       experience={bullet}
@@ -735,8 +766,15 @@ const Index = () => {
                       onUpgrade={() => setShowUpgrade(true)}
                     />
 
-                    {/* Section 3: Export */}
-                    <ExportResults result={result} />
+                    {/* Cover Letter Engine */}
+                    <CoverLetterEngine
+                      experience={bullet}
+                      jd={jd}
+                      alignmentResult={result as any}
+                      inferredRole={result.inferred_role_title || ""}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
                   </>
                 )}
               </div>
@@ -752,27 +790,21 @@ const Index = () => {
         </h2>
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="fabrication">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">
-              Does Resumix make things up?
-            </AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Resumix make things up?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Never. Resumix only works with what you give it. The engine repositions your real experience using stronger language and role-native framing — it never fabricates skills, roles, or accomplishments you don't have. Zero fabrication is a core product principle, not a feature.
+              Never. Resumix only works with what you give it. The engine repositions your real experience using stronger language and role-native framing — it never fabricates skills, roles, or accomplishments you don't have.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="chatgpt">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">
-              How is this different from ChatGPT or other AI tools?
-            </AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT rewrites. Resumix calibrates. We analyze your signal against institutional hiring thresholds, identify exactly where your profile breaks down at each stage of the hiring process, and reconstruct your positioning from the ground up. The output isn't a better-worded resume — it's a recalibrated professional identity.
+              ChatGPT rewrites. Resumix calibrates. We analyze your signal against institutional hiring thresholds, identify where your profile breaks down at each hiring stage, and reconstruct your positioning from the threshold up.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="ats">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">
-              Is this just ATS keyword stuffing?
-            </AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. ATS keyword matching is a surface-level tactic that experienced hiring managers see through immediately. Resumix calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth, the panel evaluating execution maturity. Keywords are one output. Perception is the goal.
+              No. Resumix calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
             </AccordionContent>
           </AccordionItem>
         </Accordion>

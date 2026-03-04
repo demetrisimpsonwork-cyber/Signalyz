@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      alignment_history: {
+        Row: {
+          created_at: string
+          full_result_json: Json
+          id: string
+          inferred_role: string
+          resume_built: boolean
+          score: number
+          strength_label: string
+          top_gap: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_result_json?: Json
+          id?: string
+          inferred_role?: string
+          resume_built?: boolean
+          score?: number
+          strength_label?: string
+          top_gap?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_result_json?: Json
+          id?: string
+          inferred_role?: string
+          resume_built?: boolean
+          score?: number
+          strength_label?: string
+          top_gap?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       optimizations: {
         Row: {
           alt_a: string
@@ -62,6 +98,8 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          onboarding_completed: boolean
+          onboarding_skipped: boolean
           user_id: string
         }
         Insert: {
@@ -69,6 +107,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          onboarding_completed?: boolean
+          onboarding_skipped?: boolean
           user_id: string
         }
         Update: {
@@ -76,6 +116,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          onboarding_completed?: boolean
+          onboarding_skipped?: boolean
           user_id?: string
         }
         Relationships: []
