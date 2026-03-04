@@ -31,6 +31,7 @@ interface ParsedResume {
   summaryText: string;
   skillsText: string;
   certificationsText: string;
+  educationText: string;
   contactLines: string[];
   otherSections: { heading: string; content: string }[];
 }
@@ -62,8 +63,9 @@ function parseExperience(text: string): ParsedResume {
   let summaryLines: string[] = [];
   let skillsLines: string[] = [];
   let certLines: string[] = [];
+  let educationLines: string[] = [];
   let contactLines: string[] = [];
-  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" | "projects" = "none";
+  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" | "projects" | "education" = "none";
 
   const datePattern = /(\d{4})\s*[-–—]\s*(present|\d{4}|current)/i;
   const sectionHeaders = /^(professional\s+summary|summary|core\s+competencies|skills|certifications?|independent\s+projects?|education|experience|work\s+experience)/i;
@@ -96,6 +98,7 @@ function parseExperience(text: string): ParsedResume {
       if (sectionName.includes("skill") || sectionName.includes("competen")) { currentSection = "skills"; continue; }
       if (sectionName.includes("certif")) { currentSection = "certs"; continue; }
       if (sectionName.includes("independent") || sectionName.includes("project")) { currentSection = "projects"; continue; }
+      if (sectionName.includes("education")) { currentSection = "education"; continue; }
       if (sectionName.includes("experience") || sectionName.includes("work")) { currentSection = "experience"; continue; }
       currentSection = "none";
       continue;
@@ -105,6 +108,7 @@ function parseExperience(text: string): ParsedResume {
     if (currentSection === "summary") { summaryLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
     if (currentSection === "skills") { skillsLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
     if (currentSection === "certs") { certLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
+    if (currentSection === "education") { educationLines.push(line.replace(/^[•\-*]\s*/, "")); continue; }
 
     // Detect role headers (lines with date ranges that aren't bullets)
     const isBullet = /^[•\-*]\s/.test(line);
@@ -171,6 +175,7 @@ function parseExperience(text: string): ParsedResume {
     summaryText: summaryLines.join(" ").trim(),
     skillsText: skillsLines.join(", ").trim(),
     certificationsText: certLines.join("\n").trim(),
+    educationText: educationLines.join("\n").trim(),
     contactLines,
     otherSections: [],
   };
