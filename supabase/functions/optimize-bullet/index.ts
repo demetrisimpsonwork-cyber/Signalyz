@@ -433,6 +433,14 @@ USER_PLAN: ${userPlan}`;
       strategic_bridge_analysis: strategicBridgeAnalysis,
       identity_strength_index: titan.identity_strength_index || null,
       inferred_role_title: (titan.inferred_role_title as string) || null,
+      // Signal diagnostic modules
+      jd_signal_extraction: titan.jd_signal_extraction || null,
+      resume_signal_profile: titan.resume_signal_profile || null,
+      signal_alignment_analysis: titan.signal_alignment_analysis || null,
+      hiring_pipeline_simulation: titan.hiring_pipeline_simulation || null,
+      executive_insight_summary: titan.executive_insight_summary || null,
+      transferable_signal_detection: titan.transferable_signal_detection || null,
+      signal_shift_estimates: titan.signal_shift_estimates || null,
     };
 
     // Save to database
