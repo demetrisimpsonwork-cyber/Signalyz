@@ -743,7 +743,16 @@ const Index = () => {
                   </Button>
                 </div>
               )}
-              {directorResult && !directorLoading && !directorError && <DirectorCalibrationBlock result={directorResult} />}
+              {directorResult && !directorLoading && !directorError && (
+                <DirectorCalibrationErrorBoundary onRetry={handleDirectorCalibrate}>
+                  <DirectorCalibrationBlock result={directorResult} />
+                </DirectorCalibrationErrorBoundary>
+              )}
+              {!directorResult && !directorLoading && !directorError && (
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-2">
+                  <p className="text-sm text-muted-foreground">Paste your resume and click Run to generate your report.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
