@@ -199,11 +199,74 @@ const scoreBarColor = (score: number) => {
   return "bg-destructive";
 };
 
+// ─── Normalizer: ensures all arrays/nested fields exist ───────────────────────
+
+function normalizeResult(raw: DirectorCalibrationResult): DirectorCalibrationResult {
+  const dims = Array.isArray(raw.dimensions) ? raw.dimensions : [];
+  const pd = raw.pattern_detection ?? { undersignaling_patterns: [], ownership_inflation_patterns: [] };
+  const hsf = raw.hiring_stage_friction ?? {
+    recruiter_filter_risk: { level: "Low" as const, observation: "Not evaluated" },
+    hiring_manager_friction: { level: "Low" as const, observation: "Not evaluated" },
+    executive_skepticism: { level: "Low" as const, observation: "Not evaluated" },
+    primary_friction_stage: "Recruiter Filter" as const,
+  };
+
+  // Normalize signal_classifier dimension scores
+  let sc = raw.signal_classifier ?? null;
+  if (sc?.dimension_scores) {
+    const keys = ["commercial", "ownership", "authority", "cross_functional", "lifecycle", "risk", "narrative"] as const;
+    const scores = { ...sc.dimension_scores };
+    for (const k of keys) {
+      if (!scores[k]) {
+        scores[k] = { score: 0, gap: "", missing: [] };
+      } else {
+        scores[k] = {
+          ...scores[k],
+          missing: Array.isArray(scores[k].missing) ? scores[k].missing : [],
+          evidence_quotes: Array.isArray(scores[k].evidence_quotes) ? scores[k].evidence_quotes : [],
+        };
+      }
+    }
+    sc = {
+      ...sc,
+      dimension_scores: scores,
+      top_3_gaps: Array.isArray(sc.top_3_gaps) ? sc.top_3_gaps : [],
+    };
+  }
+
+  // Normalize gap_analyzer
+  let ga = raw.gap_analyzer ?? null;
+  if (ga) {
+    ga = {
+      ...ga,
+      priority_order: Array.isArray(ga.priority_order) ? ga.priority_order : [],
+      rewrite_targets: Array.isArray(ga.rewrite_targets) ? ga.rewrite_targets : [],
+    };
+  }
+
+  return {
+    ...raw,
+    dimensions: dims,
+    director_signal_tier: raw.director_signal_tier ?? { tier: "Senior IC Signal", rationale: "Unable to determine tier." },
+    hiring_stage_friction: hsf,
+    pattern_detection: {
+      undersignaling_patterns: Array.isArray(pd.undersignaling_patterns) ? pd.undersignaling_patterns : [],
+      ownership_inflation_patterns: Array.isArray(pd.ownership_inflation_patterns) ? pd.ownership_inflation_patterns : [],
+    },
+    recalibration_directives: Array.isArray(raw.recalibration_directives) ? raw.recalibration_directives : [],
+    signal_classifier: sc,
+    gap_analyzer: ga,
+    consistency_validator: raw.consistency_validator ?? null,
+    export_builder: raw.export_builder ?? null,
+  };
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResult }) => {
+const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalibrationResult }) => {
   const [copied, setCopied] = useState(false);
 
+  const result = normalizeResult(rawResult);
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
   const frictionStages = [
