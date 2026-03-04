@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Info, ChevronDown, ChevronUp, ArrowRight, TrendingUp } from "lucide-react";
+import { Info, ChevronDown, ChevronUp, ArrowRight, TrendingUp, Lock, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import {
   Tooltip,
