@@ -190,6 +190,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
+
+    // --- Server-side rate limiting for free users ---
+    if (userPlan === "free") {
+      const today = new Date().toISOString().slice(0, 10);
+      let existing: { id: string; alignment_count: number } | null = null;
+
+      if (userId) {
+        const { data } = await sb
           .from("usage_tracking")
           .select("id, alignment_count")
           .eq("user_id", userId)
