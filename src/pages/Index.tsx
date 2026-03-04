@@ -265,9 +265,28 @@ const Index = () => {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
         body: { experience: trimmed },
       });
-      if (error) throw error;
+      // Capture debug info from response
+      const debug: DebugInfo = {
+        request_id: data?.request_id,
+        error_code: data?.error_code,
+        message: data?.message || data?.error,
+        payload_length: trimmed.length,
+        timestamp: new Date().toISOString(),
+        status_code: error ? 500 : 200,
+      };
+      if (error) {
+        debug.response_snippet = typeof error === "object" ? JSON.stringify(error).slice(0, 500) : String(error).slice(0, 500);
+        debug.status_code = 500;
+        setLastDebug(debug);
+        throw error;
+      }
+      setLastDebug(debug);
       // Handle soft errors returned as 200 with status:"error"
-      if (data?.status === "error") throw new Error(data.error || "Analysis failed");
+      if (data?.status === "error") {
+        debug.response_snippet = JSON.stringify(data).slice(0, 500);
+        setLastDebug(debug);
+        throw new Error(data.message || data.error || "Analysis failed");
+      }
       if (data?.error) throw new Error(data.error);
       const result = data as DirectorCalibrationResult;
       setDirectorResult(result);
