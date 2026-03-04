@@ -228,7 +228,7 @@ function getStrengthLabel(score: number): string {
 }
 
 const Index = () => {
-  const [mode, setMode] = useState<"alignment" | "linkedin" | "director">("alignment");
+  const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated">("alignment");
   const [bullet, setBullet] = useState("");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -744,6 +744,18 @@ const Index = () => {
               className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "director" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               Signal Positioning Report
+            </button>
+            <button
+              onClick={() => {
+                if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                setMode("calibrated");
+              }}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "calibrated" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              style={mode === "calibrated" ? { backgroundColor: "hsl(var(--primary))" } : {}}
+            >
+              <span style={{ color: mode === "calibrated" ? "inherit" : "hsl(38, 92%, 50%)" }}>✦</span>
+              Calibrated Resume
+              {!effectiveIsPro && <Lock className="h-3 w-3" />}
             </button>
           </div>
         </div>
