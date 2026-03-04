@@ -123,17 +123,6 @@ export interface SignalDiagnosticData {
   isPro?: boolean;
   onUpgrade?: () => void;
 }
-    user_score?: number;
-    median_candidate_score?: number;
-    top_candidate_threshold?: number;
-    dimension_comparison?: Array<{
-      dimension: string;
-      user_score: number;
-      median_score: number;
-      gap_explanation: string;
-    }>;
-  };
-}
 
 const STRENGTH_STYLES: Record<string, string> = {
   Strong: "bg-green-500/10 text-green-700 dark:text-green-400",
