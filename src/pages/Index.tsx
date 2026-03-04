@@ -27,6 +27,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
+import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
