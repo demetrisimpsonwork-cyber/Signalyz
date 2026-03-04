@@ -79,6 +79,31 @@ export interface SignalDiagnosticData {
     domain_alignment?: SignalShift;
   };
   evidence_ledger?: Array<{ claim: string; source: string; evidence: string }>;
+  career_signal_map?: {
+    primary_alignment?: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+    secondary_alignment?: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+  };
+  hiring_signal_benchmark?: {
+    user_score?: number;
+    median_candidate_score?: number;
+    top_candidate_threshold?: number;
+    dimension_comparison?: Array<{
+      dimension: string;
+      user_score: number;
+      median_score: number;
+      gap_explanation: string;
+    }>;
+  };
 }
 
 const STRENGTH_STYLES: Record<string, string> = {
