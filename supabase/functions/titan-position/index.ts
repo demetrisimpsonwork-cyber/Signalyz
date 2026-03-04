@@ -5,6 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ─── Input limits ────────────────────────────────────────────────────────────
+const MAX_RESUME_CHARS = 10000;
+const MAX_JD_CHARS = 8000;
+const MAX_COMBINED_CHARS = 16000;
+
 // Model router: use Pro for large inputs (>10k chars combined), Flash otherwise
 const MODELS_LARGE = [
   "google/gemini-2.5-pro",
@@ -28,6 +33,47 @@ async function hashInputs(experience: string, jd: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function normalizeText(input: string): string {
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function stripResumeHeader(text: string): string {
+  const lines = text.split("\n");
+  let skipUntil = 0;
+  const headerPatterns = [
+    /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,
+    /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,
+    /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,
+    /^\d+\s+\w+\s+(street|st|ave|avenue|blvd|rd|dr)/i,
+    /^(linkedin|github|portfolio)/i,
+    /^(http|www\.)/i,
+  ];
+  for (let i = 0; i < Math.min(lines.length, 6); i++) {
+    const line = lines[i].trim();
+    if (!line) { skipUntil = i + 1; continue; }
+    if (headerPatterns.some(p => p.test(line))) { skipUntil = i + 1; continue; }
+    break;
+  }
+  return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
+}
+
+function enforceCharLimits(resume: string, jd: string): { resume: string; jd: string; truncated: boolean } {
+  let truncated = false;
+  if (resume.length > MAX_RESUME_CHARS) { resume = resume.slice(0, MAX_RESUME_CHARS); truncated = true; }
+  if (jd.length > MAX_JD_CHARS) { jd = jd.slice(0, MAX_JD_CHARS); truncated = true; }
+  const combined = resume.length + jd.length;
+  if (combined > MAX_COMBINED_CHARS) {
+    const excess = combined - MAX_COMBINED_CHARS;
+    resume = resume.slice(0, resume.length - excess);
+    truncated = true;
+  }
+  return { resume, jd, truncated };
+}
+
 async function callAI(apiKey: string, prompt: string, inputLen: number): Promise<string> {
   const models = inputLen > LARGE_INPUT_THRESHOLD ? MODELS_LARGE : MODELS_SMALL;
   console.log(`Input length: ${inputLen} → using ${inputLen > LARGE_INPUT_THRESHOLD ? "LARGE (Pro)" : "SMALL (Flash)"} model set`);
@@ -35,7 +81,7 @@ async function callAI(apiKey: string, prompt: string, inputLen: number): Promise
   for (const model of models) {
     console.log(`Trying model: ${model}`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 55000);
     try {
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -68,11 +114,36 @@ async function callAI(apiKey: string, prompt: string, inputLen: number): Promise
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const requestId = crypto.randomUUID();
+
   try {
     const { experience, jd } = await req.json();
-    if (!experience || !jd) {
-      return new Response(JSON.stringify({ error: "Missing experience or jd" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    console.log(JSON.stringify({
+      event: "request_start",
+      request_id: requestId,
+      function: "titan-position",
+      timestamp: new Date().toISOString(),
+      resume_text_length: typeof experience === "string" ? experience.length : 0,
+      jd_text_length: typeof jd === "string" ? jd.length : 0,
+    }));
+
+    if (!experience || typeof experience !== "string" || !jd || typeof jd !== "string") {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Missing resume or job description.", details: { resume_len: 0, jd_len: 0 } }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Normalize and enforce limits
+    let cleanExp = normalizeText(stripResumeHeader(experience.trim()));
+    let cleanJd = normalizeText(jd.trim());
+    const limits = enforceCharLimits(cleanExp, cleanJd);
+    cleanExp = limits.resume;
+    cleanJd = limits.jd;
+
+    if (cleanExp.length < 20) {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: cleanExp.length, jd_len: cleanJd.length } }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -80,7 +151,7 @@ serve(async (req) => {
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
     // ── Cache lookup ──────────────────────────────────────────────────────────
-    const cacheKey = await hashInputs(experience, jd);
+    const cacheKey = await hashInputs(cleanExp, cleanJd);
     const cached = resultCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
       console.log("Cache HIT:", cacheKey.slice(0, 8));
@@ -89,7 +160,7 @@ serve(async (req) => {
       });
     }
 
-    const inputLen = experience.length + jd.length;
+    const inputLen = cleanExp.length + cleanJd.length;
 
     const prompt = `You are a Strategic Positioning Engine. Reposition a candidate's resume for a target role WITHOUT fabrication — only reframe real facts.
 
@@ -138,9 +209,9 @@ ARRAY SIZES:
 - employer_risk_perception: exactly 5 items in order above
 - optimized_summary: 120–180 words
 
-RESUME: ${experience}
+RESUME: ${cleanExp}
 
-JOB DESCRIPTION: ${jd}`;
+JOB DESCRIPTION: ${cleanJd}`;
 
     let content = await callAI(apiKey, prompt, inputLen);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
