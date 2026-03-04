@@ -281,6 +281,66 @@ Return ONLY this JSON object with EXACT keys:
       }
     ]
   },
+  "jd_signal_extraction": {
+    "role_identity_signals": ["string (primary functional identity signals from JD, e.g. 'Provider Relations', 'Network Performance Strategy')"],
+    "strategic_signals": ["string (signals indicating strategic influence, e.g. 'value-based care', 'cost optimization')"],
+    "relationship_signals": ["string (external/executive coordination signals, e.g. 'physician engagement', 'executive stakeholder influence')"],
+    "operational_signals": ["string (process/operational responsibilities, e.g. 'claims resolution', 'compliance documentation')"],
+    "leadership_signals": ["string (team leadership/influence signals, e.g. 'coaching representatives', 'leading committees')"],
+    "priority_summary": "string (2-3 sentences explaining which signal categories the JD emphasizes most and why)"
+  },
+  "resume_signal_profile": {
+    "operational_execution": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string (specific resume phrases that demonstrate this)"] },
+    "stakeholder_coordination": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
+    "strategic_influence": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
+    "performance_improvement": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
+    "domain_expertise": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] }
+  },
+  "signal_alignment_analysis": [
+    {
+      "category": "string (signal category name)",
+      "alignment_level": "Strong|Moderate|Weak|Missing",
+      "current_signal": "string (what the resume currently signals in this category)",
+      "perception_gap": "string (where the gap exists — be specific)",
+      "threshold_expectation": "string (what this role typically expects as evidence)"
+    }
+  ],
+  "hiring_pipeline_simulation": [
+    {
+      "stage": "Recruiter Filter",
+      "status": "PASS|MODERATE RISK|HIGH RISK",
+      "criteria": ["keyword density", "role identity match", "domain terminology"],
+      "explanation": "string (one sentence)"
+    },
+    {
+      "stage": "Hiring Manager Review",
+      "status": "PASS|MODERATE RISK|HIGH RISK",
+      "criteria": ["ownership language", "strategic framing", "performance impact"],
+      "explanation": "string (one sentence)"
+    },
+    {
+      "stage": "Panel Interview Signal",
+      "status": "PASS|MODERATE RISK|HIGH RISK",
+      "criteria": ["cross-functional leadership", "strategic influence", "domain expertise"],
+      "explanation": "string (one sentence)"
+    }
+  ],
+  "executive_insight_summary": {
+    "primary_insight": "string (one sentence — what the resume strongly signals and where it under-signals)",
+    "why_it_matters": "string (one sentence — why this matters for the target role)",
+    "strategic_repositioning_opportunity": "string (one sentence — specific reframing opportunity)"
+  },
+  "transferable_signal_detection": {
+    "detected_capability": "string (the transferable capability found in the resume)",
+    "why_it_transfers": "string (how this capability maps to the target role)",
+    "elevation_opportunity": "string (how to reframe this for stronger alignment)"
+  },
+  "signal_shift_estimates": {
+    "ownership_signal": { "before": number, "after": number },
+    "commercial_impact_signal": { "before": number, "after": number },
+    "role_identity_clarity": { "before": number, "after": number },
+    "domain_alignment": { "before": number, "after": number }
+  },
   "debug": {
     "mode": "${mode}",
     "user_plan": "${userPlan}",
@@ -373,6 +433,14 @@ USER_PLAN: ${userPlan}`;
       strategic_bridge_analysis: strategicBridgeAnalysis,
       identity_strength_index: titan.identity_strength_index || null,
       inferred_role_title: (titan.inferred_role_title as string) || null,
+      // Signal diagnostic modules
+      jd_signal_extraction: titan.jd_signal_extraction || null,
+      resume_signal_profile: titan.resume_signal_profile || null,
+      signal_alignment_analysis: titan.signal_alignment_analysis || null,
+      hiring_pipeline_simulation: titan.hiring_pipeline_simulation || null,
+      executive_insight_summary: titan.executive_insight_summary || null,
+      transferable_signal_detection: titan.transferable_signal_detection || null,
+      signal_shift_estimates: titan.signal_shift_estimates || null,
     };
 
     // Save to database

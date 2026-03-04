@@ -16,6 +16,8 @@ import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
+import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
+import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock } from "lucide-react";
@@ -722,7 +724,10 @@ const Index = () => {
 
                     {/* Section 1: Signal Diagnosis with glow */}
                     <div className={`rounded-xl border bg-card p-6 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2" style={{ letterSpacing: "0.15em" }}>Signal Diagnosis</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2" style={{ letterSpacing: "0.15em" }}>Signal Diagnosis</h3>
+                        <ScoreExplanation score={result.match_score} />
+                      </div>
                       <div className="flex items-baseline gap-3">
                         <span className={`text-5xl font-bold tabular-nums ${
                           result.match_score >= 70 ? "text-green-600 dark:text-green-400" :
@@ -748,6 +753,20 @@ const Index = () => {
                         </ul>
                       )}
                     </div>
+
+                    {/* Signal Diagnostic Modules */}
+                    <SignalDiagnosticModules
+                      data={{
+                        jd_signal_extraction: (result as any).jd_signal_extraction,
+                        resume_signal_profile: (result as any).resume_signal_profile,
+                        signal_alignment_analysis: (result as any).signal_alignment_analysis,
+                        hiring_pipeline_simulation: (result as any).hiring_pipeline_simulation,
+                        executive_insight_summary: (result as any).executive_insight_summary,
+                        transferable_signal_detection: (result as any).transferable_signal_detection,
+                        signal_shift_estimates: (result as any).signal_shift_estimates,
+                      }}
+                      matchScore={result.match_score}
+                    />
 
                     {/* Calibrated Summary */}
                     <CalibratedSummary
