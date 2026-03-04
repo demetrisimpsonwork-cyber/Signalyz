@@ -820,6 +820,7 @@ const Index = () => {
                         transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
                         signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
                         signal_map: result.signal_model?.signal_map || (result as any).signal_map,
+                        evidence_ledger: result.signal_model?.evidence_ledger,
                       }}
                       matchScore={result.match_score}
                     />
