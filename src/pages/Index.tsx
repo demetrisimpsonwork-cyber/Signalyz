@@ -777,6 +777,7 @@ const Index = () => {
             onUpgrade={() => setShowUpgrade(true)}
             directorResult={directorResult}
             originalResume={directorExperience}
+            onSwitchToReport={() => setMode("director")}
           />
         )}
 
