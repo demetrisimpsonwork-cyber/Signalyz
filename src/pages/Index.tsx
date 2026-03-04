@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
 import { Textarea } from "@/components/ui/textarea";
 import ResultSection from "@/components/ResultSection";
 import KeywordChips from "@/components/KeywordChips";
@@ -192,6 +193,8 @@ const Index = () => {
   const [directorResult, setDirectorResult] = useState<DirectorCalibrationResult | null>(null);
   const [directorLoading, setDirectorLoading] = useState(false);
   const [directorError, setDirectorError] = useState<string | null>(null);
+  const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
+  const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
 
   const { user } = useAuth();
   const isPro = false;
