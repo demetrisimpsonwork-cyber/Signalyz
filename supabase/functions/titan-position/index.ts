@@ -93,6 +93,8 @@ serve(async (req) => {
 
     const prompt = `You are a Strategic Positioning Engine. Reposition a candidate's resume for a target role WITHOUT fabrication — only reframe real facts.
 
+Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience.
+
 RULES:
 - No invented tools, certs, metrics, or expertise
 - Reframe existing experience in role vocabulary

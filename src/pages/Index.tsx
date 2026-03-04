@@ -404,49 +404,51 @@ const Index = () => {
       </section>
 
       {/* Match Score Forecast */}
-      <section className="py-16 container max-w-3xl">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Same resume. Repositioned signal. 30-point lift.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">This is what Resumix does to how hiring managers read your experience.</p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] items-center">
-          <div className="text-center space-y-2 p-6 rounded-xl border bg-card">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive">BEFORE</p>
-            <p className="text-5xl font-bold text-destructive tabular-nums">45%</p>
-            <p className="text-xs text-muted-foreground">Framed in procedural and compliance language. Strong experience, wrong signal.</p>
+      <section className="py-16 bg-[#F8F9FB]">
+        <div className="container max-w-3xl">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>Same resume. Repositioned signal. 30-point lift.</h2>
+            <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>This is what Resumix does to how hiring managers read your experience.</p>
           </div>
-          <div className="hidden md:flex items-center justify-center">
-            <div className="w-12 h-0.5 bg-primary" />
-            <div className="w-0 h-0 border-t-4 border-b-4 border-l-8 border-transparent border-l-primary" />
+          <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] items-center">
+            <div className="text-center space-y-2 p-6 rounded-xl border bg-card">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-destructive">BEFORE</p>
+              <p className="font-bold text-destructive tabular-nums" style={{ fontSize: "52px" }}>45%</p>
+              <p className="text-muted-foreground" style={{ fontSize: "13px" }}>Framed in procedural language. Strong experience, wrong signal.</p>
+            </div>
+            <div className="hidden md:flex items-center justify-center">
+              <div className="w-12 h-0.5 bg-primary" />
+              <div className="w-0 h-0 border-t-4 border-b-4 border-l-8 border-transparent border-l-primary" />
+            </div>
+            <div className="flex justify-center md:hidden"><ArrowDown className="h-6 w-6 text-primary" /></div>
+            <div className="text-center space-y-2 p-6 rounded-xl border border-primary/30 bg-card">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
+              <p className="font-bold text-primary tabular-nums" style={{ fontSize: "52px" }}>75%</p>
+              <p className="text-muted-foreground" style={{ fontSize: "13px" }}>Same experience. Repositioned toward what this role weights.</p>
+            </div>
           </div>
-          <div className="flex justify-center md:hidden"><ArrowDown className="h-6 w-6 text-primary" /></div>
-          <div className="text-center space-y-2 p-6 rounded-xl border border-primary/30 bg-card">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
-            <p className="text-5xl font-bold text-primary tabular-nums">75%</p>
-            <p className="text-xs text-muted-foreground">Same experience. Repositioned toward what this role actually weights.</p>
+          <p className="text-center text-muted-foreground italic mt-6" style={{ fontSize: "13px" }}>Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
+          <div className="flex justify-center mt-6">
+            <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Run Your Signal Analysis →
+            </Button>
           </div>
-        </div>
-        <p className="text-center text-xs text-muted-foreground italic mt-6">Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
-        <div className="flex justify-center mt-6">
-          <Button onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })} className="transition-transform hover:scale-[1.03] active:scale-[0.97]">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Run Your Signal Analysis
-          </Button>
         </div>
       </section>
 
       {/* WAS/NOW Transformation Section */}
       <section className="py-16 container max-w-3xl">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">This is what repositioning looks like.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Not rewriting. Recalibrating. Every word came from the original resume.</p>
+          <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
+          <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not rewriting. Recalibrating. Every word came from the original resume.</p>
         </div>
         <div className="space-y-4">
           {[
             {
               was: "Executed complaint routing and escalation triage across a high-volume state-managed caseload — managing 40-70 concurrent cases with 8-15 resolved daily under strict SLA requirements.",
-              now: "Directed high-volume client issue triage and resolution, ensuring expeditious throughput under stringent service level agreements.",
-              signal: "Ownership language + SLA accountability",
+              now: "Directed high-volume client issue triage and resolution, ensuring expeditious throughput under stringent service level agreements while maintaining meticulous judgment on case prioritization and handoff ownership.",
+              signal: "Ownership language + SLA accountability framing",
             },
             {
               was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
@@ -456,17 +458,22 @@ const Index = () => {
             {
               was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
               now: "Advised executive and institutional clientele on complex procedural and regulatory matters, distilling intricate information into actionable guidance that upheld brand standards and compliance.",
-              signal: "Client elevation + brand alignment language",
+              signal: "Client elevation + brand alignment",
             },
           ].map((card, i) => (
-            <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
-              <p className="text-sm text-muted-foreground line-through leading-relaxed">{card.was}</p>
-              <hr className="border-border/50" />
-              <div className="flex gap-2 items-start">
-                <span className="text-primary mt-0.5">•</span>
-                <p className="text-sm font-medium text-foreground leading-relaxed">{card.now}</p>
+            <div key={i} className="rounded-xl border bg-card p-4 space-y-3 shadow-sm" style={{ borderRadius: "12px" }}>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">WAS</p>
+                <p className="text-muted-foreground line-through leading-relaxed" style={{ fontSize: "13px" }}>{card.was}</p>
               </div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Applied: {card.signal}</p>
+              <hr className="border-border/40" />
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1.5">NOW</p>
+                <p className="font-medium text-foreground leading-relaxed" style={{ fontSize: "14px" }}>{card.now}</p>
+              </div>
+              <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-primary bg-primary/10 rounded-full px-3 py-1">
+                Signal Applied: {card.signal}
+              </span>
             </div>
           ))}
         </div>
@@ -880,6 +887,12 @@ const Index = () => {
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
               No. Resumix calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="full-analysis">
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet rewrites. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet rewrites, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
             </AccordionContent>
           </AccordionItem>
         </Accordion>

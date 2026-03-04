@@ -103,9 +103,19 @@ serve(async (req) => {
 
     const prompt = `You are a professional resume calibration engine. You will receive structured resume roles with individual bullets, plus a target job description.
 
+Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience. The product speaks to the user, never about them.
+
 YOUR TASK:
 1. Infer the target role title and seniority from the JD.
-2. Generate a calibrated PROFESSIONAL SUMMARY (3-4 sentences, third person, institutional voice, signal-calibrated to the JD).
+2. Generate a calibrated PROFESSIONAL SUMMARY following these strict rules:
+   - Maximum 4 sentences.
+   - Open with a declarative identity statement: state the identity directly without "I am" — e.g. "Client experience operations professional with 7+ years..." NOT "I am a highly accomplished..."
+   - Every sentence must start with an active verb or a specific noun — never a passive construction.
+   - Must reference the specific role being targeted — not a generic summary.
+   - Must include at least one specific measurable detail from the resume.
+   - NEVER open a sentence with: "Demonstrates", "Possesses", "reflecting", "Highly accomplished", "Dedicated experience".
+   - Replace passive constructions with active ownership language.
+   - First person present tense for the summary.
 3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
@@ -117,6 +127,7 @@ BULLET CALIBRATION RULES (CRITICAL):
 - The calibrated bullet must ALWAYS be equal to or LONGER than the original bullet.
 - If the original bullet is already well-aligned, elevate the language while keeping ALL specifics intact.
 - NEVER produce a bullet that loses detail the original contained.
+- If a calibrated bullet exceeds 4 lines of text (~280 characters), split it into two bullets. The second bullet should begin with a continuation verb ("Additionally," "Further," "Concurrently,").
 
 PINNACLE FILTER:
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
