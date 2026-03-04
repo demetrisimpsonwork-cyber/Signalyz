@@ -421,6 +421,54 @@ USER_PLAN: ${userPlan}`;
     const weightedPriorityCommentary = titan.weighted_priority_commentary || null;
     const strategicBridgeAnalysis = titan.strategic_bridge_analysis || null;
 
+    // Build unified SignalModel
+    const signalModel = {
+      role: {
+        title: (titan.inferred_role_title as string) || "",
+        level_inferred: confidenceLevel,
+        confidence: confidenceLevel || "Weak",
+      },
+      weights: {
+        operational: priorities.find((p: any) => /operat/i.test(p.priority))?.weight || 0.15,
+        stakeholder: priorities.find((p: any) => /stakeholder|relationship|partner/i.test(p.priority))?.weight || 0.15,
+        strategic: priorities.find((p: any) => /strateg/i.test(p.priority))?.weight || 0.20,
+        performance: priorities.find((p: any) => /perform|impact|outcome/i.test(p.priority))?.weight || 0.25,
+        domain: priorities.find((p: any) => /domain|industry|sector/i.test(p.priority))?.weight || 0.25,
+      },
+      strengths: (titan.resume_signal_profile
+        ? Object.entries(titan.resume_signal_profile as Record<string, any>)
+            .filter(([, v]) => v?.strength === "Strong" || v?.strength === "Moderate")
+            .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v.evidence?.[0] || v.strength}`)
+        : []),
+      gaps: (titan.signal_alignment_analysis as any[] || [])
+        .filter((a: any) => a.alignment_level === "Weak" || a.alignment_level === "Missing")
+        .map((a: any) => a.perception_gap || a.category),
+      under_signaled_keywords: missingKeywords as string[],
+      evidence_ledger: [
+        ...(titan.resume_signal_profile
+          ? Object.entries(titan.resume_signal_profile as Record<string, any>)
+              .flatMap(([k, v]) => (v?.evidence || []).map((e: string) => ({ claim: k.replace(/_/g, " "), source: "resume" as const, evidence: e })))
+          : []),
+        ...priorities.map((p: any) => ({ claim: p.priority, source: "jd" as const, evidence: p.evidence || "" })),
+      ],
+      risk_projection: {
+        stages: titan.hiring_pipeline_simulation || [],
+      },
+      recommended_rewrites: {
+        bullets: titan.optimized_bullets || [],
+      },
+      resume_signal_profile: titan.resume_signal_profile || null,
+      jd_signal_extraction: titan.jd_signal_extraction || null,
+      signal_alignment_analysis: titan.signal_alignment_analysis || [],
+      executive_insight_summary: titan.executive_insight_summary || null,
+      transferable_signal_detection: titan.transferable_signal_detection || null,
+      signal_map: titan.signal_map || null,
+      signal_shift_estimates: titan.signal_shift_estimates || null,
+      identity_strength_index: titan.identity_strength_index || null,
+      match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
+      scoring_breakdown: breakdown,
+    };
+
     const result = {
       optimized_bullet: optimizedBullet,
       match_score: matchScore,
@@ -442,7 +490,7 @@ USER_PLAN: ${userPlan}`;
       strategic_bridge_analysis: strategicBridgeAnalysis,
       identity_strength_index: titan.identity_strength_index || null,
       inferred_role_title: (titan.inferred_role_title as string) || null,
-      // Signal diagnostic modules
+      // Signal diagnostic modules (legacy direct access)
       jd_signal_extraction: titan.jd_signal_extraction || null,
       resume_signal_profile: titan.resume_signal_profile || null,
       signal_alignment_analysis: titan.signal_alignment_analysis || null,
@@ -451,6 +499,8 @@ USER_PLAN: ${userPlan}`;
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       signal_map: titan.signal_map || null,
+      // Unified SignalModel
+      signal_model: signalModel,
     };
 
     // Save to database
