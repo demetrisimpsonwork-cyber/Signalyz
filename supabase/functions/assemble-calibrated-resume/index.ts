@@ -18,7 +18,26 @@ serve(async (req) => {
     if (!directorResult) {
       return new Response(
         JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Signal Positioning Report data is required to assemble the resume." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Validate required sections exist before attempting assembly
+    const report = directorResult;
+    const hasGapAnalyzer = report.gap_analyzer?.rewrite_targets?.length > 0;
+    const hasExportBuilder = !!report.export_builder?.final_resume_text;
+    const hasSignalClassifier = !!report.signal_classifier;
+    const hasDimensions = report.dimensions?.length > 0;
+
+    if (!hasGapAnalyzer && !hasExportBuilder && !hasSignalClassifier && !hasDimensions) {
+      return new Response(
+        JSON.stringify({
+          status: "error",
+          request_id,
+          error_code: "INCOMPLETE_REPORT",
+          message: "Signal Positioning Report must be generated before assembling the Calibrated Resume. Missing required analysis sections.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

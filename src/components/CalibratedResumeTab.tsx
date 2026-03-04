@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Lock, RefreshCw } from "lucide-react";
+import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { useResumeAssembly } from "@/hooks/useResumeAssembly";
@@ -12,11 +12,23 @@ import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 
+/** Check if the director result has the minimum sections needed for assembly */
+function hasRequiredSections(result: DirectorCalibrationResult | null): boolean {
+  if (!result) return false;
+  // Need at least gap_analyzer (bullets) or export_builder (resume text) or signal_classifier
+  const hasGapAnalyzer = !!(result as any).gap_analyzer?.rewrite_targets?.length;
+  const hasExportBuilder = !!(result as any).export_builder?.final_resume_text;
+  const hasSignalClassifier = !!(result as any).signal_classifier;
+  const hasDimensions = !!(result as any).dimensions?.length;
+  return hasGapAnalyzer || hasExportBuilder || hasSignalClassifier || hasDimensions;
+}
+
 interface CalibratedResumeTabProps {
   isPro: boolean;
   onUpgrade: () => void;
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
+  onSwitchToReport?: () => void;
 }
 
 const CalibratedResumeTab = ({
@@ -24,6 +36,7 @@ const CalibratedResumeTab = ({
   onUpgrade,
   directorResult,
   originalResume,
+  onSwitchToReport,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
@@ -31,11 +44,11 @@ const CalibratedResumeTab = ({
   const currentResume = editedResume || assembledResume;
 
   const handleAssemble = () => {
-    if (!directorResult) {
+    if (!hasRequiredSections(directorResult)) {
       toast.error("Run the Signal Positioning Report first to generate your calibrated resume.");
       return;
     }
-    assemble(directorResult, originalResume);
+    assemble(directorResult!, originalResume);
   };
 
   const handleExportDocx = () => {
@@ -110,16 +123,22 @@ const CalibratedResumeTab = ({
     );
   }
 
-  // No director result yet
-  if (!directorResult && !currentResume) {
+  // No director result or missing required sections
+  if (!currentResume && !hasRequiredSections(directorResult)) {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
-          <Sparkles className="h-8 w-8 text-muted-foreground/40" />
-          <h3 className="text-base font-semibold text-foreground">Your signals are ready. Assemble your resume.</h3>
+          <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
+          <h3 className="text-base font-semibold text-foreground">No signal report detected</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            Run the Signal Positioning Report first, then return here to auto-assemble your calibrated resume.
+            Run the Signal Positioning Report first — the Calibrated Resume assembles directly from your deep analysis.
           </p>
+          {onSwitchToReport && (
+            <Button onClick={onSwitchToReport} variant="outline" className="gap-2 mt-2">
+              <Sparkles className="h-4 w-4" />
+              Go to Signal Positioning Report
+            </Button>
+          )}
         </div>
       </div>
     );
