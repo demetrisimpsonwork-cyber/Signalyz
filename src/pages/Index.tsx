@@ -359,13 +359,13 @@ const Index = () => {
     if (now - lastClickRef.current < 2000) return;
     lastClickRef.current = now;
 
-    const normResume = normalizeClientInput(directorExperience.trim(), MAX_RESUME_CHARS);
+    const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
     if (!normResume.text) {
-      toast.error("Please paste your resume or experience bullets.");
+      toast.error("Run the Alignment Engine first to load your resume.");
       return;
     }
     if (normResume.text.length < 300) {
-      setDirectorError("Please paste more of your resume or experience section so Resumix can analyze your signal.");
+      setDirectorError("Your resume input is too short. Go back to the Alignment Engine and paste a fuller resume.");
       return;
     }
     if (normResume.truncated) setInputTruncated(true);
