@@ -559,13 +559,47 @@ const ResumeBuilder = ({
                 </div>
               </div>
             )}
+            {/* Skills */}
+            {parsedExtras.skills && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Skills
+                </p>
+                <p className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                  {parsedExtras.skills}
+                </p>
+              </div>
+            )}
+
+            {/* Education */}
+            {parsedExtras.education && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Education
+                </p>
+                {parsedExtras.education.split("\n").filter(Boolean).map((line, i) => (
+                  <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* Certifications */}
+            {parsedExtras.certifications && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-2" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Certifications
+                </p>
+                {parsedExtras.certifications.split("\n").filter(Boolean).map((line, i) => (
+                  <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Interview Preparation Notice — OUTSIDE the resume */}
-        {resumeResult.interview_preparation_notice && (
-          <div className="rounded-lg border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 p-5 max-w-[640px] mx-auto">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-400 mb-2">
               Interview Preparation Notice
             </p>
             <p className="text-xs text-amber-900 dark:text-amber-300 leading-relaxed">
