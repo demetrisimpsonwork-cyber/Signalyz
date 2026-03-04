@@ -67,13 +67,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+
   try {
     const { bullet, jd, userId, mode = "single_bullet", sessionToken } = await req.json();
+    const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
-    // --- Input validation ---
+    // --- Structured logging ---
+    console.log(JSON.stringify({
+      event: "request_start",
+      request_id: requestId,
+      function: "optimize-bullet",
+      timestamp: new Date().toISOString(),
+      resume_text_length: typeof bullet === "string" ? bullet.length : 0,
+      jd_text_length: typeof jd === "string" ? jd.length : 0,
+      total_payload_length: (typeof bullet === "string" ? bullet.length : 0) + (typeof jd === "string" ? jd.length : 0),
+      user_plan: userPlan,
+    }));
+
+    // --- Input validation (always 200) ---
     if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
-      return new Response(JSON.stringify({ error: "Missing or invalid bullet or jd fields." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Missing or invalid resume or job description fields." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -82,14 +97,14 @@ serve(async (req) => {
     const trimmedJd = jd.trim();
 
     if (trimmedBullet.length < 20) {
-      return new Response(JSON.stringify({ error: "Experience input must be at least 20 characters." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Experience input must be at least 20 characters." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (trimmedJd.length < 20) {
-      return new Response(JSON.stringify({ error: "Target role input must be at least 20 characters." }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Job description must be at least 20 characters." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -101,12 +116,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
-
     // --- Server-side rate limiting for free users ---
-    const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
     if (userPlan === "free") {
       const today = new Date().toISOString().slice(0, 10);
