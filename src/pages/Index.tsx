@@ -336,9 +336,11 @@ const Index = () => {
     }
     setLoading(true);
     setResult(null);
+    setAlignmentError(null);
     setShowSamples(false);
     const startTime = Date.now();
     const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
+    const payloadLength = bullet.trim().length + jd.trim().length;
     try {
       const bulletWithContext = additionalContext.trim()
         ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
@@ -347,9 +349,39 @@ const Index = () => {
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
         body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode: engineMode, sessionToken },
       });
-      if (error) throw error;
-      // Handle soft errors returned as 200 with status:"error"
-      if (data?.status === "error") throw new Error(data.error || "Analysis failed");
+
+      // Capture debug info
+      const debug: DebugInfo = {
+        request_id: data?.request_id,
+        error_code: data?.error_code,
+        message: data?.message || data?.error,
+        payload_length: payloadLength,
+        timestamp: new Date().toISOString(),
+        status_code: error ? 500 : 200,
+      };
+
+      if (error) {
+        debug.response_snippet = typeof error === "object" ? JSON.stringify(error).slice(0, 500) : String(error).slice(0, 500);
+        debug.status_code = 500;
+        setLastDebug(debug);
+        setAlignmentError(debug);
+        throw error;
+      }
+
+      setLastDebug(debug);
+
+      // Handle soft errors (200 with status:"error")
+      if (data?.status === "error") {
+        debug.response_snippet = JSON.stringify(data).slice(0, 500);
+        setLastDebug(debug);
+        if (data.limit_reached) {
+          setShowUpgrade(true);
+          return;
+        }
+        setAlignmentError(debug);
+        throw new Error(data.message || data.error || "Analysis failed");
+      }
+
       const res = data as OptimizationResult;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
@@ -367,13 +399,15 @@ const Index = () => {
       }
     } catch (err: any) {
       const msg = err.message || "Something went wrong. Please try again.";
-      // Error card in results area
       setResult(null);
-      if (msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("timed out")) {
-        toast.error("Signal analysis is taking longer than expected. Hang tight — complex resumes take up to 60 seconds.");
-      } else {
-        toast.error(msg);
+      if (!alignmentError) {
+        setAlignmentError({
+          message: msg,
+          payload_length: payloadLength,
+          timestamp: new Date().toISOString(),
+        });
       }
+      console.error("[resumix] alignment engine error:", msg);
     } finally {
       setLoading(false);
     }
