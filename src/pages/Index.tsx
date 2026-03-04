@@ -810,6 +810,12 @@ const Index = () => {
               <div className="space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
+                {!loading && inputTruncated && (
+                  <div className="rounded-md border border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+                    Input trimmed for reliability. Paste Experience + Skills for best results.
+                  </div>
+                )}
+
                 {!loading && !result && alignmentError && (
                   <EngineErrorCard debugInfo={alignmentError} onRetry={handleOptimize} />
                 )}
