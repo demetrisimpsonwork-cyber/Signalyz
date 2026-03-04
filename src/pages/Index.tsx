@@ -265,15 +265,21 @@ const Index = () => {
   };
 
   const handleDirectorCalibrate = async () => {
-    const trimmed = directorExperience.trim();
-    if (!trimmed) {
+    // 2s debounce
+    const now = Date.now();
+    if (now - lastClickRef.current < 2000) return;
+    lastClickRef.current = now;
+
+    const normResume = normalizeClientInput(directorExperience.trim(), MAX_RESUME_CHARS);
+    if (!normResume.text) {
       toast.error("Please paste your resume or experience bullets.");
       return;
     }
-    if (trimmed.length < 300) {
+    if (normResume.text.length < 300) {
       setDirectorError("Please paste more of your resume or experience section so Resumix can analyze your signal.");
       return;
     }
+    if (normResume.truncated) setInputTruncated(true);
     setDirectorLoading(true);
     setDirectorResult(null);
     setDirectorError(null);
