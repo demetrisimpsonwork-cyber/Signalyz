@@ -286,14 +286,14 @@ const Index = () => {
     console.log("[telemetry] positioning_run_clicked");
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
-        body: { experience: trimmed },
+        body: { experience: normResume.text },
       });
       // Capture debug info from response
       const debug: DebugInfo = {
         request_id: data?.request_id,
         error_code: data?.error_code,
         message: data?.message || data?.error,
-        payload_length: trimmed.length,
+        payload_length: normResume.text.length,
         timestamp: new Date().toISOString(),
         status_code: error ? 500 : 200,
       };
