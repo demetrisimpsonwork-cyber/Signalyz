@@ -601,6 +601,9 @@ const ResumeBuilder = ({
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
           {loading ? "Calibrating resume…" : "Generate Calibrated Resume"}
         </Button>
+        {resumeError && (
+          <EngineErrorCard debugInfo={resumeError} onRetry={handleGenerate} />
+        )}
       </div>
     );
   }
