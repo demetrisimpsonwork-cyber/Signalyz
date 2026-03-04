@@ -28,6 +28,7 @@ import EvidenceLedger from "@/components/EvidenceLedger";
 import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
 import CalibratedResumeTab from "@/components/CalibratedResumeTab";
+import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
@@ -267,6 +268,46 @@ const Index = () => {
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
 
   const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
+
+  // Check if calibrated resume exists (persisted in localStorage by useResumeAssembly)
+  const hasCalibratedResume = (() => {
+    try { return !!localStorage.getItem("resumix_calibrated_resume"); } catch { return false; }
+  })();
+
+  // Pipeline stages derived from existing React state
+  const pipelineStages: PipelineStage[] = useMemo(() => {
+    const alignmentDone = !!result;
+    const reportDone = !!directorResult;
+    const resumeDone = hasCalibratedResume;
+    return [
+      {
+        id: "alignment",
+        label: "Alignment Engine",
+        shortLabel: "Alignment",
+        sublabel: "Score + signal diagnosis",
+        status: alignmentDone ? "complete" as const : "active" as const,
+        completedAt: null,
+      },
+      {
+        id: "report",
+        label: "Signal Report",
+        shortLabel: "Report",
+        sublabel: "12-section deep analysis",
+        status: reportDone ? "complete" as const : alignmentDone ? "active" as const : "locked" as const,
+        completedAt: null,
+        lockedReason: "Run the Alignment Engine first",
+      },
+      {
+        id: "resume",
+        label: "Calibrated Resume",
+        shortLabel: "Resume",
+        sublabel: "Assembled + export ready",
+        status: resumeDone ? "complete" as const : reportDone ? "active" as const : "locked" as const,
+        completedAt: null,
+        lockedReason: "Run the Signal Positioning Report first",
+      },
+    ];
+  }, [result, directorResult, hasCalibratedResume]);
 
   useEffect(() => {
     if (result) {
@@ -720,8 +761,26 @@ const Index = () => {
 
       {/* Mode toggle + Tool */}
       <section id="alignment-tool" className="py-16 container max-w-6xl">
+        {/* Pipeline progress bar */}
+        <SignalPipelineProgress
+          stages={pipelineStages}
+          onStageClick={(id) => {
+            const tabMap: Record<string, typeof mode> = {
+              alignment: "alignment",
+              report: "director",
+              resume: "calibrated",
+            };
+            const target = tabMap[id];
+            if (target === "calibrated" && !effectiveIsPro) {
+              setShowUpgrade(true);
+              return;
+            }
+            if (target) setMode(target);
+          }}
+        />
+
         {/* Mode toggle — 3 tabs */}
-        <div className="mb-10 flex justify-center">
+        <div className="mb-10 flex justify-center mt-6">
           <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
             <button
               onClick={() => setMode("alignment")}

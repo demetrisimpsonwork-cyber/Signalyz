@@ -5,6 +5,14 @@
   to   { width: 100%; }
 }
 
+@keyframes ping-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.15); }
+}
+.active-pulse {
+  animation: ping-soft 2s ease-in-out infinite;
+}
+
 @tailwind components;
 @tailwind utilities;
 
