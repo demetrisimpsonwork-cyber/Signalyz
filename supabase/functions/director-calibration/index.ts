@@ -904,9 +904,22 @@ async function runPipeline(
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const requestId = crypto.randomUUID();
+
   try {
     const body = await req.json();
     const { experience, jd, deterministic = true, qa_mode = false } = body;
+
+    // --- Structured logging ---
+    console.log(JSON.stringify({
+      event: "request_start",
+      request_id: requestId,
+      function: "director-calibration",
+      timestamp: new Date().toISOString(),
+      resume_text_length: typeof experience === "string" ? experience.length : 0,
+      jd_text_length: typeof jd === "string" ? jd.length : 0,
+      total_payload_length: (typeof experience === "string" ? experience.length : 0) + (typeof jd === "string" ? jd.length : 0),
+    }));
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
@@ -937,30 +950,37 @@ serve(async (req) => {
           });
         }
       }
-      return new Response(JSON.stringify({ qa_results: results }), {
+      return new Response(JSON.stringify({ qa_results: results, request_id: requestId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
-      console.log("Resumix request rejected: empty experience input");
-      return new Response(JSON.stringify({ status: "error", error: "Insufficient input provided for analysis." }), {
+      console.log(JSON.stringify({ event: "validation_error", request_id: requestId, reason: "empty_experience" }));
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Insufficient input provided for analysis." }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Resumix request length:", experience.trim().length);
+    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: experience.trim().length }));
     const result = await runPipeline(apiKey, experience.trim(), jd, deterministic);
-    console.log("Resumix director-calibration: pipeline complete");
+    console.log(JSON.stringify({ event: "pipeline_complete", request_id: requestId }));
 
-    return new Response(JSON.stringify({ status: "success", ...result }), {
+    return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Resumix engine error:", message);
+    const stack = err instanceof Error ? err.stack || "" : "";
+    console.error(JSON.stringify({
+      event: "request_error",
+      request_id: requestId,
+      function: "director-calibration",
+      error_message: message,
+      timestamp: new Date().toISOString(),
+    }));
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
@@ -968,7 +988,13 @@ serve(async (req) => {
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
       "Analysis engine temporarily unavailable. Please try again.";
-    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+    return new Response(JSON.stringify({
+      status: "error",
+      request_id: requestId,
+      error_code: "EDGE_EXCEPTION",
+      message: friendly,
+      details: { error_message: message, error_stack: stack.slice(0, 500) },
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

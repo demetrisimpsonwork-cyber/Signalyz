@@ -116,6 +116,10 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+
     // --- Server-side rate limiting for free users ---
 
     if (userPlan === "free") {
@@ -144,10 +148,13 @@ serve(async (req) => {
 
       if (existing && existing.alignment_count >= DAILY_FREE_LIMIT) {
         return new Response(JSON.stringify({
-          error: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
+          status: "error",
+          request_id: requestId,
+          error_code: "RATE_LIMIT",
+          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
-          status: 429,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -588,21 +595,30 @@ USER_PLAN: ${userPlan}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Resumix engine error:", message);
-    // Rate limit still uses 429 so frontend can show upgrade modal
-    if (message.includes("Daily free limit")) {
-      return new Response(JSON.stringify({ status: "error", error: message, limit_reached: true }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const stack = err instanceof Error ? err.stack || "" : "";
+    console.error(JSON.stringify({
+      event: "request_error",
+      request_id: requestId,
+      function: "optimize-bullet",
+      error_message: message,
+      timestamp: new Date().toISOString(),
+    }));
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
+      message.includes("Daily free limit") ? message :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
       "Analysis engine temporarily unavailable. Please try again.";
-    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+    return new Response(JSON.stringify({
+      status: "error",
+      request_id: requestId,
+      error_code: message.includes("Daily free limit") ? "RATE_LIMIT" : "EDGE_EXCEPTION",
+      message: friendly,
+      limit_reached: message.includes("Daily free limit"),
+      details: { error_message: message, error_stack: stack.slice(0, 500) },
+    }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
