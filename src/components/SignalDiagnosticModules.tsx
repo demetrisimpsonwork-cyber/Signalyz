@@ -614,6 +614,150 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
   );
 }
 
+/* ─── MODULE 11: Why You're Not Getting Interviews ─── */
+function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]> }) {
+  const currentScore = data.current_score ?? 0;
+  const predictedScore = data.predicted_score ?? 0;
+
+  return (
+    <div className="rounded-xl border border-orange-500/20 bg-card p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-orange-500" />
+        <SectionLabel>Why You're Not Getting Interviews</SectionLabel>
+      </div>
+
+      {data.primary_issue && (
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Primary Issue</p>
+          <p className="text-sm text-foreground leading-relaxed">{data.primary_issue}</p>
+        </div>
+      )}
+
+      {data.what_hiring_managers_see && data.what_hiring_managers_see.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">What Hiring Managers See</p>
+          <ul className="space-y-0.5">
+            {data.what_hiring_managers_see.map((s, i) => (
+              <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {data.what_this_creates && (
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">What This Creates</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{data.what_this_creates}</p>
+        </div>
+      )}
+
+      {data.strategic_fixes && data.strategic_fixes.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Three Strategic Fixes</p>
+          <ol className="space-y-1">
+            {data.strategic_fixes.map((fix, i) => (
+              <li key={i} className="text-xs text-foreground flex gap-2">
+                <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{fix}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {currentScore > 0 && predictedScore > 0 && (
+        <div className="rounded-lg border bg-background p-3 space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground">Current</p>
+              <p className="text-lg font-bold text-orange-500 tabular-nums">{currentScore}%</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-primary" />
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground">After Calibration</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── MODULE 12: Predicted Signal Lift ─── */
+function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; isPro?: boolean; onUpgrade?: () => void }) {
+  const currentScore = data.current_score ?? 0;
+  const predictedScore = data.predicted_score ?? 0;
+  const dims = data.dimensions ?? [];
+
+  return (
+    <div className="rounded-xl border bg-card p-5 space-y-4 relative">
+      <SectionLabel>Predicted Signal Improvement</SectionLabel>
+      <SectionSub>Estimated improvement after applying calibration suggestions</SectionSub>
+
+      {/* Dimension lifts */}
+      <div className={`space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
+        {dims.map((d, i) => (
+          <div key={i} className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+            <p className="text-xs font-medium text-foreground">{d.dimension}</p>
+            <span className="text-xs font-bold text-green-600 dark:text-green-400 tabular-nums">+{d.lift}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Score projection */}
+      {currentScore > 0 && predictedScore > 0 && (
+        <div className={`rounded-lg border bg-background p-3 space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Signal Diagnosis After Calibration</p>
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground">Current Signal Score</p>
+              <p className="text-lg font-bold text-muted-foreground tabular-nums">{currentScore}%</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-primary" />
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground">Predicted Score</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pro gate overlay */}
+      {!isPro && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
+          <div className="text-center space-y-2 p-4">
+            <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+            <p className="text-xs font-medium text-foreground">Unlock full calibration and resume rebuild with Resumix Pro.</p>
+            {onUpgrade && (
+              <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Pro Gate Wrapper ─── */
+function ProGate({ isPro, onUpgrade, children, label }: { isPro?: boolean; onUpgrade?: () => void; children: React.ReactNode; label?: string }) {
+  if (isPro) return <>{children}</>;
+  return (
+    <div className="relative">
+      <div className="blur-[3px] select-none pointer-events-none">{children}</div>
+      <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
+        <div className="text-center space-y-2 p-4">
+          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+          <p className="text-xs font-medium text-foreground">{label || "Unlock with Resumix Pro"}</p>
+          {onUpgrade && (
+            <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN COMPONENT ─── */
 interface SignalDiagnosticModulesProps {
   data: SignalDiagnosticData;
@@ -621,6 +765,9 @@ interface SignalDiagnosticModulesProps {
 }
 
 const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesProps) => {
+  const isPro = data.isPro ?? false;
+  const onUpgrade = data.onUpgrade;
+
   const hasAny =
     data.executive_insight_summary ||
     data.transferable_signal_detection ||
@@ -631,13 +778,20 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     data.signal_shift_estimates ||
     data.signal_map ||
     data.career_signal_map ||
-    data.hiring_signal_benchmark;
+    data.hiring_signal_benchmark ||
+    data.interview_gap_diagnosis ||
+    data.predicted_signal_lift;
 
   if (!hasAny) return null;
 
   return (
     <div className="space-y-4">
-      {/* Executive Insight — top of report */}
+      {/* Why You're Not Getting Interviews — immediately after diagnosis */}
+      {data.interview_gap_diagnosis?.primary_issue && (
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} />
+      )}
+
+      {/* Executive Insight */}
       {data.executive_insight_summary?.primary_insight && (
         <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
       )}
@@ -660,14 +814,25 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
         </div>
       )}
 
+      {/* Career Signal Map — free tier visible */}
+      {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+        <CareerSignalMap data={data.career_signal_map} />
+      )}
+
       {/* Signal Alignment Analysis */}
       {data.signal_alignment_analysis && data.signal_alignment_analysis.length > 0 && (
         <SignalAlignmentAnalysis data={data.signal_alignment_analysis} />
       )}
 
-      {/* Hiring Pipeline Simulation */}
+      {/* Hiring Pipeline Simulation — pro gated for full view */}
       {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
-        <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
+        isPro ? (
+          <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
+        ) : (
+          <ProGate isPro={isPro} onUpgrade={onUpgrade} label="Unlock full risk projection with Resumix Pro">
+            <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
+          </ProGate>
+        )
       )}
 
       {/* Signal Shift Visualization */}
@@ -675,14 +840,14 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
         <SignalShiftVisualization data={data.signal_shift_estimates} />
       )}
 
-      {/* Career Signal Map */}
-      {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
-        <CareerSignalMap data={data.career_signal_map} />
-      )}
-
       {/* Hiring Signal Benchmark */}
       {data.hiring_signal_benchmark && data.hiring_signal_benchmark.user_score != null && (
         <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
+      )}
+
+      {/* Predicted Signal Lift — pro gated */}
+      {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
+        <PredictedSignalLift data={data.predicted_signal_lift} isPro={isPro} onUpgrade={onUpgrade} />
       )}
     </div>
   );
