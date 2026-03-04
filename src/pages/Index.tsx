@@ -346,6 +346,11 @@ const Index = () => {
   };
 
   const handleOptimize = async () => {
+    // 2s debounce
+    const now = Date.now();
+    if (now - lastClickRef.current < 2000) return;
+    lastClickRef.current = now;
+
     if (!validate()) return;
     if (limitReached && !isTrialPro) {
       setShowUpgrade(true);
@@ -354,17 +359,25 @@ const Index = () => {
     setLoading(true);
     setResult(null);
     setAlignmentError(null);
+    setInputTruncated(false);
     setShowSamples(false);
     const startTime = Date.now();
     const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
-    const payloadLength = bullet.trim().length + jd.trim().length;
+
+    // Client-side normalization
+    const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
+    const normJd = normalizeClientInput(jd.trim(), MAX_JD_CHARS);
+    if (normResume.truncated || normJd.truncated) {
+      setInputTruncated(true);
+    }
+    const payloadLength = normResume.text.length + normJd.text.length;
     try {
       const bulletWithContext = additionalContext.trim()
-        ? `${bullet.trim()}\n\nAdditional context: ${additionalContext.trim()}`
-        : bullet.trim();
+        ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
+        : normResume.text;
       const sessionToken = user ? undefined : getSessionToken();
       const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: jd.trim(), userId: user?.id ?? null, mode: engineMode, sessionToken },
+        body: { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
       });
 
       // Capture debug info
