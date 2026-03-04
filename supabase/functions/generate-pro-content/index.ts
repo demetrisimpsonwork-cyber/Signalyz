@@ -57,7 +57,9 @@ serve(async (req) => {
         const gaps = alignmentResult.missing_keywords || [];
         const topGap = alignmentResult.top_missing_signal || "";
         const scoreRationale = alignmentResult.score_rationale || [];
-        const prompt = `You are a hiring signal analyst. Given these signal gaps from a resume-to-JD alignment analysis, produce actionable fix cards.
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+
+You are a hiring signal analyst. Given these signal gaps from a resume-to-JD alignment analysis, produce actionable fix cards.
 
 Resume experience: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
@@ -79,7 +81,9 @@ Order by highest impact first. Return ONLY valid JSON array, no markdown.`;
       }
 
       case "calibrated_summary": {
-        const prompt = `Generate professional summary variants for this candidate targeting this specific role. Use only experience that exists in the resume — zero fabrication, zero inflation.
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns.
+
+Generate professional summary variants for this candidate targeting this specific role. Use only experience that exists in the resume — zero fabrication, zero inflation.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
@@ -105,7 +109,9 @@ Return ONLY valid JSON, no markdown.`;
       }
 
       case "interview_intelligence": {
-        const prompt = `You are a hiring manager for this specific role. Based on the signal gaps and risks identified in this alignment analysis, generate exactly 5 interview questions you would ask this candidate.
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+
+You are a hiring manager for this specific role. Based on the signal gaps and risks identified in this alignment analysis, generate exactly 5 interview questions you would ask this candidate.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
@@ -125,7 +131,9 @@ Return ONLY valid JSON array, no markdown.`;
       }
 
       case "ats_panel": {
-        const prompt = `Identify keywords and phrases from this job description that are absent or under-represented in the resume, and keywords that match well.
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+
+Identify keywords and phrases from this job description that are absent or under-represented in the resume, and keywords that match well.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
@@ -144,7 +152,9 @@ Return ONLY valid JSON, no markdown.`;
       }
 
       case "linkedin_headline": {
-        const prompt = `Generate 3 LinkedIn headline variants for this candidate targeting roles similar to ${inferredRole}. 
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+
+Generate 3 LinkedIn headline variants for this candidate targeting roles similar to ${inferredRole}. 
 
 Resume: ${experience.slice(0, 3000)}
 Current headline: ${currentHeadline || "(none)"}
@@ -164,7 +174,9 @@ Return ONLY valid JSON array, no markdown.`;
       }
 
       case "linkedin_summary": {
-        const prompt = `Rewrite this LinkedIn About section for a candidate targeting ${inferredRole}. Use only experience from the resume — zero fabrication.
+        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+
+Rewrite this LinkedIn About section for a candidate targeting ${inferredRole}. Use only experience from the resume — zero fabrication.
 
 Resume: ${experience.slice(0, 3000)}
 Current About: ${currentAbout || "(none — build from scratch)"}
@@ -182,22 +194,24 @@ Return ONLY valid JSON, no markdown.`;
       case "cover_letter": {
         const companyName = sanitize(body.companyName || "the company");
         const roleTitle = inferredRole || "this role";
-        const prompt = `Write a professional cover letter for this candidate applying to ${roleTitle} at ${companyName}. Use only experience from the resume — zero fabrication.
+        const prompt = `Write a professional cover letter for this candidate applying to ${roleTitle} at ${companyName}. Use only experience from the resume — zero fabrication, zero inflation.
+
+Address the user directly in second person throughout. Use 'you' and 'your' — never use the candidate's name or third-person pronouns when referring to the user.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 Top signal gaps: ${alignmentResult.top_missing_signal || "N/A"}
 Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
 
-Structure as exactly 3 paragraphs:
+Structure as exactly 3 paragraphs. Maximum 250 words total.
 
-Paragraph 1 — Opening signal: In 2-3 sentences, establish the candidate's professional identity and name their strongest alignment signal for this specific role. Do not open with "I am writing to apply." Open with a declarative statement of professional identity or a specific capability that directly matches the role's top-weighted requirement.
+Paragraph 1 — Open with a declarative statement of professional identity that names the strongest transferable signal for this specific role. Do not open with "I am writing to apply." Do not open with "I am excited." Open with a statement of what the candidate brings — present tense, first person, specific to this role.
 
-Paragraph 2 — Gap bridge: In 2-3 sentences, directly acknowledge the most significant perception gap identified in the alignment and bridge it using a specific transferable experience from the resume. Do not avoid the gap — address it head-on and reframe it as a strength.
+Paragraph 2 — Address the primary perception gap head-on in the first sentence, then immediately bridge it using a specific experience from the resume. Do not avoid the gap. Reframe it as a strength. This paragraph should make the hiring manager feel that the gap they were about to worry about has already been thought through.
 
-Paragraph 3 — Forward close: In 2 sentences, connect the candidate's trajectory to what this specific role and organization is trying to accomplish. Close with a confident, direct final sentence — not "Thank you for your consideration."
+Paragraph 3 — Connect the candidate's trajectory to what this organization is building or needs right now based on the JD. Close with one confident, forward-looking sentence. Do not close with "Thank you for your consideration." Do not close with "I look forward to hearing from you."
 
-Tone: professional, precise, confident. No filler sentences.
+Tone: precise, confident, professional. No filler. No buzzwords. Every sentence earns its place.
 
 Return a JSON object with: "letter" (the full cover letter text), "strategy_note" (one-line explanation of strategic choices made)
 Return ONLY valid JSON, no markdown.`;

@@ -21,27 +21,38 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const [letter, setLetter] = useState("");
   const [strategyNote, setStrategyNote] = useState("");
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
     setExpanded(true);
     setLoading(true);
+    setError(null);
+    setLetter("");
+    setStrategyNote("");
     try {
-      const { data, error } = await supabase.functions.invoke("generate-pro-content", {
+      if (!experience?.trim() || !jd?.trim()) {
+        throw new Error("Missing resume or job description content.");
+      }
+      const { data, error: fnError } = await supabase.functions.invoke("generate-pro-content", {
         body: {
           type: "cover_letter",
-          experience,
-          jd,
-          alignmentResult,
-          inferredRole,
+          experience: experience.trim(),
+          jd: jd.trim(),
+          alignmentResult: alignmentResult || {},
+          inferredRole: inferredRole || "",
           companyName: "",
         },
       });
-      if (error) throw error;
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.letter) throw new Error("No letter content returned.");
       setLetter(data.letter || "");
       setStrategyNote(data.strategy_note || "");
-    } catch {
-      toast.error("Failed to generate cover letter.");
+    } catch (e: any) {
+      const msg = e?.message || "Cover letter generation failed.";
+      console.error("Cover letter generation error:", msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -76,10 +87,21 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Cover Letter Engine™</p>
+      {(letter || loading || error) && (
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Cover Letter Engine™</p>
+      )}
 
       {loading ? (
         <div className="animate-pulse h-48 rounded-lg bg-muted" />
+      ) : error ? (
+        <div className="rounded-lg bg-[#0F1C2E] p-6 space-y-4">
+          <p className="text-sm text-white leading-relaxed">
+            Cover letter generation interrupted. This can happen with complex inputs — click retry to try again.
+          </p>
+          <Button onClick={generate} className="w-full gap-2">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </Button>
+        </div>
       ) : letter ? (
         <>
           <div className="relative rounded-lg border bg-card p-6">
@@ -88,7 +110,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             </button>
             <div className="space-y-4 pr-8">
               {letter.split("\n\n").filter(Boolean).map((p, i) => (
-                <p key={i} className="text-sm text-foreground leading-relaxed">{p}</p>
+                <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "16px" }}>{p}</p>
               ))}
             </div>
           </div>
@@ -103,7 +125,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               <Download className="h-3.5 w-3.5" /> Download DOCX
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground text-center">Built from your signal — not a template. Zero fabrication.</p>
+          <p className="text-xs text-muted-foreground text-center italic">Built from your signal — not a template. Zero fabrication.</p>
         </>
       ) : null}
     </div>

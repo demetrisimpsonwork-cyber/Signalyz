@@ -286,29 +286,31 @@ const ResumeBuilder = ({
 
     const sectionHeader = (text: string) =>
       new Paragraph({
-        spacing: { before: 300, after: 80 },
+        spacing: { before: 160, after: 80 },
         border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
         children: [
-          new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: "Calibri", allCaps: true }),
+          new TextRun({ text: text.toUpperCase(), bold: true, size: 24, font: "Calibri", allCaps: true }),
         ],
       });
 
     // Professional experience roles
-    const roleChildren = resumeResult.calibrated_roles.flatMap((role) => {
+    const roleChildren = resumeResult.calibrated_roles.flatMap((role, ri) => {
       const header = [role.company, role.title, role.date_range].filter(Boolean).join(" | ");
       return [
         new Paragraph({
-          spacing: { before: 160, after: 60 },
-          children: [new TextRun({ text: header, bold: true, size: 21, font: "Calibri" })],
+          spacing: { before: 200, after: 60 },
+          children: [new TextRun({ text: header, bold: true, size: 22, font: "Calibri" })],
         }),
         ...role.calibrated_bullets.map(
           (b) =>
             new Paragraph({
-              spacing: { after: 40 },
+              spacing: { after: 120, line: 276 },
               bullet: { level: 0 },
               children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
             })
         ),
+        // Add spacing after last bullet of each role
+        ...(ri < resumeResult.calibrated_roles.length - 1 ? [new Paragraph({ spacing: { after: 80 }, children: [] })] : []),
       ];
     });
 
@@ -339,15 +341,15 @@ const ResumeBuilder = ({
     const doc = new Document({
       sections: [
         {
-          properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+          properties: { page: { margin: { top: 1440, bottom: 1080, left: 1080, right: 1080 } } },
           children: [
-            // Name — centered, bold, 18-20px
+            // Name — centered, bold, 14pt
             new Paragraph({
               alignment: AlignmentType.CENTER,
               spacing: { after: 40 },
-              children: [new TextRun({ text: name.trim(), bold: true, size: 36, font: "Calibri" })],
+              children: [new TextRun({ text: name.trim(), bold: true, size: 28, font: "Calibri" })],
             }),
-            // Contact info — centered, 11px, gray — ALWAYS in header, never in body
+            // Contact info — centered, 10pt, gray
             ...(contactParts.length > 0
               ? [
                   new Paragraph({
@@ -373,7 +375,7 @@ const ResumeBuilder = ({
             // Professional Summary
             sectionHeader("Professional Summary"),
             new Paragraph({
-              spacing: { after: 200 },
+              spacing: { after: 200, line: 276 },
               children: [new TextRun({ text: resumeResult.positioning_statement, size: 21, font: "Calibri" })],
             }),
             // Experience
@@ -518,10 +520,24 @@ const ResumeBuilder = ({
           Enter your details for the resume header. Only your name is required.
         </p>
         <div className="space-y-3">
-          <Input placeholder="Full Name *" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input placeholder="Location — e.g. New York, NY (optional)" value={location} onChange={(e) => setLocation(e.target.value)} />
-          <Input placeholder="Email (optional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input placeholder="Full Name *" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+          <Input placeholder="Location — e.g. New York, NY (optional)" value={location} onChange={(e) => setLocation(e.target.value)} autoComplete="off" />
+          <Input placeholder="Email (optional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" />
+          <Input
+            placeholder="Phone (optional)"
+            value={phone}
+            autoComplete="off"
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+              if (digits.length <= 3) {
+                setPhone(digits.length > 0 ? `(${digits}` : "");
+              } else if (digits.length <= 6) {
+                setPhone(`(${digits.slice(0, 3)}) ${digits.slice(3)}`);
+              } else {
+                setPhone(`(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`);
+              }
+            }}
+          />
         </div>
         <Button onClick={handleGenerate} disabled={loading} className="w-full gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
