@@ -54,6 +54,7 @@ export interface SignalDiagnosticData {
   hiring_pipeline_simulation?: PipelineStage[];
   executive_insight_summary?: {
     primary_insight?: string;
+    primary_strength?: string;
     why_it_matters?: string;
     strategic_repositioning_opportunity?: string;
   };
@@ -61,6 +62,14 @@ export interface SignalDiagnosticData {
     detected_capability?: string;
     why_it_transfers?: string;
     elevation_opportunity?: string;
+  };
+  signal_map?: {
+    role_identity?: number;
+    ownership_framing?: number;
+    commercial_impact?: number;
+    domain_expertise?: number;
+    stakeholder_influence?: number;
+    operational_execution?: number;
   };
   signal_shift_estimates?: {
     ownership_signal?: SignalShift;
@@ -361,6 +370,57 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
   );
 }
 
+/* ─── MODULE 8: Signal Map Visualization ─── */
+function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticData["signal_map"]> }) {
+  const dimensions = [
+    { key: "role_identity" as const, label: "Role Identity" },
+    { key: "ownership_framing" as const, label: "Ownership Framing" },
+    { key: "commercial_impact" as const, label: "Commercial Impact" },
+    { key: "domain_expertise" as const, label: "Domain Expertise" },
+    { key: "stakeholder_influence" as const, label: "Stakeholder Influence" },
+    { key: "operational_execution" as const, label: "Operational Execution" },
+  ];
+
+  const total = dimensions.reduce((sum, d) => sum + (data[d.key] ?? 0), 0);
+
+  return (
+    <div className="rounded-xl border bg-card p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <SectionLabel>Signal Map</SectionLabel>
+          <SectionSub>Your career signal strength across six dimensions</SectionSub>
+        </div>
+        <span className="text-lg font-bold text-foreground tabular-nums">{total}<span className="text-xs text-muted-foreground font-normal">/150</span></span>
+      </div>
+      <div className="space-y-2.5">
+        {dimensions.map(({ key, label }) => {
+          const score = data[key] ?? 0;
+          const pct = (score / 25) * 100;
+          return (
+            <div key={key} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-foreground">{label}</p>
+                <span className="text-xs font-semibold text-muted-foreground tabular-nums">{score}/25</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    score >= 20 ? "bg-green-500" :
+                    score >= 13 ? "bg-yellow-500" :
+                    score >= 7 ? "bg-orange-500" :
+                    "bg-destructive/60"
+                  }`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN COMPONENT ─── */
 interface SignalDiagnosticModulesProps {
   data: SignalDiagnosticData;
@@ -375,7 +435,8 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     data.jd_signal_extraction ||
     data.signal_alignment_analysis?.length ||
     data.hiring_pipeline_simulation?.length ||
-    data.signal_shift_estimates;
+    data.signal_shift_estimates ||
+    data.signal_map;
 
   if (!hasAny) return null;
 
@@ -389,6 +450,11 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
       {/* Transferable Signal */}
       {data.transferable_signal_detection?.detected_capability && (
         <TransferableSignal data={data.transferable_signal_detection} />
+      )}
+
+      {/* Signal Map */}
+      {data.signal_map && (
+        <SignalMapVisualization data={data.signal_map} />
       )}
 
       {/* Resume Signal Profile + Employer Priorities side by side on desktop */}
