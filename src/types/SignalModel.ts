@@ -189,4 +189,24 @@ export interface SignalModel {
       gap_explanation: string;
     }>;
   };
+
+  /** Interview Gap Diagnosis — why you're not getting interviews */
+  interview_gap_diagnosis?: {
+    primary_issue: string;
+    what_hiring_managers_see: string[];
+    what_this_creates: string;
+    strategic_fixes: string[];
+    current_score: number;
+    predicted_score: number;
+  };
+
+  /** Predicted Signal Lift — estimated improvement after calibration */
+  predicted_signal_lift?: {
+    dimensions: Array<{
+      dimension: string;
+      lift: number;
+    }>;
+    current_score: number;
+    predicted_score: number;
+  };
 }

@@ -381,6 +381,24 @@ Return ONLY this JSON object with EXACT keys:
       }
     ]
   },
+  "interview_gap_diagnosis": {
+    "primary_issue": "string (one sentence — the main perception gap between resume and role, e.g. 'Your resume signals strong operational execution but under-communicates ownership authority expected for this role.')",
+    "what_hiring_managers_see": ["string (3 signals currently communicated by the resume, e.g. 'escalation management capability')"],
+    "what_this_creates": "string (one sentence — how hiring managers may interpret this signal pattern)",
+    "strategic_fixes": ["string (3 highest impact improvements, e.g. 'Elevate ownership language')"],
+    "current_score": number (current alignment score),
+    "predicted_score": number (predicted score after applying calibration suggestions)
+  },
+  "predicted_signal_lift": {
+    "dimensions": [
+      {
+        "dimension": "string (e.g. 'Ownership Authority', 'Strategic Impact', 'Domain Alignment', 'Role Identity Clarity')",
+        "lift": number (estimated point improvement, e.g. 6)
+      }
+    ],
+    "current_score": number,
+    "predicted_score": number
+  },
   "debug": {
     "mode": "${mode}",
     "user_plan": "${userPlan}",
@@ -498,6 +516,8 @@ USER_PLAN: ${userPlan}`;
       identity_strength_index: titan.identity_strength_index || null,
       career_signal_map: titan.career_signal_map || null,
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
+      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
+      predicted_signal_lift: titan.predicted_signal_lift || null,
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
@@ -534,6 +554,8 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       career_signal_map: titan.career_signal_map || null,
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
+      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
+      predicted_signal_lift: titan.predicted_signal_lift || null,
       // Unified SignalModel
       signal_model: signalModel,
     };
