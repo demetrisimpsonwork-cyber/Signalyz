@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
 import { Button } from "@/components/ui/button";
 import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
 import { Textarea } from "@/components/ui/textarea";
