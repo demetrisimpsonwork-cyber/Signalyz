@@ -15,6 +15,20 @@ interface CoverLetterEngineProps {
   onUpgrade: () => void;
 }
 
+type Tone = "confident" | "strategic" | "direct";
+
+const TONES: { value: Tone; label: string }[] = [
+  { value: "confident", label: "Confident" },
+  { value: "strategic", label: "Strategic" },
+  { value: "direct", label: "Direct" },
+];
+
+const STEPS = [
+  "Extracting role hiring signals…",
+  "Calibrating your narrative…",
+  "Assembling cover letter…",
+];
+
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,6 +36,8 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const [strategyNote, setStrategyNote] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tone, setTone] = useState<Tone>("confident");
+  const [step, setStep] = useState(0);
 
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
@@ -30,6 +46,14 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     setError(null);
     setLetter("");
     setStrategyNote("");
+    setStep(0);
+
+    // Animate through steps
+    const stepTimers = [
+      setTimeout(() => setStep(1), 1200),
+      setTimeout(() => setStep(2), 2800),
+    ];
+
     try {
       if (!experience?.trim() || !jd?.trim()) {
         throw new Error("Missing resume or job description content.");
@@ -42,14 +66,20 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           alignmentResult: alignmentResult || {},
           inferredRole: inferredRole || "",
           companyName: "",
+          tone,
         },
       });
+
+      stepTimers.forEach(clearTimeout);
+
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
       setLetter(data.letter || "");
       setStrategyNote(data.strategy_note || "");
+      setStep(3);
     } catch (e: any) {
+      stepTimers.forEach(clearTimeout);
       const msg = e?.message || "Cover letter generation failed.";
       console.error("Cover letter generation error:", msg);
       setError(msg);
@@ -77,11 +107,32 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   if (!expanded) {
     return (
-      <Button variant="secondary" onClick={generate} className="w-full gap-2">
-        <Sparkles className="h-4 w-4" />
-        Generate Signal-Calibrated Cover Letter
-        {!isPro && <span className="ml-1 text-[10px] uppercase tracking-wider text-primary font-semibold">Pro</span>}
-      </Button>
+      <div className="space-y-3">
+        {/* Tone selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
+          <div className="flex gap-1">
+            {TONES.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setTone(t.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                  tone === t.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button variant="secondary" onClick={generate} className="w-full gap-2">
+          <Sparkles className="h-4 w-4" />
+          Generate Signal-Calibrated Cover Letter
+          {!isPro && <span className="ml-1 text-[10px] uppercase tracking-wider text-primary font-semibold">Pro</span>}
+        </Button>
+      </div>
     );
   }
 
@@ -92,7 +143,28 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       )}
 
       {loading ? (
-        <div className="animate-pulse h-48 rounded-lg bg-muted" />
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          {STEPS.map((label, i) => {
+            const done = i < step;
+            const active = i === step;
+            return (
+              <div key={i} className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  done ? "bg-primary" : active ? "border-2 border-primary" : "border border-muted-foreground/30"
+                }`}>
+                  {done ? (
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  ) : active ? (
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary active-pulse" />
+                  ) : null}
+                </div>
+                <span className={`text-sm ${done ? "text-foreground" : active ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                  {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       ) : error ? (
         <div className="rounded-lg bg-[#0F1C2E] p-6 space-y-4">
           <p className="text-sm text-white leading-relaxed">
@@ -117,7 +189,23 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           {strategyNote && (
             <p className="text-xs text-muted-foreground italic">{strategyNote}</p>
           )}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Tone selector inline */}
+            <div className="flex gap-1 mr-auto">
+              {TONES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setTone(t.value)}
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+                    tone === t.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <Button variant="outline" size="sm" onClick={generate} className="gap-1.5">
               <RefreshCw className="h-3.5 w-3.5" /> Regenerate
             </Button>
