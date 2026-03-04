@@ -10,10 +10,28 @@ const MODELS = [
   "openai/gpt-5-mini",
 ];
 
+function makeRequestId(): string {
+  return crypto.randomUUID();
+}
+
+function ok(body: Record<string, unknown>, requestId: string) {
+  return new Response(JSON.stringify({ status: "success", request_id: requestId, ...body }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function err(requestId: string, errorCode: string, message: string, details?: Record<string, unknown>) {
+  return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: errorCode, message, details }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 async function callAI(apiKey: string, prompt: string): Promise<string> {
   for (const model of MODELS) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 55000);
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -32,7 +50,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       console.error(`${model} error:`, e);
     }
   }
-  throw new Error("Service temporarily unavailable.");
+  throw new Error("All AI models failed or timed out.");
 }
 
 function sanitizeInput(input: string): string {
@@ -42,7 +60,13 @@ function sanitizeInput(input: string): string {
     .replace(/you\s+are\s+now\s+/gi, "")
     .replace(/act\s+as\s+/gi, "")
     .replace(/pretend\s+(you\s+are|to\s+be)\s+/gi, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+    .replace(/[ \t]{3,}/g, "  ")
     .trim();
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max) : text;
 }
 
 serve(async (req) => {
@@ -50,23 +74,50 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = makeRequestId();
+
   try {
     const body = await req.json();
     const { roles, jd, matchScore, existingSummary, skills, certifications } = body;
 
-    if (!roles || !Array.isArray(roles) || roles.length === 0 || !jd) {
-      return new Response(JSON.stringify({ error: "Missing required fields: roles array and jd." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Structured logging
+    const rolesLen = JSON.stringify(roles || []).length;
+    const jdLen = (jd || "").length;
+    console.log(JSON.stringify({
+      request_id: requestId,
+      function: "generate-resume-summary",
+      timestamp: new Date().toISOString(),
+      roles_count: Array.isArray(roles) ? roles.length : 0,
+      roles_payload_len: rolesLen,
+      jd_len: jdLen,
+      total_payload_len: rolesLen + jdLen,
+      has_existing_summary: !!existingSummary,
+      has_skills: !!skills,
+    }));
+
+    // Input validation
+    if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      return err(requestId, "INVALID_INPUT", "Please paste your experience bullets so Resumix can calibrate your resume.", { roles_provided: 0 });
+    }
+
+    const totalBullets = roles.reduce((sum: number, r: any) => sum + ((r.bullets || []).length), 0);
+    if (totalBullets < 2) {
+      return err(requestId, "INVALID_INPUT_RESUME_TOO_SHORT", "Your resume needs at least a few experience bullets for calibration. Paste more of your Experience section.", { total_bullets: totalBullets });
+    }
+
+    if (!jd || jd.trim().length < 100) {
+      return err(requestId, "INVALID_INPUT_JD_TOO_SHORT", "Please paste more of the job description — include responsibilities and requirements for best results.", { jd_len: (jd || "").length });
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+    if (!apiKey) {
+      return err(requestId, "CONFIG_ERROR", "Analysis engine configuration error. Please try again later.");
+    }
 
-    const cleanJd = sanitizeInput(jd);
+    // Truncate JD to 8k chars
+    const cleanJd = truncate(sanitizeInput(jd), 8000);
 
-    // Categorize roles: professional vs independent projects
+    // Categorize roles
     const professionalRoles: typeof roles = [];
     const independentProjects: typeof roles = [];
 
@@ -80,7 +131,7 @@ serve(async (req) => {
         title.includes("founder") || title.includes("creator") ||
         title.includes("personal project") || title.includes("side project") ||
         (!hasEmployer && !dateRange);
-      
+
       if (isIndependent) {
         independentProjects.push(r);
       } else {
@@ -88,16 +139,16 @@ serve(async (req) => {
       }
     }
 
-    // Build structured roles description for the prompt
-    const proRolesDescription = professionalRoles.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
+    // Build roles description — truncate individual bullets to prevent blowup
+    const proRolesDescription = professionalRoles.map((r: any, i: number) => {
       const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
-      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${sanitizeInput(b)}`).join("\n");
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${truncate(sanitizeInput(b), 500)}`).join("\n");
       return `PROFESSIONAL ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
     }).join("\n\n");
 
-    const indProjDescription = independentProjects.length > 0 ? independentProjects.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
+    const indProjDescription = independentProjects.length > 0 ? independentProjects.map((r: any, i: number) => {
       const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
-      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${sanitizeInput(b)}`).join("\n");
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${truncate(sanitizeInput(b), 500)}`).join("\n");
       return `INDEPENDENT PROJECT ${i + 1}: ${header || "Project"}\n${bulletList}`;
     }).join("\n\n") : "";
 
@@ -142,9 +193,9 @@ ${proRolesDescription}
 
 ${indProjDescription ? `\n${indProjDescription}` : ""}
 
-${existingSummary ? `EXISTING SUMMARY: ${sanitizeInput(existingSummary)}` : ""}
-${skills ? `SKILLS/COMPETENCIES: ${sanitizeInput(skills)}` : ""}
-${certifications ? `CERTIFICATIONS: ${sanitizeInput(certifications)}` : ""}
+${existingSummary ? `EXISTING SUMMARY: ${truncate(sanitizeInput(existingSummary), 2000)}` : ""}
+${skills ? `SKILLS/COMPETENCIES: ${truncate(sanitizeInput(skills), 2000)}` : ""}
+${certifications ? `CERTIFICATIONS: ${truncate(sanitizeInput(certifications), 1000)}` : ""}
 
 JOB DESCRIPTION: ${cleanJd}
 
@@ -184,34 +235,46 @@ CRITICAL:
     try {
       parsed = JSON.parse(content);
     } catch {
-      console.error("JSON parse failed:", content.slice(0, 500));
-      throw new Error("Failed to parse AI response.");
+      console.error(JSON.stringify({ request_id: requestId, error: "JSON_PARSE_FAILED", snippet: content.slice(0, 500) }));
+      return err(requestId, "AI_PARSE_ERROR", "The analysis engine returned an unparseable response. Please retry.", { response_snippet: content.slice(0, 300) });
     }
 
-    // Validate structure
     if (!parsed.positioning_statement) {
-      throw new Error("Invalid AI response structure.");
+      return err(requestId, "AI_INVALID_STRUCTURE", "The analysis engine returned an incomplete response. Please retry.");
     }
 
-    // Map to expected frontend shape, combining professional + independent
     const calibrated_roles = [
       ...(parsed.calibrated_professional_roles || parsed.calibrated_roles || []),
     ];
     const independent_projects = parsed.calibrated_independent_projects || [];
 
-    return new Response(JSON.stringify({
+    // Null-safe: ensure every role has calibrated_bullets array
+    for (const role of calibrated_roles) {
+      if (!Array.isArray(role.calibrated_bullets)) role.calibrated_bullets = [];
+      role.company = role.company || "";
+      role.title = role.title || "";
+      role.date_range = role.date_range || "";
+    }
+    for (const proj of independent_projects) {
+      if (!Array.isArray(proj.calibrated_bullets)) proj.calibrated_bullets = [];
+      proj.company = proj.company || "";
+      proj.title = proj.title || "";
+      proj.date_range = proj.date_range || "";
+    }
+
+    console.log(JSON.stringify({ request_id: requestId, status: "success", roles_returned: calibrated_roles.length, projects_returned: independent_projects.length }));
+
+    return ok({
       positioning_statement: parsed.positioning_statement,
       interview_preparation_notice: parsed.interview_preparation_notice || "",
       calibrated_roles,
       independent_projects,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    }, requestId);
+
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const stack = e instanceof Error ? e.stack : undefined;
+    console.error(JSON.stringify({ request_id: requestId, error: "EDGE_EXCEPTION", message, stack: (stack || "").slice(0, 500) }));
+    return err(requestId, "EDGE_EXCEPTION", "Resume calibration engine temporarily unavailable. Please retry.", { error_message: message });
   }
 });
