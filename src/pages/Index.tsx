@@ -149,6 +149,41 @@ function getSessionToken(): string {
   return token;
 }
 
+// ─── Error boundary for Signal Positioning Report ─────────────────────────
+class DirectorCalibrationErrorBoundary extends Component<
+  { children: ReactNode; onRetry: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; onRetry: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[DirectorCalibrationBlock] Render error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
+          <p className="text-sm text-white leading-relaxed">
+            Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}
+            className="w-full flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/90"
+          >
+            Retry Analysis
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── Input normalization (client-side) ─────────────────────────────────────
 const MAX_RESUME_CHARS = 10000;
 const MAX_JD_CHARS = 8000;
