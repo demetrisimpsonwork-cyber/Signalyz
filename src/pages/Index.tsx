@@ -275,10 +275,20 @@ const Index = () => {
   })();
 
   // Pipeline stages derived from existing React state
-  const pipelineStages: PipelineStage[] = useMemo(() => {
+    const pipelineStages: PipelineStage[] = useMemo(() => {
     const alignmentDone = !!result;
     const reportDone = !!directorResult;
     const resumeDone = hasCalibratedResume;
+
+    // Determine which stage is the "next actionable" one
+    const nextActionable = !alignmentDone ? "alignment" : !reportDone ? "report" : !resumeDone ? "resume" : null;
+
+    const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "locked" => {
+      if (done) return "complete";
+      if (!priorDone) return "locked";
+      return id === nextActionable ? "active" : "locked";
+    };
+
     return [
       {
         id: "alignment",
@@ -293,7 +303,7 @@ const Index = () => {
         label: "Signal Report",
         shortLabel: "Report",
         sublabel: "12-section deep analysis",
-        status: reportDone ? "complete" as const : alignmentDone ? "active" as const : "locked" as const,
+        status: getStatus("report", reportDone, alignmentDone),
         completedAt: null,
         lockedReason: "Run the Alignment Engine first",
       },
@@ -302,7 +312,7 @@ const Index = () => {
         label: "Calibrated Resume",
         shortLabel: "Resume",
         sublabel: "Assembled + export ready",
-        status: resumeDone ? "complete" as const : reportDone ? "active" as const : "locked" as const,
+        status: getStatus("resume", resumeDone, reportDone),
         completedAt: null,
         lockedReason: "Run the Signal Positioning Report first",
       },
@@ -840,32 +850,50 @@ const Index = () => {
           />
         )}
 
-        {/* Executive Signal Audit Mode */}
+      {/* Executive Signal Audit Mode */}
         {mode === "director" && (
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
+              {!result ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                  <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
+                  <Button variant="outline" size="sm" onClick={() => setMode("alignment")}>
+                    Run Alignment →
+                  </Button>
+                </div>
+              ) : (
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
                 <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                   Then recalibrate it using only the experience you already have. 11-section diagnostic report. Zero fabrication. Private analysis.
                 </p>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Resume or Experience Input</label>
-                <Textarea
-                  placeholder="Paste your resume, experience section, or key accomplishments. Resumix will analyze how your experience signals value to hiring managers."
-                  value={directorExperience}
-                  onChange={(e) => { setDirectorExperience(e.target.value); setDirectorError(null); }}
-                  rows={12}
-                />
-                {directorExperience.trim().length > 20 && (
-                  <div className="mt-1.5">
-                    <ResumePasteQuality quality={getPasteQuality(parseResumeIntake(directorExperience))} />
+
+                {/* Confirmed inputs cards */}
+                <div className="space-y-3 mb-5">
+                  <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">Resume detected from Alignment Engine</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {result.inferred_role_title ? `${result.inferred_role_title} · ` : ""}{bullet.slice(0, 80)}{bullet.length > 80 ? "…" : ""}
+                      </p>
+                    </div>
                   </div>
-                )}
-                {directorExperience.trim().length > 0 && directorExperience.trim().length < 300 && (
-                  <p className="text-xs text-muted-foreground mt-1">{directorExperience.trim().length}/300 characters minimum</p>
-                )}
+                  <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">Job description loaded</p>
+                      <p className="text-xs text-muted-foreground truncate">{jd.slice(0, 60)}{jd.length > 60 ? "…" : ""}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
+              )}
               <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Run Signal Positioning Report
