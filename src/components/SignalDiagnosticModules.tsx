@@ -104,6 +104,35 @@ export interface SignalDiagnosticData {
       gap_explanation: string;
     }>;
   };
+  interview_gap_diagnosis?: {
+    primary_issue?: string;
+    what_hiring_managers_see?: string[];
+    what_this_creates?: string;
+    strategic_fixes?: string[];
+    current_score?: number;
+    predicted_score?: number;
+  };
+  predicted_signal_lift?: {
+    dimensions?: Array<{
+      dimension: string;
+      lift: number;
+    }>;
+    current_score?: number;
+    predicted_score?: number;
+  };
+  isPro?: boolean;
+  onUpgrade?: () => void;
+}
+    user_score?: number;
+    median_candidate_score?: number;
+    top_candidate_threshold?: number;
+    dimension_comparison?: Array<{
+      dimension: string;
+      user_score: number;
+      median_score: number;
+      gap_explanation: string;
+    }>;
+  };
 }
 
 const STRENGTH_STYLES: Record<string, string> = {
