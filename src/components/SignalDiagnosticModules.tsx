@@ -462,12 +462,12 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     <div className="space-y-4">
       {/* Executive Insight — top of report */}
       {data.executive_insight_summary?.primary_insight && (
-        <ExecutiveInsight data={data.executive_insight_summary} />
+        <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
       )}
 
       {/* Transferable Signal */}
       {data.transferable_signal_detection?.detected_capability && (
-        <TransferableSignal data={data.transferable_signal_detection} />
+        <TransferableSignal data={data.transferable_signal_detection} evidenceLedger={data.evidence_ledger} />
       )}
 
       {/* Signal Map */}
