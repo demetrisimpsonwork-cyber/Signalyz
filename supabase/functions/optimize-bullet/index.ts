@@ -350,6 +350,37 @@ Return ONLY this JSON object with EXACT keys:
     "role_identity_clarity": { "before": number, "after": number },
     "domain_alignment": { "before": number, "after": number }
   },
+  "career_signal_map": {
+    "primary_alignment": [
+      {
+        "role": "string (role title the experience most strongly signals, e.g. 'Customer Success Manager')",
+        "score": number (50-100, alignment percentage),
+        "signals": ["string (2-4 specific signals from the resume that support this role)"],
+        "explanation": "string (2-3 sentences explaining why the experience aligns with this role)"
+      }
+    ],
+    "secondary_alignment": [
+      {
+        "role": "string (secondary role the experience could signal)",
+        "score": number (50-100),
+        "signals": ["string"],
+        "explanation": "string"
+      }
+    ]
+  },
+  "hiring_signal_benchmark": {
+    "user_score": number (the user's overall signal score for the target role),
+    "median_candidate_score": number (estimated median candidate signal score for this role),
+    "top_candidate_threshold": number (estimated signal score of a top candidate),
+    "dimension_comparison": [
+      {
+        "dimension": "string (e.g. 'Ownership Authority', 'Operational Execution', 'Domain Expertise')",
+        "user_score": number (0-100),
+        "median_score": number (0-100),
+        "gap_explanation": "string (one sentence explaining the gap or advantage)"
+      }
+    ]
+  },
   "debug": {
     "mode": "${mode}",
     "user_plan": "${userPlan}",
@@ -465,6 +496,8 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       identity_strength_index: titan.identity_strength_index || null,
+      career_signal_map: titan.career_signal_map || null,
+      hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
@@ -499,6 +532,8 @@ USER_PLAN: ${userPlan}`;
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       signal_map: titan.signal_map || null,
+      career_signal_map: titan.career_signal_map || null,
+      hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       // Unified SignalModel
       signal_model: signalModel,
     };

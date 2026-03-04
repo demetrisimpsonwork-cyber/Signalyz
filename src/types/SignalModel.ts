@@ -160,4 +160,33 @@ export interface SignalModel {
     context_and_scale_alignment: number;
     communication_and_leadership_alignment: number;
   };
+
+  /** Career Signal Map — roles the experience most strongly signals */
+  career_signal_map?: {
+    primary_alignment: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+    secondary_alignment: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+  };
+
+  /** Hiring Signal Benchmark — comparison against typical candidates */
+  hiring_signal_benchmark?: {
+    user_score: number;
+    median_candidate_score: number;
+    top_candidate_threshold: number;
+    dimension_comparison: Array<{
+      dimension: string;
+      user_score: number;
+      median_score: number;
+      gap_explanation: string;
+    }>;
+  };
 }
