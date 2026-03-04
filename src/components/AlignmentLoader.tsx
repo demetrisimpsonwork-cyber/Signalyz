@@ -5,17 +5,18 @@ const STEPS = [
   "Extracting employer priority signals…",
   "Mapping your experience to weighted themes…",
   "Generating strategic positioning insights…",
+  "Applying Pinnacle filter…",
 ];
 
 const STEP_INTERVAL_MS = 3000;
 
 interface AlignmentLoaderProps {
-  /** Minimum height to hold space so layout doesn't jump */
   minHeight?: string;
 }
 
 const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -24,12 +25,16 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    const id = setInterval(() => setElapsed((p) => p + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div
       className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in"
       style={{ minHeight }}
     >
-      {/* Steps */}
       <div className="space-y-4 mb-6">
         {STEPS.map((label, i) => {
           const done = i < activeIndex;
@@ -41,7 +46,6 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
                 active || done ? "opacity-100" : "opacity-30"
               }`}
             >
-              {/* Step indicator */}
               <div
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors duration-500 ${
                   done
@@ -53,8 +57,6 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
               >
                 {done ? <Check className="h-3 w-3" /> : i + 1}
               </div>
-
-              {/* Label */}
               <div className="flex-1 min-w-0">
                 <p
                   className={`text-sm leading-snug transition-colors duration-300 ${
@@ -67,8 +69,6 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
                 >
                   {label}
                 </p>
-
-                {/* Active progress bar */}
                 {active && (
                   <div className="mt-2 h-0.5 w-full rounded-full bg-border overflow-hidden">
                     <div
@@ -85,9 +85,10 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
         })}
       </div>
 
-      {/* Helper text */}
       <p className="text-center text-xs text-muted-foreground leading-relaxed">
-        Full resume + job description analyses typically take 20–40 seconds.
+        {elapsed >= 18
+          ? "Signal analysis is taking longer than expected. Hang tight — complex resumes take up to 60 seconds."
+          : "Full resume + job description analyses typically take 20–40 seconds."}
       </p>
     </div>
   );

@@ -10,7 +10,7 @@ interface LevelDeterminationBlockProps {
   inferredRoleTitle?: string;
 }
 
-// ─── Inference helpers ────────────────────────────────────────────────────────
+// Inference helpers
 
 const deriveInferenceConfidence = (score: number): "High" | "Moderate" | "Low" => {
   if (score >= 75) return "High";
@@ -51,11 +51,9 @@ const deriveOwnershipVerdict = (score: number, confidence: "High" | "Moderate" |
   return `Signal density is insufficient to confirm ${roleTitle} calibration. Current evidence indicates threshold deficiency.`;
 };
 
-// ─── Primary deficiency extraction ───────────────────────────────────────────
-
 const extractPrimaryDeficiency = (raw: string): { name: string; status: string; pattern: string; panelRisk: string } | null => {
   const lines = raw
-    .split(/\n|\r|;|\d+\.\s+/)
+    .split(/\n|\r|;|\\d+\\.\\s+/)
     .map((l) => l.trim())
     .filter((l) => l.length > 20);
 
@@ -70,13 +68,11 @@ const extractPrimaryDeficiency = (raw: string): { name: string; status: string; 
 
   if (lower.includes("owner") || lower.includes("scope")) {
     name = "Ownership Scope";
-    panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
   } else if (lower.includes("execut") || lower.includes("leader")) {
     name = "Executive Signal";
     panelRisk = "Stage 4 — Executive Strategy Calibration";
   } else if (lower.includes("impact") || lower.includes("metric") || lower.includes("revenue") || lower.includes("result")) {
     name = "Commercial Impact";
-    panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
   } else if (lower.includes("strateg") || lower.includes("priorit") || lower.includes("roadmap")) {
     name = "Strategic Definition";
     panelRisk = "Stage 4 — Executive Strategy Calibration";
@@ -89,15 +85,8 @@ const extractPrimaryDeficiency = (raw: string): { name: string; status: string; 
     panelRisk = "Stage 1 — Recruiter Signal Filter";
   }
 
-  return {
-    name,
-    status,
-    pattern: line.replace(/^[-•*]\s*/, ""),
-    panelRisk,
-  };
+  return { name, status, pattern: line.replace(/^[-•*]\s*/, ""), panelRisk };
 };
-
-// ─── Strategic upgrade priority ───────────────────────────────────────────────
 
 const deriveStrategicPriority = (score: number, deficiencyName: string | null, roleTitle: string): string => {
   if (deficiencyName === "Ownership Scope" || score < 50) {
@@ -121,8 +110,6 @@ const deriveStrategicPriority = (score: number, deficiencyName: string | null, r
   return `${roleTitle} threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.`;
 };
 
-// ─── Hiring risk funnel stage configuration ───────────────────────────────────
-
 interface FunnelStage {
   stage: string;
   label: string;
@@ -136,78 +123,39 @@ const deriveFunnelStages = (score: number): FunnelStage[] => {
   const isApproaching = score >= 50;
 
   return [
-    {
-      stage: "Stage 1",
-      label: "Recruiter Signal Filter",
-      risk: isAt ? "Low" : isApproaching ? "Moderate" : "High",
-      note: isAt
-        ? "Role vocabulary and keyword density meet recruiter pattern threshold."
-        : isApproaching
-        ? "Keyword alignment is partial. Role-specific terminology may not surface in automated screening."
-        : "Signal vocabulary insufficient. Resume may not pass initial recruiter or ATS filter.",
-    },
-    {
-      stage: "Stage 2",
-      label: "Hiring Manager Ownership Audit",
-      risk: isAbove ? "Low" : isAt ? "Moderate" : "High",
-      note: isAbove
-        ? "Ownership signals are explicit and consistent with target role classification."
-        : isAt
-        ? "Ownership language is present but may not fully distinguish from IC-level contribution."
-        : "Ownership scope is under-represented. Hiring managers may classify candidate as execution-level.",
-    },
-    {
-      stage: "Stage 3",
-      label: "Cross-Functional Panel Stress Test",
-      risk: isAbove ? "Low" : isAt ? "Moderate" : isApproaching ? "High" : "Critical",
-      note: isAbove
-        ? "Cross-functional authority signals are sufficient for panel evaluation."
-        : isAt
-        ? "Cross-functional language is present but decision-making authority is not clearly evidenced."
-        : "Candidate is likely to face authority challenges from panel. Stakeholder influence signals are absent.",
-    },
-    {
-      stage: "Stage 4",
-      label: "Executive Strategy Calibration",
-      risk: isAbove ? "Low" : isAt ? "Moderate" : "Critical",
-      note: isAbove
-        ? "Strategic framing and executive-facing signals are present and consistent."
-        : isAt
-        ? "Strategic language is detectable but lacks sufficient executive-level evidence."
-        : "No executive strategy signals detected. Candidate may fail calibration at senior review.",
-    },
-    {
-      stage: "Stage 5",
-      label: "Offer-Level Risk Check",
-      risk: isAbove ? "Low" : isAt ? "Low" : isApproaching ? "Moderate" : "High",
-      note: isAbove
-        ? "Candidate signal supports offer-level confidence. No terminal risk factors identified."
-        : isAt
-        ? "Minor signal gaps present but unlikely to introduce offer-level risk."
-        : isApproaching
-        ? "Moderate risk — compensation or leveling expectations may misalign at offer stage."
-        : "Candidate positioning may create leveling or compensation misalignment at offer.",
-    },
+    { stage: "Stage 1", label: "Recruiter Signal Filter", risk: isAt ? "Low" : isApproaching ? "Moderate" : "High", note: isAt ? "Role vocabulary and keyword density meet recruiter pattern threshold." : isApproaching ? "Keyword alignment is partial. Role-specific terminology may not surface in automated screening." : "Signal vocabulary insufficient. Resume may not pass initial recruiter or ATS filter." },
+    { stage: "Stage 2", label: "Hiring Manager Ownership Audit", risk: isAbove ? "Low" : isAt ? "Moderate" : "High", note: isAbove ? "Ownership signals are explicit and consistent with target role classification." : isAt ? "Ownership language is present but may not fully distinguish from IC-level contribution." : "Ownership scope is under-represented. Hiring managers may classify candidate as execution-level." },
+    { stage: "Stage 3", label: "Cross-Functional Panel Stress Test", risk: isAbove ? "Low" : isAt ? "Moderate" : isApproaching ? "High" : "Critical", note: isAbove ? "Cross-functional authority signals are sufficient for panel evaluation." : isAt ? "Cross-functional language is present but decision-making authority is not clearly evidenced." : "Candidate is likely to face authority challenges from panel. Stakeholder influence signals are absent." },
+    { stage: "Stage 4", label: "Executive Strategy Calibration", risk: isAbove ? "Low" : isAt ? "Moderate" : "Critical", note: isAbove ? "Strategic framing and executive-facing signals are present and consistent." : isAt ? "Strategic language is detectable but lacks sufficient executive-level evidence." : "No executive strategy signals detected. Candidate may fail calibration at senior review." },
+    { stage: "Stage 5", label: "Offer-Level Risk Check", risk: isAbove ? "Low" : isAt ? "Low" : isApproaching ? "Moderate" : "High", note: isAbove ? "Candidate signal supports offer-level confidence. No terminal risk factors identified." : isAt ? "Minor signal gaps present but unlikely to introduce offer-level risk." : isApproaching ? "Moderate risk — compensation or leveling expectations may misalign at offer stage." : "Candidate positioning may create leveling or compensation misalignment at offer." },
   ];
 };
 
-const riskStyles: Record<FunnelStage["risk"], { badge: string; bar: string }> = {
-  Low: { badge: "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20", bar: "bg-green-500" },
-  Moderate: { badge: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20", bar: "bg-amber-500" },
-  High: { badge: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20", bar: "bg-orange-500" },
-  Critical: { badge: "text-destructive bg-destructive/10", bar: "bg-destructive" },
+// Solid risk badge styles
+const riskBadgeStyles: Record<FunnelStage["risk"], string> = {
+  Low: "bg-green-600 text-white",
+  Moderate: "bg-amber-500 text-white",
+  High: "bg-orange-500 text-white animate-pulse-soft",
+  Critical: "bg-red-600 text-white animate-pulse-soft",
+};
+
+const riskBarStyles: Record<FunnelStage["risk"], string> = {
+  Low: "bg-green-500",
+  Moderate: "bg-amber-500",
+  High: "bg-orange-500",
+  Critical: "bg-destructive",
 };
 
 const thresholdStatusStyle = (status: string) => {
-  if (status === "Below Threshold") return "text-destructive bg-destructive/10";
-  if (status === "Approaching Threshold") return "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20";
-  if (status === "At Threshold") return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
-  return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+  if (status === "Below Threshold") return "bg-red-600 text-white";
+  if (status === "Approaching Threshold") return "bg-orange-500 text-white";
+  if (status === "At Threshold") return "bg-amber-500 text-white";
+  return "bg-green-600 text-white";
 };
 
 const BlockShell = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="rounded-lg border bg-card overflow-hidden">
-    <div className="px-5 pt-4 pb-3 border-b border-border/60">
+    <div className="px-5 pt-5 pb-3 border-b border-border/60">
       <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground">{label}</p>
     </div>
     {children}
@@ -220,8 +168,6 @@ const Row = ({ label, value, mono = false }: { label: string; value: string; mon
     <p className={`text-xs text-right leading-relaxed text-foreground ${mono ? "font-medium" : ""}`}>{value}</p>
   </div>
 );
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 const LevelDeterminationBlock = ({
   score,
@@ -333,23 +279,20 @@ const LevelDeterminationBlock = ({
       {/* 4 — Signal Risk Projection */}
       <BlockShell label="Signal Risk Projection">
         <div className="divide-y divide-border/50">
-          {funnelStages.map((s) => {
-            const styles = riskStyles[s.risk];
-            return (
-              <div key={s.stage} className="px-5 py-3.5 space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground font-medium">{s.stage}</p>
-                    <p className="text-xs font-semibold text-foreground">{s.label}</p>
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${styles.badge}`}>
-                    {s.risk}
-                  </span>
+          {funnelStages.map((s) => (
+            <div key={s.stage} className="px-5 py-3.5 space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-medium">{s.stage}</p>
+                  <p className="text-xs font-semibold text-foreground">{s.label}</p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{s.note}</p>
+                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded shrink-0 ${riskBadgeStyles[s.risk]}`}>
+                  {s.risk}
+                </span>
               </div>
-            );
-          })}
+              <p className="text-xs text-muted-foreground leading-relaxed">{s.note}</p>
+            </div>
+          ))}
         </div>
       </BlockShell>
 
