@@ -1,4 +1,4 @@
-import { ClipboardCopy, Download } from "lucide-react";
+import { ClipboardCopy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -18,10 +18,10 @@ interface ExportResultsProps {
 
 const buildExportText = (r: ExportResultsProps["result"]): string => {
   const lines: string[] = [
-    "RESUMIX ALIGNMENT RESULTS",
+    "RESUMIX CALIBRATION REPORT",
     "=========================",
     "",
-    "OPTIMIZED BULLET",
+    "CALIBRATED BULLET",
     r.optimized_bullet,
     "",
     `MATCH SCORE: ${r.match_score}%${r.alignment_confidence_level ? ` — ${r.alignment_confidence_level}` : ""}`,
@@ -40,7 +40,7 @@ const buildExportText = (r: ExportResultsProps["result"]): string => {
   ];
 
   if (r.alignment_notes) {
-    lines.push("", "PINNACLE ALIGNMENT NOTES", r.alignment_notes);
+    lines.push("", "ALIGNMENT NOTES", r.alignment_notes);
   }
   if (r.gap_suggestions) {
     lines.push("", "GAP SUGGESTIONS", r.gap_suggestions);
@@ -52,32 +52,14 @@ const buildExportText = (r: ExportResultsProps["result"]): string => {
 const ExportResults = ({ result }: ExportResultsProps) => {
   const handleCopyAll = async () => {
     await navigator.clipboard.writeText(buildExportText(result));
-    toast.success("All results copied to clipboard", { duration: 1500 });
-  };
-
-  const handleDownload = () => {
-    const text = buildExportText(result);
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "resumix-results.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Download started", { duration: 1500 });
+    toast.success("Calibration report copied to clipboard", { duration: 1500 });
   };
 
   return (
-    <div className="flex items-center gap-3 pt-2">
-      <Button variant="outline" size="sm" onClick={handleCopyAll} className="gap-2">
-        <ClipboardCopy className="h-3.5 w-3.5" />
-        Copy All
-      </Button>
-      <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
-        <Download className="h-3.5 w-3.5" />
-        Download .txt
-      </Button>
-    </div>
+    <Button variant="outline" onClick={handleCopyAll} className="w-full gap-2 border-foreground/20 text-foreground">
+      <ClipboardCopy className="h-3.5 w-3.5" />
+      Copy Calibration Report
+    </Button>
   );
 };
 
