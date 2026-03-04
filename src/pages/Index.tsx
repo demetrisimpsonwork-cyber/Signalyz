@@ -147,6 +147,21 @@ function getSessionToken(): string {
   return token;
 }
 
+// ─── Input normalization (client-side) ─────────────────────────────────────
+const MAX_RESUME_CHARS = 10000;
+const MAX_JD_CHARS = 8000;
+
+function normalizeClientInput(text: string, maxChars: number): { text: string; truncated: boolean } {
+  let cleaned = text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  const truncated = cleaned.length > maxChars;
+  if (truncated) cleaned = cleaned.slice(0, maxChars);
+  return { text: cleaned, truncated };
+}
+
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
   const rafRef = useRef<number>();
