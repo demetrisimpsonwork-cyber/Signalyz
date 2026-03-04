@@ -270,10 +270,10 @@ const Index = () => {
     try {
       await supabase.from("alignment_history").insert({
         user_id: user.id,
-        inferred_role: res.inferred_role_title || "",
+        inferred_role: res.signal_model?.role?.title || res.inferred_role_title || "",
         score: res.match_score,
         strength_label: getStrengthLabel(res.match_score),
-        top_gap: res.top_missing_signal || null,
+        top_gap: res.signal_model?.gaps?.[0] || res.top_missing_signal || null,
         full_result_json: res as any,
       });
     } catch {}
@@ -743,21 +743,21 @@ const Index = () => {
                         )}
                       </div>
 
-                      {/* Structured diagnosis insights */}
+                      {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
-                        {result.top_missing_signal && (
+                        {(result.signal_model?.gaps?.[0] || result.top_missing_signal) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Top gap:</span> {result.top_missing_signal}
+                            <span className="font-medium text-foreground">Top gap:</span> {result.signal_model?.gaps?.[0] || result.top_missing_signal}
                           </p>
                         )}
-                        {(result as any).executive_insight_summary?.primary_strength && (
+                        {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Primary strength:</span> {(result as any).executive_insight_summary.primary_strength}
+                            <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
                           </p>
                         )}
-                        {(result as any).executive_insight_summary?.strategic_repositioning_opportunity && (
+                        {(result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-primary">Repositioning opportunity:</span> {(result as any).executive_insight_summary.strategic_repositioning_opportunity}
+                            <span className="font-medium text-primary">Repositioning opportunity:</span> {result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity}
                           </p>
                         )}
                       </div>
