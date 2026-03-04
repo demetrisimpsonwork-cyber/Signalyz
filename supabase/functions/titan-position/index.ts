@@ -234,7 +234,7 @@ JOB DESCRIPTION: ${cleanJd}`;
       resultCache.delete(oldest);
     }
 
-    return new Response(responseBody, {
+    return new Response(JSON.stringify({ status: "success", request_id: requestId, ...titan, truncated: limits.truncated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "MISS" },
     });
   } catch (err) {
