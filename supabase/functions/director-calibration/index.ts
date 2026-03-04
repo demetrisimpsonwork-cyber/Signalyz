@@ -989,14 +989,27 @@ serve(async (req) => {
     // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
       console.log(JSON.stringify({ event: "validation_error", request_id: requestId, reason: "empty_experience" }));
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Insufficient input provided for analysis." }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: 0 } }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: experience.trim().length }));
-    const result = await runPipeline(apiKey, experience.trim(), jd, deterministic);
+    // Normalize and enforce limits
+    let cleanExperience = normalizeText(stripResumeHeader(experience.trim()));
+    if (cleanExperience.length > MAX_RESUME_CHARS) {
+      cleanExperience = cleanExperience.slice(0, MAX_RESUME_CHARS);
+    }
+
+    if (cleanExperience.length < 100) {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your resume or experience section so Resumix can analyze your signal.", details: { resume_len: cleanExperience.length } }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: cleanExperience.length }));
+    const result = await runPipeline(apiKey, cleanExperience, jd, deterministic);
     console.log(JSON.stringify({ event: "pipeline_complete", request_id: requestId }));
 
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
