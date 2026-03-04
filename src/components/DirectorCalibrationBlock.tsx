@@ -569,7 +569,7 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
               </div>
             )}
 
-            {/* Download / Copy buttons */}
+            {/* Copy button only — no .txt download */}
             <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={async () => {
@@ -580,22 +580,6 @@ const DirectorCalibrationBlock = ({ result }: { result: DirectorCalibrationResul
               >
                 <FileText className="h-3 w-3" />
                 Copy Resume
-              </button>
-              <button
-                onClick={() => {
-                  const blob = new Blob([result.export_builder!.final_resume_text], { type: "text/plain" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "resume-calibrated.txt";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Download started", { duration: 1500 });
-                }}
-                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                <Download className="h-3 w-3" />
-                Download .txt
               </button>
             </div>
           </div>

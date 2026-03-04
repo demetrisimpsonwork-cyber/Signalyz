@@ -66,32 +66,70 @@ serve(async (req) => {
 
     const cleanJd = sanitizeInput(jd);
 
+    // Categorize roles: professional vs independent projects
+    const professionalRoles: typeof roles = [];
+    const independentProjects: typeof roles = [];
+
+    for (const r of roles) {
+      const company = (r.company || "").toLowerCase();
+      const title = (r.title || "").toLowerCase();
+      const dateRange = (r.date_range || "").toLowerCase();
+      const hasEmployer = company && !["experience", "untitled role", ""].includes(company);
+      const isIndependent = company.includes("independent") || company.includes("personal") ||
+        company.includes("self") || company.includes("freelance") ||
+        title.includes("founder") || title.includes("creator") ||
+        title.includes("personal project") || title.includes("side project") ||
+        (!hasEmployer && !dateRange);
+      
+      if (isIndependent) {
+        independentProjects.push(r);
+      } else {
+        professionalRoles.push(r);
+      }
+    }
+
     // Build structured roles description for the prompt
-    const rolesDescription = roles.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
+    const proRolesDescription = professionalRoles.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
       const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
       const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${sanitizeInput(b)}`).join("\n");
-      return `ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
+      return `PROFESSIONAL ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
     }).join("\n\n");
+
+    const indProjDescription = independentProjects.length > 0 ? independentProjects.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
+      const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${sanitizeInput(b)}`).join("\n");
+      return `INDEPENDENT PROJECT ${i + 1}: ${header || "Project"}\n${bulletList}`;
+    }).join("\n\n") : "";
 
     const prompt = `You are a professional resume calibration engine. You will receive structured resume roles with individual bullets, plus a target job description.
 
 YOUR TASK:
 1. Infer the target role title and seniority from the JD.
 2. Generate a calibrated PROFESSIONAL SUMMARY (3-4 sentences, third person, institutional voice, signal-calibrated to the JD).
-3. For EACH role, calibrate EACH bullet individually through the signal engine. Preserve the original role structure — do NOT merge bullets across roles.
+3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
-CALIBRATION RULES (Pinnacle Filter):
+BULLET CALIBRATION RULES (CRITICAL):
+- Reposition each bullet to align with the target JD's priority signals.
+- You MUST preserve EVERY specific detail from the original bullet — stakeholder names, volume metrics, process outcomes, tool names.
+- Do NOT remove any detail that exists in the original.
+- ADD JD-aligned language, stronger ownership framing, and role-native vocabulary ON TOP of what already exists.
+- The calibrated bullet must ALWAYS be equal to or LONGER than the original bullet.
+- If the original bullet is already well-aligned, elevate the language while keeping ALL specifics intact.
+- NEVER produce a bullet that loses detail the original contained.
+
+PINNACLE FILTER:
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
 - Use operational language: what was built, owned, fixed, decided.
 - Never use: "results-driven", "leveraging synergies", "passionate about", "dynamic environment", "fast-paced team".
 - Vary sentence cadence — no symmetrical bullet structures.
-- Each bullet must be 1-2 lines max (under 35 words).
 - Write like a capable professional explaining work to a peer.
 
 INPUTS:
-${rolesDescription}
+${proRolesDescription}
+
+${indProjDescription ? `\n${indProjDescription}` : ""}
 
 ${existingSummary ? `EXISTING SUMMARY: ${sanitizeInput(existingSummary)}` : ""}
 ${skills ? `SKILLS/COMPETENCIES: ${sanitizeInput(skills)}` : ""}
@@ -105,17 +143,28 @@ Return ONLY this JSON (no markdown, no code fences):
 {
   "positioning_statement": "string (3-4 sentence professional summary)",
   "interview_preparation_notice": "string (2-3 sentences on remaining gaps)",
-  "calibrated_roles": [
+  "calibrated_professional_roles": [
     {
       "company": "string",
       "title": "string",
       "date_range": "string",
-      "calibrated_bullets": ["string (each bullet individually calibrated)"]
+      "calibrated_bullets": ["string (each bullet individually calibrated, LONGER than original)"]
+    }
+  ],
+  "calibrated_independent_projects": [
+    {
+      "company": "string",
+      "title": "string",
+      "date_range": "string",
+      "calibrated_bullets": ["string"]
     }
   ]
 }
 
-CRITICAL: calibrated_roles must have the SAME number of roles as the input, in the SAME order. Each role must have the SAME number of bullets as the input role.`;
+CRITICAL: 
+- calibrated_professional_roles must have the SAME number of roles as the professional input roles, in the SAME order. Each role must have the SAME number of bullets.
+- calibrated_independent_projects must have the SAME number as independent project inputs.
+- Every calibrated bullet must be EQUAL TO OR LONGER than its original. Never compress.`;
 
     let content = await callAI(apiKey, prompt);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
@@ -129,11 +178,22 @@ CRITICAL: calibrated_roles must have the SAME number of roles as the input, in t
     }
 
     // Validate structure
-    if (!parsed.positioning_statement || !parsed.calibrated_roles || !Array.isArray(parsed.calibrated_roles)) {
+    if (!parsed.positioning_statement) {
       throw new Error("Invalid AI response structure.");
     }
 
-    return new Response(JSON.stringify(parsed), {
+    // Map to expected frontend shape, combining professional + independent
+    const calibrated_roles = [
+      ...(parsed.calibrated_professional_roles || parsed.calibrated_roles || []),
+    ];
+    const independent_projects = parsed.calibrated_independent_projects || [];
+
+    return new Response(JSON.stringify({
+      positioning_statement: parsed.positioning_statement,
+      interview_preparation_notice: parsed.interview_preparation_notice || "",
+      calibrated_roles,
+      independent_projects,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

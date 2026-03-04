@@ -9,7 +9,6 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   AlignmentType,
   BorderStyle,
 } from "docx";
@@ -23,6 +22,7 @@ interface ParsedRole {
   title: string;
   dateRange: string;
   bullets: string[];
+  isIndependent: boolean;
 }
 
 interface ParsedResume {
@@ -30,7 +30,28 @@ interface ParsedResume {
   summaryText: string;
   skillsText: string;
   certificationsText: string;
+  contactLines: string[];
   otherSections: { heading: string; content: string }[];
+}
+
+// Contact info patterns
+const CONTACT_PATTERNS = [
+  /^[\w.-]+@[\w.-]+\.\w{2,}$/i, // email
+  /^\+?\(?\d{1,4}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/i, // phone
+  /^\d{3}[\s.-]\d{3}[\s.-]\d{4}$/, // phone alt
+  /^[A-Z][a-z]+,?\s+[A-Z]{2}\s*\d{0,5}$/i, // City, ST or City, ST ZIP
+  /^remote\b/i,
+  /^linkedin\.com|github\.com|portfolio/i,
+];
+
+function isContactLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (trimmed.length > 80) return false;
+  // Check if line contains email OR phone pattern
+  if (/[\w.-]+@[\w.-]+\.\w{2,}/.test(trimmed)) return true;
+  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(trimmed)) return true;
+  if (/\bremote\b/i.test(trimmed) && trimmed.length < 30) return true;
+  return CONTACT_PATTERNS.some(p => p.test(trimmed));
 }
 
 function parseExperience(text: string): ParsedResume {
@@ -40,13 +61,30 @@ function parseExperience(text: string): ParsedResume {
   let summaryLines: string[] = [];
   let skillsLines: string[] = [];
   let certLines: string[] = [];
-  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" = "none";
+  let contactLines: string[] = [];
+  let currentSection: "none" | "summary" | "skills" | "certs" | "experience" | "projects" = "none";
 
   const datePattern = /(\d{4})\s*[-–—]\s*(present|\d{4}|current)/i;
-  const sectionHeaders = /^(professional\s+summary|summary|core\s+competencies|skills|certifications?|independent\s+projects?|education)/i;
+  const sectionHeaders = /^(professional\s+summary|summary|core\s+competencies|skills|certifications?|independent\s+projects?|education|experience|work\s+experience)/i;
 
-  for (const line of lines) {
+  // First pass: extract contact info from top lines (before any section header)
+  let headerEnd = 0;
+  for (let i = 0; i < Math.min(lines.length, 8); i++) {
+    const line = lines[i];
     if (!line) continue;
+    if (sectionHeaders.test(line) || datePattern.test(line)) break;
+    if (isContactLine(line)) {
+      contactLines.push(line);
+    }
+    headerEnd = i + 1;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+
+    // Skip contact lines already extracted
+    if (i < headerEnd && isContactLine(line)) continue;
 
     // Detect section headers
     const sectionMatch = line.match(sectionHeaders);
@@ -56,6 +94,8 @@ function parseExperience(text: string): ParsedResume {
       if (sectionName.includes("summary")) { currentSection = "summary"; continue; }
       if (sectionName.includes("skill") || sectionName.includes("competen")) { currentSection = "skills"; continue; }
       if (sectionName.includes("certif")) { currentSection = "certs"; continue; }
+      if (sectionName.includes("independent") || sectionName.includes("project")) { currentSection = "projects"; continue; }
+      if (sectionName.includes("experience") || sectionName.includes("work")) { currentSection = "experience"; continue; }
       currentSection = "none";
       continue;
     }
@@ -71,7 +111,6 @@ function parseExperience(text: string): ParsedResume {
 
     if (hasDate && !isBullet) {
       if (currentRole) roles.push(currentRole);
-      // Parse header: try "Title — Company (Dates)" or "Company | Title | Dates"
       let company = "";
       let title = "";
       let dateRange = "";
@@ -87,33 +126,51 @@ function parseExperience(text: string): ParsedResume {
         title = headerWithoutDate;
       }
 
-      currentRole = { header: line, company, title, dateRange, bullets: [] };
-      currentSection = "experience";
+      const isIndependent = currentSection === "projects";
+      currentRole = { header: line, company, title, dateRange, bullets: [], isIndependent };
+      if (currentSection !== "projects") currentSection = "experience";
+      continue;
+    }
+
+    // For projects section without dates
+    if (currentSection === "projects" && !isBullet && !currentRole && line.length > 5) {
+      currentRole = { header: line, company: "", title: line, dateRange: "", bullets: [], isIndependent: true };
       continue;
     }
 
     if (isBullet && currentRole) {
       currentRole.bullets.push(line.replace(/^[•\-*]\s*/, ""));
-    } else if (currentRole && currentSection === "experience") {
-      // Non-bullet text under a role — treat as a bullet
+    } else if (currentRole && (currentSection === "experience" || currentSection === "projects")) {
       if (line.length > 15) currentRole.bullets.push(line);
-    } else if (!currentRole && currentSection === "none" && line.length > 15) {
-      // Pre-role text with no section header — might be experience without header
-      if (!currentRole) {
-        currentRole = { header: "Experience", company: "", title: "", dateRange: "", bullets: [] };
-        currentSection = "experience";
-      }
+    } else if (!currentRole && currentSection === "none" && line.length > 15 && i >= headerEnd) {
+      currentRole = { header: "Experience", company: "", title: "", dateRange: "", bullets: [], isIndependent: false };
+      currentSection = "experience";
       currentRole.bullets.push(line.replace(/^[•\-*]\s*/, ""));
     }
   }
 
   if (currentRole) roles.push(currentRole);
 
+  // Post-process: detect independent projects that ended up in experience
+  for (const role of roles) {
+    if (role.isIndependent) continue;
+    const companyLower = (role.company || role.title || "").toLowerCase();
+    if (!role.dateRange && (
+      companyLower.includes("resumix") || companyLower.includes("vela") ||
+      companyLower.includes("personal") || companyLower.includes("independent") ||
+      companyLower.includes("self-") || companyLower.includes("founder") ||
+      companyLower.includes("side project") || companyLower.includes("freelance")
+    )) {
+      role.isIndependent = true;
+    }
+  }
+
   return {
     roles,
     summaryText: summaryLines.join(" ").trim(),
     skillsText: skillsLines.join(", ").trim(),
     certificationsText: certLines.join("\n").trim(),
+    contactLines,
     otherSections: [],
   };
 }
@@ -131,6 +188,7 @@ interface ResumeResult {
   positioning_statement: string;
   interview_preparation_notice: string;
   calibrated_roles: CalibratedRole[];
+  independent_projects: CalibratedRole[];
 }
 
 interface ResumeBuilderProps {
@@ -160,6 +218,7 @@ const ResumeBuilder = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
 
   const handleBuildClick = () => {
     if (!isPro) { onUpgrade(); return; }
@@ -171,16 +230,31 @@ const ResumeBuilder = ({
     setLoading(true);
     try {
       const parsed = parseExperience(experience);
-      const rolesPayload = parsed.roles.map((r) => ({
+
+      // Separate professional roles from independent projects
+      const professionalRoles = parsed.roles.filter(r => !r.isIndependent);
+      const independentProjects = parsed.roles.filter(r => r.isIndependent);
+
+      const proRolesPayload = professionalRoles.map((r) => ({
         company: r.company || r.title || "Experience",
         title: r.title || "",
         date_range: r.dateRange || "",
         bullets: r.bullets,
       }));
 
+      const indProjPayload = independentProjects.map((r) => ({
+        company: r.company || r.title || "Project",
+        title: r.title || "",
+        date_range: r.dateRange || "",
+        bullets: r.bullets,
+      }));
+
+      // Combine for the API call but mark them separately
+      const allRoles = [...proRolesPayload, ...indProjPayload];
+
       const { data, error } = await supabase.functions.invoke("generate-resume-summary", {
         body: {
-          roles: rolesPayload,
+          roles: allRoles,
           jd,
           matchScore,
           existingSummary: parsed.summaryText || undefined,
@@ -195,6 +269,7 @@ const ResumeBuilder = ({
         positioning_statement: data.positioning_statement,
         interview_preparation_notice: data.interview_preparation_notice || data.signal_gap_notice || "",
         calibrated_roles: data.calibrated_roles || [],
+        independent_projects: data.independent_projects || [],
       });
       setShowContactForm(false);
     } catch (err: any) {
@@ -207,15 +282,18 @@ const ResumeBuilder = ({
   const handleDownloadDocx = async () => {
     if (!resumeResult) return;
 
+    const contactParts = [location.trim(), email.trim(), phone.trim()].filter(Boolean);
+
     const sectionHeader = (text: string) =>
       new Paragraph({
-        spacing: { before: 240, after: 80 },
+        spacing: { before: 300, after: 80 },
         border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
         children: [
           new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: "Calibri", allCaps: true }),
         ],
       });
 
+    // Professional experience roles
     const roleChildren = resumeResult.calibrated_roles.flatMap((role) => {
       const header = [role.company, role.title, role.date_range].filter(Boolean).join(" | ");
       return [
@@ -234,24 +312,50 @@ const ResumeBuilder = ({
       ];
     });
 
+    // Independent projects
+    const projectChildren = resumeResult.independent_projects.length > 0
+      ? [
+          sectionHeader("Independent Projects"),
+          ...resumeResult.independent_projects.flatMap((proj) => {
+            const header = [proj.company, proj.title, proj.date_range].filter(Boolean).join(" | ");
+            return [
+              new Paragraph({
+                spacing: { before: 160, after: 60 },
+                children: [new TextRun({ text: header, bold: true, size: 21, font: "Calibri" })],
+              }),
+              ...proj.calibrated_bullets.map(
+                (b) =>
+                  new Paragraph({
+                    spacing: { after: 40 },
+                    bullet: { level: 0 },
+                    children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+                  })
+              ),
+            ];
+          }),
+        ]
+      : [];
+
     const doc = new Document({
       sections: [
         {
           properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
           children: [
+            // Name — centered, bold, 18-20px
             new Paragraph({
               alignment: AlignmentType.CENTER,
-              spacing: { after: 80 },
-              children: [new TextRun({ text: name.trim(), bold: true, size: 32, font: "Calibri" })],
+              spacing: { after: 40 },
+              children: [new TextRun({ text: name.trim(), bold: true, size: 36, font: "Calibri" })],
             }),
-            ...([email.trim(), phone.trim()].filter(Boolean).length > 0
+            // Contact info — centered, 11px, gray — ALWAYS in header, never in body
+            ...(contactParts.length > 0
               ? [
                   new Paragraph({
                     alignment: AlignmentType.CENTER,
-                    spacing: { after: 200 },
+                    spacing: { after: 80 },
                     children: [
                       new TextRun({
-                        text: [email.trim(), phone.trim()].filter(Boolean).join("  |  "),
+                        text: contactParts.join("  |  "),
                         size: 20,
                         font: "Calibri",
                         color: "666666",
@@ -260,13 +364,23 @@ const ResumeBuilder = ({
                   }),
                 ]
               : []),
+            // Horizontal rule
+            new Paragraph({
+              spacing: { after: 200 },
+              border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
+              children: [],
+            }),
+            // Professional Summary
             sectionHeader("Professional Summary"),
             new Paragraph({
               spacing: { after: 200 },
               children: [new TextRun({ text: resumeResult.positioning_statement, size: 21, font: "Calibri" })],
             }),
+            // Experience
             sectionHeader("Experience"),
             ...roleChildren,
+            // Independent Projects (separate section)
+            ...projectChildren,
           ],
         },
       ],
@@ -280,6 +394,8 @@ const ResumeBuilder = ({
   // ─── Resume Preview ──────────────────────────────────────────────────────
 
   if (resumeResult) {
+    const contactParts = [location.trim(), email.trim(), phone.trim()].filter(Boolean);
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -295,14 +411,14 @@ const ResumeBuilder = ({
         {/* Document-style resume */}
         <div className="bg-white rounded-sm shadow-[0_2px_20px_-4px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.05)] max-w-[640px] mx-auto">
           <div className="px-10 py-10 space-y-6" style={{ fontFamily: "'Calibri', 'Segoe UI', sans-serif" }}>
-            {/* Name */}
+            {/* Name — header */}
             <div className="text-center border-b pb-5" style={{ borderColor: "#e0e0e0" }}>
               <p className="font-bold text-foreground" style={{ fontSize: "20px", letterSpacing: "0.02em" }}>
                 {name.trim()}
               </p>
-              {(email.trim() || phone.trim()) && (
+              {contactParts.length > 0 && (
                 <p className="mt-1.5 text-muted-foreground" style={{ fontSize: "13px" }}>
-                  {[email.trim(), phone.trim()].filter(Boolean).join("  ·  ")}
+                  {contactParts.join("  ·  ")}
                 </p>
               )}
             </div>
@@ -317,31 +433,61 @@ const ResumeBuilder = ({
               </p>
             </div>
 
-            {/* Experience — role by role */}
-            <div>
-              <p className="font-bold uppercase text-foreground mb-3" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
-                Experience
-              </p>
-              <div className="space-y-5">
-                {resumeResult.calibrated_roles.map((role, ri) => {
-                  const header = [role.company, role.title, role.date_range].filter(Boolean).join(" | ");
-                  return (
-                    <div key={ri}>
-                      <p className="font-bold text-foreground mb-1.5" style={{ fontSize: "13px" }}>
-                        {header || `Role ${ri + 1}`}
-                      </p>
-                      <ul className="space-y-1.5 pl-4" style={{ listStyleType: "disc" }}>
-                        {role.calibrated_bullets.map((b, bi) => (
-                          <li key={bi} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
-                            {b}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
+            {/* Experience — professional roles only */}
+            {resumeResult.calibrated_roles.length > 0 && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-3" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Experience
+                </p>
+                <div className="space-y-5">
+                  {resumeResult.calibrated_roles.map((role, ri) => {
+                    const header = [role.company, role.title, role.date_range].filter(Boolean).join(" | ");
+                    return (
+                      <div key={ri}>
+                        <p className="font-bold text-foreground mb-1.5" style={{ fontSize: "13px" }}>
+                          {header || `Role ${ri + 1}`}
+                        </p>
+                        <ul className="space-y-1.5 pl-4" style={{ listStyleType: "disc" }}>
+                          {role.calibrated_bullets.map((b, bi) => (
+                            <li key={bi} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                              {b}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Independent Projects — separate section */}
+            {resumeResult.independent_projects.length > 0 && (
+              <div>
+                <p className="font-bold uppercase text-foreground mb-3" style={{ fontSize: "12px", letterSpacing: "0.12em" }}>
+                  Independent Projects
+                </p>
+                <div className="space-y-5">
+                  {resumeResult.independent_projects.map((proj, pi) => {
+                    const header = [proj.company, proj.title, proj.date_range].filter(Boolean).join(" | ");
+                    return (
+                      <div key={pi}>
+                        <p className="font-bold text-foreground mb-1.5" style={{ fontSize: "13px" }}>
+                          {header || `Project ${pi + 1}`}
+                        </p>
+                        <ul className="space-y-1.5 pl-4" style={{ listStyleType: "disc" }}>
+                          {proj.calibrated_bullets.map((b, bi) => (
+                            <li key={bi} className="text-foreground leading-relaxed" style={{ fontSize: "14px" }}>
+                              {b}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -373,6 +519,7 @@ const ResumeBuilder = ({
         </p>
         <div className="space-y-3">
           <Input placeholder="Full Name *" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder="Location — e.g. New York, NY (optional)" value={location} onChange={(e) => setLocation(e.target.value)} />
           <Input placeholder="Email (optional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>

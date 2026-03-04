@@ -107,7 +107,11 @@ const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: strin
       <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
         Threshold Requirement
       </p>
-      <p className="text-xs text-foreground leading-relaxed">{roleTitle} threshold requires {pillar.improvement_lever.replace(/^[Ii]f possible[,]?\s*/i, "").replace(/^[Aa]dd\s/i, "").replace(/^[Ii]nclude\s/i, "").replace(/^[Cc]onsider\s/i, "")}</p>
+      <p className="text-xs text-foreground leading-relaxed">
+        <span className="font-medium">{roleTitle} threshold requires:</span>
+        <br />
+        {pillar.improvement_lever.replace(/^[Ii]f possible[,]?\s*/i, "").replace(/^[Aa]dd\s/i, "").replace(/^[Ii]nclude\s/i, "").replace(/^[Cc]onsider\s/i, "")}
+      </p>
     </div>
   </div>
 );
