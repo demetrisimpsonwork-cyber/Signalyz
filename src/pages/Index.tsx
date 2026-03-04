@@ -210,6 +210,8 @@ const Index = () => {
   const [directorError, setDirectorError] = useState<string | null>(null);
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
+  const [inputTruncated, setInputTruncated] = useState(false);
+  const lastClickRef = useRef(0);
 
   const { user } = useAuth();
   const isPro = false;
