@@ -755,6 +755,12 @@ const Index = () => {
 
                 {result && (
                   <>
+                    {/* Professional Signal Diagnosis headline */}
+                    <div className="text-center space-y-1">
+                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Professional Signal Diagnosis</h2>
+                      <p className="text-xs text-muted-foreground">How hiring managers interpret your experience.</p>
+                    </div>
+
                     {/* Analysis banner */}
                     {analysisTime > 0 && (
                       <p className="text-xs text-muted-foreground text-center">
@@ -823,6 +829,10 @@ const Index = () => {
                         evidence_ledger: result.signal_model?.evidence_ledger,
                         career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
                         hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
+                        interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
+                        predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
+                        isPro: effectiveIsPro,
+                        onUpgrade: () => setShowUpgrade(true),
                       }}
                       matchScore={result.match_score}
                     />
