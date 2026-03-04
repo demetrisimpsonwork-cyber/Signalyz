@@ -189,11 +189,12 @@ const CalibratedResumeTab = ({
             className="rounded-lg py-8 px-4"
             style={{ backgroundColor: "#F3F4F6" }}
           >
-            <div id="resume-canvas">
+          <div id="resume-canvas">
               <ResumeCanvas
                 resume={currentResume}
                 editMode={editMode}
                 onUpdate={updateField}
+                saved={saved}
               />
             </div>
           </div>
