@@ -429,6 +429,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <DebugPanel lastDebug={lastDebug} />
       <OnboardingModal />
 
       {/* Hero — deep navy */}
