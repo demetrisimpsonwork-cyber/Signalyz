@@ -8,6 +8,13 @@ const corsHeaders = {
 
 const DAILY_FREE_LIMIT = 3;
 
+// ─── Input limits ────────────────────────────────────────────────────────────
+const MAX_RESUME_CHARS = 10000;
+const MAX_JD_CHARS = 8000;
+const MAX_COMBINED_CHARS = 16000;
+const MIN_RESUME_CHARS = 20;
+const MIN_JD_CHARS = 20;
+
 const MODELS = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
@@ -18,7 +25,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
   for (const model of MODELS) {
     console.log(`Trying model: ${model}`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout
     try {
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -42,14 +49,61 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       clearTimeout(timeout);
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
-      console.error(`${model} threw:`, msg);
+      if (msg.includes("aborted")) console.error(`${model} timed out`);
+      else console.error(`${model} threw:`, msg);
     }
   }
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
 
+// ─── Input normalization ─────────────────────────────────────────────────────
+
+function normalizeText(input: string): string {
+  return input
+    // Remove null bytes and unusual control characters
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    // Collapse repeated whitespace (preserve newlines)
+    .replace(/[^\S\n]+/g, " ")
+    // Collapse 3+ consecutive newlines into 2
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function stripResumeHeader(text: string): string {
+  const lines = text.split("\n");
+  let skipUntil = 0;
+  // Heuristic: skip leading lines that look like name/email/phone/address (up to 6 lines)
+  const headerPatterns = [
+    /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,                    // "John Smith"
+    /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,                     // email
+    /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,            // phone
+    /^\d+\s+\w+\s+(street|st|ave|avenue|blvd|rd|dr)/i, // address
+    /^(linkedin|github|portfolio)/i,                    // social links
+    /^(http|www\.)/i,                                   // URLs
+  ];
+  for (let i = 0; i < Math.min(lines.length, 6); i++) {
+    const line = lines[i].trim();
+    if (!line) { skipUntil = i + 1; continue; }
+    if (headerPatterns.some(p => p.test(line))) { skipUntil = i + 1; continue; }
+    break;
+  }
+  return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
+}
+
+function enforceCharLimits(resume: string, jd: string): { resume: string; jd: string; truncated: boolean } {
+  let truncated = false;
+  if (resume.length > MAX_RESUME_CHARS) { resume = resume.slice(0, MAX_RESUME_CHARS); truncated = true; }
+  if (jd.length > MAX_JD_CHARS) { jd = jd.slice(0, MAX_JD_CHARS); truncated = true; }
+  const combined = resume.length + jd.length;
+  if (combined > MAX_COMBINED_CHARS) {
+    const excess = combined - MAX_COMBINED_CHARS;
+    resume = resume.slice(0, resume.length - excess);
+    truncated = true;
+  }
+  return { resume, jd, truncated };
+}
+
 function sanitizeInput(input: string): string {
-  // Strip common prompt injection patterns
   return input
     .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)/gi, "")
     .replace(/system\s*:\s*/gi, "")
@@ -109,9 +163,26 @@ serve(async (req) => {
       });
     }
 
-    // Sanitize inputs
-    const cleanBullet = sanitizeInput(trimmedBullet);
-    const cleanJd = sanitizeInput(trimmedJd);
+    // --- Normalize and enforce limits ---
+    let normalizedBullet = normalizeText(stripResumeHeader(trimmedBullet));
+    let normalizedJd = normalizeText(trimmedJd);
+    const limits = enforceCharLimits(normalizedBullet, normalizedJd);
+    normalizedBullet = limits.resume;
+    normalizedJd = limits.jd;
+
+    const cleanBullet = sanitizeInput(normalizedBullet);
+    const cleanJd = sanitizeInput(normalizedJd);
+
+    if (cleanBullet.length < MIN_RESUME_CHARS) {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (cleanJd.length < MIN_JD_CHARS) {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Resumix can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
@@ -119,17 +190,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
-
-    // --- Server-side rate limiting for free users ---
-
-    if (userPlan === "free") {
-      const today = new Date().toISOString().slice(0, 10);
-
-      // Authenticated users: track by user_id. Guests: track by session token.
-      let existing: { id: string; alignment_count: number } | null = null;
-
-      if (userId) {
-        const { data } = await sb
           .from("usage_tracking")
           .select("id, alignment_count")
           .eq("user_id", userId)
