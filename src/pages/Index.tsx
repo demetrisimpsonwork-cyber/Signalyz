@@ -269,6 +269,46 @@ const Index = () => {
 
   const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
 
+  // Check if calibrated resume exists (persisted in localStorage by useResumeAssembly)
+  const hasCalibratedResume = (() => {
+    try { return !!localStorage.getItem("resumix_calibrated_resume"); } catch { return false; }
+  })();
+
+  // Pipeline stages derived from existing React state
+  const pipelineStages: PipelineStage[] = useMemo(() => {
+    const alignmentDone = !!result;
+    const reportDone = !!directorResult;
+    const resumeDone = hasCalibratedResume;
+    return [
+      {
+        id: "alignment",
+        label: "Alignment Engine",
+        shortLabel: "Alignment",
+        sublabel: "Score + signal diagnosis",
+        status: alignmentDone ? "complete" as const : "active" as const,
+        completedAt: null,
+      },
+      {
+        id: "report",
+        label: "Signal Report",
+        shortLabel: "Report",
+        sublabel: "12-section deep analysis",
+        status: reportDone ? "complete" as const : alignmentDone ? "active" as const : "locked" as const,
+        completedAt: null,
+        lockedReason: "Run the Alignment Engine first",
+      },
+      {
+        id: "resume",
+        label: "Calibrated Resume",
+        shortLabel: "Resume",
+        sublabel: "Assembled + export ready",
+        status: resumeDone ? "complete" as const : reportDone ? "active" as const : "locked" as const,
+        completedAt: null,
+        lockedReason: "Run the Signal Positioning Report first",
+      },
+    ];
+  }, [result, directorResult, hasCalibratedResume]);
+
   useEffect(() => {
     if (result) {
       setScoreRevealed(false);
