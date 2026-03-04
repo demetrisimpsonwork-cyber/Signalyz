@@ -79,6 +79,31 @@ export interface SignalDiagnosticData {
     domain_alignment?: SignalShift;
   };
   evidence_ledger?: Array<{ claim: string; source: string; evidence: string }>;
+  career_signal_map?: {
+    primary_alignment?: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+    secondary_alignment?: Array<{
+      role: string;
+      score: number;
+      signals: string[];
+      explanation: string;
+    }>;
+  };
+  hiring_signal_benchmark?: {
+    user_score?: number;
+    median_candidate_score?: number;
+    top_candidate_threshold?: number;
+    dimension_comparison?: Array<{
+      dimension: string;
+      user_score: number;
+      median_score: number;
+      gap_explanation: string;
+    }>;
+  };
 }
 
 const STRENGTH_STYLES: Record<string, string> = {
@@ -439,6 +464,137 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
   );
 }
 
+/* ─── MODULE 9: Career Signal Map ─── */
+function CareerSignalMap({ data }: { data: NonNullable<SignalDiagnosticData["career_signal_map"]> }) {
+  const renderRole = (item: { role: string; score: number; signals: string[]; explanation: string }, i: number) => {
+    const scoreColor = item.score >= 70 ? "text-green-600 dark:text-green-400" :
+      item.score >= 60 ? "text-yellow-600 dark:text-yellow-400" :
+      "text-orange-600 dark:text-orange-400";
+
+    return (
+      <div key={i} className="rounded-lg border bg-background p-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-foreground">{item.role}</p>
+          <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{item.score}%</span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${
+              item.score >= 70 ? "bg-green-500" : item.score >= 60 ? "bg-yellow-500" : "bg-orange-500"
+            }`}
+            style={{ width: `${item.score}%` }}
+          />
+        </div>
+        {item.signals?.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Your experience strongly signals:</p>
+            <ul className="space-y-0.5">
+              {item.signals.map((s, j) => (
+                <li key={j} className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {item.explanation && (
+          <p className="text-[11px] text-muted-foreground/80 leading-relaxed italic">{item.explanation}</p>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-5 space-y-4">
+      <div>
+        <SectionLabel>Career Signal Map</SectionLabel>
+        <SectionSub>Roles your experience most strongly signals</SectionSub>
+      </div>
+      {data.primary_alignment && data.primary_alignment.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-primary">Primary Alignment</p>
+          {data.primary_alignment.map(renderRole)}
+        </div>
+      )}
+      {data.secondary_alignment && data.secondary_alignment.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Secondary Alignment</p>
+          {data.secondary_alignment.map(renderRole)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── MODULE 10: Hiring Signal Benchmark ─── */
+function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticData["hiring_signal_benchmark"]> }) {
+  const userScore = data.user_score ?? 0;
+  const medianScore = data.median_candidate_score ?? 0;
+  const topThreshold = data.top_candidate_threshold ?? 0;
+
+  const scoreColor = (val: number, ref: number) =>
+    val >= ref ? "text-green-600 dark:text-green-400" : val >= ref - 10 ? "text-yellow-600 dark:text-yellow-400" : "text-orange-600 dark:text-orange-400";
+
+  return (
+    <div className="rounded-xl border bg-card p-5 space-y-4">
+      <div>
+        <SectionLabel>Hiring Signal Benchmark</SectionLabel>
+        <SectionSub>How your signal compares to typical candidates for this role</SectionSub>
+      </div>
+
+      {/* Summary scores */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Score</p>
+          <p className={`text-2xl font-bold tabular-nums ${scoreColor(userScore, medianScore)}`}>{userScore}</p>
+        </div>
+        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Median Candidate</p>
+          <p className="text-2xl font-bold tabular-nums text-muted-foreground">{medianScore}</p>
+        </div>
+        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Top Candidate</p>
+          <p className="text-2xl font-bold tabular-nums text-muted-foreground/70">{topThreshold}</p>
+        </div>
+      </div>
+
+      {/* Dimension comparison */}
+      {data.dimension_comparison && data.dimension_comparison.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Dimension Comparison</p>
+          {data.dimension_comparison.map((dim, i) => {
+            const ahead = dim.user_score >= dim.median_score;
+            return (
+              <div key={i} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-foreground">{dim.dimension}</p>
+                  <div className="flex items-center gap-3 text-xs tabular-nums">
+                    <span className={ahead ? "font-semibold text-green-600 dark:text-green-400" : "font-semibold text-orange-600 dark:text-orange-400"}>
+                      You: {dim.user_score}
+                    </span>
+                    <span className="text-muted-foreground">Median: {dim.median_score}</span>
+                  </div>
+                </div>
+                <div className="relative w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full bg-muted-foreground/20 transition-all duration-500"
+                    style={{ width: `${dim.median_score}%` }}
+                  />
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${ahead ? "bg-green-500" : "bg-orange-500"}`}
+                    style={{ width: `${dim.user_score}%` }}
+                  />
+                </div>
+                {dim.gap_explanation && (
+                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed">{dim.gap_explanation}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── MAIN COMPONENT ─── */
 interface SignalDiagnosticModulesProps {
   data: SignalDiagnosticData;
@@ -454,7 +610,9 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     data.signal_alignment_analysis?.length ||
     data.hiring_pipeline_simulation?.length ||
     data.signal_shift_estimates ||
-    data.signal_map;
+    data.signal_map ||
+    data.career_signal_map ||
+    data.hiring_signal_benchmark;
 
   if (!hasAny) return null;
 
@@ -496,6 +654,16 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
       {/* Signal Shift Visualization */}
       {data.signal_shift_estimates && (
         <SignalShiftVisualization data={data.signal_shift_estimates} />
+      )}
+
+      {/* Career Signal Map */}
+      {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+        <CareerSignalMap data={data.career_signal_map} />
+      )}
+
+      {/* Hiring Signal Benchmark */}
+      {data.hiring_signal_benchmark && data.hiring_signal_benchmark.user_score != null && (
+        <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
       )}
     </div>
   );
