@@ -774,14 +774,14 @@ const Index = () => {
                     {/* Signal Diagnostic Modules */}
                     <SignalDiagnosticModules
                       data={{
-                        jd_signal_extraction: (result as any).jd_signal_extraction,
-                        resume_signal_profile: (result as any).resume_signal_profile,
-                        signal_alignment_analysis: (result as any).signal_alignment_analysis,
-                        hiring_pipeline_simulation: (result as any).hiring_pipeline_simulation,
-                        executive_insight_summary: (result as any).executive_insight_summary,
-                        transferable_signal_detection: (result as any).transferable_signal_detection,
-                        signal_shift_estimates: (result as any).signal_shift_estimates,
-                        signal_map: (result as any).signal_map,
+                        jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
+                        resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
+                        signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
+                        hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
+                        executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
+                        transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
+                        signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
+                        signal_map: result.signal_model?.signal_map || (result as any).signal_map,
                       }}
                       matchScore={result.match_score}
                     />
