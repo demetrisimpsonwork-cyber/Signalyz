@@ -770,6 +770,16 @@ const Index = () => {
           </div>
         )}
 
+        {/* Calibrated Resume Tab */}
+        {mode === "calibrated" && (
+          <CalibratedResumeTab
+            isPro={effectiveIsPro}
+            onUpgrade={() => setShowUpgrade(true)}
+            directorResult={directorResult}
+            originalResume={directorExperience}
+          />
+        )}
+
         {/* Executive Signal Audit Mode */}
         {mode === "director" && (
           <div className="grid gap-8 lg:grid-cols-2">
