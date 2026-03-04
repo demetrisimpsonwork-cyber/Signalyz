@@ -105,7 +105,14 @@ const SectionSub = ({ children }: { children: React.ReactNode }) => (
 );
 
 /* ─── MODULE 6: Executive Insight Summary ─── */
-function ExecutiveInsight({ data }: { data: NonNullable<SignalDiagnosticData["executive_insight_summary"]> }) {
+function ExecutiveInsight({ data, evidenceLedger }: { data: NonNullable<SignalDiagnosticData["executive_insight_summary"]>; evidenceLedger?: SignalDiagnosticData["evidence_ledger"] }) {
+  const evidenceEntries = evidenceLedger?.filter(e => e.source === "resume").slice(0, 3).map(e => ({
+    claim: e.evidence || e.claim,
+    resume_snippet: e.evidence || e.claim,
+    source_section: "Resume",
+    confidence: "High" as const,
+  }));
+
   return (
     <div className="rounded-xl border-l-4 border-l-primary bg-card p-5 space-y-3">
       <SectionLabel>Executive Insight</SectionLabel>
@@ -114,12 +121,20 @@ function ExecutiveInsight({ data }: { data: NonNullable<SignalDiagnosticData["ex
         <p><span className="font-semibold text-foreground">Why this matters:</span> {data.why_it_matters}</p>
         <p><span className="font-semibold text-primary">Repositioning opportunity:</span> {data.strategic_repositioning_opportunity}</p>
       </div>
+      <EvidenceLedger entries={evidenceEntries} />
     </div>
   );
 }
 
 /* ─── MODULE 1: Transferable Signal Detection ─── */
-function TransferableSignal({ data }: { data: NonNullable<SignalDiagnosticData["transferable_signal_detection"]> }) {
+function TransferableSignal({ data, evidenceLedger }: { data: NonNullable<SignalDiagnosticData["transferable_signal_detection"]>; evidenceLedger?: SignalDiagnosticData["evidence_ledger"] }) {
+  const evidenceEntries = evidenceLedger?.filter(e => e.source === "resume").slice(0, 2).map(e => ({
+    claim: e.evidence || e.claim,
+    resume_snippet: e.evidence || e.claim,
+    source_section: "Resume",
+    confidence: "Moderate" as const,
+  }));
+
   return (
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-3">
       <div className="flex items-center gap-2">
@@ -131,6 +146,7 @@ function TransferableSignal({ data }: { data: NonNullable<SignalDiagnosticData["
         <p><span className="font-semibold text-foreground">Why it transfers:</span> {data.why_it_transfers}</p>
         <p><span className="font-semibold text-primary">Elevation opportunity:</span> {data.elevation_opportunity}</p>
       </div>
+      <EvidenceLedger entries={evidenceEntries} />
     </div>
   );
 }
