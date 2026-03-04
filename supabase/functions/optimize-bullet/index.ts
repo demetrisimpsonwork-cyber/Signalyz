@@ -578,9 +578,22 @@ USER_PLAN: ${userPlan}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const status = message.includes("Rate limits") || message.includes("Daily free limit") ? 429 : message.includes("Usage limit") ? 402 : 500;
-    return new Response(JSON.stringify({ error: message }), {
-      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("Resumix engine error:", message);
+    // Rate limit still uses 429 so frontend can show upgrade modal
+    if (message.includes("Daily free limit")) {
+      return new Response(JSON.stringify({ status: "error", error: message, limit_reached: true }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const friendly =
+      message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
+      message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
+      message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
+      message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
+      message.includes("aborted") ? "Analysis took too long. Please retry." :
+      "Analysis engine temporarily unavailable. Please try again.";
+    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
