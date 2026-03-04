@@ -1,55 +1,80 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const DAILY_FREE_LIMIT = 3;
-const STORAGE_KEY = "resumix_daily_usage";
 
-interface DailyUsage {
-  date: string;
-  count: number;
-}
-
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getStoredUsage(): DailyUsage {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as DailyUsage;
-      if (parsed.date === getToday()) return parsed;
-    }
-  } catch {}
-  return { date: getToday(), count: 0 };
-}
-
-function saveUsage(usage: DailyUsage) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
+function getSessionToken(): string {
+  const key = "resumix_session_token";
+  let token = localStorage.getItem(key);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(key, token);
+  }
+  return token;
 }
 
 export function useDailyUsage(isPro: boolean) {
-  const [usage, setUsage] = useState<DailyUsage>(getStoredUsage);
+  const [count, setCount] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
-  const remaining = Math.max(0, DAILY_FREE_LIMIT - usage.count);
+  const remaining = Math.max(0, DAILY_FREE_LIMIT - count);
   const limitReached = !isPro && remaining <= 0;
 
+  // Fetch actual usage from server
+  const fetchUsage = useCallback(async () => {
+    if (isPro) { setLoaded(true); return; }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
+    try {
+      if (userId) {
+        const { data } = await supabase
+          .from("usage_tracking")
+          .select("alignment_count")
+          .eq("user_id", userId)
+          .eq("usage_date", today)
+          .maybeSingle();
+        setCount(data?.alignment_count ?? 0);
+      } else {
+        // Guest: use session token — query via edge function or just rely on server enforcement
+        // We can't query usage_tracking directly without auth (RLS), so use local fallback
+        const key = "resumix_daily_usage";
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.date === today) {
+              setCount(parsed.count ?? 0);
+            } else {
+              setCount(0);
+            }
+          }
+        } catch { setCount(0); }
+      }
+    } catch {
+      // Fallback to 0 on error
+      setCount(0);
+    }
+    setLoaded(true);
+  }, [isPro]);
+
+  useEffect(() => {
+    fetchUsage();
+  }, [fetchUsage]);
+
   const increment = useCallback(() => {
-    setUsage((prev) => {
-      const today = getToday();
-      const next = prev.date === today
-        ? { date: today, count: prev.count + 1 }
-        : { date: today, count: 1 };
-      saveUsage(next);
+    setCount((prev) => {
+      const next = prev + 1;
+      // For guests, also update localStorage for UI display
+      const today = new Date().toISOString().slice(0, 10);
+      try {
+        localStorage.setItem("resumix_daily_usage", JSON.stringify({ date: today, count: next }));
+      } catch {}
       return next;
     });
   }, []);
 
-  // Sync across tabs
-  useEffect(() => {
-    const handler = () => setUsage(getStoredUsage());
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
-
-  return { remaining, limitReached, increment, DAILY_FREE_LIMIT };
+  return { remaining, limitReached, increment, DAILY_FREE_LIMIT, loaded };
 }

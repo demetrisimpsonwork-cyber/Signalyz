@@ -13,7 +13,7 @@ const MODELS = [
 async function callAI(apiKey: string, prompt: string): Promise<string> {
   for (const model of MODELS) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -35,16 +35,27 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
   throw new Error("Service temporarily unavailable.");
 }
 
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)/gi, "")
+    .replace(/system\s*:\s*/gi, "")
+    .replace(/you\s+are\s+now\s+/gi, "")
+    .replace(/act\s+as\s+/gi, "")
+    .replace(/pretend\s+(you\s+are|to\s+be)\s+/gi, "")
+    .trim();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { experience, jd, calibratedBullet, matchScore } = await req.json();
+    const body = await req.json();
+    const { roles, jd, matchScore, existingSummary, skills, certifications } = body;
 
-    if (!experience || !jd || !calibratedBullet) {
-      return new Response(JSON.stringify({ error: "Missing required fields." }), {
+    if (!roles || !Array.isArray(roles) || roles.length === 0 || !jd) {
+      return new Response(JSON.stringify({ error: "Missing required fields: roles array and jd." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,35 +64,58 @@ serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
 
-    const prompt = `You are a professional resume positioning engine. Generate TWO things based on the candidate's experience and target job description.
+    const cleanJd = sanitizeInput(jd);
 
-ANTI-FABRICATION RULE: You MUST only reference skills, experiences, outcomes, and responsibilities that are explicitly present in the EXPERIENCE_INPUT. Do NOT invent metrics, titles, tools, certifications, or responsibilities.
+    // Build structured roles description for the prompt
+    const rolesDescription = roles.map((r: { company: string; title: string; date_range: string; bullets: string[] }, i: number) => {
+      const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${sanitizeInput(b)}`).join("\n");
+      return `ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
+    }).join("\n\n");
 
-WRITING STYLE:
-- Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment"
-- Write in third person, institutional voice
-- Lead with evidence, not claims
-- Operational language only
+    const prompt = `You are a professional resume calibration engine. You will receive structured resume roles with individual bullets, plus a target job description.
 
-TASK 1 — POSITIONING STATEMENT:
-Write a 3-4 sentence professional summary in third person that positions this candidate for the target role. It must be signal-calibrated to the specific JD. Use only evidence from the experience provided.
+YOUR TASK:
+1. Infer the target role title and seniority from the JD.
+2. Generate a calibrated PROFESSIONAL SUMMARY (3-4 sentences, third person, institutional voice, signal-calibrated to the JD).
+3. For EACH role, calibrate EACH bullet individually through the signal engine. Preserve the original role structure — do NOT merge bullets across roles.
+4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
-TASK 2 — SIGNAL GAP NOTICE:
-Write 2-3 sentences identifying remaining perception gaps AFTER calibration. Be specific about what signals are still missing or weak relative to the JD requirements. This is diagnostic, not promotional.
+CALIBRATION RULES (Pinnacle Filter):
+- Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
+- Lead with evidence before claims — numbers, systems, ownership, outcomes first.
+- Use operational language: what was built, owned, fixed, decided.
+- Never use: "results-driven", "leveraging synergies", "passionate about", "dynamic environment", "fast-paced team".
+- Vary sentence cadence — no symmetrical bullet structures.
+- Each bullet must be 1-2 lines max (under 35 words).
+- Write like a capable professional explaining work to a peer.
+
+INPUTS:
+${rolesDescription}
+
+${existingSummary ? `EXISTING SUMMARY: ${sanitizeInput(existingSummary)}` : ""}
+${skills ? `SKILLS/COMPETENCIES: ${sanitizeInput(skills)}` : ""}
+${certifications ? `CERTIFICATIONS: ${sanitizeInput(certifications)}` : ""}
+
+JOB DESCRIPTION: ${cleanJd}
+
+MATCH SCORE: ${matchScore || "N/A"}%
 
 Return ONLY this JSON (no markdown, no code fences):
 {
-  "positioning_statement": "string",
-  "signal_gap_notice": "string"
+  "positioning_statement": "string (3-4 sentence professional summary)",
+  "interview_preparation_notice": "string (2-3 sentences on remaining gaps)",
+  "calibrated_roles": [
+    {
+      "company": "string",
+      "title": "string",
+      "date_range": "string",
+      "calibrated_bullets": ["string (each bullet individually calibrated)"]
+    }
+  ]
 }
 
-EXPERIENCE_INPUT: ${experience}
-
-JOB_DESCRIPTION: ${jd}
-
-CALIBRATED_BULLET: ${calibratedBullet}
-
-MATCH_SCORE: ${matchScore}%`;
+CRITICAL: calibrated_roles must have the SAME number of roles as the input, in the SAME order. Each role must have the SAME number of bullets as the input role.`;
 
     let content = await callAI(apiKey, prompt);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
@@ -90,7 +124,13 @@ MATCH_SCORE: ${matchScore}%`;
     try {
       parsed = JSON.parse(content);
     } catch {
+      console.error("JSON parse failed:", content.slice(0, 500));
       throw new Error("Failed to parse AI response.");
+    }
+
+    // Validate structure
+    if (!parsed.positioning_statement || !parsed.calibrated_roles || !Array.isArray(parsed.calibrated_roles)) {
+      throw new Error("Invalid AI response structure.");
     }
 
     return new Response(JSON.stringify(parsed), {

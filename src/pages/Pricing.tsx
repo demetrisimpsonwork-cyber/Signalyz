@@ -3,58 +3,54 @@ import { Button } from "@/components/ui/button";
 
 const tiers = [
   {
-    name: "Free",
+    name: "Signal Preview",
     price: "$0",
-    description: "Surface-level alignment",
+    description: "Surface-level alignment diagnostics",
     features: [
-      "3 alignments/day",
+      "3 signal alignments per day",
+      "Calibrated bullet (1 version)",
       "Overall alignment score",
-      "Basic keyword gap analysis",
-      "1 optimized bullet",
-      "Role Signal Clarity pillar (ISI™)",
+      "Top signal gap identification",
     ],
     cta: "Get started",
     highlighted: false,
-    microcopy: null,
-    psychFrame: null,
   },
   {
-    name: "Pro — Unlimited",
+    name: "Resumix Pro",
     price: "$19",
     period: "/mo",
-    description: "Full employer decision model",
+    description: "Full signal calibration engine",
     features: [
-      "Unlimited refinements",
-      "Full Identity Strength Index™ (4 pillars)",
-      "Employer Risk Perception Analysis™",
-      "Weighted employer priority breakdown",
-      "Multi-bullet strategic variants",
-      "Gap severity classification",
-      "Interview leverage insights",
-      "Strategic Bridge Analysis",
-      "Alignment history tracking",
+      "Unlimited alignments",
+      "Full Identity Strength Index™ (all 4 pillars)",
+      "Complete Signal Risk Projection (all 5 stages)",
+      "Multi-variant repositioned bullets",
+      "Build My Calibrated Resume (full DOCX export)",
+      "Executive Signal Audit access",
+      "Interview Preparation Notice",
+      "Alignment history",
     ],
-    cta: "Unlock Employer Intelligence™",
+    cta: "Unlock Resumix Pro",
     highlighted: true,
-    microcopy: "Most users get interview-ready in one session.",
-    psychFrame: "You are currently seeing surface-level alignment only.",
   },
 ];
 
 const Pricing = () => {
   return (
-    <div className="container max-w-4xl py-20">
+    <div className="container max-w-4xl py-20 px-4">
       <div className="mb-14 text-center">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
           Most candidates optimize wording. Strategic candidates optimize perception.
         </p>
       </div>
+
+      {/* Desktop: 2-col grid. Mobile: stacked cards */}
       <div className="grid gap-6 md:grid-cols-2">
         {tiers.map((tier) => (
           <div
             key={tier.name}
-            className={`rounded-xl border p-8 flex flex-col ${
+            className={`rounded-xl border p-6 sm:p-8 flex flex-col ${
               tier.highlighted
                 ? "border-primary bg-accent shadow-lg"
                 : "bg-card"
@@ -62,12 +58,7 @@ const Pricing = () => {
           >
             <div>
               <h3 className="text-base font-semibold text-foreground tracking-tight">{tier.name}</h3>
-              {tier.psychFrame && (
-                <p className="mt-1 text-[11px] text-destructive/70 font-medium">{tier.psychFrame}</p>
-              )}
-              {!tier.psychFrame && (
-                <p className="mt-1 text-sm text-muted-foreground">{tier.description}</p>
-              )}
+              <p className="mt-1 text-sm text-muted-foreground">{tier.description}</p>
             </div>
 
             <div className="mt-4">
@@ -90,9 +81,6 @@ const Pricing = () => {
             >
               {tier.cta}
             </Button>
-            {tier.microcopy && (
-              <p className="mt-2 text-[11px] text-muted-foreground text-center italic">{tier.microcopy}</p>
-            )}
           </div>
         ))}
       </div>
@@ -102,9 +90,16 @@ const Pricing = () => {
       </p>
 
       <p className="mt-4 text-center text-xs text-muted-foreground leading-relaxed">
-        Cancel anytime. No contracts. No commitment.<br />
+        Less than one rejected application costs you.<br />
         Every insight is grounded in real resume + job description signals — zero fabrication.
       </p>
+
+      {/* Sticky mobile CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3">
+        <Button className="w-full" size="lg">
+          Unlock Resumix Pro — $19/month
+        </Button>
+      </div>
     </div>
   );
 };
