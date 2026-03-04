@@ -321,10 +321,18 @@ const Index = () => {
     setDirectorResult(null);
     setDirectorError(null);
     console.log("[telemetry] positioning_run_clicked");
+
+    // 90-second timeout
+    const timeoutId = setTimeout(() => {
+      setDirectorLoading(false);
+      setDirectorError("Analysis is taking longer than expected. Your resume may be complex — click retry to try again.");
+    }, 90000);
+
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
         body: { experience: normResume.text },
       });
+      clearTimeout(timeoutId);
       // Capture debug info from response
       const debug: DebugInfo = {
         request_id: data?.request_id,
@@ -348,14 +356,28 @@ const Index = () => {
         throw new Error(data.message || data.error || "Analysis failed");
       }
       if (data?.error) throw new Error(data.error);
+
       const result = data as DirectorCalibrationResult;
+
+      // Validate the result has minimum required fields
+      if (!result || !result.dimensions || !result.director_signal_tier) {
+        console.error("[positioning] Result missing required fields:", Object.keys(result || {}));
+        throw new Error("Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.");
+      }
+
       setDirectorResult(result);
-      console.log("[telemetry] positioning_run_success");
+      console.log("[telemetry] positioning_run_success", {
+        dimensions: result.dimensions?.length,
+        has_classifier: !!result.signal_classifier,
+        has_gap_analyzer: !!result.gap_analyzer,
+        has_export: !!result.export_builder,
+      });
       // Persist last successful run
       try {
         localStorage.setItem("resumix_last_positioning_run", JSON.stringify(result));
       } catch {}
     } catch (err: any) {
+      clearTimeout(timeoutId);
       const msg = err.message || "We couldn't complete the analysis. Please try again.";
       setDirectorError(msg);
       console.log("[telemetry] positioning_run_error", msg);
