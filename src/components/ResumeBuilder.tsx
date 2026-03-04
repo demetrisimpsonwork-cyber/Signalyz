@@ -215,6 +215,7 @@ const ResumeBuilder = ({
 }: ResumeBuilderProps) => {
   const [loading, setLoading] = useState(false);
   const [resumeResult, setResumeResult] = useState<ResumeResult | null>(null);
+  const [parsedExtras, setParsedExtras] = useState<{ skills: string; certifications: string; education: string }>({ skills: "", certifications: "", education: "" });
   const [showContactForm, setShowContactForm] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
