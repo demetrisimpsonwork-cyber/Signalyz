@@ -89,8 +89,19 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         console.warn("[useResumeAssembly] Received partial result, using Phase 1 structure");
       }
 
+      // Merge pre-extracted contact into header (fill gaps only)
+      const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
+      const mergedHeader = {
+        name: rawHeader.name || preExtractedContact?.name || "",
+        title: rawHeader.title || "",
+        email: rawHeader.email || preExtractedContact?.email || "",
+        phone: rawHeader.phone || preExtractedContact?.phone || "",
+        linkedin: rawHeader.linkedin || preExtractedContact?.linkedin || "",
+        location: rawHeader.location || preExtractedContact?.location || "",
+      };
+
       const resume: CalibratedResumeData = {
-        header: data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" },
+        header: mergedHeader,
         summary: data.summary || "",
         core_competencies: data.core_competencies || [],
         experience: data.experience || [],
