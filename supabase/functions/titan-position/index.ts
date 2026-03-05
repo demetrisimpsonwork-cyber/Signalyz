@@ -10,6 +10,59 @@ const MAX_RESUME_CHARS = 10000;
 const MAX_JD_CHARS = 8000;
 const MAX_COMBINED_CHARS = 16000;
 
+// ─── Cache ───────────────────────────────────────────────────────────────────
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+const resultCache = new Map<string, { data: string; ts: number }>();
+
+async function hashInputs(a: string, b: string): Promise<string> {
+  const enc = new TextEncoder().encode(a + "||" + b);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+// ─── Input normalization ─────────────────────────────────────────────────────
+
+function normalizeText(input: string): string {
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function stripResumeHeader(text: string): string {
+  const lines = text.split("\n");
+  let skipUntil = 0;
+  const headerPatterns = [
+    /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,
+    /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,
+    /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,
+    /^\d+\s+\w+\s+(street|st|ave|avenue|blvd|rd|dr)/i,
+    /^(linkedin|github|portfolio)/i,
+    /^(http|www\.)/i,
+  ];
+  for (let i = 0; i < Math.min(lines.length, 6); i++) {
+    const line = lines[i].trim();
+    if (!line) { skipUntil = i + 1; continue; }
+    if (headerPatterns.some(p => p.test(line))) { skipUntil = i + 1; continue; }
+    break;
+  }
+  return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
+}
+
+function enforceCharLimits(resume: string, jd: string): { resume: string; jd: string; truncated: boolean } {
+  let truncated = false;
+  if (resume.length > MAX_RESUME_CHARS) { resume = resume.slice(0, MAX_RESUME_CHARS); truncated = true; }
+  if (jd.length > MAX_JD_CHARS) { jd = jd.slice(0, MAX_JD_CHARS); truncated = true; }
+  const combined = resume.length + jd.length;
+  if (combined > MAX_COMBINED_CHARS) {
+    const excess = combined - MAX_COMBINED_CHARS;
+    resume = resume.slice(0, resume.length - excess);
+    truncated = true;
+  }
+  return { resume, jd, truncated };
+}
+
 async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55000);
