@@ -29,7 +29,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
+        max_tokens: 3500,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -251,273 +251,68 @@ serve(async (req) => {
       }
     }
 
-    const prompt = `You are Alignment Engine V2 (Titan).
+    const prompt = `You are Alignment Engine V2. Analyze resume vs JD. No fabrication. Address user as "you/your" only — never third person.
 
-Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience. The product speaks to the user, never about them.
+RULES: Never invent tools/metrics/certs. Only reframe existing experience. Return ONLY valid JSON.
 
-Your function is to analyze resume experience against a job description and generate structured alignment output without fabrication.
+SCORING (5 dimensions, weights in parens):
+1) Role Outcomes (30%) 2) Tools & Workflow (20%) 3) Domain (20%) 4) Context & Scale (15%) 5) Communication & Leadership (15%)
+Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ requires top-2 JD priority match + tool match + ownership signals.
 
-YOU MUST:
-- Never invent tools, metrics, certifications, or domain experience.
-- Only elevate, reframe, and optimize based on provided input.
-- Preserve factual integrity at all times.
+BULLETS: Max 35 words, high-signal verbs, ATS-safe, no semicolons/em-dashes.
+${userPlan === "pro" ? "3 variants: [0]Impact-Focused [1]Human-Natural [2]Keyword-Maximized" : "1 variant: primary (ATS-weighted to top JD priorities)"}
 
-INPUTS:
-- EXPERIENCE_INPUT
-- JOB_DESCRIPTION
-- USER_PLAN: ${userPlan}
+PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00).
 
--------------------------------------
-SCORING MODEL
--------------------------------------
-
-Score across 5 weighted dimensions:
-1) Role Outcomes & Deliverables (30%) → role_outcomes_alignment
-2) Tools & Workflow Signals (20%) → tools_and_workflow_alignment
-3) Domain Alignment (20%) → domain_and_context_alignment
-4) Context & Scale (15%) → context_and_scale_alignment
-5) Communication & Leadership Signals (15%) → communication_and_leadership_alignment
-
-Alignment Levels:
-- 0–49 = Weak
-- 50–64 = Moderate
-- 65–79 = Solid
-- 80+ = Strong
-
-Do NOT inflate score. Score must reflect realistic fit based on provided experience.
-Strong Alignment (80+) requires clear match on top 2 JD priorities AND at least one tool/workflow match AND credible ownership signals.
-
--------------------------------------
-BULLET GENERATION RULES
--------------------------------------
-
-Bullets must:
-- Be 1–2 lines, not exceed 35 words
-- Use high-signal verbs
-- Avoid exaggeration
-- Reflect only given experience
-- Be ATS-safe (no semicolons, no em dashes)
-
-IF USER_PLAN = "free":
-  optimized_bullets must contain EXACTLY 1 object (primary: direct, ATS-weighted to top JD priorities).
-
-IF USER_PLAN = "pro":
-  optimized_bullets must contain EXACTLY 3 objects:
-  [0] Impact-Focused — metric-forward tone, outcome-driven, emphasize ownership/delivery/revenue
-  [1] Human-Natural — interview-ready, natural professional tone, strong clarity, slightly less formal
-  [2] Keyword-Maximized — ATS-aligned, dense with role-relevant terminology, keyword-optimized
-
--------------------------------------
-WEIGHTED PRIORITY EXTRACTION
--------------------------------------
-
-Extract 5–8 priorities from JOB_DESCRIPTION. Each must include:
-- priority theme
-- weight (0.05–0.25) based on repetition, must/required/mandatory signals, role framing
-Weights must sum to 1.00.
-
--------------------------------------
-TITAN OUTPUT CONTRACT (STRICT JSON)
--------------------------------------
-
-Return ONLY this JSON object with EXACT keys:
+JSON SCHEMA:
 {
-  "inferred_role_title": "string (exact target role title and seniority level inferred from the JD — e.g. 'Senior Customer Success Manager', 'Marketing Manager', 'Operations Lead'. Be specific to the JD. This drives all threshold language.)",
-  "optimized_bullets": [
-    {
-      "text": "string",
-      "variant": "primary" | "impact_focused" | "human_natural" | "keyword_maximized",
-      "used_signals": ["string"],
-      "removed_or_softened": ["string"]
-    }
-  ],
-  "match_score": {
-    "score": number,
-    "label": "Weak" | "Moderate" | "Solid" | "Strong",
-    "score_rationale": ["string"]
-  },
-  "missing_keywords": ["string (3–10 items max, ranked by importance)"],
-  "suggested_action_verbs": ["string (5 items max, aligned to JD tone and ownership level)"],
-  "alignment_intelligence_summary": "string (pro: 4–6 sentences; free: 2–3 sentences — what was elevated, what gaps remain, how transferable skills were repositioned)",
-  "strategic_gap_actions": ["string (2–3 for free, up to 5 for pro — actionable, truthful, behavior-based)"],
-  "weighted_priority_commentary": ${userPlan === "pro" ? '"string (pro only: 3–5 sentences explaining how JD priorities were weighted and which signals drove the score)"' : 'null'},
-  "strategic_bridge_analysis": ${userPlan === "pro" ? '{ "why_it_translates": "string", "perception_gaps": ["string"], "interview_narrative": "string" }' : 'null'},
+  "inferred_role_title": "string",
+  "optimized_bullets": [{"text":"string","variant":"string","used_signals":["string"],"removed_or_softened":["string"]}],
+  "match_score": {"score":number,"label":"Weak|Moderate|Solid|Strong","score_rationale":["string"]},
+  "missing_keywords": ["string (3-10)"],
+  "suggested_action_verbs": ["string (max 5)"],
+  "alignment_intelligence_summary": "string (${userPlan === "pro" ? "4-6" : "2-3"} sentences)",
+  "strategic_gap_actions": ["string (${userPlan === "pro" ? "up to 5" : "2-3"})"],
+  "weighted_priority_commentary": ${userPlan === "pro" ? '"string (3-5 sentences)"' : 'null'},
+  "strategic_bridge_analysis": ${userPlan === "pro" ? '{"why_it_translates":"string","perception_gaps":["string"],"interview_narrative":"string"}' : 'null'},
   "identity_strength_index": {
-    "total_score": number (0–100, sum of 4 pillar scores),
-    "pillars": [
-      {
-        "name": "Role Signal Clarity",
-        "score": number (0–25, strict signal read — not aspirational),
-        "explanation": "string (2–3 sentences: how clearly the resume projects role identity aligned to this JD — based only on observable signals)",
-        "improvement_lever": "string (one concise, actionable positioning change — no fabrication)"
-      },
-      {
-        "name": "Commercial Framing Power",
-        "score": number (0–25),
-        "explanation": "string (2–3 sentences: how effectively the resume frames commercial impact, revenue ownership, and measurable outcomes relative to JD requirements)",
-        "improvement_lever": "string"
-      },
-      {
-        "name": "Risk Compression Strength",
-        "score": number (0–25),
-        "explanation": "string (2–3 sentences: how well the resume reduces perceived hiring risk — stability, ownership signals, context match, transition logic)",
-        "improvement_lever": "string"
-      },
-      {
-        "name": "Narrative Cohesion",
-        "score": number (0–25),
-        "explanation": "string (2–3 sentences: how coherent and consistent the career narrative is relative to the JD — does the arc logically lead to this role?)",
-        "improvement_lever": "string"
-      }
-    ]
+    "total_score": number,
+    "pillars": [{"name":"Role Signal Clarity|Commercial Framing Power|Risk Compression Strength|Narrative Cohesion","score":number,"explanation":"string","improvement_lever":"string"}]
   },
   "jd_signal_extraction": {
-    "role_identity_signals": ["string (primary functional identity signals from JD, e.g. 'Provider Relations', 'Network Performance Strategy')"],
-    "strategic_signals": ["string (signals indicating strategic influence, e.g. 'value-based care', 'cost optimization')"],
-    "relationship_signals": ["string (external/executive coordination signals, e.g. 'physician engagement', 'executive stakeholder influence')"],
-    "operational_signals": ["string (process/operational responsibilities, e.g. 'claims resolution', 'compliance documentation')"],
-    "leadership_signals": ["string (team leadership/influence signals, e.g. 'coaching representatives', 'leading committees')"],
-    "priority_summary": "string (2-3 sentences explaining which signal categories the JD emphasizes most and why)"
+    "role_identity_signals":["string"],"strategic_signals":["string"],"relationship_signals":["string"],
+    "operational_signals":["string"],"leadership_signals":["string"],"priority_summary":"string"
   },
   "resume_signal_profile": {
-    "operational_execution": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string (specific resume phrases that demonstrate this)"] },
-    "stakeholder_coordination": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
-    "strategic_influence": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
-    "performance_improvement": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] },
-    "domain_expertise": { "strength": "Strong|Moderate|Weak|Missing", "evidence": ["string"] }
+    "operational_execution":{"strength":"Strong|Moderate|Weak|Missing","evidence":["string"]},
+    "stakeholder_coordination":{"strength":"string","evidence":["string"]},
+    "strategic_influence":{"strength":"string","evidence":["string"]},
+    "performance_improvement":{"strength":"string","evidence":["string"]},
+    "domain_expertise":{"strength":"string","evidence":["string"]}
   },
-  "signal_alignment_analysis": [
-    {
-      "category": "string (signal category name)",
-      "alignment_level": "Strong|Moderate|Weak|Missing",
-      "current_signal": "string (what the resume currently signals in this category)",
-      "perception_gap": "string (where the gap exists — be specific)",
-      "threshold_expectation": "string (what this role typically expects as evidence)"
-    }
-  ],
+  "signal_alignment_analysis": [{"category":"string","alignment_level":"Strong|Moderate|Weak|Missing","current_signal":"string","perception_gap":"string","threshold_expectation":"string"}],
   "hiring_pipeline_simulation": [
-    {
-      "stage": "Recruiter Filter",
-      "status": "PASS|MODERATE RISK|HIGH RISK",
-      "criteria": ["keyword density", "role identity match", "domain terminology"],
-      "explanation": "string (one sentence)"
-    },
-    {
-      "stage": "Hiring Manager Review",
-      "status": "PASS|MODERATE RISK|HIGH RISK",
-      "criteria": ["ownership language", "strategic framing", "performance impact"],
-      "explanation": "string (one sentence)"
-    },
-    {
-      "stage": "Panel Interview Signal",
-      "status": "PASS|MODERATE RISK|HIGH RISK",
-      "criteria": ["cross-functional leadership", "strategic influence", "domain expertise"],
-      "explanation": "string (one sentence)"
-    }
+    {"stage":"Recruiter Filter","status":"PASS|MODERATE RISK|HIGH RISK","criteria":["string"],"explanation":"string"},
+    {"stage":"Hiring Manager Review","status":"string","criteria":["string"],"explanation":"string"},
+    {"stage":"Panel Interview Signal","status":"string","criteria":["string"],"explanation":"string"}
   ],
-  "executive_insight_summary": {
-    "primary_insight": "string (one sentence — what the resume strongly signals and where it under-signals)",
-    "primary_strength": "string (one sentence — the strongest signal the resume currently projects)",
-    "why_it_matters": "string (one sentence — why this matters for the target role)",
-    "strategic_repositioning_opportunity": "string (one sentence — specific reframing opportunity)"
-  },
-  "transferable_signal_detection": {
-    "detected_capability": "string (the transferable capability found in the resume)",
-    "why_it_transfers": "string (how this capability maps to the target role)",
-    "elevation_opportunity": "string (how to reframe this for stronger alignment)"
-  },
-  "signal_map": {
-    "role_identity": number (0-25),
-    "ownership_framing": number (0-25),
-    "commercial_impact": number (0-25),
-    "domain_expertise": number (0-25),
-    "stakeholder_influence": number (0-25),
-    "operational_execution": number (0-25)
-  },
-  "signal_shift_estimates": {
-    "ownership_signal": { "before": number, "after": number },
-    "commercial_impact_signal": { "before": number, "after": number },
-    "role_identity_clarity": { "before": number, "after": number },
-    "domain_alignment": { "before": number, "after": number }
-  },
+  "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
+  "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
+  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number},
+  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}},
   "career_signal_map": {
-    "primary_alignment": [
-      {
-        "role": "string (role title the experience most strongly signals, e.g. 'Customer Success Manager')",
-        "score": number (50-100, alignment percentage),
-        "signals": ["string (2-4 specific signals from the resume that support this role)"],
-        "explanation": "string (2-3 sentences explaining why the experience aligns with this role)"
-      }
-    ],
-    "secondary_alignment": [
-      {
-        "role": "string (secondary role the experience could signal)",
-        "score": number (50-100),
-        "signals": ["string"],
-        "explanation": "string"
-      }
-    ]
+    "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string"}],
+    "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string"}]
   },
-  "hiring_signal_benchmark": {
-    "user_score": number (the user's overall signal score for the target role),
-    "median_candidate_score": number (estimated median candidate signal score for this role),
-    "top_candidate_threshold": number (estimated signal score of a top candidate),
-    "dimension_comparison": [
-      {
-        "dimension": "string (e.g. 'Ownership Authority', 'Operational Execution', 'Domain Expertise')",
-        "user_score": number (0-100),
-        "median_score": number (0-100),
-        "gap_explanation": "string (one sentence explaining the gap or advantage)"
-      }
-    ]
-  },
-  "interview_gap_diagnosis": {
-    "primary_issue": "string (one sentence — the main perception gap between resume and role, e.g. 'Your resume signals strong operational execution but under-communicates ownership authority expected for this role.')",
-    "what_hiring_managers_see": ["string (3 signals currently communicated by the resume, e.g. 'escalation management capability')"],
-    "what_this_creates": "string (one sentence — how hiring managers may interpret this signal pattern)",
-    "strategic_fixes": ["string (3 highest impact improvements, e.g. 'Elevate ownership language')"],
-    "current_score": number (current alignment score),
-    "predicted_score": number (predicted score after applying calibration suggestions)
-  },
-  "predicted_signal_lift": {
-    "dimensions": [
-      {
-        "dimension": "string (e.g. 'Ownership Authority', 'Strategic Impact', 'Domain Alignment', 'Role Identity Clarity')",
-        "lift": number (estimated point improvement, e.g. 6)
-      }
-    ],
-    "current_score": number,
-    "predicted_score": number
-  },
-  "debug": {
-    "mode": "${mode}",
-    "user_plan": "${userPlan}",
-    "bullet_count_requested": ${userPlan === "pro" ? 3 : 1},
-    "extracted_jd_priorities": [
-      { "priority": "string", "weight": number, "evidence": "string" }
-    ],
-    "scoring_breakdown": {
-      "role_outcomes_alignment": number,
-      "tools_and_workflow_alignment": number,
-      "domain_and_context_alignment": number,
-      "context_and_scale_alignment": number,
-      "communication_and_leadership_alignment": number
-    }
-  }
+  "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]},
+  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string"],"current_score":number,"predicted_score":number},
+  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number},
+  "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
 
-RULES:
-- No markdown. No code fences. No text outside the JSON.
-- weighted_priority_commentary and strategic_bridge_analysis must be null for free plan.
+Identity_strength_index pillars: exactly 4 (Role Signal Clarity, Commercial Framing Power, Risk Compression Strength, Narrative Cohesion), each 0-25, strict evidence-based.
 
-WRITING STYLE CONSTRAINTS (apply to ALL generated bullets):
-- Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
-- Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
-- Lead with evidence before claims — numbers, systems, ownership, outcomes first.
-- Use operational language describing what was built, owned, fixed, or decided.
-- Write like a capable professional explaining work to a peer, not a resume template.
-- Remove adjective stacking and motivational tone entirely.
-- Every bullet must sound like a specific human wrote it about a specific job, specific system, and specific outcome.
+STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
 EXPERIENCE_INPUT: ${cleanBullet}
 
