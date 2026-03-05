@@ -424,6 +424,111 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
         </div>
       )}
 
+      {/* Independent Projects */}
+      {resume.independent_projects && resume.independent_projects.length > 0 && (
+        <div className="mb-5">
+          <SectionHeader>Independent Projects</SectionHeader>
+          <div className="space-y-3">
+            {resume.independent_projects.map((proj, pi) => (
+              <div key={pi}>
+                <div className="mb-1">
+                  <EditableField
+                    value={proj.name}
+                    path={`independent_projects.${pi}.name`}
+                    editMode={editMode}
+                    onUpdate={onUpdate}
+                    className="font-bold"
+                    style={{ fontSize: "12px" }}
+                    placeholder="Project Name"
+                  />
+                  {(proj.description || editMode) && (
+                    <EditableField
+                      value={proj.description}
+                      path={`independent_projects.${pi}.description`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      style={{ fontSize: "11px", color: "#4B5563" }}
+                      placeholder="Brief description"
+                    />
+                  )}
+                </div>
+                {proj.bullets.length > 0 && (
+                  <BulletEditor
+                    bullets={proj.bullets}
+                    expIdx={1000 + pi}
+                    editMode={editMode}
+                    onUpdate={onUpdate}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skills */}
+      {resume.skills && resume.skills.length > 0 && (
+        <div className="mb-5">
+          <SectionHeader>Skills</SectionHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {resume.skills.map((skill, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center rounded-full border px-2.5 py-0.5"
+                style={{ borderColor: "#D1D5DB", color: "#374151", fontSize: "10px", fontWeight: 500 }}
+              >
+                {editMode ? (
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="outline-none cursor-text min-w-[20px]"
+                    onBlur={(e) => {
+                      const updated = [...resume.skills];
+                      updated[i] = e.currentTarget.textContent || skill;
+                      onUpdate("skills", updated);
+                    }}
+                  >
+                    {skill}
+                  </span>
+                ) : (
+                  skill
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Certifications */}
+      {resume.certifications && resume.certifications.length > 0 && (
+        <div className="mb-5">
+          <SectionHeader>Certifications</SectionHeader>
+          <ul className="space-y-1 ml-3">
+            {resume.certifications.map((cert, i) => (
+              <li key={i} className="flex gap-1.5" style={{ fontSize: "11px", lineHeight: "1.65" }}>
+                <span className="shrink-0 mt-0.5">•</span>
+                {editMode ? (
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="outline-none rounded px-1 -mx-1 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
+                    onBlur={(e) => {
+                      const updated = [...resume.certifications];
+                      updated[i] = e.currentTarget.textContent || cert;
+                      onUpdate("certifications", updated);
+                    }}
+                  >
+                    {cert}
+                  </span>
+                ) : (
+                  <span>{cert}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Education */}
       {resume.education.length > 0 && (
         <div>
