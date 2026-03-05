@@ -39,7 +39,7 @@ import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { useSubscription } from "@/hooks/useSubscription";
-import { PinnacleGate } from "@/components/PinnacleGate";
+import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -256,7 +256,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const { isPinnacle, isFree, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
+  const { isPro, isFree, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
@@ -267,14 +267,14 @@ const Index = () => {
     incrementTrialRun,
     TRIAL_LIMIT,
   } = useReverseTrial();
-  const effectiveIsPro = isPinnacle || isAdmin || isTrialPro;
+  const effectiveIsPro = isPro || isAdmin || isTrialPro;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Post-upgrade success toast
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
-      toast("Welcome to Pinnacle. All features are now unlocked.", {
+      toast("Welcome to Pro. All features are now unlocked.", {
         icon: "✦",
         duration: 4000,
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
@@ -843,7 +843,7 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <PinnacleGate
+          <ProGate
             featureName="LinkedIn Signal Calibration"
             featureDescription="Calibrate your LinkedIn headline and About section to match the exact language your target role is screening for."
           >
@@ -854,12 +854,12 @@ const Index = () => {
                 signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
               />
             </div>
-          </PinnacleGate>
+          </ProGate>
         )}
 
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
-          <PinnacleGate
+          <ProGate
             featureName="Calibrated Resume"
             featureDescription="Auto-assemble a polished, ATS-optimized resume from your signal analysis. Edit inline and export as .docx or .pdf."
           >
@@ -870,12 +870,12 @@ const Index = () => {
               originalResume={directorExperience}
               onSwitchToReport={() => setMode("director")}
             />
-          </PinnacleGate>
+          </ProGate>
         )}
 
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
-          <PinnacleGate
+          <ProGate
             featureName="Signal Positioning Report"
             featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
           >
@@ -952,7 +952,7 @@ const Index = () => {
               )}
             </div>
           </div>
-          </PinnacleGate>
+          </ProGate>
         )}
 
         {/* Alignment Mode */}
@@ -999,10 +999,10 @@ const Index = () => {
                   {!effectiveIsPro && dailyRunsRemaining <= 0 ? (
                     <div className="w-full space-y-2">
                       <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                        Upgrade to Pinnacle for Unlimited Runs
+                        Upgrade to Pro for Unlimited Runs
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        You've used your 3 free analyses today. Upgrade to Pinnacle for unlimited runs.
+                        You've used your 3 free analyses today. Upgrade to Pro for unlimited runs.
                       </p>
                     </div>
                   ) : (

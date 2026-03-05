@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SubscriptionTier = "free" | "pinnacle";
+export type SubscriptionTier = "free" | "pro";
 
 export interface SubscriptionState {
   tier: SubscriptionTier;
-  isPinnacle: boolean;
+  isPro: boolean;
   isFree: boolean;
   dailyRunCount: number;
   dailyRunsRemaining: number;
@@ -18,7 +18,7 @@ const FREE_DAILY_LIMIT = 3;
 export function useSubscription(): SubscriptionState {
   const [state, setState] = useState<SubscriptionState>({
     tier: "free",
-    isPinnacle: false,
+    isPro: false,
     isFree: true,
     dailyRunCount: 0,
     dailyRunsRemaining: FREE_DAILY_LIMIT,
@@ -57,14 +57,16 @@ export function useSubscription(): SubscriptionState {
 
     const runCount = isNewDay ? 0 : (profile.daily_run_count ?? 0);
     const tier = (profile.subscription_tier ?? "free") as SubscriptionTier;
+    // Support both "pro" and legacy "pinnacle" values in DB
+    const isPaid = tier === "pro" || (profile.subscription_tier as string) === "pinnacle";
 
     setState((s) => ({
       ...s,
-      tier,
-      isPinnacle: tier === "pinnacle",
-      isFree: tier === "free",
+      tier: isPaid ? "pro" : "free",
+      isPro: isPaid,
+      isFree: !isPaid,
       dailyRunCount: runCount,
-      dailyRunsRemaining: tier === "pinnacle" ? 999 : Math.max(0, FREE_DAILY_LIMIT - runCount),
+      dailyRunsRemaining: isPaid ? 999 : Math.max(0, FREE_DAILY_LIMIT - runCount),
       loading: false,
     }));
 

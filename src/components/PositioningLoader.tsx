@@ -6,7 +6,7 @@ const STEPS = [
   "Mapping your experience to weighted role dimensions…",
   "Detecting transferable signal patterns…",
   "Generating strategic positioning insights…",
-  "Applying Pinnacle calibration filter…",
+  "Applying Pro calibration filter…",
 ];
 
 const STEP_INTERVAL_MS = 3500;

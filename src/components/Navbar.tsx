@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
-  const { isPinnacle } = useSubscription();
+  const { isPro } = useSubscription();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -38,9 +38,9 @@ const Navbar = () => {
           )}
           {loading ? null : user ? (
             <div className="flex items-center gap-3">
-              {isPinnacle && (
+              {isPro && (
                 <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
-                  ✦ Pinnacle
+                  ✦ Pro
                 </span>
               )}
               <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
@@ -81,9 +81,9 @@ const Navbar = () => {
             )}
             {!loading && user && (
               <>
-                {isPinnacle && (
+                {isPro && (
                   <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
-                    ✦ Pinnacle
+                    ✦ Pro
                   </span>
                 )}
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>

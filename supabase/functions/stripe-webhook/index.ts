@@ -47,7 +47,7 @@ serve(async (req) => {
   }
 
   switch (event.type) {
-    // Payment succeeded = upgrade to Pinnacle
+    // Payment succeeded = upgrade to Pro
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id;
@@ -56,7 +56,7 @@ serve(async (req) => {
         await supabase
           .from("profiles")
           .update({
-            subscription_tier: "pinnacle",
+            subscription_tier: "pro",
             subscription_id: session.subscription as string,
             subscription_status: "active",
           })

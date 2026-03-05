@@ -5,7 +5,7 @@ const STEPS = [
   "Extracting employer priority signals…",
   "Mapping your experience to weighted themes…",
   "Generating strategic positioning insights…",
-  "Applying Pinnacle filter…",
+  "Applying Pro calibration filter…",
 ];
 
 const STEP_INTERVAL_MS = 3000;

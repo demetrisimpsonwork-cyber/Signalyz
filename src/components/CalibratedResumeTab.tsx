@@ -110,7 +110,7 @@ const CalibratedResumeTab = ({
             <div className="rounded-xl border bg-card p-8 text-center space-y-4 shadow-lg max-w-md">
               <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Upgrade to Pinnacle to auto-assemble, edit, and export your signal-optimized resume.
+                Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume.
               </p>
               <Button onClick={onUpgrade} size="lg" className="w-full gap-2">
                 <Lock className="h-4 w-4" />

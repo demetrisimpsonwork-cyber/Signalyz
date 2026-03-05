@@ -190,7 +190,7 @@ BULLET CALIBRATION RULES (CRITICAL):
 - NEVER produce a bullet that loses detail the original contained.
 - If a calibrated bullet exceeds 4 lines of text (~280 characters), split it into two bullets. The second bullet should begin with a continuation verb ("Additionally," "Further," "Concurrently,").
 
-PINNACLE FILTER:
+PRO FILTER:
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
 - Use operational language: what was built, owned, fixed, decided.
