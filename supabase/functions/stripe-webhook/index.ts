@@ -1,0 +1,143 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.0.0";
+
+serve(async (req) => {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+  if (!stripeKey || !webhookSecret) {
+    return new Response("Stripe not configured", { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+  const signature = req.headers.get("stripe-signature");
+  const body = await req.text();
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(body, signature!, webhookSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return new Response(`Webhook Error: ${err}`, { status: 400 });
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  switch (event.type) {
+    // Payment succeeded = upgrade to Pinnacle
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.metadata?.user_id;
+
+      if (userId) {
+        await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: "pinnacle",
+            subscription_id: session.subscription as string,
+            subscription_status: "active",
+          })
+          .eq("user_id", userId);
+
+        await supabase.from("subscription_events").insert({
+          user_id: userId,
+          event_type: "checkout.completed",
+          stripe_event_id: event.id,
+          payload: session as any,
+        });
+      }
+      break;
+    }
+
+    // Recurring payment succeeded
+    case "invoice.payment_succeeded": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = invoice.subscription as string;
+
+      if (subId) {
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        const userId = subscription.metadata?.user_id;
+
+        if (userId) {
+          await supabase
+            .from("profiles")
+            .update({
+              subscription_status: "active",
+              subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq("user_id", userId);
+
+          await supabase.from("subscription_events").insert({
+            user_id: userId,
+            event_type: "invoice.payment_succeeded",
+            stripe_event_id: event.id,
+            payload: { invoice_id: invoice.id, subscription_id: subId } as any,
+          });
+        }
+      }
+      break;
+    }
+
+    // Payment failed
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = invoice.subscription as string;
+
+      if (subId) {
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        const userId = subscription.metadata?.user_id;
+
+        if (userId) {
+          await supabase
+            .from("profiles")
+            .update({ subscription_status: "past_due" })
+            .eq("user_id", userId);
+
+          await supabase.from("subscription_events").insert({
+            user_id: userId,
+            event_type: "invoice.payment_failed",
+            stripe_event_id: event.id,
+            payload: { invoice_id: invoice.id } as any,
+          });
+        }
+      }
+      break;
+    }
+
+    // Subscription cancelled
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object as Stripe.Subscription;
+      const userId = subscription.metadata?.user_id;
+
+      if (userId) {
+        await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: "free",
+            subscription_status: "cancelled",
+            subscription_id: null,
+          })
+          .eq("user_id", userId);
+
+        await supabase.from("subscription_events").insert({
+          user_id: userId,
+          event_type: "subscription.deleted",
+          stripe_event_id: event.id,
+          payload: { subscription_id: subscription.id } as any,
+        });
+      }
+      break;
+    }
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+});

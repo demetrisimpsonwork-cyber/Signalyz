@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Menu, X, User } from "lucide-react";
 import { useState } from "react";
@@ -8,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
+  const { isPinnacle } = useSubscription();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,6 +38,11 @@ const Navbar = () => {
           )}
           {loading ? null : user ? (
             <div className="flex items-center gap-3">
+              {isPinnacle && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
+                  ✦ Pinnacle
+                </span>
+              )}
               <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
                 <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{initials}</AvatarFallback>
               </Avatar>
@@ -74,6 +81,11 @@ const Navbar = () => {
             )}
             {!loading && user && (
               <>
+                {isPinnacle && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
+                    ✦ Pinnacle
+                  </span>
+                )}
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
                 <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
               </>

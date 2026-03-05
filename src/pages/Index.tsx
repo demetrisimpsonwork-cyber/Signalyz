@@ -38,7 +38,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PinnacleGate } from "@/components/PinnacleGate";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
@@ -253,7 +256,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const isPro = false;
+  const { isPinnacle, isFree, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
@@ -264,8 +267,23 @@ const Index = () => {
     incrementTrialRun,
     TRIAL_LIMIT,
   } = useReverseTrial();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro;
+  const effectiveIsPro = isPinnacle || isAdmin || isTrialPro;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Post-upgrade success toast
+  useEffect(() => {
+    if (searchParams.get("upgrade") === "success") {
+      toast("Welcome to Pinnacle. All features are now unlocked.", {
+        icon: "✦",
+        duration: 4000,
+        style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
+      });
+      searchParams.delete("upgrade");
+      setSearchParams(searchParams, { replace: true });
+      refreshSub();
+    }
+  }, []);
 
   const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
 
@@ -534,6 +552,11 @@ const Index = () => {
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       increment();
       if (isTrialPro) incrementTrialRun();
+      // Increment server-side daily run count
+      if (user) {
+        try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
+        refreshSub();
+      }
       // Save to history
       saveToHistory(res);
       // Guest nudge
@@ -799,10 +822,7 @@ const Index = () => {
               Alignment Engine
             </button>
             <button
-              onClick={() => {
-                if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                setMode("linkedin");
-              }}
+              onClick={() => setMode("linkedin")}
               className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "linkedin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               LinkedIn Signal
@@ -815,10 +835,7 @@ const Index = () => {
               Signal Positioning Report
             </button>
             <button
-              onClick={() => {
-                if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                setMode("calibrated");
-              }}
+              onClick={() => setMode("calibrated")}
               className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "calibrated" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               style={mode === "calibrated" ? { backgroundColor: "hsl(var(--primary))" } : {}}
             >
@@ -831,28 +848,42 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <div className="max-w-2xl mx-auto">
-            <LinkedInSignalTab
-              experience={bullet}
-              inferredRole={result?.inferred_role_title || ""}
-              signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
-            />
-          </div>
+          <PinnacleGate
+            featureName="LinkedIn Signal Calibration"
+            featureDescription="Calibrate your LinkedIn headline and About section to match the exact language your target role is screening for."
+          >
+            <div className="max-w-2xl mx-auto">
+              <LinkedInSignalTab
+                experience={bullet}
+                inferredRole={result?.inferred_role_title || ""}
+                signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
+              />
+            </div>
+          </PinnacleGate>
         )}
 
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
-          <CalibratedResumeTab
-            isPro={effectiveIsPro}
-            onUpgrade={() => setShowUpgrade(true)}
-            directorResult={directorResult}
-            originalResume={directorExperience}
-            onSwitchToReport={() => setMode("director")}
-          />
+          <PinnacleGate
+            featureName="Calibrated Resume"
+            featureDescription="Auto-assemble a polished, ATS-optimized resume from your signal analysis. Edit inline and export as .docx or .pdf."
+          >
+            <CalibratedResumeTab
+              isPro={effectiveIsPro}
+              onUpgrade={() => setShowUpgrade(true)}
+              directorResult={directorResult}
+              originalResume={directorExperience}
+              onSwitchToReport={() => setMode("director")}
+            />
+          </PinnacleGate>
         )}
 
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
+          <PinnacleGate
+            featureName="Signal Positioning Report"
+            featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
+          >
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
               {!result ? (
@@ -926,6 +957,7 @@ const Index = () => {
               )}
             </div>
           </div>
+          </PinnacleGate>
         )}
 
         {/* Alignment Mode */}
@@ -969,10 +1001,15 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                  {!effectiveIsPro && limitReached ? (
-                    <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                      Upgrade to Pro for Unlimited Alignments
-                    </Button>
+                  {!effectiveIsPro && dailyRunsRemaining <= 0 ? (
+                    <div className="w-full space-y-2">
+                      <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                        Upgrade to Pinnacle for Unlimited Runs
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        You've used your 3 free analyses today. Upgrade to Pinnacle for unlimited runs.
+                      </p>
+                    </div>
                   ) : (
                     <Button onClick={handleOptimize} disabled={loading} className="gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97]">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -989,11 +1026,11 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Free tier counter */}
-                {!effectiveIsPro && (
-                  <p className="text-xs text-muted-foreground">
-                    {usedCount} of {DAILY_FREE_LIMIT} free alignments used today
-                  </p>
+                {/* Free tier counter — only show when 1 remaining */}
+                {!effectiveIsPro && dailyRunsRemaining === 1 && (
+                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 72%, 45%)" }}>
+                    1 free analysis remaining today
+                  </span>
                 )}
                 <p className="text-[11px] text-muted-foreground/70">Zero fabrication — we only work with what you give us.</p>
               </div>

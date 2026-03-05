@@ -95,29 +95,50 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          daily_run_count: number | null
+          daily_run_reset_at: string | null
           display_name: string | null
           email: string | null
           id: string
           onboarding_completed: boolean
           onboarding_skipped: boolean
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          subscription_period_end: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          daily_run_count?: number | null
+          daily_run_reset_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           onboarding_completed?: boolean
           onboarding_skipped?: boolean
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          daily_run_count?: number | null
+          daily_run_reset_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           onboarding_completed?: boolean
           onboarding_skipped?: boolean
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           user_id?: string
         }
         Relationships: []
@@ -220,6 +241,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          stripe_event_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_event_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_event_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       usage_tracking: {
         Row: {
           alignment_count: number
@@ -283,6 +331,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_run_count: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
