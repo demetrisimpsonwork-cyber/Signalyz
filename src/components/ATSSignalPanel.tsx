@@ -71,7 +71,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
       </div>
 
       {/* Risk badge */}
-      <div className={`rounded-lg p-4 text-center ${RISK_STYLES[data.ats_risk]}`}>
+      <div className={`rounded-lg p-5 md:p-4 text-center ${RISK_STYLES[data.ats_risk]}`}>
         <p className="text-lg font-bold">ATS Risk: {data.ats_risk}</p>
         <p className="text-sm opacity-90 mt-1">{data.ats_risk_explanation}</p>
       </div>
