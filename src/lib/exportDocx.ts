@@ -1,14 +1,15 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
 export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   const sectionHeader = (text: string) =>
     new Paragraph({
-      spacing: { before: 160, after: 80 },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 240, after: 120 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" } },
       children: [
-        new TextRun({ text: text.toUpperCase(), bold: true, size: 24, font: "Calibri", allCaps: true }),
+        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: "Calibri" }),
       ],
     });
 
@@ -20,35 +21,93 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   ].filter(Boolean);
 
   const experienceChildren = resume.experience.flatMap((exp, ri) => {
-    const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
-    return [
+    const roleParts: Paragraph[] = [];
+
+    // Role title + company as a sub-heading
+    const titleLine = [exp.title, exp.company].filter(Boolean).join(" — ");
+    roleParts.push(
       new Paragraph({
-        spacing: { before: 200, after: 60 },
-        children: [new TextRun({ text: header, bold: true, size: 22, font: "Calibri" })],
+        heading: HeadingLevel.HEADING_3,
+        spacing: { before: 200, after: 40 },
+        children: [
+          new TextRun({ text: titleLine, bold: true, size: 22, font: "Calibri" }),
+          ...(exp.dates
+            ? [new TextRun({ text: `  |  ${exp.dates}`, size: 20, font: "Calibri", color: "666666" })]
+            : []),
+        ],
       }),
+    );
+
+    // Bullets as actual list items
+    roleParts.push(
       ...exp.bullets.map(
         (b) =>
           new Paragraph({
-            spacing: { after: 120, line: 276 },
+            spacing: { after: 80, line: 276 },
             bullet: { level: 0 },
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
       ),
-      ...(ri < resume.experience.length - 1
-        ? [new Paragraph({ spacing: { after: 80 }, children: [] })]
-        : []),
-    ];
+    );
+
+    // Spacing between roles
+    if (ri < resume.experience.length - 1) {
+      roleParts.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
+    }
+
+    return roleParts;
   });
 
   const doc = new Document({
+    numbering: {
+      config: [
+        {
+          reference: "bullet-list",
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: "\u2022",
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: {
+                  indent: { left: 360, hanging: 180 },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    styles: {
+      paragraphStyles: [
+        {
+          id: "Heading2",
+          name: "Heading 2",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { bold: true, size: 22, font: "Calibri" },
+          paragraph: { spacing: { before: 240, after: 120 } },
+        },
+        {
+          id: "Heading3",
+          name: "Heading 3",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { bold: true, size: 22, font: "Calibri" },
+          paragraph: { spacing: { before: 200, after: 40 } },
+        },
+      ],
+    },
     sections: [
       {
         properties: {
           page: { margin: { top: 1440, bottom: 1080, left: 1080, right: 1080 } },
         },
         children: [
-          // Name
+          // Name — Heading 1 style
           new Paragraph({
+            heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
@@ -62,12 +121,12 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                   alignment: AlignmentType.CENTER,
                   spacing: { after: 40 },
                   children: [
-                    new TextRun({ text: resume.header.title, size: 22, font: "Calibri", color: "666666" }),
+                    new TextRun({ text: resume.header.title, size: 22, font: "Calibri", color: "555555" }),
                   ],
                 }),
               ]
             : []),
-          // Contact
+          // Contact line
           ...(contactParts.length > 0
             ? [
                 new Paragraph({
@@ -85,7 +144,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" } },
             children: [],
           }),
-          // Summary
+          // Professional Summary
           ...(resume.summary
             ? [
                 sectionHeader("Professional Summary"),
@@ -108,14 +167,16 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
               ]
             : []),
           // Experience
-          sectionHeader("Experience"),
-          ...experienceChildren,
+          ...(experienceChildren.length > 0
+            ? [sectionHeader("Professional Experience"), ...experienceChildren]
+            : []),
           // Independent Projects
           ...(resume.independent_projects && resume.independent_projects.length > 0
             ? [
                 sectionHeader("Independent Projects"),
                 ...resume.independent_projects.flatMap((proj) => [
                   new Paragraph({
+                    heading: HeadingLevel.HEADING_3,
                     spacing: { before: 160, after: 60 },
                     children: [
                       new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
@@ -125,7 +186,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                   ...proj.bullets.map(
                     (b) =>
                       new Paragraph({
-                        spacing: { after: 120, line: 276 },
+                        spacing: { after: 80, line: 276 },
                         bullet: { level: 0 },
                         children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
                       }),

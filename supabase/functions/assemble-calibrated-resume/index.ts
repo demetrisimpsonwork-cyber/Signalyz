@@ -67,7 +67,6 @@ function parseResumeTextIntoSections(text: string): any {
         } else if (currentExp && /^[-•▪►]/.test(trimmed)) {
           currentExp.bullets.push(trimmed.replace(/^[-•▪►]\s*/, ""));
         } else if (currentExp && trimmed.length > 20) {
-          // Could be a company name or a bullet without marker
           if (!currentExp.company && trimmed.length < 60 && !dateRx.test(trimmed)) {
             currentExp.company = trimmed;
           } else {
@@ -86,7 +85,6 @@ function parseResumeTextIntoSections(text: string): any {
         result.certifications.push(trimmed.replace(/^[-•▪►]\s*/, ""));
         break;
       case "projects": {
-        // Simple: treat each line as a project entry
         result.independentProjects.push({ name: trimmed, description: "", bullets: [] });
         break;
       }
@@ -94,6 +92,74 @@ function parseResumeTextIntoSections(text: string): any {
   }
   if (currentExp) result.experience.push(currentExp);
   return result;
+}
+
+function extractJDSignals(directorResult: any): string {
+  const parts: string[] = [];
+
+  // Priority signals from JD extraction
+  if (directorResult.signal_classifier?.jd_signal_extraction) {
+    const jd = directorResult.signal_classifier.jd_signal_extraction;
+    if (jd.priority_summary) parts.push(`Employer priority: ${jd.priority_summary}`);
+    if (jd.role_identity_signals?.length) parts.push(`Role signals: ${jd.role_identity_signals.join(", ")}`);
+    if (jd.strategic_signals?.length) parts.push(`Strategic signals: ${jd.strategic_signals.join(", ")}`);
+    if (jd.operational_signals?.length) parts.push(`Operational signals: ${jd.operational_signals.join(", ")}`);
+    if (jd.leadership_signals?.length) parts.push(`Leadership signals: ${jd.leadership_signals.join(", ")}`);
+  }
+
+  // Gap priorities
+  if (directorResult.gap_analyzer?.priority_order?.length) {
+    parts.push(`Signal gaps to address: ${directorResult.gap_analyzer.priority_order.join(", ")}`);
+  }
+
+  // Target level
+  if (directorResult.signal_classifier?.target_level_inferred) {
+    parts.push(`Target level: ${directorResult.signal_classifier.target_level_inferred}`);
+  }
+  if (directorResult.signal_classifier?.overall_seniority_alignment) {
+    parts.push(`Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}`);
+  }
+
+  return parts.join("\n");
+}
+
+function reorderCompetencies(skills: string[], directorResult: any): string[] {
+  if (!skills.length) return skills;
+
+  const jdSignals: string[] = [];
+  const jdExtraction = directorResult.signal_classifier?.jd_signal_extraction;
+  if (jdExtraction) {
+    jdSignals.push(
+      ...(jdExtraction.role_identity_signals || []),
+      ...(jdExtraction.strategic_signals || []),
+      ...(jdExtraction.operational_signals || []),
+      ...(jdExtraction.leadership_signals || []),
+      ...(jdExtraction.relationship_signals || []),
+    );
+  }
+
+  if (!jdSignals.length) return skills;
+
+  const jdLower = jdSignals.map(s => s.toLowerCase());
+
+  // Score each skill by relevance to JD signals
+  const scored = skills.map(skill => {
+    const skillLower = skill.toLowerCase();
+    let score = 0;
+    for (const sig of jdLower) {
+      if (skillLower.includes(sig) || sig.includes(skillLower)) score += 3;
+      // Partial word overlap
+      const skillWords = skillLower.split(/\s+/);
+      const sigWords = sig.split(/\s+/);
+      for (const sw of skillWords) {
+        if (sw.length > 3 && sigWords.some(w => w.includes(sw) || sw.includes(w))) score += 1;
+      }
+    }
+    return { skill, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(s => s.skill);
 }
 
 function assembleStructureFromSignalData(directorResult: any, originalResume: string) {
@@ -109,7 +175,6 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   let independentProjects: any[] = [];
   let signalKeywords: string[] = [];
 
-  // Parse from export_builder or original resume
   const textToParse = report.export_builder?.final_resume_text || originalResume;
   if (textToParse) {
     const parsed = parseResumeTextIntoSections(textToParse);
@@ -121,13 +186,22 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
     independentProjects = parsed.independentProjects;
   }
 
-  // Core competencies from signal classifier
+  // Core competencies from signal classifier dimensions
   if (report.signal_classifier?.dimension_scores) {
     const dims = Object.keys(report.signal_classifier.dimension_scores);
     coreCompetencies = dims.slice(0, 12).map((d: string) =>
       d.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
     );
   }
+
+  // Merge skills into competencies if no dimension scores
+  if (coreCompetencies.length === 0 && skills.length > 0) {
+    coreCompetencies = skills.slice(0, 12);
+  }
+
+  // Reorder competencies by JD relevance
+  coreCompetencies = reorderCompetencies(coreCompetencies, report);
+  skills = reorderCompetencies(skills, report);
 
   // Signal keywords
   if (report.gap_analyzer?.rewrite_targets?.length) {
@@ -171,7 +245,7 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   };
 }
 
-// ─── Phase 2: Focused sectional API calls ───
+// ─── Phase 2: Focused sectional API calls with JD context ───
 
 async function generateSummary(
   originalSummary: string,
@@ -180,12 +254,13 @@ async function generateSummary(
   apiKey: string,
   requestId: string,
 ): Promise<string> {
+  const jdSignals = extractJDSignals(directorResult);
+
   const context = [
     `Original summary: ${originalSummary}`,
-    directorResult.signal_classifier ? `Target level: ${directorResult.signal_classifier.target_level_inferred}` : "",
-    directorResult.signal_classifier ? `Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}` : "",
+    jdSignals ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSignals}` : "",
     directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
-    `First 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
+    `\nFirst 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
   ].filter(Boolean).join("\n");
 
   const controller = new AbortController();
@@ -203,7 +278,18 @@ async function generateSummary(
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
         temperature: 0,
-        system: "Rewrite the professional summary for signal alignment with the target role level. Keep it 2-4 sentences. Do not fabricate experience. Return ONLY the summary text, no JSON, no quotes.",
+        system: `Rewrite this professional summary to align with the target role's hiring criteria.
+
+RULES:
+- Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
+- Use 2-4 sentences of active voice only
+- NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
+- Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
+- Every sentence must reference verifiable experience from the original resume
+- Incorporate the target role's language architecture naturally — not keyword stuffing
+- ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
+
+Return ONLY the summary text, no JSON, no quotes, no labels.`,
         messages: [{ role: "user", content: context }],
       }),
       signal: controller.signal,
@@ -231,23 +317,17 @@ async function rewriteExperienceBullets(
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
-  // Build compact context
+  const jdSignals = extractJDSignals(directorResult);
+
+  // For each role, identify the 2-3 strongest bullets and mark them for rewrite
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
-    const bullets = exp.bullets.map((b: string) => `  • ${b}`).join("\n");
-    return `[${i}] ${header}\n${bullets}`;
+    const bullets = exp.bullets.map((b: string, bi: number) => `  [${bi}] ${b}`).join("\n");
+    return `[ROLE ${i}] ${header}\n${bullets}`;
   }).join("\n\n");
 
-  const signalContext = directorResult.signal_classifier
-    ? `Target: ${directorResult.signal_classifier.target_level_inferred}. Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}.`
-    : "";
-
-  const gapContext = directorResult.gap_analyzer?.rewrite_targets?.length
-    ? `Priority gaps: ${directorResult.gap_analyzer.priority_order?.join(", ") || "none"}`
-    : "";
-
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -261,15 +341,23 @@ async function rewriteExperienceBullets(
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         temperature: 0,
-        system: `Rewrite resume experience bullets for signal optimization. Elevate ownership language, add outcome framing, and strengthen authority signals. Do NOT fabricate metrics, titles, or responsibilities. Only reframe existing content.
+        system: `You are rewriting resume experience bullets to align with a target job description.
 
-${signalContext}
-${gapContext}
+TARGET JD SIGNAL CONTEXT:
+${jdSignals}
 
-Return ONLY valid JSON array matching:
+INSTRUCTIONS:
+1. For each role, identify the 2-3 bullets with the strongest transferable signal to the target JD
+2. Rewrite ONLY those high-signal bullets using the JD's language architecture — genuine reframing of actual work performed, not keyword stuffing
+3. Keep remaining bullets as-is (minor polish OK but no substantive changes)
+4. Preserve company names, titles, and dates EXACTLY as provided
+5. ZERO FABRICATION: Do not invent metrics, titles, responsibilities, or experience not present in the original
+6. Elevate ownership language and add outcome framing where the underlying work genuinely supports it
+
+Return ONLY valid JSON array:
 [{"company":"","title":"","dates":"","bullets":["..."]}]
 
-Keep ALL roles. Keep ALL bullets (rewritten). Preserve company names, titles, and dates exactly.`,
+Keep ALL roles. Keep ALL bullets. Preserve exact order.`,
         messages: [{ role: "user", content: expText }],
       }),
       signal: controller.signal,
@@ -339,16 +427,16 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars`);
+    console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars, ${structure.core_competencies.length} competencies`);
 
     // ── Phase 2: Sequential focused API calls ──
-    // 2a: Rewrite summary (small, fast)
+    // 2a: Rewrite summary
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
     const rewrittenSummary = await generateSummary(
       structure.summary, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id
     );
 
-    // 2b: Rewrite experience bullets (larger but focused)
+    // 2b: Rewrite experience bullets
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
       structure.experience, directorResult, ANTHROPIC_API_KEY, request_id
