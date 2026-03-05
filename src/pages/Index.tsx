@@ -388,6 +388,7 @@ const Index = () => {
       return;
     }
     if (normResume.truncated) setInputTruncated(true);
+    setDirectorExperience(normResume.text);
     setDirectorLoading(true);
     setDirectorResult(null);
     setDirectorError(null);

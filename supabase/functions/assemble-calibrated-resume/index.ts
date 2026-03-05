@@ -187,18 +187,17 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
     independentProjects = parsed.independentProjects;
   }
 
-  // Core competencies from signal classifier dimensions
-  if (report.signal_classifier?.dimension_scores) {
-    const dims = Object.keys(report.signal_classifier.dimension_scores);
-    coreCompetencies = dims.slice(0, 12).map((d: string) =>
-      d.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
-    );
-  }
-
-  // Merge skills into competencies if no dimension scores
-  if (coreCompetencies.length === 0 && skills.length > 0) {
+  // Core competencies: use actual skills parsed from the resume, NOT internal dimension labels
+  if (skills.length > 0) {
     coreCompetencies = skills.slice(0, 12);
   }
+
+  // Only fallback to explicit competency lists from the report if no skills were parsed
+  if (coreCompetencies.length === 0 && report.export_builder?.core_competencies?.length) {
+    coreCompetencies = report.export_builder.core_competencies;
+  }
+
+  // NEVER use dimension_scores keys as competencies — those are internal signal labels
 
   // Reorder competencies by JD relevance
   coreCompetencies = reorderCompetencies(coreCompetencies, report);
