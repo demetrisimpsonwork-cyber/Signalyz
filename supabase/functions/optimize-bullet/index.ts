@@ -506,6 +506,9 @@ USER_PLAN: ${userPlan}`;
       alt_b: altB,
     }).throwOnError();
 
+    // Cache the result for repeat analyses
+    setCache(cacheKey, result);
+
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
