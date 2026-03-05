@@ -957,6 +957,7 @@ const Index = () => {
               )}
             </div>
           </div>
+          </PinnacleGate>
         )}
 
         {/* Alignment Mode */}
