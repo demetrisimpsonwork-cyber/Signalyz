@@ -166,8 +166,8 @@ class DirectorCalibrationErrorBoundary extends Component<
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[DirectorCalibrationBlock] Render error:", error, info);
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    // Error boundary caught render error
   }
   render() {
     if (this.state.hasError) {
@@ -390,7 +390,7 @@ const Index = () => {
     setDirectorLoading(true);
     setDirectorResult(null);
     setDirectorError(null);
-    console.log("[telemetry] positioning_run_clicked");
+    // telemetry: positioning_run_clicked
 
     // 90-second timeout
     const timeoutId = setTimeout(() => {
@@ -431,17 +431,12 @@ const Index = () => {
 
       // Validate the result has minimum required fields
       if (!result || !result.dimensions || !result.director_signal_tier) {
-        console.error("[positioning] Result missing required fields:", Object.keys(result || {}));
+        // positioning result missing required fields
         throw new Error("Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.");
       }
 
       setDirectorResult(result);
-      console.log("[telemetry] positioning_run_success", {
-        dimensions: result.dimensions?.length,
-        has_classifier: !!result.signal_classifier,
-        has_gap_analyzer: !!result.gap_analyzer,
-        has_export: !!result.export_builder,
-      });
+      // telemetry: positioning_run_success
       // Persist last successful run
       try {
         localStorage.setItem("resumix_last_positioning_run", JSON.stringify(result));
@@ -450,7 +445,7 @@ const Index = () => {
       clearTimeout(timeoutId);
       const msg = err.message || "We couldn't complete the analysis. Please try again.";
       setDirectorError(msg);
-      console.log("[telemetry] positioning_run_error", msg);
+      // telemetry: positioning_run_error
     } finally {
       setDirectorLoading(false);
     }
@@ -577,7 +572,7 @@ const Index = () => {
           timestamp: new Date().toISOString(),
         });
       }
-      console.error("[resumix] alignment engine error:", msg);
+      // alignment engine error handled via UI
     } finally {
       setLoading(false);
     }

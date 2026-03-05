@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { X, Plus, Check } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -69,7 +70,7 @@ const EditableField = ({
       onBlur={() => {
         if (ref.current) onUpdate(path, ref.current.textContent || "");
       }}
-      dangerouslySetInnerHTML={{ __html: value || "" }}
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(value || "") }}
       data-placeholder={placeholder}
     />
   );

@@ -19,7 +19,6 @@ export async function initiateCheckout() {
     });
 
     if (error) {
-      console.error("Checkout error:", error);
       return;
     }
 
@@ -27,6 +26,6 @@ export async function initiateCheckout() {
       window.location.href = data.url;
     }
   } catch (err) {
-    console.error("Checkout error:", err);
+    // Checkout error handled silently
   }
 }
