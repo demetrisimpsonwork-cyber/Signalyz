@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
+import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 
 export interface CalibratedResumeData {
   header: {
@@ -39,7 +40,7 @@ interface UseResumeAssemblyReturn {
   loading: boolean;
   error: string | null;
   step: number;
-  assemble: (directorResult: DirectorCalibrationResult, originalResume: string) => Promise<void>;
+  assemble: (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => Promise<void>;
 }
 
 const STEPS = [
@@ -61,7 +62,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string) => {
+  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
     setLoading(true);
     setError(null);
     setStep(0);
@@ -82,8 +83,25 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       if (fnError) throw new Error(fnError.message || "Assembly failed");
       if (data?.status === "error") throw new Error(data.message || "Assembly failed");
 
+      // Handle partial result with retry flag
+      if (data?.status === "partial" && data?.retry) {
+        // Use the partial result but show a message
+        console.warn("[useResumeAssembly] Received partial result, using Phase 1 structure");
+      }
+
+      // Merge pre-extracted contact into header (fill gaps only)
+      const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
+      const mergedHeader = {
+        name: rawHeader.name || preExtractedContact?.name || "",
+        title: rawHeader.title || "",
+        email: rawHeader.email || preExtractedContact?.email || "",
+        phone: rawHeader.phone || preExtractedContact?.phone || "",
+        linkedin: rawHeader.linkedin || preExtractedContact?.linkedin || "",
+        location: rawHeader.location || preExtractedContact?.location || "",
+      };
+
       const resume: CalibratedResumeData = {
-        header: data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" },
+        header: mergedHeader,
         summary: data.summary || "",
         core_competencies: data.core_competencies || [],
         experience: data.experience || [],

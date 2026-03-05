@@ -443,7 +443,18 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
     { key: "operational_execution" as const, label: "Operational Execution" },
   ];
 
+  // Detect the actual scale: if any score > 25, scores are on 0-100 scale
+  const maxScore = Math.max(...dimensions.map(d => data[d.key] ?? 0));
+  const isPercentScale = maxScore > 25;
+  const dimensionMax = isPercentScale ? 100 : 25;
+  const totalMax = dimensionMax * dimensions.length;
+
   const total = dimensions.reduce((sum, d) => sum + (data[d.key] ?? 0), 0);
+
+  // Thresholds adjusted to scale
+  const strongThreshold = dimensionMax * 0.8;
+  const moderateThreshold = dimensionMax * 0.52;
+  const weakThreshold = dimensionMax * 0.28;
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
@@ -452,27 +463,27 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
           <SectionLabel>Signal Map</SectionLabel>
           <SectionSub>Your career signal strength across six dimensions</SectionSub>
         </div>
-        <span className="text-lg font-bold text-foreground tabular-nums">{total}<span className="text-xs text-muted-foreground font-normal">/150</span></span>
+        <span className="text-lg font-bold text-foreground tabular-nums">{total}<span className="text-xs text-muted-foreground font-normal">/{totalMax}</span></span>
       </div>
       <div className="space-y-2.5">
         {dimensions.map(({ key, label }) => {
           const score = data[key] ?? 0;
-          const pct = (score / 25) * 100;
+          const pct = (score / dimensionMax) * 100;
           return (
             <div key={key} className="space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-foreground">{label}</p>
-                <span className="text-xs font-semibold text-muted-foreground tabular-nums">{score}/25</span>
+                <span className="text-xs font-semibold text-muted-foreground tabular-nums">{score}/{dimensionMax}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
-                    score >= 20 ? "bg-green-500" :
-                    score >= 13 ? "bg-yellow-500" :
-                    score >= 7 ? "bg-orange-500" :
+                    score >= strongThreshold ? "bg-green-500" :
+                    score >= moderateThreshold ? "bg-yellow-500" :
+                    score >= weakThreshold ? "bg-orange-500" :
                     "bg-destructive/60"
                   }`}
-                  style={{ width: `${pct}%` }}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
             </div>
