@@ -82,6 +82,12 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       if (fnError) throw new Error(fnError.message || "Assembly failed");
       if (data?.status === "error") throw new Error(data.message || "Assembly failed");
 
+      // Handle partial result with retry flag
+      if (data?.status === "partial" && data?.retry) {
+        // Use the partial result but show a message
+        console.warn("[useResumeAssembly] Received partial result, using Phase 1 structure");
+      }
+
       const resume: CalibratedResumeData = {
         header: data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" },
         summary: data.summary || "",
