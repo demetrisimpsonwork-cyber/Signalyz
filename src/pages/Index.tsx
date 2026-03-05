@@ -483,10 +483,6 @@ const Index = () => {
     lastClickRef.current = now;
 
     if (!validate()) return;
-    if (limitReached && !isTrialPro) {
-      setShowUpgrade(true);
-      return;
-    }
     setLoading(true);
     setResult(null);
     setAlignmentError(null);
@@ -535,10 +531,7 @@ const Index = () => {
       if (data?.status === "error") {
         debug.response_snippet = JSON.stringify(data).slice(0, 500);
         setLastDebug(debug);
-        if (data.limit_reached) {
-          setShowUpgrade(true);
-          return;
-        }
+        // limit_reached handling removed — server-side only
         setAlignmentError(debug);
         throw new Error(data.message || data.error || "Analysis failed");
       }
