@@ -554,7 +554,7 @@ const Index = () => {
       if (isTrialPro) incrementTrialRun();
       // Increment server-side daily run count
       if (user) {
-        supabase.rpc("increment_run_count", { p_user_id: user.id }).then(() => {}).catch?.(() => {});
+        try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
       }
       // Save to history
