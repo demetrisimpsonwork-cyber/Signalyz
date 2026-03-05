@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { initiateCheckout } from "@/utils/stripe";
 import { Separator } from "@/components/ui/separator";
-import { Separator } from "@/components/ui/separator";
 
 interface UpgradeModalProps {
   open: boolean;

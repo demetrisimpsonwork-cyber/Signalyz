@@ -2,7 +2,6 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
-import { useEffect, useState } from "react";
 
 const tiers = [
   {
