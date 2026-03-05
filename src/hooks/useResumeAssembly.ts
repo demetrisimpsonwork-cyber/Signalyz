@@ -19,6 +19,13 @@ export interface CalibratedResumeData {
     dates: string;
     bullets: string[];
   }>;
+  independent_projects: Array<{
+    name: string;
+    description: string;
+    bullets: string[];
+  }>;
+  skills: string[];
+  certifications: string[];
   education: Array<{
     institution: string;
     degree: string;
@@ -80,6 +87,9 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         summary: data.summary || "",
         core_competencies: data.core_competencies || [],
         experience: data.experience || [],
+        independent_projects: data.independent_projects || [],
+        skills: data.skills || [],
+        certifications: data.certifications || [],
         education: data.education || [],
         signal_keywords: data.signal_keywords || [],
       };
