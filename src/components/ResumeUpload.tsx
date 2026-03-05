@@ -2,10 +2,7 @@ import { useState, useRef } from "react";
 import { Upload, Loader2, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 import mammoth from "mammoth";
-import * as pdfjsLib from "pdfjs-dist";
 import { validateFileUpload } from "@/lib/sanitize";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface ResumeUploadProps {
   onTextExtracted: (text: string) => void;
@@ -23,6 +20,8 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
   };
 
   const extractFromPdf = async (file: File): Promise<string> => {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pages: string[] = [];
