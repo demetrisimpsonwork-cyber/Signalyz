@@ -56,6 +56,7 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
         text = await extractFromDocx(file);
       } else {
         text = await extractFromPdf(file);
+        toast.info("PDF text extracted. If formatting looks off, paste your resume text directly for best results.");
       }
 
       if (!text || text.length < 10) {
