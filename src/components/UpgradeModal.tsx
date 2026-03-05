@@ -6,7 +6,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { initiateCheckout } from "@/utils/stripe";
 import { Separator } from "@/components/ui/separator";
 
 interface UpgradeModalProps {
@@ -26,7 +26,7 @@ const UpgradeModal = ({
   trialLimit = 3,
   onStartTrial,
 }: UpgradeModalProps) => {
-  const navigate = useNavigate();
+  // removed unused navigate
 
   const handleStartTrial = () => {
     onStartTrial?.();
@@ -111,7 +111,7 @@ const UpgradeModal = ({
               className="w-full"
               onClick={() => {
                 onClose();
-                navigate("/pricing");
+                initiateCheckout();
               }}
             >
               Unlock Resumix Pro
