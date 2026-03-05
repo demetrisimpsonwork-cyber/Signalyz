@@ -9,27 +9,29 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
-    console.log("[Webhook] STRIPE_SECRET_KEY present:", !!stripeKey, "STRIPE_WEBHOOK_SECRET present:", !!webhookSecret);
-    console.log("[Webhook] Secret prefix:", webhookSecret?.substring(0, 20));
-
-    if (!stripeKey) {
-      console.error("[Webhook] Missing STRIPE_SECRET_KEY");
+    if (!stripeKey || !webhookSecret) {
+      console.error("[Webhook] Missing secrets — stripeKey:", !!stripeKey, "webhookSecret:", !!webhookSecret);
       return new Response("Not configured", { status: 500 });
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // TEMPORARY: bypass signature verification to test DB write end-to-end
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      console.error("[Webhook] Missing stripe-signature header");
+      return new Response("Missing signature", { status: 400 });
+    }
+
     const body = await req.text();
     console.log("[Webhook] Body length:", body.length);
 
     let event: Stripe.Event;
     try {
-      event = JSON.parse(body) as Stripe.Event;
-      console.log("[Webhook] Parsed event (NO signature check) — type:", event.type, "id:", event.id);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      console.log("[Webhook] Signature verified — event type:", event.type, "event id:", event.id);
     } catch (err) {
-      console.error("[Webhook] Failed to parse body as JSON:", (err as Error).message);
-      return new Response("Invalid JSON", { status: 400 });
+      console.error("[Webhook] Signature verification FAILED:", (err as Error).message);
+      return new Response(`Invalid signature: ${(err as Error).message}`, { status: 400 });
     }
 
     const supabase = createClient(
