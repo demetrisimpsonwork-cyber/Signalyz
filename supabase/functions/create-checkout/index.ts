@@ -68,6 +68,16 @@ serve(async (req) => {
 
     let customerId = profile?.stripe_customer_id;
 
+    // Validate existing customer still exists in current Stripe mode
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch {
+        console.log("Stored customer not found in current Stripe mode — will re-create");
+        customerId = undefined;
+      }
+    }
+
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: userEmail,
