@@ -509,7 +509,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
       {/* 7 — Gap Analyzer with A/B rewrites */}
       {gap_analyzer && (
-        <BlockShell label="Gap Analyzer — Upgrade Priority">
+        <BlockShell label="Calibrated Bullets — Upgrade Priority">
           {gap_analyzer.priority_order.length > 0 && (
             <div className="px-4 py-3 border-b border-border/60">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Remediation Priority Order</p>
@@ -525,49 +525,104 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
           )}
 
           <div className="divide-y divide-border/50">
-            {gap_analyzer.rewrite_targets.map((target, i) => (
-              <div key={i} className="px-4 py-3 space-y-2.5">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs font-semibold text-foreground leading-relaxed">{target.bullet_reference}</p>
-                  <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type]}`}>
-                    {UPGRADE_TYPE_LABELS[target.upgrade_type]}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
+            {(() => {
+              // Detect if any bullet_reference is actually a full resume
+              const SECTION_HEADER_RX = /^(PROFESSIONAL\s+(EXPERIENCE|SUMMARY)|CORE\s+COMPETENCIES|EDUCATION|SKILLS|CERTIFICATIONS|WORK\s+HISTORY)/im;
+              const processedTargets = gap_analyzer.rewrite_targets.flatMap((target) => {
+                const ref = target.bullet_reference || "";
+                const isFullResume = ref.length > 500 && SECTION_HEADER_RX.test(ref);
+                if (!isFullResume) return [target];
 
-                {/* A/B Rewrites */}
-                {(target.version_a || target.version_b) ? (
-                  <div className="space-y-2">
-                    {target.version_a && (
-                      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
-                        <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400">
-                          A — Upper-bound Truth
-                        </p>
-                        <p className="text-xs text-foreground leading-relaxed">{target.version_a}</p>
-                      </div>
-                    )}
-                    {target.version_b && (
-                      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
-                        <p className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 dark:text-blue-400">
-                          B — Conservative Truth
-                        </p>
-                        <p className="text-xs text-foreground leading-relaxed">{target.version_b}</p>
-                      </div>
-                    )}
-                    {target.chooser_line && (
-                      <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed pl-3 border-l-2 border-border/40">
-                        {target.chooser_line}
-                      </p>
-                    )}
+                // Parse individual bullets from the full resume text
+                const lines = ref.split("\n").map(l => l.trim()).filter(Boolean);
+                const extractedBullets: Array<{ bullet: string; context: string }> = [];
+                let currentContext = "";
+
+                for (const line of lines) {
+                  if (SECTION_HEADER_RX.test(line)) {
+                    currentContext = "";
+                    continue;
+                  }
+                  // Detect role/company headers (lines with dates)
+                  const dateRx = /(\d{4})\s*[-–—]\s*(present|current|\d{4})/i;
+                  if (dateRx.test(line)) {
+                    currentContext = line.replace(dateRx, "").replace(/[|—–,]\s*$/, "").trim();
+                    continue;
+                  }
+                  // Detect bullet points
+                  if (/^[-•▪►]/.test(line) || (line.length > 40 && /^[A-Z]/.test(line) && !SECTION_HEADER_RX.test(line))) {
+                    const cleanBullet = line.replace(/^[-•▪►]\s*/, "");
+                    if (cleanBullet.length > 30) {
+                      extractedBullets.push({ bullet: cleanBullet, context: currentContext });
+                    }
+                  }
+                }
+
+                // Take top 5 most calibration-worthy bullets (longest / most substantive)
+                const topBullets = extractedBullets
+                  .sort((a, b) => b.bullet.length - a.bullet.length)
+                  .slice(0, 5);
+
+                if (topBullets.length === 0) return [target]; // fallback
+
+                return topBullets.map((b, idx) => ({
+                  ...target,
+                  bullet_reference: b.bullet,
+                  _contextLabel: b.context || undefined,
+                  _parsedIndex: idx,
+                }));
+              });
+
+              return processedTargets.map((target: any, i: number) => (
+                <div key={i} className="px-4 py-3 space-y-2.5">
+                  {target._contextLabel && (
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/60">{target._contextLabel}</p>
+                  )}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Original Bullet</p>
+                      <p className="text-xs text-foreground leading-relaxed">{target.bullet_reference}</p>
+                    </div>
+                    <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type as UpgradeType]}`}>
+                      {UPGRADE_TYPE_LABELS[target.upgrade_type as UpgradeType]}
+                    </span>
                   </div>
-                ) : target.rewritten_bullet ? (
-                  <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Rewritten</p>
-                    <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                  <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
+
+                  {/* A/B Rewrites */}
+                  {(target.version_a || target.version_b) ? (
+                    <div className="space-y-2">
+                      {target.version_a && (
+                        <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400">
+                            A — Upper-bound Truth
+                          </p>
+                          <p className="text-xs text-foreground leading-relaxed">{target.version_a}</p>
+                        </div>
+                      )}
+                      {target.version_b && (
+                        <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 dark:text-blue-400">
+                            B — Conservative Truth
+                          </p>
+                          <p className="text-xs text-foreground leading-relaxed">{target.version_b}</p>
+                        </div>
+                      )}
+                      {target.chooser_line && (
+                        <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed pl-3 border-l-2 border-border/40">
+                          {target.chooser_line}
+                        </p>
+                      )}
+                    </div>
+                  ) : target.rewritten_bullet ? (
+                    <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Rewritten</p>
+                      <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ));
+            })()}
           </div>
         </BlockShell>
       )}
