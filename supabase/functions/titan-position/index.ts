@@ -89,14 +89,13 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
       if (content) return content;
     } else {
       const err = await aiRes.text();
-      console.error("Anthropic error:", err);
+      console.error("Anthropic error:", aiRes.status, err);
       if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-      if (aiRes.status === 402 || (aiRes.status === 400 && err.includes("credit"))) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
   } catch (e) {
     clearTimeout(timeout);
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    if (msg.includes("Rate limits")) throw e;
     console.error("Anthropic threw:", msg);
   }
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
@@ -233,7 +232,6 @@ JOB DESCRIPTION: ${cleanJd}`;
     console.error("Resumix engine error:", message);
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
-      message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
       message.includes("unavailable") ? "Our AI service is temporarily busy. Please try again in a moment." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :

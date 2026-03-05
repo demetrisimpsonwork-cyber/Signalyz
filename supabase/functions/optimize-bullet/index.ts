@@ -42,14 +42,13 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       if (content) return content;
     } else {
       const err = await aiRes.text();
-      console.error("Anthropic error:", err);
+      console.error("Anthropic error:", aiRes.status, err);
       if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-      if (aiRes.status === 402 || aiRes.status === 400 && err.includes("credit")) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
   } catch (e) {
     clearTimeout(timeout);
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    if (msg.includes("Rate limits")) throw e;
     if (msg.includes("aborted")) console.error("Anthropic timed out");
     else console.error("Anthropic threw:", msg);
   }
@@ -686,7 +685,6 @@ USER_PLAN: ${userPlan}`;
     }));
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
-      message.includes("Usage limit") ? "Usage limit reached. Please add credits to continue." :
       message.includes("Daily free limit") ? message :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :

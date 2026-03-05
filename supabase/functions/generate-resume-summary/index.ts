@@ -31,14 +31,13 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       if (content) return content;
     } else {
       const err = await res.text();
-      console.error("Anthropic error:", err);
+      console.error("Anthropic error:", res.status, err);
       if (res.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-      if (res.status === 402 || (res.status === 400 && err.includes("credit"))) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
   } catch (e) {
     clearTimeout(timeout);
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    if (msg.includes("Rate limits")) throw e;
     console.error("Anthropic threw:", msg);
   }
   throw new Error("All AI models failed or timed out.");

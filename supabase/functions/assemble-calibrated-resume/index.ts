@@ -187,12 +187,7 @@ Rules:
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ status: "error", request_id, error_code: "PAYMENT_REQUIRED", message: "AI credits exhausted. Please add credits." }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
+      // Let other non-429 errors fall through to the generic AI_ERROR below
 
       return new Response(
         JSON.stringify({ status: "error", request_id, error_code: "AI_ERROR", message: "Resume assembly failed. Please retry." }),
