@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
+import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 
 export interface CalibratedResumeData {
   header: {
@@ -39,7 +40,7 @@ interface UseResumeAssemblyReturn {
   loading: boolean;
   error: string | null;
   step: number;
-  assemble: (directorResult: DirectorCalibrationResult, originalResume: string) => Promise<void>;
+  assemble: (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => Promise<void>;
 }
 
 const STEPS = [
@@ -61,7 +62,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string) => {
+  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
     setLoading(true);
     setError(null);
     setStep(0);
