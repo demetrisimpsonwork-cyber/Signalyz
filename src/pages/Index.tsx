@@ -604,8 +604,8 @@ const Index = () => {
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
-          <p className="mt-4 text-base text-white/70 leading-relaxed">
-            Most candidates optimize wording. Strategic candidates optimize <span className="text-primary font-medium">perception</span>.
+          <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
+            Resumix analyzes your resume against real job descriptions and rewrites it so hiring systems and recruiters recognize your true experience.
           </p>
           <Button
             size="lg"
