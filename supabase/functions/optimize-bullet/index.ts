@@ -31,7 +31,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
         method: "POST",
         signal: controller.signal,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ model, temperature: 0, messages: [{ role: "user", content: prompt }] }),
       });
       clearTimeout(timeout);
       console.log(`${model} status:`, aiRes.status);
@@ -521,14 +521,27 @@ JOB_DESCRIPTION: ${cleanJd}
 USER_PLAN: ${userPlan}`;
 
     let content = await callAI(apiKey, prompt);
-    content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+    // Strip markdown code fences and whitespace
+    content = content.replace(/^```(?:json)?\s*/gm, "").replace(/```\s*$/gm, "").trim();
 
     let titan: Record<string, unknown>;
     try {
       titan = JSON.parse(content);
     } catch {
-      console.error("JSON parse failed. Preview:", content.slice(0, 300));
-      throw new Error("Failed to parse AI response. Please try again.");
+      // Attempt to extract JSON object from surrounding text
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          titan = JSON.parse(jsonMatch[0]);
+        } catch {
+          console.error("JSON parse failed after extraction. Preview:", content.slice(0, 300));
+          throw new Error("Failed to parse AI response. Please try again.");
+        }
+      } else {
+        console.error("JSON parse failed, no JSON object found. Preview:", content.slice(0, 300));
+        throw new Error("Failed to parse AI response. Please try again.");
+      }
     }
 
     // Map Titan contract to the shape the frontend expects
