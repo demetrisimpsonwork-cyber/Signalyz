@@ -110,6 +110,55 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           // Experience
           sectionHeader("Experience"),
           ...experienceChildren,
+          // Independent Projects
+          ...(resume.independent_projects && resume.independent_projects.length > 0
+            ? [
+                sectionHeader("Independent Projects"),
+                ...resume.independent_projects.flatMap((proj) => [
+                  new Paragraph({
+                    spacing: { before: 160, after: 60 },
+                    children: [
+                      new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
+                      ...(proj.description ? [new TextRun({ text: ` — ${proj.description}`, size: 21, font: "Calibri", color: "666666" })] : []),
+                    ],
+                  }),
+                  ...proj.bullets.map(
+                    (b) =>
+                      new Paragraph({
+                        spacing: { after: 120, line: 276 },
+                        bullet: { level: 0 },
+                        children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+                      }),
+                  ),
+                ]),
+              ]
+            : []),
+          // Skills
+          ...(resume.skills && resume.skills.length > 0
+            ? [
+                sectionHeader("Skills"),
+                new Paragraph({
+                  spacing: { after: 200, line: 276 },
+                  children: [
+                    new TextRun({ text: resume.skills.join("  •  "), size: 21, font: "Calibri" }),
+                  ],
+                }),
+              ]
+            : []),
+          // Certifications
+          ...(resume.certifications && resume.certifications.length > 0
+            ? [
+                sectionHeader("Certifications"),
+                ...resume.certifications.map(
+                  (cert) =>
+                    new Paragraph({
+                      spacing: { after: 80 },
+                      bullet: { level: 0 },
+                      children: [new TextRun({ text: cert, size: 21, font: "Calibri" })],
+                    }),
+                ),
+              ]
+            : []),
           // Education
           ...(resume.education.length > 0
             ? [

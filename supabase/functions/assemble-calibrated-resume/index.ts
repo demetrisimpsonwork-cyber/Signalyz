@@ -103,7 +103,7 @@ serve(async (req) => {
 
     const contextPayload = contextParts.join("\n\n---\n\n");
 
-    const systemPrompt = `You are a professional resume architect. You have been given pre-optimized resume components extracted from a deep signal analysis. Your job is to assemble them into a single coherent, ATS-optimized, professionally formatted resume. Maintain all signal-calibrated language exactly. Do not summarize or dilute any bullets. Structure the resume in this order: Header → Summary → Core Competencies → Experience → Education. Return the result as structured JSON with clearly labeled sections so each section can be rendered and edited independently in the UI.
+    const systemPrompt = `You are a professional resume architect. You have been given pre-optimized resume components extracted from a deep signal analysis. Your job is to assemble them into a single coherent, ATS-optimized, professionally formatted resume. Maintain all signal-calibrated language exactly. Do not summarize or dilute any bullets. Structure the resume in this order: Header → Professional Summary → Core Competencies → Experience → Independent Projects → Skills → Certifications → Education. Return the result as structured JSON with clearly labeled sections so each section can be rendered and edited independently in the UI.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -125,6 +125,15 @@ Return ONLY valid JSON matching this schema:
       "bullets": ["", ""]
     }
   ],
+  "independent_projects": [
+    {
+      "name": "",
+      "description": "",
+      "bullets": [""]
+    }
+  ],
+  "skills": ["", ""],
+  "certifications": [""],
   "education": [
     {
       "institution": "",
@@ -136,11 +145,17 @@ Return ONLY valid JSON matching this schema:
 }
 
 Rules:
-- Extract header info (name, email, phone, location) from the original resume text
+- Extract header info (name, email, phone, location, linkedin) from the original resume text
 - Use the optimized/rewritten bullets where available, falling back to originals
+- Apply signal-calibrated language to the Professional Summary — rewrite it to align with the target JD's signal dimensions
 - Core competencies should be 8-12 key skill/domain terms extracted from the signal analysis
+- Include ALL experience sections from the original resume with role/company/dates as structured headers and calibrated bullet points
+- Include Independent Projects if present in the original resume (side projects, open source, freelance)
+- Extract and list all Skills from the resume, organized by relevance to the target role
+- Include all Certifications mentioned in the original resume
 - Signal keywords should be the top 8-10 terms the role is screening for
 - Do not fabricate any experience, metrics, or claims
+- If a section has no content, return an empty array
 - If a field cannot be determined, use empty string
 - Return ONLY valid JSON, no markdown, no code fences`;
 
@@ -218,6 +233,15 @@ Rules:
             bullets: Array.isArray(e.bullets) ? e.bullets : [],
           }))
         : [],
+      independent_projects: Array.isArray(assembled.independent_projects)
+        ? assembled.independent_projects.map((p: any) => ({
+            name: p.name || "",
+            description: p.description || "",
+            bullets: Array.isArray(p.bullets) ? p.bullets : [],
+          }))
+        : [],
+      skills: Array.isArray(assembled.skills) ? assembled.skills : [],
+      certifications: Array.isArray(assembled.certifications) ? assembled.certifications : [],
       education: Array.isArray(assembled.education)
         ? assembled.education.map((e: any) => ({
             institution: e.institution || "",
