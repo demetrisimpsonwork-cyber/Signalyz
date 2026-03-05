@@ -213,6 +213,17 @@ serve(async (req) => {
       });
     }
 
+    // ─── Cache check ───────────────────────────────────────────────────────
+    const engineMode = mode === "multi_bullet" ? "pro" : "free";
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, engineMode);
+    const cached = getCached(cacheKey);
+    if (cached) {
+      console.log("Cache HIT for", cacheKey.slice(0, 12));
+      return new Response(JSON.stringify({ status: "success", request_id: requestId, cached: true, ...cached }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
