@@ -19,37 +19,20 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
     return result.value.trim();
   };
 
-  const extractFromPdf = async (file: File): Promise<string> => {
-    const PDFJS_VERSION = "4.4.168";
-    const cdnBase = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
-
-    // Load pdfjs from CDN to avoid production build issues
-    const pdfjsLib = await new Promise<any>((resolve, reject) => {
-      if ((window as any).pdfjsLib) {
-        resolve((window as any).pdfjsLib);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = `${cdnBase}/pdf.min.js`;
-      script.onload = () => resolve((window as any).pdfjsLib);
-      script.onerror = () => reject(new Error("Failed to load PDF library"));
-      document.head.appendChild(script);
+  const extractFromPdf = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = (e.target?.result as string) || "";
+        if (!text || text.length < 10) {
+          reject(new Error("Could not extract meaningful text from this PDF."));
+          return;
+        }
+        resolve(text.trim());
+      };
+      reader.onerror = () => reject(new Error("Failed to read PDF file."));
+      reader.readAsText(file);
     });
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `${cdnBase}/pdf.worker.min.js`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const pages: string[] = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const text = content.items
-        .map((item: any) => item.str)
-        .join(" ");
-      pages.push(text);
-    }
-    return pages.join("\n\n").trim();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
