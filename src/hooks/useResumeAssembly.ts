@@ -52,7 +52,7 @@ const STEPS = [
 export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(() => {
     try {
-      const saved = localStorage.getItem("resumix_calibrated_resume");
+      const saved = localStorage.getItem("resumix_calibrated_resume_data");
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -117,7 +117,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
       // Persist
       try {
-        localStorage.setItem("resumix_calibrated_resume", JSON.stringify(resume));
+        localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(resume));
       } catch {}
     } catch (err: any) {
       setError(err.message || "Failed to assemble resume. Please retry.");

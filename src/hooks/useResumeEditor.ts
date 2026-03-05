@@ -24,7 +24,7 @@ export function useResumeEditor(initial: CalibratedResumeData | null): UseResume
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       try {
-        localStorage.setItem("resumix_calibrated_resume_edited", JSON.stringify(data));
+        localStorage.setItem("resumix_calibrated_resume_data_edited", JSON.stringify(data));
         setSaved(true);
         setTimeout(() => setSaved(false), 1500);
       } catch {}
