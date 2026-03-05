@@ -12,7 +12,6 @@ import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
-import { exportCalibratedPdf } from "@/lib/exportPdf";
 
 /** Check if the director result has the minimum sections needed for assembly */
 function hasRequiredSections(result: DirectorCalibrationResult | null): boolean {
