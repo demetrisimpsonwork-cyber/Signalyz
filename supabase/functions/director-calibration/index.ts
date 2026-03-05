@@ -576,23 +576,26 @@ async function callAI(
   apiKey: string,
   systemPrompt: string,
   userContent: string,
+  temperature?: number,
 ): Promise<string> {
   for (const model of MODELS) {
     console.log(`Trying model: ${model}`);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
     try {
+      const bodyPayload: Record<string, unknown> = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      };
+      if (temperature !== undefined) bodyPayload.temperature = temperature;
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         signal: controller.signal,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ],
-        }),
+        body: JSON.stringify(bodyPayload),
       });
       clearTimeout(timeout);
       console.log(`${model} status:`, aiRes.status);
@@ -705,7 +708,7 @@ async function runPipeline(
     const normInput = jd?.trim()
       ? `JOB DESCRIPTION:\n${jd.trim()}\n\nRESUME:\n${experience}`
       : `RESUME:\n${experience}`;
-    const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput);
+    const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput, 0);
     normalized = parseJSON<Record<string, unknown>>(raw);
     console.log("  → target_role_title:", normalized.target_role_title);
     await storeArtifact(supabase, runId, "step_1_normalizer", { raw, parsed: normalized });
@@ -723,8 +726,8 @@ async function runPipeline(
   // ── 2. Signal Classifier + Director Calibration (parallel) ──────────────────
   console.log("[2/6] Signal Classifier + Director Calibration (parallel)");
   const [calibrationRaw, classifierRaw] = await Promise.all([
-    callAI(apiKey, DIRECTOR_PROMPT, sharedContext),
-    callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext),
+    callAI(apiKey, DIRECTOR_PROMPT, sharedContext, 0),
+    callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
   ]);
 
   // Director Calibration (required)
@@ -789,6 +792,7 @@ async function runPipeline(
         apiKey,
         `${GAP_ANALYZER_SYSTEM}\n\n${GAP_ANALYZER_SCHEMA}`,
         `INPUT DATA:\n${JSON.stringify(gapInput, null, 2)}`,
+        0,
       );
       gapOutput = parseJSON<GapAnalyzerOutput>(raw);
       result.gap_analyzer = gapOutput;
@@ -860,7 +864,7 @@ async function runPipeline(
         : "",
     ].filter(Boolean).join("\n\n");
 
-    const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
+    const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent, 0);
     const cvParsed = parseJSON<{ status: string; issues: string[] }>(raw);
     result.consistency_validator = cvParsed;
     console.log("  → status:", cvParsed.status);

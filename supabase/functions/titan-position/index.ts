@@ -87,7 +87,7 @@ async function callAI(apiKey: string, prompt: string, inputLen: number): Promise
         method: "POST",
         signal: controller.signal,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ model, temperature: 0, messages: [{ role: "user", content: prompt }] }),
       });
       clearTimeout(timeout);
       console.log(`${model} status:`, aiRes.status);
