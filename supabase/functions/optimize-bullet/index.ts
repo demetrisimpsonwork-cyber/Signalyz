@@ -119,7 +119,31 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
-// Session-based tracking replaces IP-based tracking
+// ─── In-memory result cache (SHA-256, 30min TTL, 50 entries) ──────────────────
+const resultCache = new Map<string, { data: Record<string, unknown>; ts: number }>();
+const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_MAX = 50;
+
+async function hashInputs(a: string, b: string, mode: string): Promise<string> {
+  const enc = new TextEncoder().encode(a + "|" + b + "|" + mode);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function getCached(key: string): Record<string, unknown> | null {
+  const entry = resultCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) { resultCache.delete(key); return null; }
+  return entry.data;
+}
+
+function setCache(key: string, data: Record<string, unknown>) {
+  if (resultCache.size >= CACHE_MAX) {
+    const oldest = resultCache.keys().next().value;
+    if (oldest) resultCache.delete(oldest);
+  }
+  resultCache.set(key, { data, ts: Date.now() });
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -186,6 +210,17 @@ serve(async (req) => {
     if (cleanJd.length < MIN_JD_CHARS) {
       return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Resumix can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── Cache check ───────────────────────────────────────────────────────
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, userPlan);
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, engineMode);
+    const cached = getCached(cacheKey);
+    if (cached) {
+      console.log("Cache HIT for", cacheKey.slice(0, 12));
+      return new Response(JSON.stringify({ status: "success", request_id: requestId, cached: true, ...cached }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -470,6 +505,9 @@ USER_PLAN: ${userPlan}`;
       alt_a: altA,
       alt_b: altB,
     }).throwOnError();
+
+    // Cache the result for repeat analyses
+    setCache(cacheKey, result);
 
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
