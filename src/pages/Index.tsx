@@ -1001,10 +1001,15 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                  {!effectiveIsPro && limitReached ? (
-                    <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                      Upgrade to Pro for Unlimited Alignments
-                    </Button>
+                  {!effectiveIsPro && dailyRunsRemaining <= 0 ? (
+                    <div className="w-full space-y-2">
+                      <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                        Upgrade to Pinnacle for Unlimited Runs
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        You've used your 3 free analyses today. Upgrade to Pinnacle for unlimited runs.
+                      </p>
+                    </div>
                   ) : (
                     <Button onClick={handleOptimize} disabled={loading} className="gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97]">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -1021,11 +1026,11 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Free tier counter */}
-                {!effectiveIsPro && (
-                  <p className="text-xs text-muted-foreground">
-                    {usedCount} of {DAILY_FREE_LIMIT} free alignments used today
-                  </p>
+                {/* Free tier counter — only show when 1 remaining */}
+                {!effectiveIsPro && dailyRunsRemaining === 1 && (
+                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 72%, 45%)" }}>
+                    1 free analysis remaining today
+                  </span>
                 )}
                 <p className="text-[11px] text-muted-foreground/70">Zero fabrication — we only work with what you give us.</p>
               </div>
