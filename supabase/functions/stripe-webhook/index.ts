@@ -52,15 +52,26 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id;
 
+      console.log("[Webhook] checkout.session.completed — metadata.user_id:", userId, "customer:", session.customer, "subscription:", session.subscription, "customer_email:", session.customer_email);
+
       if (userId) {
-        await supabase
+        const updatePayload = {
+          subscription_tier: "pro",
+          subscription_id: session.subscription as string,
+          subscription_status: "active",
+        };
+        console.log("[Webhook] Writing to profiles for user_id:", userId, "payload:", JSON.stringify(updatePayload));
+
+        const { error: updateError } = await supabase
           .from("profiles")
-          .update({
-            subscription_tier: "pro",
-            subscription_id: session.subscription as string,
-            subscription_status: "active",
-          })
+          .update(updatePayload)
           .eq("user_id", userId);
+
+        if (updateError) {
+          console.error("[Webhook] Profile update FAILED:", updateError.message);
+        } else {
+          console.log("[Webhook] Profile update SUCCESS for user_id:", userId);
+        }
 
         await supabase.from("subscription_events").insert({
           user_id: userId,
@@ -68,6 +79,8 @@ serve(async (req) => {
           stripe_event_id: event.id,
           payload: session as any,
         });
+      } else {
+        console.warn("[Webhook] checkout.session.completed but NO user_id in metadata! Session ID:", session.id);
       }
       break;
     }

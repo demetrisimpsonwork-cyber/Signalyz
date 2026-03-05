@@ -21,13 +21,20 @@ async function fetchSubscriptionData() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user) {
+    console.log("[SubCheck] No authenticated user");
+    return null;
+  }
 
-  const { data: profile } = await supabase
+  console.log("[SubCheck] Querying profiles for user_id:", user.id);
+
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, daily_run_count, daily_run_reset_at")
+    .select("subscription_tier, subscription_status, subscription_id, daily_run_count, daily_run_reset_at")
     .eq("user_id", user.id)
     .single();
+
+  console.log("[SubCheck] DB returned:", JSON.stringify(profile), "error:", profileError?.message ?? "none");
 
   if (!profile) return null;
 
@@ -55,13 +62,25 @@ async function fetchSubscriptionData() {
       .eq("user_id", user.id);
   }
 
-  return {
+  const result = {
     tier: isPaid ? ("pro" as SubscriptionTier) : ("free" as SubscriptionTier),
     isPro: isPaid,
     isFree: !isPaid,
     dailyRunCount: runCount,
     dailyRunsRemaining: isPaid ? 999 : Math.max(0, FREE_DAILY_LIMIT - runCount),
+    _debug: {
+      userId: user.id,
+      rawTier: profile.subscription_tier,
+      rawStatus: (profile as any).subscription_status,
+      rawSubId: (profile as any).subscription_id,
+      resolvedTier: isPaid ? "pro" : "free",
+      queriedAt: new Date().toISOString(),
+    },
   };
+
+  console.log("[SubCheck] Resolved tier:", result._debug.resolvedTier, "from raw:", result._debug.rawTier, "status:", result._debug.rawStatus);
+
+  return result;
 }
 
 export function useSubscription(): SubscriptionState {
