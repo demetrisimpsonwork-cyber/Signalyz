@@ -37,7 +37,7 @@ const Navbar = () => {
             <Link to="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Dashboard</Link>
           )}
           {loading ? null : user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {isPinnacle && (
                 <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
                   ✦ Pinnacle
@@ -46,7 +46,6 @@ const Navbar = () => {
               <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
                 <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{initials}</AvatarFallback>
               </Avatar>
-            </div>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />Sign out
               </Button>
