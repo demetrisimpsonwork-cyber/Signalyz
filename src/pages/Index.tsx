@@ -48,6 +48,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import SubscriptionDebugPanel from "@/components/SubscriptionDebugPanel";
 
 // Define types
 type SignalLevel = "Low" | "Moderate" | "High" | "Strong";
@@ -595,6 +596,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <DebugPanel lastDebug={lastDebug} />
+      <SubscriptionDebugPanel />
       <OnboardingModal />
 
       {/* Hero — deep navy */}
