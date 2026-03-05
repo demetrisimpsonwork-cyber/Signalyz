@@ -950,8 +950,8 @@ serve(async (req) => {
       total_payload_length: (typeof experience === "string" ? experience.length : 0) + (typeof jd === "string" ? jd.length : 0),
     }));
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
     // ── QA Mode: run all 3 fixtures ──────────────────────────────────────────
     if (qa_mode) {
