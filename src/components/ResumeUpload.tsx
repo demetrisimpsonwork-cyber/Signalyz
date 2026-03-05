@@ -30,14 +30,13 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
         return;
       }
       const script = document.createElement("script");
-      script.src = `${cdnBase}/pdf.min.mjs`;
-      script.type = "module";
+      script.src = `${cdnBase}/pdf.min.js`;
       script.onload = () => resolve((window as any).pdfjsLib);
       script.onerror = () => reject(new Error("Failed to load PDF library"));
       document.head.appendChild(script);
     });
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `${cdnBase}/pdf.worker.min.mjs`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `${cdnBase}/pdf.worker.min.js`;
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
