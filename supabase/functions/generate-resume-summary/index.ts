@@ -5,50 +5,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODELS = [
-  "google/gemini-2.5-flash",
-  "openai/gpt-5-mini",
-];
-
-function makeRequestId(): string {
-  return crypto.randomUUID();
-}
-
-function ok(body: Record<string, unknown>, requestId: string) {
-  return new Response(JSON.stringify({ status: "success", request_id: requestId, ...body }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-function err(requestId: string, errorCode: string, message: string, details?: Record<string, unknown>) {
-  return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: errorCode, message, details }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
 async function callAI(apiKey: string, prompt: string): Promise<string> {
-  for (const model of MODELS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
-    try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
-      });
-      clearTimeout(timeout);
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        if (content) return content;
-      }
-    } catch (e) {
-      clearTimeout(timeout);
-      console.error(`${model} error:`, e);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55000);
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        temperature: 0,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.content?.[0]?.text || "";
+      if (content) return content;
+    } else {
+      const err = await res.text();
+      console.error("Anthropic error:", err);
+      if (res.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      if (res.status === 402 || (res.status === 400 && err.includes("credit"))) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
+  } catch (e) {
+    clearTimeout(timeout);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    console.error("Anthropic threw:", msg);
   }
   throw new Error("All AI models failed or timed out.");
 }
@@ -119,7 +110,7 @@ serve(async (req) => {
       return err(requestId, "INVALID_INPUT_JD_TOO_SHORT", "Please paste more of the job description — include responsibilities and requirements for best results.", { jd_len: (jd || "").length });
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) {
       return err(requestId, "CONFIG_ERROR", "Analysis engine configuration error. Please try again later.");
     }

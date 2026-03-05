@@ -10,103 +10,41 @@ const MAX_RESUME_CHARS = 10000;
 const MAX_JD_CHARS = 8000;
 const MAX_COMBINED_CHARS = 16000;
 
-// Model router: use Pro for large inputs (>10k chars combined), Flash otherwise
-const MODELS_LARGE = [
-  "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash",
-  "openai/gpt-5-mini",
-];
-const MODELS_SMALL = [
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite",
-  "openai/gpt-5-mini",
-];
-const LARGE_INPUT_THRESHOLD = 10000;
-
-// Simple in-memory result cache (keyed by SHA-256 of inputs)
-const resultCache = new Map<string, { data: string; ts: number }>();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
-async function hashInputs(experience: string, jd: string): Promise<string> {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest("SHA-256", enc.encode(experience + "|||" + jd));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function normalizeText(input: string): string {
-  return input
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    .replace(/[^\S\n]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function stripResumeHeader(text: string): string {
-  const lines = text.split("\n");
-  let skipUntil = 0;
-  const headerPatterns = [
-    /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,
-    /\b[\w.-]+@[\w.-]+\.\w{2,}\b/,
-    /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/,
-    /^\d+\s+\w+\s+(street|st|ave|avenue|blvd|rd|dr)/i,
-    /^(linkedin|github|portfolio)/i,
-    /^(http|www\.)/i,
-  ];
-  for (let i = 0; i < Math.min(lines.length, 6); i++) {
-    const line = lines[i].trim();
-    if (!line) { skipUntil = i + 1; continue; }
-    if (headerPatterns.some(p => p.test(line))) { skipUntil = i + 1; continue; }
-    break;
-  }
-  return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
-}
-
-function enforceCharLimits(resume: string, jd: string): { resume: string; jd: string; truncated: boolean } {
-  let truncated = false;
-  if (resume.length > MAX_RESUME_CHARS) { resume = resume.slice(0, MAX_RESUME_CHARS); truncated = true; }
-  if (jd.length > MAX_JD_CHARS) { jd = jd.slice(0, MAX_JD_CHARS); truncated = true; }
-  const combined = resume.length + jd.length;
-  if (combined > MAX_COMBINED_CHARS) {
-    const excess = combined - MAX_COMBINED_CHARS;
-    resume = resume.slice(0, resume.length - excess);
-    truncated = true;
-  }
-  return { resume, jd, truncated };
-}
-
-async function callAI(apiKey: string, prompt: string, inputLen: number): Promise<string> {
-  const models = inputLen > LARGE_INPUT_THRESHOLD ? MODELS_LARGE : MODELS_SMALL;
-  console.log(`Input length: ${inputLen} → using ${inputLen > LARGE_INPUT_THRESHOLD ? "LARGE (Pro)" : "SMALL (Flash)"} model set`);
-
-  for (const model of models) {
-    console.log(`Trying model: ${model}`);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
-    try {
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, temperature: 0, messages: [{ role: "user", content: prompt }] }),
-      });
-      clearTimeout(timeout);
-      console.log(`${model} status:`, aiRes.status);
-      if (aiRes.ok) {
-        const data = await aiRes.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        if (content) { console.log(`Success: ${model}`); return content; }
-      } else {
-        const err = await aiRes.text();
-        console.error(`${model} error:`, err);
-        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
-      }
-    } catch (e) {
-      clearTimeout(timeout);
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
-      console.error(`${model} threw:`, msg);
+async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55000);
+  try {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        temperature: 0,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    clearTimeout(timeout);
+    if (aiRes.ok) {
+      const data = await aiRes.json();
+      const content = data.content?.[0]?.text || "";
+      if (content) return content;
+    } else {
+      const err = await aiRes.text();
+      console.error("Anthropic error:", err);
+      if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      if (aiRes.status === 402 || (aiRes.status === 400 && err.includes("credit"))) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
+  } catch (e) {
+    clearTimeout(timeout);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    console.error("Anthropic threw:", msg);
   }
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
@@ -147,8 +85,8 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
     // ── Cache lookup ──────────────────────────────────────────────────────────
     const cacheKey = await hashInputs(cleanExp, cleanJd);

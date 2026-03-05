@@ -6,25 +6,26 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 async function callAI(prompt: string, maxTokens = 4000): Promise<string> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "user", content: prompt }],
+      model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       temperature: 0.4,
+      messages: [{ role: "user", content: prompt }],
     }),
   });
   if (!res.ok) throw new Error(`AI API error: ${res.status}`);
   const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+  return data.content?.[0]?.text ?? "";
 }
 
 function sanitize(input: string): string {
