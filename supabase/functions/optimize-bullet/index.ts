@@ -214,7 +214,7 @@ serve(async (req) => {
     }
 
     // ─── Cache check ───────────────────────────────────────────────────────
-    const engineMode = mode === "multi_bullet" ? "pro" : "free";
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, userPlan);
     const cacheKey = await hashInputs(cleanBullet, cleanJd, engineMode);
     const cached = getCached(cacheKey);
     if (cached) {
