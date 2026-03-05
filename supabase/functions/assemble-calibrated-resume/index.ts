@@ -201,7 +201,7 @@ Rules:
     }
 
     const aiData = await response.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
+    const rawContent = aiData.content?.[0]?.text || "";
 
     // Parse JSON from response
     let assembled;
