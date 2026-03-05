@@ -17,7 +17,7 @@ const MIN_JD_CHARS = 20;
 
 async function callAI(apiKey: string, prompt: string): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
+  const timeout = setTimeout(() => controller.abort(), 90000);
   try {
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -29,7 +29,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 8192,
+        max_tokens: 4096,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -56,7 +56,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
     clearTimeout(timeout);
     if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 55s.");
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 90s.");
     throw new Error(`AI call failed: ${msg}`);
   }
 }
