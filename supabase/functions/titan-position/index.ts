@@ -65,7 +65,7 @@ function enforceCharLimits(resume: string, jd: string): { resume: string; jd: st
 
 async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
+  const timeout = setTimeout(() => controller.abort(), 90000);
   try {
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -77,7 +77,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 8192,
+        max_tokens: 4096,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
