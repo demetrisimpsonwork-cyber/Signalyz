@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { isPasswordLeaked } from "@/lib/passwordCheck";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -25,6 +26,14 @@ const Auth = () => {
     setLoading(true);
 
     if (isSignUp) {
+      // Check password against known breaches
+      const leaked = await isPasswordLeaked(password);
+      if (leaked) {
+        toast.error("This password has appeared in a known data breach. Please choose a different password.");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
