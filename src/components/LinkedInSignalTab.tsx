@@ -9,6 +9,7 @@ interface LinkedInSignalTabProps {
   experience: string;
   inferredRole: string;
   signalKeywords?: string[];
+  onRunAlignment?: () => void;
 }
 
 interface HeadlineVariant {
@@ -16,7 +17,7 @@ interface HeadlineVariant {
   text: string;
 }
 
-const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [] }: LinkedInSignalTabProps) => {
+const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRunAlignment }: LinkedInSignalTabProps) => {
   const [headline, setHeadline] = useState("");
   const [aboutSection, setAboutSection] = useState("");
   const [headlineVariants, setHeadlineVariants] = useState<HeadlineVariant[]>([]);
@@ -58,7 +59,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [] }: Li
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
         <p className="text-sm text-muted-foreground">Run an alignment first to get role-targeted LinkedIn calibration</p>
-        <Button variant="outline" size="sm" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+        <Button variant="outline" size="sm" onClick={onRunAlignment}>
           Run Alignment →
         </Button>
       </div>

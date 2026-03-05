@@ -854,6 +854,7 @@ const Index = () => {
                 experience={bullet}
                 inferredRole={result?.inferred_role_title || ""}
                 signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
+                onRunAlignment={() => setMode("alignment")}
               />
             </div>
           </ProGate>
