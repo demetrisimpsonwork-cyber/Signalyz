@@ -40,19 +40,25 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       const data = await aiRes.json();
       const content = data.content?.[0]?.text || "";
       if (content) return content;
-    } else {
-      const err = await aiRes.text();
-      console.error("Anthropic error:", aiRes.status, err);
-      if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      throw new Error("Anthropic returned empty content.");
+    }
+    const errBody = await aiRes.text();
+    console.error("Anthropic error:", aiRes.status, errBody);
+    // Pass through the actual Anthropic error message
+    try {
+      const parsed = JSON.parse(errBody);
+      throw new Error(`Anthropic ${aiRes.status}: ${parsed.error?.message || errBody}`);
+    } catch (parseErr) {
+      if (parseErr instanceof Error && parseErr.message.startsWith("Anthropic")) throw parseErr;
+      throw new Error(`Anthropic ${aiRes.status}: ${errBody.slice(0, 300)}`);
     }
   } catch (e) {
     clearTimeout(timeout);
+    if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("Rate limits")) throw e;
-    if (msg.includes("aborted")) console.error("Anthropic timed out");
-    else console.error("Anthropic threw:", msg);
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 55s.");
+    throw new Error(`AI call failed: ${msg}`);
   }
-  throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
 
 // ─── Input normalization ─────────────────────────────────────────────────────

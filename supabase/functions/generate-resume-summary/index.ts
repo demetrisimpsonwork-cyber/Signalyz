@@ -29,18 +29,24 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       const data = await res.json();
       const content = data.content?.[0]?.text || "";
       if (content) return content;
-    } else {
-      const err = await res.text();
-      console.error("Anthropic error:", res.status, err);
-      if (res.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      throw new Error("Anthropic returned empty content.");
+    }
+    const errBody = await res.text();
+    console.error("Anthropic error:", res.status, errBody);
+    try {
+      const parsed = JSON.parse(errBody);
+      throw new Error(`Anthropic ${res.status}: ${parsed.error?.message || errBody}`);
+    } catch (parseErr) {
+      if (parseErr instanceof Error && parseErr.message.startsWith("Anthropic")) throw parseErr;
+      throw new Error(`Anthropic ${res.status}: ${errBody.slice(0, 300)}`);
     }
   } catch (e) {
     clearTimeout(timeout);
+    if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("Rate limits")) throw e;
-    console.error("Anthropic threw:", msg);
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 55s.");
+    throw new Error(`AI call failed: ${msg}`);
   }
-  throw new Error("All AI models failed or timed out.");
 }
 
 function sanitizeInput(input: string): string {
