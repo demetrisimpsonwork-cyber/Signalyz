@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
+import ResumeUpload from "@/components/ResumeUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -901,6 +902,7 @@ const Position = () => {
                 💡 For best speed, paste your most recent 1–2 roles or a shortened resume.
               </p>
             )}
+            <ResumeUpload onTextExtracted={(text) => { setExperience(text); setErrors((p) => ({ ...p, experience: undefined })); }} />
           </div>
 
           <div>

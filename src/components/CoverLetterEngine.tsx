@@ -180,9 +180,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             <button onClick={handleCopy} className="absolute top-3 right-3 p-1.5 rounded hover:bg-secondary transition-colors">
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
             </button>
-            <div className="space-y-4 pr-8">
+            <div className="space-y-4 pr-8 md:space-y-4 [&>p+p]:mt-[1.25rem]">
               {letter.split("\n\n").filter(Boolean).map((p, i) => (
-                <p key={i} className="text-foreground leading-relaxed" style={{ fontSize: "16px" }}>{p}</p>
+                <p key={i} className="text-foreground leading-relaxed text-[15px] md:text-[16px]">{p}</p>
               ))}
             </div>
           </div>
