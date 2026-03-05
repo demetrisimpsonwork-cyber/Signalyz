@@ -51,26 +51,46 @@ serve(async (req) => {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id;
+      const subscriptionId = session.subscription as string | null;
 
-      console.log("[Webhook] checkout.session.completed — metadata.user_id:", userId, "customer:", session.customer, "subscription:", session.subscription, "customer_email:", session.customer_email);
+      console.log("[Webhook] checkout.session.completed — user_id:", userId, "subscription:", subscriptionId, "customer:", session.customer);
 
       if (userId) {
-        const updatePayload = {
-          subscription_tier: "pro",
-          subscription_id: session.subscription as string,
-          subscription_status: "active",
-        };
-        console.log("[Webhook] Writing to profiles for user_id:", userId, "payload:", JSON.stringify(updatePayload));
+        let periodEnd: string | null = null;
 
-        const { error: updateError } = await supabase
+        // Retrieve the full subscription to get period_end
+        if (subscriptionId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subscriptionId);
+            periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+            console.log("[Webhook] Retrieved subscription period_end:", periodEnd, "status:", sub.status);
+          } catch (subErr) {
+            console.error("[Webhook] Failed to retrieve subscription from Stripe:", subErr);
+          }
+        }
+
+        const updatePayload: Record<string, any> = {
+          subscription_tier: "pro",
+          subscription_status: "active",
+          subscription_id: subscriptionId,
+          subscription_period_end: periodEnd,
+        };
+        console.log("[Webhook] UPDATE profiles SET", JSON.stringify(updatePayload), "WHERE user_id =", userId);
+
+        const { data: updateData, error: updateError, count, status, statusText } = await supabase
           .from("profiles")
           .update(updatePayload)
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .select();
+
+        console.log("[Webhook] Supabase response — status:", status, statusText, "data:", JSON.stringify(updateData), "error:", JSON.stringify(updateError), "count:", count);
 
         if (updateError) {
-          console.error("[Webhook] Profile update FAILED:", updateError.message);
+          console.error("[Webhook] Profile update FAILED:", updateError.message, updateError.details, updateError.hint);
+        } else if (!updateData || updateData.length === 0) {
+          console.error("[Webhook] Profile update returned NO rows — user_id may not exist in profiles:", userId);
         } else {
-          console.log("[Webhook] Profile update SUCCESS for user_id:", userId);
+          console.log("[Webhook] Profile update SUCCESS:", JSON.stringify(updateData[0]));
         }
 
         await supabase.from("subscription_events").insert({
