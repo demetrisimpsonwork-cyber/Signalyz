@@ -81,10 +81,20 @@ serve(async (req) => {
         .eq("user_id", userId);
     }
 
-    // Get the price ID from env, or auto-create a test product
-    let priceId = Deno.env.get("STRIPE_PINNACLE_PRICE_ID");
+    // Get the price ID from env — validate it works, else auto-create
+    let priceId: string | undefined = Deno.env.get("STRIPE_PINNACLE_PRICE_ID") || undefined;
+
+    if (priceId) {
+      try {
+        await stripe.prices.retrieve(priceId);
+      } catch {
+        console.log("Configured STRIPE_PINNACLE_PRICE_ID not found in current Stripe mode — will auto-create");
+        priceId = undefined;
+      }
+    }
+
     if (!priceId) {
-      console.log("No STRIPE_PINNACLE_PRICE_ID set — auto-creating Resumix Pro product…");
+      console.log("Auto-creating Resumix Pro product…");
       const product = await stripe.products.create({ name: "Resumix Pro" });
       const price = await stripe.prices.create({
         product: product.id,
@@ -93,7 +103,7 @@ serve(async (req) => {
         recurring: { interval: "month" },
       });
       priceId = price.id;
-      console.log("Auto-created price:", priceId);
+      console.log("Auto-created test price:", priceId);
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
