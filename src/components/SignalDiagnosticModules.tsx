@@ -139,7 +139,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>
+  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>
     {children}
   </p>
 );

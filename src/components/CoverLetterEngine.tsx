@@ -176,7 +176,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
         </div>
       ) : letter ? (
         <>
-          <div className="relative rounded-lg border bg-card p-6">
+          <div className="relative rounded-lg border bg-card p-5 md:p-6">
             <button onClick={handleCopy} className="absolute top-3 right-3 p-1.5 rounded hover:bg-secondary transition-colors">
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
             </button>

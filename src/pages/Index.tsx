@@ -1027,7 +1027,7 @@ const Index = () => {
               </div>
 
               {/* Right — Results */}
-              <div className="space-y-7">
+              <div className="space-y-4 md:space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
                 {!loading && inputTruncated && (
@@ -1096,7 +1096,7 @@ const Index = () => {
                     )}
 
                     {/* Section 1: Signal Diagnosis with glow */}
-                    <div className={`rounded-xl border bg-card p-6 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
+                    <div className={`rounded-xl border bg-card p-5 md:p-6 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
                         <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2" style={{ letterSpacing: "0.15em" }}>Signal Diagnosis</h3>
                         <ScoreExplanation score={result.match_score} />
@@ -1182,8 +1182,8 @@ const Index = () => {
                     />
 
                     {/* Section 2: Calibrated Bullets */}
-                    <div className="space-y-3">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
 
                       {/* Original */}
                       <div className="rounded-xl border bg-card p-5 space-y-2">

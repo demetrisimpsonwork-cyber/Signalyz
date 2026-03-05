@@ -111,3 +111,14 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
+
+/* ─── Mobile spacing consistency ─── */
+@layer utilities {
+  /* Section label: consistent 24px margin-bottom on mobile */
+  @media (max-width: 767px) {
+    .mobile-section-label {
+      margin-bottom: 24px !important;
+      letter-spacing: 0.15em !important;
+    }
+  }
+}

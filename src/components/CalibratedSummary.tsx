@@ -46,9 +46,9 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
-        <div className="animate-pulse space-y-3">
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+        <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-muted" />)}
         </div>
       </div>
@@ -58,17 +58,17 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
   if (variants.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
         <p className="text-xs text-muted-foreground mt-1">Your professional identity, repositioned for this role</p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {variants.map((v, i) => {
           const isBlurred = !isPro && i >= 1;
           return (
             <div key={i} className="relative" style={{ animationDelay: `${i * 200}ms` }}>
-              <div className={`rounded-lg border-l-4 border-l-primary border bg-card p-4 space-y-2 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""}`}>
+              <div className={`rounded-lg border-l-4 border-l-primary border bg-card p-5 md:p-4 space-y-2 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""}`}>
                 <div className="flex items-start justify-between">
                   <p className="text-xs font-semibold uppercase tracking-widest text-primary">{v.name}</p>
                   <button onClick={() => handleCopy(v.text, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">

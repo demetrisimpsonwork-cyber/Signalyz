@@ -104,10 +104,10 @@ const History = () => {
       </div>
 
       {/* Cards */}
-      <div className={`space-y-3 relative ${!isPro ? "blur-sm pointer-events-none select-none" : ""}`}>
+      <div className={`space-y-4 relative ${!isPro ? "blur-sm pointer-events-none select-none" : ""}`}>
         {entries.map((entry) => (
           <div key={entry.id}>
-            <div className="rounded-lg border bg-card p-4 flex items-center justify-between gap-4">
+            <div className="rounded-lg border bg-card p-5 md:p-4 flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">{format(new Date(entry.created_at), "MMM d · h:mm a")}</p>
                 <p className="text-sm font-medium text-foreground truncate">{entry.inferred_role || "Alignment Run"}</p>
