@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { format } from "date-fns";
 import UpgradeModal from "@/components/UpgradeModal";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface HistoryEntry {
   id: string;
@@ -23,7 +24,7 @@ const scoreDotColor = (s: number) => s >= 70 ? "#22c55e" : s >= 50 ? "#f97316" :
 const History = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const isPro = false; // TODO: wire to real pro status
+  const { isPro, loading: subLoading } = useSubscription();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -61,7 +62,7 @@ const History = () => {
     setExpandedResult(data?.full_result_json as Record<string, unknown> || null);
   };
 
-  if (authLoading || loading) {
+  if (authLoading || loading || subLoading) {
     return <div className="container max-w-3xl py-20 text-center text-muted-foreground">Loading...</div>;
   }
 

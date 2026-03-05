@@ -1330,6 +1330,12 @@ const Index = () => {
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="who-is-it-for">
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Resumix for?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Resumix is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="fabrication">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Resumix make things up?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
