@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import ResumeCanvas from "@/components/ResumeCanvas";
 import ResumeToolbar from "@/components/ResumeToolbar";
 import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
+import { exportCalibratedPdf } from "@/lib/exportPdf";
+import { extractContactFromText } from "@/lib/contactExtractor";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 
 /** Check if the director result has the minimum sections needed for assembly */
@@ -43,12 +45,18 @@ const CalibratedResumeTab = ({
 
   const currentResume = editedResume || assembledResume;
 
+  // Pre-extract contact info from resume text (client-side, no API)
+  const preExtractedContact = useMemo(
+    () => extractContactFromText(originalResume),
+    [originalResume]
+  );
+
   const handleAssemble = () => {
     if (!hasRequiredSections(directorResult)) {
       toast.error("Run the Signal Positioning Report first to generate your calibrated resume.");
       return;
     }
-    assemble(directorResult!, originalResume);
+    assemble(directorResult!, originalResume, preExtractedContact);
   };
 
   const handleExportDocx = () => {
