@@ -84,6 +84,16 @@ export function useSubscription(): SubscriptionState {
 
   useEffect(() => {
     fetchSubscription();
+
+    // Re-fetch after returning from Stripe checkout
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgrade") === "success") {
+      // Poll a few times to wait for webhook processing
+      const delays = [2000, 5000, 10000];
+      delays.forEach((ms) => {
+        setTimeout(() => fetchSubscription(), ms);
+      });
+    }
   }, [fetchSubscription]);
 
   // Attach refresh to state
