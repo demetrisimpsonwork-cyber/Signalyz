@@ -48,6 +48,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import SubscriptionDebugPanel from "@/components/SubscriptionDebugPanel";
 
 // Define types
 type SignalLevel = "Low" | "Moderate" | "High" | "Strong";
