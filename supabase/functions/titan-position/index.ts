@@ -77,7 +77,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
+        max_tokens: 2800,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
