@@ -8,65 +8,6 @@ const corsHeaders = {
 
 // ─── Phase 1: Assemble structure from existing signal data (no API call) ───
 
-function assembleStructureFromSignalData(directorResult: any, originalResume: string) {
-  const report = directorResult;
-
-  // Extract header from original resume via simple heuristics
-  const header = extractHeaderFromResume(originalResume);
-
-  // Pull experience from export_builder or gap_analyzer
-  let experience: any[] = [];
-  let summary = "";
-  let coreCompetencies: string[] = [];
-  let skills: string[] = [];
-  let certifications: string[] = [];
-  let education: any[] = [];
-  let independentProjects: any[] = [];
-  let signalKeywords: string[] = [];
-
-  // Extract from export_builder final resume if available
-  if (report.export_builder?.final_resume_text) {
-    const parsed = parseResumeTextIntoSections(report.export_builder.final_resume_text);
-    experience = parsed.experience;
-    summary = parsed.summary;
-    education = parsed.education;
-    skills = parsed.skills;
-    certifications = parsed.certifications;
-    independentProjects = parsed.independentProjects;
-  }
-
-  // Core competencies from signal classifier dimensions
-  if (report.signal_classifier?.dimension_scores) {
-    const dims = Object.keys(report.signal_classifier.dimension_scores);
-    coreCompetencies = dims.slice(0, 12).map((d: string) => d.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()));
-  }
-
-  // Signal keywords from various sources
-  if (report.signal_classifier?.dimension_scores) {
-    const allRationales = Object.values(report.signal_classifier.dimension_scores)
-      .map((v: any) => v.rationale || "")
-      .filter(Boolean);
-    // Extract key terms
-    signalKeywords = allRationales.slice(0, 10);
-  }
-
-  // Get rewrite targets for Phase 2
-  const rewriteTargets = report.gap_analyzer?.rewrite_targets || [];
-
-  return {
-    header,
-    summary,
-    core_competencies: coreCompetencies,
-    experience,
-    independent_projects: independentProjects,
-    skills,
-    certifications,
-    education,
-    signal_keywords: signalKeywords,
-    _rewriteTargets: rewriteTargets,
-  };
-}
-
 function extractHeaderFromResume(text: string): any {
   const header = { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
   if (!text) return header;
@@ -93,7 +34,7 @@ function extractHeaderFromResume(text: string): any {
 function parseResumeTextIntoSections(text: string): any {
   const lines = text.split("\n");
   const result: any = { experience: [], summary: "", education: [], skills: [], certifications: [], independentProjects: [] };
-  
+
   let currentSection = "";
   let currentExp: any = null;
   const dateRx = /(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*)?(?:\d{1,2}\/)?(\d{4})\s*[-–—to]+\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*)?(?:\d{1,2}\/)?(present|current|\d{4})/i;
@@ -102,11 +43,10 @@ function parseResumeTextIntoSections(text: string): any {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const lower = trimmed.toLowerCase();
     if (/^(professional\s+)?summary/i.test(trimmed)) { currentSection = "summary"; continue; }
     if (/^(professional\s+)?experience|^work\s+history/i.test(trimmed)) { currentSection = "experience"; continue; }
     if (/^education/i.test(trimmed)) { currentSection = "education"; continue; }
-    if (/^(core\s+)?skills|^technical\s+skills|^competencies/i.test(trimmed)) { currentSection = "skills"; continue; }
+    if (/^(core\s+)?skills|^technical\s+skills|^competencies|^core\s+competencies/i.test(trimmed)) { currentSection = "skills"; continue; }
     if (/^certifications?/i.test(trimmed)) { currentSection = "certifications"; continue; }
     if (/^(independent\s+)?projects?/i.test(trimmed)) { currentSection = "projects"; continue; }
 
@@ -117,11 +57,22 @@ function parseResumeTextIntoSections(text: string): any {
       case "experience": {
         if (dateRx.test(trimmed)) {
           if (currentExp) result.experience.push(currentExp);
-          currentExp = { company: "", title: trimmed.replace(dateRx, "").replace(/[|—–,]\s*$/, "").trim(), dates: (trimmed.match(dateRx) || [])[0] || "", bullets: [] };
-        } else if (currentExp && /^[-•]/.test(trimmed)) {
-          currentExp.bullets.push(trimmed.replace(/^[-•]\s*/, ""));
+          const dateMatch = trimmed.match(dateRx);
+          currentExp = {
+            company: "",
+            title: trimmed.replace(dateRx, "").replace(/[|—–,]\s*$/, "").trim(),
+            dates: dateMatch ? dateMatch[0] : "",
+            bullets: [],
+          };
+        } else if (currentExp && /^[-•▪►]/.test(trimmed)) {
+          currentExp.bullets.push(trimmed.replace(/^[-•▪►]\s*/, ""));
         } else if (currentExp && trimmed.length > 20) {
-          currentExp.bullets.push(trimmed);
+          // Could be a company name or a bullet without marker
+          if (!currentExp.company && trimmed.length < 60 && !dateRx.test(trimmed)) {
+            currentExp.company = trimmed;
+          } else {
+            currentExp.bullets.push(trimmed);
+          }
         }
         break;
       }
@@ -129,103 +80,118 @@ function parseResumeTextIntoSections(text: string): any {
         result.education.push({ institution: trimmed, degree: "", year: "" });
         break;
       case "skills":
-        result.skills.push(...trimmed.split(/,\s*/).filter(Boolean));
+        result.skills.push(...trimmed.split(/[,•|]/).map((s: string) => s.trim()).filter(Boolean));
         break;
       case "certifications":
-        result.certifications.push(trimmed);
+        result.certifications.push(trimmed.replace(/^[-•▪►]\s*/, ""));
         break;
+      case "projects": {
+        // Simple: treat each line as a project entry
+        result.independentProjects.push({ name: trimmed, description: "", bullets: [] });
+        break;
+      }
     }
   }
   if (currentExp) result.experience.push(currentExp);
   return result;
 }
 
-// ─── Phase 2: Focused API call for bullet rewrites + summary ───
+function assembleStructureFromSignalData(directorResult: any, originalResume: string) {
+  const report = directorResult;
+  const header = extractHeaderFromResume(originalResume);
 
-async function rewriteBulletsAndSummary(
-  structure: any,
+  let experience: any[] = [];
+  let summary = "";
+  let coreCompetencies: string[] = [];
+  let skills: string[] = [];
+  let certifications: string[] = [];
+  let education: any[] = [];
+  let independentProjects: any[] = [];
+  let signalKeywords: string[] = [];
+
+  // Parse from export_builder or original resume
+  const textToParse = report.export_builder?.final_resume_text || originalResume;
+  if (textToParse) {
+    const parsed = parseResumeTextIntoSections(textToParse);
+    experience = parsed.experience;
+    summary = parsed.summary;
+    education = parsed.education;
+    skills = parsed.skills;
+    certifications = parsed.certifications;
+    independentProjects = parsed.independentProjects;
+  }
+
+  // Core competencies from signal classifier
+  if (report.signal_classifier?.dimension_scores) {
+    const dims = Object.keys(report.signal_classifier.dimension_scores);
+    coreCompetencies = dims.slice(0, 12).map((d: string) =>
+      d.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+    );
+  }
+
+  // Signal keywords
+  if (report.gap_analyzer?.rewrite_targets?.length) {
+    const types = report.gap_analyzer.rewrite_targets
+      .map((t: any) => t.upgrade_type)
+      .filter(Boolean);
+    signalKeywords = [...new Set(types)].map((t: string) =>
+      t.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+    );
+  }
+
+  // Merge rewritten bullets into experience
+  if (report.gap_analyzer?.rewrite_targets?.length && experience.length > 0) {
+    const rewrites = report.gap_analyzer.rewrite_targets;
+    for (const rw of rewrites) {
+      if (!rw.version_a && !rw.rewritten_bullet) continue;
+      const rewrittenText = rw.version_a || rw.rewritten_bullet || "";
+      const originalRef = (rw.bullet_reference || "").toLowerCase().slice(0, 60);
+
+      for (const exp of experience) {
+        for (let bi = 0; bi < exp.bullets.length; bi++) {
+          if (exp.bullets[bi].toLowerCase().slice(0, 60) === originalRef) {
+            exp.bullets[bi] = rewrittenText;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    header,
+    summary,
+    core_competencies: coreCompetencies,
+    experience,
+    independent_projects: independentProjects,
+    skills,
+    certifications,
+    education,
+    signal_keywords: signalKeywords,
+  };
+}
+
+// ─── Phase 2: Focused sectional API calls ───
+
+async function generateSummary(
+  originalSummary: string,
   directorResult: any,
   originalResume: string,
   apiKey: string,
   requestId: string,
-): Promise<any> {
-  // Build a focused context — only what's needed for rewriting
-  const contextParts: string[] = [];
+): Promise<string> {
+  const context = [
+    `Original summary: ${originalSummary}`,
+    directorResult.signal_classifier ? `Target level: ${directorResult.signal_classifier.target_level_inferred}` : "",
+    directorResult.signal_classifier ? `Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}` : "",
+    directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
+    `First 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
+  ].filter(Boolean).join("\n");
 
-  if (originalResume) {
-    contextParts.push(`ORIGINAL RESUME TEXT:\n${originalResume.slice(0, 6000)}`);
-  }
-
-  if (directorResult.export_builder?.final_resume_text) {
-    contextParts.push(`EXPORT BUILDER FINAL RESUME:\n${directorResult.export_builder.final_resume_text.slice(0, 4000)}`);
-  }
-
-  if (directorResult.gap_analyzer?.rewrite_targets?.length) {
-    const rewrites = directorResult.gap_analyzer.rewrite_targets.map((t: any, i: number) => {
-      const lines = [`${i + 1}. Original: ${t.bullet_reference}`];
-      if (t.version_a) lines.push(`   Version A: ${t.version_a}`);
-      if (t.version_b) lines.push(`   Version B: ${t.version_b}`);
-      if (t.rewritten_bullet) lines.push(`   Rewritten: ${t.rewritten_bullet}`);
-      return lines.join("\n");
-    });
-    contextParts.push(`BULLET REWRITES:\n${rewrites.join("\n\n")}`);
-  }
-
-  if (directorResult.signal_classifier) {
-    const sc = directorResult.signal_classifier;
-    contextParts.push(`SIGNAL CLASSIFIER:\nInferred Level: ${sc.target_level_inferred}\nOverall Alignment: ${sc.overall_seniority_alignment}`);
-  }
-
-  if (directorResult.dimensions?.length) {
-    const dimText = directorResult.dimensions.map((d: any) =>
-      `${d.name}: ${d.classification} | Strength: ${d.strength_signal} | Risk: ${d.risk_signal}`
-    ).join("\n");
-    contextParts.push(`POSITIONING DIMENSIONS:\n${dimText}`);
-  }
-
-  if (directorResult.director_signal_tier) {
-    contextParts.push(`SIGNAL TIER: ${directorResult.director_signal_tier.tier}\nRationale: ${directorResult.director_signal_tier.rationale}`);
-  }
-
-  const contextPayload = contextParts.join("\n\n---\n\n");
-
-  const systemPrompt = `You are a professional resume architect. You have been given pre-optimized resume components extracted from a deep signal analysis. Your job is to assemble them into a single coherent, ATS-optimized, professionally formatted resume. Maintain all signal-calibrated language exactly. Do not summarize or dilute any bullets. Structure the resume in this order: Header → Professional Summary → Core Competencies → Experience → Independent Projects → Skills → Certifications → Education. Return the result as structured JSON with clearly labeled sections so each section can be rendered and edited independently in the UI.
-
-Return ONLY valid JSON matching this schema:
-{
-  "header": { "name": "", "title": "", "email": "", "phone": "", "linkedin": "", "location": "" },
-  "summary": "",
-  "core_competencies": ["", ""],
-  "experience": [{ "company": "", "title": "", "dates": "", "bullets": ["", ""] }],
-  "independent_projects": [{ "name": "", "description": "", "bullets": [""] }],
-  "skills": ["", ""],
-  "certifications": [""],
-  "education": [{ "institution": "", "degree": "", "year": "" }],
-  "signal_keywords": ["", ""]
-}
-
-Rules:
-- Extract header info (name, email, phone, location, linkedin) from the original resume text
-- Use the optimized/rewritten bullets where available, falling back to originals
-- Apply signal-calibrated language to the Professional Summary
-- Core competencies should be 8-12 key skill/domain terms
-- Include ALL experience sections with calibrated bullet points
-- Include Independent Projects if present
-- Extract and list all Skills organized by relevance
-- Include all Certifications
-- Signal keywords should be the top 8-10 terms the role screens for
-- Do not fabricate any experience, metrics, or claims
-- If a section has no content, return an empty array
-- If a field cannot be determined, use empty string
-- Return ONLY valid JSON, no markdown, no code fences`;
-
-  // 25-second timeout using AbortController
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
-    console.log(`[assemble-calibrated-resume] [${requestId}] Phase 2: Calling Anthropic API`);
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -235,60 +201,94 @@ Rules:
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 8192,
+        max_tokens: 500,
         temperature: 0,
-        system: systemPrompt,
-        messages: [{ role: "user", content: contextPayload }],
+        system: "Rewrite the professional summary for signal alignment with the target role level. Keep it 2-4 sentences. Do not fabricate experience. Return ONLY the summary text, no JSON, no quotes.",
+        messages: [{ role: "user", content: context }],
       }),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
-
     if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[assemble-calibrated-resume] [${requestId}] AI gateway error: ${response.status}`, errText);
-
-      if (response.status === 429) {
-        return { error: true, error_code: "RATE_LIMIT", message: "Rate limit exceeded. Please try again in a moment." };
-      }
-      return { error: true, error_code: "AI_ERROR", message: `Resume assembly failed (${response.status}). Please retry.` };
+      console.error(`[assemble] [${requestId}] Summary API error: ${response.status}`);
+      return originalSummary;
     }
-
-    console.log(`[assemble-calibrated-resume] [${requestId}] Phase 2: API response received`);
-
-    let aiData;
-    try {
-      aiData = await response.json();
-    } catch (parseErr) {
-      console.error(`[assemble-calibrated-resume] [${requestId}] Failed to parse API response JSON`);
-      return { error: true, error_code: "RESPONSE_PARSE_ERROR", message: "Failed to read AI response." };
-    }
-
-    const rawContent = aiData.content?.[0]?.text || "";
-
-    let assembled;
-    try {
-      const cleaned = rawContent.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-      assembled = JSON.parse(cleaned);
-    } catch {
-      console.error(`[assemble-calibrated-resume] [${requestId}] JSON parse failed:`, rawContent.slice(0, 500));
-      return { error: true, error_code: "PARSE_ERROR", message: "Resume assembly returned invalid format. Please retry." };
-    }
-
-    console.log(`[assemble-calibrated-resume] [${requestId}] Phase 2: Successfully parsed result`);
-    return { error: false, data: assembled };
-
+    const data = await response.json();
+    return data.content?.[0]?.text?.trim() || originalSummary;
   } catch (err: any) {
     clearTimeout(timeoutId);
+    console.error(`[assemble] [${requestId}] Summary generation failed: ${err.message}`);
+    return originalSummary;
+  }
+}
 
-    if (err.name === "AbortError") {
-      console.error(`[assemble-calibrated-resume] [${requestId}] Phase 2: Timed out after 25s`);
-      return { error: true, error_code: "TIMEOUT", message: "Still building your resume — this section took longer than expected. Please retry.", retry: true };
+async function rewriteExperienceBullets(
+  experience: any[],
+  directorResult: any,
+  apiKey: string,
+  requestId: string,
+): Promise<any[]> {
+  if (experience.length === 0) return experience;
+
+  // Build compact context
+  const expText = experience.map((exp: any, i: number) => {
+    const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
+    const bullets = exp.bullets.map((b: string) => `  • ${b}`).join("\n");
+    return `[${i}] ${header}\n${bullets}`;
+  }).join("\n\n");
+
+  const signalContext = directorResult.signal_classifier
+    ? `Target: ${directorResult.signal_classifier.target_level_inferred}. Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}.`
+    : "";
+
+  const gapContext = directorResult.gap_analyzer?.rewrite_targets?.length
+    ? `Priority gaps: ${directorResult.gap_analyzer.priority_order?.join(", ") || "none"}`
+    : "";
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        temperature: 0,
+        system: `Rewrite resume experience bullets for signal optimization. Elevate ownership language, add outcome framing, and strengthen authority signals. Do NOT fabricate metrics, titles, or responsibilities. Only reframe existing content.
+
+${signalContext}
+${gapContext}
+
+Return ONLY valid JSON array matching:
+[{"company":"","title":"","dates":"","bullets":["..."]}]
+
+Keep ALL roles. Keep ALL bullets (rewritten). Preserve company names, titles, and dates exactly.`,
+        messages: [{ role: "user", content: expText }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
+      return experience;
     }
-
-    console.error(`[assemble-calibrated-resume] [${requestId}] Phase 2: Unexpected error:`, err.message);
-    return { error: true, error_code: "FETCH_ERROR", message: err.message || "Network error during assembly." };
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || "";
+    const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed : experience;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
+    return experience;
   }
 }
 
@@ -303,8 +303,7 @@ serve(async (req) => {
     let body;
     try {
       body = await req.json();
-    } catch (parseErr) {
-      console.error(`[assemble-calibrated-resume] [${request_id}] Failed to parse request body`);
+    } catch {
       return new Response(
         JSON.stringify({ status: "error", request_id, error_code: "BAD_REQUEST", message: "Invalid request body." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -315,21 +314,7 @@ serve(async (req) => {
 
     if (!directorResult) {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Signal Positioning Report data is required to assemble the resume." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Validate required sections
-    const report = directorResult;
-    const hasGapAnalyzer = report.gap_analyzer?.rewrite_targets?.length > 0;
-    const hasExportBuilder = !!report.export_builder?.final_resume_text;
-    const hasSignalClassifier = !!report.signal_classifier;
-    const hasDimensions = report.dimensions?.length > 0;
-
-    if (!hasGapAnalyzer && !hasExportBuilder && !hasSignalClassifier && !hasDimensions) {
-      return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "INCOMPLETE_REPORT", message: "Signal Positioning Report must be generated before assembling the Calibrated Resume." }),
+        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Signal Positioning Report data is required." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -342,59 +327,48 @@ serve(async (req) => {
       );
     }
 
-    // ── Phase 1: Assemble structure from existing data (instant) ──
-    console.log(`[assemble-calibrated-resume] [${request_id}] Phase 1: Assembling structure from signal data`);
+    // ── Phase 1: Instant structure from existing signal data ──
+    console.log(`[assemble] [${request_id}] Phase 1: Building structure`);
     let structure;
     try {
       structure = assembleStructureFromSignalData(directorResult, originalResume || "");
     } catch (err: any) {
-      console.error(`[assemble-calibrated-resume] [${request_id}] Phase 1 failed:`, err.message);
+      console.error(`[assemble] [${request_id}] Phase 1 failed:`, err.message);
       return new Response(
         JSON.stringify({ status: "error", request_id, error_code: "PHASE1_ERROR", message: "Failed to assemble resume structure." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    console.log(`[assemble-calibrated-resume] [${request_id}] Phase 1: Complete`);
+    console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars`);
 
-    // ── Phase 2: Focused API call for polished output ──
-    console.log(`[assemble-calibrated-resume] [${request_id}] Phase 2: Starting API call`);
-    const phase2Result = await rewriteBulletsAndSummary(structure, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id);
+    // ── Phase 2: Sequential focused API calls ──
+    // 2a: Rewrite summary (small, fast)
+    console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
+    const rewrittenSummary = await generateSummary(
+      structure.summary, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id
+    );
 
-    if (phase2Result.error) {
-      // On timeout, return Phase 1 structure as partial result
-      if (phase2Result.error_code === "TIMEOUT") {
-        console.log(`[assemble-calibrated-resume] [${request_id}] Returning Phase 1 partial result due to timeout`);
-        const { _rewriteTargets, ...partialResult } = structure;
-        return new Response(
-          JSON.stringify({
-            status: "partial",
-            request_id,
-            retry: true,
-            message: "Still building your resume — this section took longer than expected, retrying...",
-            ...normalizeResult(partialResult),
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
+    // 2b: Rewrite experience bullets (larger but focused)
+    console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
+    const rewrittenExperience = await rewriteExperienceBullets(
+      structure.experience, directorResult, ANTHROPIC_API_KEY, request_id
+    );
 
-      return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: phase2Result.error_code, message: phase2Result.message }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    // ── Merge results ──
+    const result = normalizeResult({
+      ...structure,
+      summary: rewrittenSummary,
+      experience: rewrittenExperience,
+    });
 
-    // ── Merge Phase 2 result ──
-    const assembled = phase2Result.data;
-    const result = normalizeResult(assembled);
-
-    console.log(`[assemble-calibrated-resume] [${request_id}] Assembly complete`);
+    console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
       JSON.stringify({ status: "ok", request_id, ...result }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
 
   } catch (err) {
-    console.error(`[assemble-calibrated-resume] [${request_id}] Unhandled error:`, err);
+    console.error(`[assemble] [${request_id}] Unhandled error:`, err);
     return new Response(
       JSON.stringify({
         status: "error",
