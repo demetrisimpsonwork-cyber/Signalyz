@@ -15,43 +15,43 @@ const MAX_COMBINED_CHARS = 16000;
 const MIN_RESUME_CHARS = 20;
 const MIN_JD_CHARS = 20;
 
-const MODELS = [
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite",
-  "openai/gpt-5-mini",
-];
-
 async function callAI(apiKey: string, prompt: string): Promise<string> {
-  for (const model of MODELS) {
-    console.log(`Trying model: ${model}`);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout
-    try {
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, temperature: 0, messages: [{ role: "user", content: prompt }] }),
-      });
-      clearTimeout(timeout);
-      console.log(`${model} status:`, aiRes.status);
-      if (aiRes.ok) {
-        const data = await aiRes.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        if (content) { console.log(`Success: ${model}`); return content; }
-      } else {
-        const err = await aiRes.text();
-        console.error(`${model} error:`, err);
-        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
-      }
-    } catch (e) {
-      clearTimeout(timeout);
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
-      if (msg.includes("aborted")) console.error(`${model} timed out`);
-      else console.error(`${model} threw:`, msg);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55000);
+  try {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        temperature: 0,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    clearTimeout(timeout);
+    console.log("Anthropic status:", aiRes.status);
+    if (aiRes.ok) {
+      const data = await aiRes.json();
+      const content = data.content?.[0]?.text || "";
+      if (content) return content;
+    } else {
+      const err = await aiRes.text();
+      console.error("Anthropic error:", err);
+      if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      if (aiRes.status === 402 || aiRes.status === 400 && err.includes("credit")) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
+  } catch (e) {
+    clearTimeout(timeout);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    if (msg.includes("aborted")) console.error("Anthropic timed out");
+    else console.error("Anthropic threw:", msg);
   }
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
@@ -184,8 +184,8 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
