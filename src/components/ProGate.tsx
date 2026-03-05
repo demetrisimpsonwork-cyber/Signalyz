@@ -1,19 +1,22 @@
+import { useState } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { initiateCheckout } from "@/utils/stripe";
+import { Loader2 } from "lucide-react";
 
-interface PinnacleGateProps {
+interface ProGateProps {
   featureName: string;
   featureDescription: string;
   children: React.ReactNode;
 }
 
-export function PinnacleGate({
+export function ProGate({
   featureName,
   featureDescription,
   children,
-}: PinnacleGateProps) {
-  const { isPinnacle, loading } = useSubscription();
+}: ProGateProps) {
+  const { isPro, loading } = useSubscription();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   if (loading) {
     return (
@@ -23,14 +26,21 @@ export function PinnacleGate({
     );
   }
 
-  if (isPinnacle) {
+  if (isPro) {
     return <>{children}</>;
   }
 
-  // ── LOCKED STATE ───────────────────────────────────────
+  const handleUpgrade = async () => {
+    setCheckoutLoading(true);
+    try {
+      await initiateCheckout();
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <div className="relative">
-      {/* Blurred ghost content */}
       <div className="pointer-events-none select-none blur-sm opacity-40">
         <div className="space-y-4 py-8">
           {[...Array(8)].map((_, i) => (
@@ -45,15 +55,12 @@ export function PinnacleGate({
         </div>
       </div>
 
-      {/* Upgrade overlay */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center space-y-5 max-w-sm px-4">
-          {/* Icon */}
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(38,92%,50%)]/10">
             <span className="text-2xl" style={{ color: "hsl(38, 92%, 50%)" }}>✦</span>
           </div>
 
-          {/* Copy */}
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-foreground tracking-tight">
               Unlock {featureName}
@@ -63,7 +70,6 @@ export function PinnacleGate({
             </p>
           </div>
 
-          {/* Price */}
           <div className="space-y-1">
             <p className="text-2xl font-bold text-foreground">
               $19<span className="text-sm font-normal text-muted-foreground">/month</span>
@@ -71,14 +77,18 @@ export function PinnacleGate({
             <p className="text-xs text-muted-foreground">Cancel anytime · Instant access</p>
           </div>
 
-          {/* CTA */}
           <Button
-            onClick={() => initiateCheckout()}
+            onClick={handleUpgrade}
+            disabled={checkoutLoading}
             className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
             size="lg"
           >
-            <span style={{ color: "inherit" }}>✦</span>
-            Upgrade to Pinnacle
+            {checkoutLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <span style={{ color: "inherit" }}>✦</span>
+            )}
+            Upgrade to Pro
           </Button>
         </div>
       </div>
@@ -86,4 +96,4 @@ export function PinnacleGate({
   );
 }
 
-export default PinnacleGate;
+export default ProGate;
