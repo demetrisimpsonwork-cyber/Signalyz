@@ -55,9 +55,9 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
-        <div className="animate-pulse space-y-3">
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+        <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-lg bg-muted" />)}
         </div>
       </div>
@@ -67,18 +67,18 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   if (gaps.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
         <p className="text-xs text-muted-foreground mt-1">What's reducing your match — and exactly how to fix it</p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {gaps.map((gap, i) => {
           const isBlurred = !isPro && i >= 1;
           const isPartialBlur = !isPro && i === 1;
           return (
             <div key={i} className="relative">
-              <div className={`rounded-lg border bg-card p-4 space-y-3 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""} ${isPartialBlur ? "blur-[3px]" : ""}`}>
+              <div className={`rounded-lg border bg-card p-5 md:p-4 space-y-3 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""} ${isPartialBlur ? "blur-[3px]" : ""}`}>
                 <div className="flex items-start justify-between">
                   <p className="text-sm font-semibold text-foreground">{gap.gap_name}</p>
                   <Badge className={`text-[10px] ${IMPACT_STYLES[gap.impact] || IMPACT_STYLES.Low}`}>

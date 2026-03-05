@@ -54,8 +54,8 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
         <div className="animate-pulse h-40 rounded-lg bg-muted" />
       </div>
     );
@@ -64,9 +64,9 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   if (!data) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
         <p className="text-xs text-muted-foreground mt-1">How your resume reads to automated screening systems</p>
       </div>
 

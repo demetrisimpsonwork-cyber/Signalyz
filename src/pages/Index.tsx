@@ -1027,7 +1027,7 @@ const Index = () => {
               </div>
 
               {/* Right — Results */}
-              <div className="space-y-7">
+              <div className="space-y-4 md:space-y-7">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
                 {!loading && inputTruncated && (

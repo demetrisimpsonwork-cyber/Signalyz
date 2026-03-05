@@ -48,9 +48,9 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
-        <div className="animate-pulse space-y-3">
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
+        <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-lg bg-muted" />)}
         </div>
       </div>
@@ -60,17 +60,17 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   if (questions.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
         <p className="text-xs text-muted-foreground mt-1">The questions this role will probe — built from your specific gaps</p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {questions.map((q, i) => {
           const isBlurred = !isPro && i >= 1;
           return (
             <div key={i} className="relative">
-              <div className={`rounded-lg border bg-card p-4 space-y-3 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""}`}>
+              <div className={`rounded-lg border bg-card p-5 md:p-4 space-y-3 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
