@@ -39,11 +39,7 @@ function stripResumeHeader(text: string): string {
   return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
 }
 
-const MODELS = [
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-pro",
-  "openai/gpt-5-mini",
-];
+const MODELS = ["claude-sonnet-4-20250514"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -578,43 +574,41 @@ async function callAI(
   userContent: string,
   temperature?: number,
 ): Promise<string> {
-  for (const model of MODELS) {
-    console.log(`Trying model: ${model}`);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
-    try {
-      const bodyPayload: Record<string, unknown> = {
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-      };
-      if (temperature !== undefined) bodyPayload.temperature = temperature;
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify(bodyPayload),
-      });
-      clearTimeout(timeout);
-      console.log(`${model} status:`, aiRes.status);
-      if (aiRes.ok) {
-        const data = await aiRes.json();
-        const content = data.choices?.[0]?.message?.content || "";
-        if (content) { console.log(`Success: ${model}`); return content; }
-      } else {
-        const err = await aiRes.text();
-        console.error(`${model} error:`, err);
-        if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
-        if (aiRes.status === 402) throw new Error("Usage limit reached. Please add credits to your workspace.");
-      }
-    } catch (e) {
-      clearTimeout(timeout);
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
-      console.error(`${model} threw:`, msg);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000);
+  try {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        temperature: temperature ?? 0,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userContent }],
+      }),
+    });
+    clearTimeout(timeout);
+    if (aiRes.ok) {
+      const data = await aiRes.json();
+      const content = data.content?.[0]?.text || "";
+      if (content) return content;
+    } else {
+      const err = await aiRes.text();
+      console.error("Anthropic error:", err);
+      if (aiRes.status === 429) throw new Error("Rate limits exceeded, please try again later.");
+      if (aiRes.status === 402 || (aiRes.status === 400 && err.includes("credit"))) throw new Error("Usage limit reached. Please check your Anthropic API credits.");
     }
+  } catch (e) {
+    clearTimeout(timeout);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Rate limits") || msg.includes("Usage limit")) throw e;
+    console.error("Anthropic threw:", msg);
   }
   throw new Error("Service temporarily unavailable. Please try again in a moment.");
 }
