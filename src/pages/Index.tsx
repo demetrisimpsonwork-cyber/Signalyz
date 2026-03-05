@@ -622,11 +622,11 @@ const Index = () => {
       <section className="py-16 container max-w-3xl">
         <div className="text-center mb-10">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-xl bg-[#2A2A2A] p-6 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">BEFORE</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">BEFORE — ORIGINAL LANGUAGE</p>
             <p className="text-sm text-gray-300 leading-relaxed">
               Managed customer inquiries and helped resolve issues for business clients while maintaining documentation.
             </p>
@@ -635,13 +635,13 @@ const Index = () => {
             <ArrowDown className="h-6 w-6 text-muted-foreground" />
           </div>
           <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY RESUMIX</p>
             <p className="text-sm text-foreground leading-relaxed">
               Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements — translating compliance and procedural complexity into clear, actionable guidance for business owners and HR administrators.
             </p>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication. Every word came from the original.</p>
+        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
       </section>
 
       {/* Testimonial */}
@@ -1358,21 +1358,27 @@ const Index = () => {
               A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet rewrites. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet rewrites, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
             </AccordionContent>
           </AccordionItem>
+          <AccordionItem value="pricing">
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Resumix cost?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              You can run up to 3 free alignments per day at no cost. Resumix Pro is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. You can cancel anytime — no contracts, no commitments.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="data-privacy">
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">What happens to my data?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Your resume and job description data are processed only to generate your analysis. We never share your data with third parties and it is never used to train AI models. You can review our full privacy practices on our Privacy Policy page.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="cancel">
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Can I cancel my subscription?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Yes. You can cancel anytime and your Pro access will remain active through the end of your billing period. No refunds are issued for partial months, but you will never be charged again after cancellation.
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-10">
-        <div className="container max-w-2xl text-center space-y-3">
-          <p className="text-xs text-muted-foreground">Zero fabrication. We only work with what you give us.</p>
-          <p className="text-xs text-muted-foreground">Your data is never used to train AI models.</p>
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground/60">
-            <span>Privacy Policy</span>
-            <span>•</span>
-            <span>Terms</span>
-          </div>
-        </div>
-      </footer>
 
       <UpgradeModal
         open={showUpgrade}
