@@ -290,7 +290,7 @@ const Index = () => {
 
   // Check if calibrated resume exists (persisted in localStorage by useResumeAssembly)
   const hasCalibratedResume = (() => {
-    try { return !!localStorage.getItem("resumix_calibrated_resume"); } catch { return false; }
+    try { return !!localStorage.getItem("resumix_calibrated_resume_data"); } catch { return false; }
   })();
 
   // Pipeline stages derived from existing React state

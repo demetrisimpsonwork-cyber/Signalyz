@@ -1,4 +1,4 @@
-// assemble-calibrated-resume v2.1
+// assemble-calibrated-resume v3.0 — robust resume parser
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,7 +7,287 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── Phase 1: Assemble structure from existing signal data (no API call) ───
+// ─── Fuzzy section header matching ───
+
+const SECTION_PATTERNS: [RegExp, string][] = [
+  [/^(professional\s+)?summary\s*(of\s+qualifications)?$/i, "summary"],
+  [/^(career\s+)?(profile|objective|overview)$/i, "summary"],
+  [/^(professional\s+|work\s+)?experience$/i, "experience"],
+  [/^work\s+history$/i, "experience"],
+  [/^employment(\s+history)?$/i, "experience"],
+  [/^(relevant\s+)?experience$/i, "experience"],
+  [/^(core\s+)?competenc(ies|y)$/i, "skills"],
+  [/^(core\s+|technical\s+|key\s+)?skills(\s+&\s+abilities)?$/i, "skills"],
+  [/^technical\s+(proficienc|competenc)(ies|y)$/i, "skills"],
+  [/^areas?\s+of\s+expertise$/i, "skills"],
+  [/^(professional\s+)?certifications?(\s+&\s+licens(es|ure))?$/i, "certifications"],
+  [/^licens(es|ure)(\s+&\s+certifications?)?$/i, "certifications"],
+  [/^education(\s+&\s+training)?$/i, "education"],
+  [/^academic(\s+background)?$/i, "education"],
+  [/^(independent\s+|personal\s+|side\s+)?projects?$/i, "projects"],
+  [/^awards?(\s+&\s+honors?)?$/i, "awards"],
+  [/^honors?(\s+&\s+awards?)?$/i, "awards"],
+  [/^volunteer(\s+experience)?$/i, "volunteer"],
+  [/^publications?$/i, "publications"],
+];
+
+function fuzzyMatch(text: string, pattern: string, threshold = 0.85): boolean {
+  const a = text.toLowerCase().replace(/[^a-z\s]/g, "").trim();
+  const b = pattern.toLowerCase().replace(/[^a-z\s]/g, "").trim();
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  // Simple similarity: longest common subsequence ratio
+  const longer = a.length > b.length ? a : b;
+  const shorter = a.length > b.length ? b : a;
+  if (longer.length === 0) return true;
+  let matches = 0;
+  let j = 0;
+  for (let i = 0; i < longer.length && j < shorter.length; i++) {
+    if (longer[i] === shorter[j]) { matches++; j++; }
+  }
+  return (matches / longer.length) >= threshold;
+}
+
+function detectSectionHeader(line: string): string | null {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length > 60) return null;
+
+  // Remove common decorators
+  const cleaned = trimmed
+    .replace(/^[-=_*#►▪•]+\s*/, "")
+    .replace(/\s*[-=_*#►▪•]+$/, "")
+    .replace(/[:]\s*$/, "")
+    .trim();
+  if (!cleaned || cleaned.length > 50) return null;
+
+  // Check if it looks like a header: ALL CAPS, or matches known patterns
+  const isAllCaps = cleaned === cleaned.toUpperCase() && /[A-Z]{3,}/.test(cleaned);
+  const isShort = cleaned.split(/\s+/).length <= 5;
+
+  for (const [rx, section] of SECTION_PATTERNS) {
+    if (rx.test(cleaned)) return section;
+  }
+
+  // Fuzzy match against known section names
+  if (isAllCaps && isShort) {
+    const sectionNames = [
+      "professional summary", "summary", "core competencies", "skills",
+      "professional experience", "experience", "work history", "employment history",
+      "education", "certifications", "independent projects", "projects",
+      "awards", "honors", "volunteer experience", "publications",
+    ];
+    for (const name of sectionNames) {
+      if (fuzzyMatch(cleaned, name, 0.85)) {
+        if (name.includes("summary") || name.includes("profile") || name.includes("objective")) return "summary";
+        if (name.includes("experience") || name.includes("work") || name.includes("employment")) return "experience";
+        if (name.includes("skill") || name.includes("competenc") || name.includes("expertise")) return "skills";
+        if (name.includes("certif") || name.includes("licens")) return "certifications";
+        if (name.includes("education") || name.includes("academic")) return "education";
+        if (name.includes("project")) return "projects";
+        if (name.includes("award") || name.includes("honor")) return "awards";
+        if (name.includes("volunteer")) return "volunteer";
+        if (name.includes("publication")) return "publications";
+      }
+    }
+  }
+
+  return null;
+}
+
+// ─── Role entry detection ───
+
+const DATE_RX = /(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*)?(?:\d{1,2}\/)?(\d{4})\s*[-–—to]+\s*(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*)?(?:\d{1,2}\/)?(present|current|\d{4})/i;
+
+const SINGLE_DATE_RX = /(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*)?\d{4}/i;
+
+const BULLET_RX = /^[\s]*[-•▪►*]\s+/;
+const COMPANY_SUFFIXES = /\b(inc\.?|llc|corp\.?|ltd\.?|co\.?|company|group|partners|consulting|services|solutions|technologies|enterprises|international|associates)\b/i;
+
+interface ParsedRole {
+  title: string;
+  company: string;
+  dates: string;
+  bullets: string[];
+}
+
+function parseExperienceBlock(lines: string[]): ParsedRole[] {
+  const roles: ParsedRole[] = [];
+  let currentRole: ParsedRole | null = null;
+  let pendingText: string[] = [];
+
+  const flushPending = () => {
+    if (currentRole && pendingText.length > 0) {
+      // Pending text that doesn't look like bullets — treat as bullets anyway
+      for (const t of pendingText) {
+        if (t.length > 15) currentRole.bullets.push(t);
+      }
+      pendingText = [];
+    }
+  };
+
+  const commitRole = () => {
+    flushPending();
+    if (currentRole) {
+      // If title looks like it has company embedded (via |), split
+      if (currentRole.title && !currentRole.company && currentRole.title.includes("|")) {
+        const parts = currentRole.title.split("|").map(s => s.trim());
+        if (parts.length >= 2) {
+          currentRole.title = parts[0];
+          currentRole.company = parts[1];
+        }
+      }
+      roles.push(currentRole);
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const hasDate = DATE_RX.test(line);
+    const isBullet = BULLET_RX.test(line);
+    const hasCompanySuffix = COMPANY_SUFFIXES.test(line);
+    const isShortLine = line.length < 80 && !isBullet;
+
+    // Detect a new role entry: line has a date range
+    if (hasDate && !isBullet) {
+      commitRole();
+      const dateMatch = line.match(DATE_RX);
+      const dates = dateMatch ? dateMatch[0] : "";
+      let titleCompany = line.replace(DATE_RX, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim();
+
+      // Check if title and company are on this line separated by |, —, or ,
+      let title = titleCompany;
+      let company = "";
+
+      if (titleCompany.includes("|")) {
+        const parts = titleCompany.split("|").map(s => s.trim());
+        title = parts[0];
+        company = parts.slice(1).join(" | ");
+      } else if (titleCompany.includes("—") || titleCompany.includes("–")) {
+        const sep = titleCompany.includes("—") ? "—" : "–";
+        const parts = titleCompany.split(sep).map(s => s.trim());
+        // Heuristic: if one part has company suffix, it's the company
+        if (COMPANY_SUFFIXES.test(parts[1] || "")) {
+          title = parts[0];
+          company = parts[1];
+        } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
+          company = parts[0];
+          title = parts[1] || "";
+        } else {
+          title = parts[0];
+          company = parts[1] || "";
+        }
+      }
+
+      currentRole = { title, company, dates, bullets: [] };
+
+      // Look ahead: next line might be company name
+      if (!company && i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60) {
+          if (COMPANY_SUFFIXES.test(nextLine) || (!DATE_RX.test(nextLine) && nextLine.length < 50)) {
+            currentRole.company = nextLine;
+            i++; // consume next line
+          }
+        }
+      }
+      continue;
+    }
+
+    // Detect role entry where company suffix is present and line is short (possible role header without date on same line)
+    if (!currentRole && isShortLine && hasCompanySuffix && !isBullet) {
+      // Look ahead for date on next line
+      if (i + 1 < lines.length && DATE_RX.test(lines[i + 1].trim())) {
+        commitRole();
+        const nextLine = lines[i + 1].trim();
+        const dateMatch = nextLine.match(DATE_RX);
+        const dates = dateMatch ? dateMatch[0] : "";
+        const titlePart = nextLine.replace(DATE_RX, "").trim().replace(/[|—–,·]\s*$/, "").trim();
+        currentRole = { title: titlePart || line, company: titlePart ? line : "", dates, bullets: [] };
+        i++;
+        continue;
+      }
+    }
+
+    // Bullet point
+    if (isBullet) {
+      if (currentRole) {
+        flushPending();
+        currentRole.bullets.push(line.replace(BULLET_RX, "").trim());
+      }
+      continue;
+    }
+
+    // Plain text within a role — treat as bullet if long enough
+    if (currentRole && line.length > 20) {
+      pendingText.push(line);
+      continue;
+    }
+
+    // Short text that might be a company name for current role
+    if (currentRole && !currentRole.company && isShortLine && line.length < 60) {
+      currentRole.company = line;
+      continue;
+    }
+  }
+
+  commitRole();
+  return roles;
+}
+
+function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
+  const entries: Array<{ institution: string; degree: string; year: string }> = [];
+  let currentEntry: { institution: string; degree: string; year: string } | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const yearMatch = trimmed.match(/\b(19|20)\d{2}\b/);
+
+    // If line has a degree keyword, start new entry
+    if (/\b(bachelor|master|associate|doctor|phd|mba|bs|ba|ms|ma|bba|bsc|msc|diploma|certificate|ged|high\s+school)\b/i.test(trimmed)) {
+      if (currentEntry) entries.push(currentEntry);
+      currentEntry = {
+        degree: trimmed.replace(/\b(19|20)\d{2}\b/g, "").replace(/[|—–,·]\s*$/, "").trim(),
+        institution: "",
+        year: yearMatch ? yearMatch[0] : "",
+      };
+    } else if (currentEntry && !currentEntry.institution) {
+      currentEntry.institution = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      if (!currentEntry.year && yearMatch) currentEntry.year = yearMatch[0];
+    } else {
+      if (currentEntry) entries.push(currentEntry);
+      currentEntry = { institution: trimmed, degree: "", year: yearMatch ? yearMatch[0] : "" };
+    }
+  }
+  if (currentEntry) entries.push(currentEntry);
+  return entries;
+}
+
+function parseProjectsBlock(lines: string[]): Array<{ name: string; description: string; bullets: string[] }> {
+  const projects: Array<{ name: string; description: string; bullets: string[] }> = [];
+  let current: { name: string; description: string; bullets: string[] } | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (BULLET_RX.test(trimmed)) {
+      if (current) current.bullets.push(trimmed.replace(BULLET_RX, "").trim());
+    } else if (!current || (trimmed.length < 60 && !BULLET_RX.test(trimmed))) {
+      if (current) projects.push(current);
+      current = { name: trimmed, description: "", bullets: [] };
+    } else {
+      current.description += (current.description ? " " : "") + trimmed;
+    }
+  }
+  if (current) projects.push(current);
+  return projects;
+}
+
+// ─── Phase 1: Full resume parser ───
 
 function extractHeaderFromResume(text: string): any {
   const header = { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
@@ -19,86 +299,165 @@ function extractHeaderFromResume(text: string): any {
   const locationRx = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
   const linkedinRx = /linkedin\.com\/in\/[\w-]+/i;
 
-  for (let i = 0; i < Math.min(lines.length, 8); i++) {
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
     const line = lines[i];
     if (!header.email) { const m = line.match(emailRx); if (m) header.email = m[0]; }
     if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
     if (!header.linkedin) { const m = line.match(linkedinRx); if (m) header.linkedin = m[0]; }
     if (!header.location && locationRx.test(line)) header.location = line;
-    if (i === 0 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line)) {
+    // Name: first line that's short, not an email/phone, not a section header
+    if (i === 0 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
       header.name = line;
     }
   }
+
+  // If location not found by pattern, check for "City, ST" embedded in contact lines
+  if (!header.location) {
+    for (let i = 0; i < Math.min(lines.length, 8); i++) {
+      const m = lines[i].match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2})/);
+      if (m) { header.location = m[1]; break; }
+    }
+  }
+
   return header;
 }
 
 function parseResumeTextIntoSections(text: string): any {
   const lines = text.split("\n");
-  const result: any = { experience: [], summary: "", education: [], skills: [], certifications: [], independentProjects: [] };
+  const sections: { type: string; lines: string[] }[] = [];
+  let currentSection = { type: "preamble", lines: [] as string[] };
 
-  let currentSection = "";
-  let currentExp: any = null;
-  const dateRx = /(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*)?(?:\d{1,2}\/)?(\d{4})\s*[-–—to]+\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*)?(?:\d{1,2}\/)?(present|current|\d{4})/i;
-
+  // First pass: split into named sections
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    if (/^(professional\s+)?summary/i.test(trimmed)) { currentSection = "summary"; continue; }
-    if (/^(professional\s+)?experience|^work\s+history/i.test(trimmed)) { currentSection = "experience"; continue; }
-    if (/^education/i.test(trimmed)) { currentSection = "education"; continue; }
-    if (/^(core\s+)?skills|^technical\s+skills|^competencies|^core\s+competencies/i.test(trimmed)) { currentSection = "skills"; continue; }
-    if (/^certifications?/i.test(trimmed)) { currentSection = "certifications"; continue; }
-    if (/^(independent\s+)?projects?/i.test(trimmed)) { currentSection = "projects"; continue; }
+    const detectedSection = detectSectionHeader(trimmed);
+    if (detectedSection) {
+      if (currentSection.lines.length > 0 || currentSection.type !== "preamble") {
+        sections.push(currentSection);
+      }
+      currentSection = { type: detectedSection, lines: [] };
+      continue;
+    }
 
-    switch (currentSection) {
+    currentSection.lines.push(trimmed);
+  }
+  if (currentSection.lines.length > 0) sections.push(currentSection);
+
+  // Second pass: parse each section by type
+  const result: any = {
+    experience: [],
+    summary: "",
+    education: [],
+    skills: [],
+    certifications: [],
+    independentProjects: [],
+  };
+
+  // Confidence tracking
+  let totalSections = 0;
+  let parsedSections = 0;
+
+  for (const section of sections) {
+    totalSections++;
+
+    switch (section.type) {
       case "summary":
-        result.summary += (result.summary ? " " : "") + trimmed;
+        result.summary = section.lines.join(" ").trim();
+        if (result.summary) parsedSections++;
         break;
+
       case "experience": {
-        if (dateRx.test(trimmed)) {
-          if (currentExp) result.experience.push(currentExp);
-          const dateMatch = trimmed.match(dateRx);
-          currentExp = {
+        const roles = parseExperienceBlock(section.lines);
+        if (roles.length > 0) {
+          result.experience.push(...roles);
+          parsedSections++;
+        } else {
+          // Low confidence: preserve as text block with a single role
+          result.experience.push({
+            title: "",
             company: "",
-            title: trimmed.replace(dateRx, "").replace(/[|—–,]\s*$/, "").trim(),
-            dates: dateMatch ? dateMatch[0] : "",
-            bullets: [],
-          };
-        } else if (currentExp && /^[-•▪►]/.test(trimmed)) {
-          currentExp.bullets.push(trimmed.replace(/^[-•▪►]\s*/, ""));
-        } else if (currentExp && trimmed.length > 20) {
-          if (!currentExp.company && trimmed.length < 60 && !dateRx.test(trimmed)) {
-            currentExp.company = trimmed;
-          } else {
-            currentExp.bullets.push(trimmed);
-          }
+            dates: "",
+            bullets: section.lines.filter(l => l.length > 10),
+          });
         }
         break;
       }
-      case "education":
-        result.education.push({ institution: trimmed, degree: "", year: "" });
+
+      case "skills": {
+        const allSkills: string[] = [];
+        for (const line of section.lines) {
+          // Split by common delimiters
+          const parts = line.split(/[,•|►▪·;]/).map(s => s.replace(BULLET_RX, "").trim()).filter(s => s.length > 1 && s.length < 50);
+          allSkills.push(...parts);
+        }
+        result.skills = allSkills;
+        if (allSkills.length > 0) parsedSections++;
         break;
-      case "skills":
-        result.skills.push(...trimmed.split(/[,•|]/).map((s: string) => s.trim()).filter(Boolean));
+      }
+
+      case "education": {
+        const edu = parseEducationBlock(section.lines);
+        result.education = edu;
+        if (edu.length > 0) parsedSections++;
         break;
-      case "certifications":
-        result.certifications.push(trimmed.replace(/^[-•▪►]\s*/, ""));
+      }
+
+      case "certifications": {
+        result.certifications = section.lines.map(l => l.replace(BULLET_RX, "").trim()).filter(Boolean);
+        if (result.certifications.length > 0) parsedSections++;
         break;
+      }
+
       case "projects": {
-        result.independentProjects.push({ name: trimmed, description: "", bullets: [] });
+        result.independentProjects = parseProjectsBlock(section.lines);
+        if (result.independentProjects.length > 0) parsedSections++;
         break;
+      }
+
+      case "preamble": {
+        // Lines before any section header — might contain experience if no sections detected
+        // Check if there are date-like patterns suggesting roles
+        const hasRoleData = section.lines.some(l => DATE_RX.test(l));
+        if (hasRoleData) {
+          const roles = parseExperienceBlock(section.lines);
+          if (roles.length > 0) result.experience.push(...roles);
+        }
+        break;
+      }
+
+      default:
+        // Unknown sections (awards, volunteer, publications) — preserve as certifications/extra
+        if (section.type === "awards" || section.type === "volunteer" || section.type === "publications") {
+          result.certifications.push(...section.lines.map(l => l.replace(BULLET_RX, "").trim()).filter(Boolean));
+        }
+        break;
+    }
+  }
+
+  // If no sections were detected at all, try to parse the entire text as experience
+  if (sections.length <= 1 && result.experience.length === 0) {
+    const allLines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    // Skip header lines (first 3-5)
+    const bodyLines = allLines.slice(3);
+    const roles = parseExperienceBlock(bodyLines);
+    if (roles.length > 0) {
+      result.experience = roles;
+    } else {
+      // Last resort: split into bullet-like chunks
+      const bullets = bodyLines.filter(l => l.length > 15);
+      if (bullets.length > 0) {
+        result.experience = [{ title: "", company: "", dates: "", bullets }];
       }
     }
   }
-  if (currentExp) result.experience.push(currentExp);
+
   return result;
 }
 
 function extractJDSignals(directorResult: any): string {
   const parts: string[] = [];
-
-  // Priority signals from JD extraction
   if (directorResult.signal_classifier?.jd_signal_extraction) {
     const jd = directorResult.signal_classifier.jd_signal_extraction;
     if (jd.priority_summary) parts.push(`Employer priority: ${jd.priority_summary}`);
@@ -107,26 +466,20 @@ function extractJDSignals(directorResult: any): string {
     if (jd.operational_signals?.length) parts.push(`Operational signals: ${jd.operational_signals.join(", ")}`);
     if (jd.leadership_signals?.length) parts.push(`Leadership signals: ${jd.leadership_signals.join(", ")}`);
   }
-
-  // Gap priorities
   if (directorResult.gap_analyzer?.priority_order?.length) {
     parts.push(`Signal gaps to address: ${directorResult.gap_analyzer.priority_order.join(", ")}`);
   }
-
-  // Target level
   if (directorResult.signal_classifier?.target_level_inferred) {
     parts.push(`Target level: ${directorResult.signal_classifier.target_level_inferred}`);
   }
   if (directorResult.signal_classifier?.overall_seniority_alignment) {
     parts.push(`Alignment: ${directorResult.signal_classifier.overall_seniority_alignment}`);
   }
-
   return parts.join("\n");
 }
 
 function reorderCompetencies(skills: string[], directorResult: any): string[] {
   if (!skills.length) return skills;
-
   const jdSignals: string[] = [];
   const jdExtraction = directorResult.signal_classifier?.jd_signal_extraction;
   if (jdExtraction) {
@@ -138,18 +491,13 @@ function reorderCompetencies(skills: string[], directorResult: any): string[] {
       ...(jdExtraction.relationship_signals || []),
     );
   }
-
   if (!jdSignals.length) return skills;
-
   const jdLower = jdSignals.map(s => s.toLowerCase());
-
-  // Score each skill by relevance to JD signals
   const scored = skills.map(skill => {
     const skillLower = skill.toLowerCase();
     let score = 0;
     for (const sig of jdLower) {
       if (skillLower.includes(sig) || sig.includes(skillLower)) score += 3;
-      // Partial word overlap
       const skillWords = skillLower.split(/\s+/);
       const sigWords = sig.split(/\s+/);
       for (const sw of skillWords) {
@@ -158,7 +506,6 @@ function reorderCompetencies(skills: string[], directorResult: any): string[] {
     }
     return { skill, score };
   });
-
   scored.sort((a, b) => b.score - a.score);
   return scored.map(s => s.skill);
 }
@@ -187,19 +534,16 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
     independentProjects = parsed.independentProjects;
   }
 
-  // Core competencies: use actual skills parsed from the resume, NOT internal dimension labels
+  // Core competencies: use actual skills parsed from the resume
   if (skills.length > 0) {
     coreCompetencies = skills.slice(0, 12);
   }
-
-  // Only fallback to explicit competency lists from the report if no skills were parsed
   if (coreCompetencies.length === 0 && report.export_builder?.core_competencies?.length) {
     coreCompetencies = report.export_builder.core_competencies;
   }
 
-  // NEVER use dimension_scores keys as competencies — those are internal signal labels
+  // NEVER use dimension_scores keys as competencies
 
-  // Reorder competencies by JD relevance
   coreCompetencies = reorderCompetencies(coreCompetencies, report);
   skills = reorderCompetencies(skills, report);
 
@@ -319,7 +663,6 @@ async function rewriteExperienceBullets(
 
   const jdSignals = extractJDSignals(directorResult);
 
-  // For each role, identify the 2-3 strongest bullets and mark them for rewrite
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
     const bullets = exp.bullets.map((b: string, bi: number) => `  [${bi}] ${b}`).join("\n");
@@ -430,13 +773,11 @@ serve(async (req) => {
     console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars, ${structure.core_competencies.length} competencies`);
 
     // ── Phase 2: Sequential focused API calls ──
-    // 2a: Rewrite summary
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
     const rewrittenSummary = await generateSummary(
       structure.summary, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id
     );
 
-    // 2b: Rewrite experience bullets
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
       structure.experience, directorResult, ANTHROPIC_API_KEY, request_id
