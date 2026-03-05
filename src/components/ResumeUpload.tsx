@@ -20,8 +20,25 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
   };
 
   const extractFromPdf = async (file: File): Promise<string> => {
-    const pdfjsLib = await import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    const PDFJS_VERSION = "4.4.168";
+    const cdnBase = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
+
+    // Load pdfjs from CDN to avoid production build issues
+    const pdfjsLib = await new Promise<any>((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve((window as any).pdfjsLib);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `${cdnBase}/pdf.min.mjs`;
+      script.type = "module";
+      script.onload = () => resolve((window as any).pdfjsLib);
+      script.onerror = () => reject(new Error("Failed to load PDF library"));
+      document.head.appendChild(script);
+    });
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `${cdnBase}/pdf.worker.min.mjs`;
+
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pages: string[] = [];
