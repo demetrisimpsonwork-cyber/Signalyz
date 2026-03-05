@@ -7,7 +7,7 @@ const corsHeaders = {
 
 async function callAI(apiKey: string, prompt: string): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
+  const timeout = setTimeout(() => controller.abort(), 90000);
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -44,7 +44,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
     clearTimeout(timeout);
     if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 55s.");
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 90s.");
     throw new Error(`AI call failed: ${msg}`);
   }
 }
