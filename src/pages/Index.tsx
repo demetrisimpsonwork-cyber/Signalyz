@@ -483,10 +483,6 @@ const Index = () => {
     lastClickRef.current = now;
 
     if (!validate()) return;
-    if (limitReached && !isTrialPro) {
-      setShowUpgrade(true);
-      return;
-    }
     setLoading(true);
     setResult(null);
     setAlignmentError(null);
