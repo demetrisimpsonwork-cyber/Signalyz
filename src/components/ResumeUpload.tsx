@@ -3,6 +3,7 @@ import { Upload, Loader2, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
+import { validateFileUpload } from "@/lib/sanitize";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -40,11 +41,13 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (ext !== "pdf" && ext !== "docx") {
-      toast.error("Please upload a PDF or DOCX file.");
+    const validation = validateFileUpload(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
 
     setExtracting(true);
     setFileName(file.name);

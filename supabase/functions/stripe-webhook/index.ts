@@ -7,27 +7,44 @@ serve(async (req) => {
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
   if (!stripeKey || !webhookSecret) {
-    return new Response("Stripe not configured", { status: 500 });
+    return new Response("Not configured", { status: 500 });
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
   const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    return new Response("Missing signature", { status: 400 });
+  }
+
   const body = await req.text();
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature!, webhookSecret);
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
-    return new Response(`Webhook Error: ${err}`, { status: 400 });
+    return new Response("Invalid signature", { status: 400 });
   }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
+
+  // Idempotency check: skip if this event was already processed
+  const { data: existing } = await supabase
+    .from("subscription_events")
+    .select("id")
+    .eq("stripe_event_id", event.id)
+    .maybeSingle();
+
+  if (existing) {
+    return new Response(JSON.stringify({ received: true, skipped: "duplicate" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   switch (event.type) {
     // Payment succeeded = upgrade to Pinnacle
