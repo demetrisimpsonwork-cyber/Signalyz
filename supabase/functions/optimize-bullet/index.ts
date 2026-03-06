@@ -540,7 +540,21 @@ USER_PLAN: ${userPlan}`;
       executive_insight_summary: titan.executive_insight_summary || null,
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_map: titan.signal_map || null,
-      signal_shift_estimates: titan.signal_shift_estimates || null,
+      signal_shift_estimates: (() => {
+        const sse = titan.signal_shift_estimates as any;
+        if (!sse) return null;
+        // Hard cap all "after" values at 95
+        const capped: Record<string, any> = {};
+        for (const [key, val] of Object.entries(sse)) {
+          const v = val as any;
+          if (v && typeof v.before === 'number' && typeof v.after === 'number') {
+            capped[key] = { before: v.before, after: Math.min(v.after, 95) };
+          } else {
+            capped[key] = v;
+          }
+        }
+        return capped;
+      })(),
       identity_strength_index: titan.identity_strength_index || null,
       career_signal_map: (() => {
         const csm = titan.career_signal_map as any;
