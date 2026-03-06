@@ -880,6 +880,16 @@ const Position = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const posResult = data as PositioningResult;
+
+      // Client-side override: force before_percent to match alignment score
+      if (typeof existingScore === "number" && posResult.match_score_forecast) {
+        posResult.match_score_forecast.before_percent = existingScore;
+        // Ensure after_percent is always higher than before
+        if (posResult.match_score_forecast.after_percent <= existingScore) {
+          posResult.match_score_forecast.after_percent = Math.min(100, existingScore + 15);
+        }
+      }
+
       setCached(cacheKey, posResult);
       setResult(posResult);
     } catch (err: any) {
