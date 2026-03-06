@@ -113,7 +113,7 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
-    const { experience, jd } = await req.json();
+    const { experience, jd, existing_alignment_score } = await req.json();
 
     console.log(JSON.stringify({
       event: "request_start",
@@ -218,6 +218,14 @@ JOB DESCRIPTION: ${cleanJd}`;
     } catch {
       console.error("JSON parse failed. Preview:", content.slice(0, 300));
       throw new Error("Failed to parse AI response. Please try again.");
+    }
+
+    // Override before_percent with existing alignment score if provided
+    if (typeof existing_alignment_score === "number" && existing_alignment_score >= 0 && existing_alignment_score <= 100) {
+      const forecast = titan.match_score_forecast as Record<string, unknown> | undefined;
+      if (forecast) {
+        forecast.before_percent = existing_alignment_score;
+      }
     }
 
     const responseBody = JSON.stringify(titan);

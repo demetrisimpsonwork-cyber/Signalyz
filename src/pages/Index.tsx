@@ -634,6 +634,16 @@ const Index = () => {
       const res = data as OptimizationResult;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
+
+      // Store alignment score + JD fingerprint for cross-engine consistency
+      try {
+        const jdFingerprint = normJd.text.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
+        sessionStorage.setItem("resumix_alignment_score", JSON.stringify({
+          score: res.match_score,
+          jd_fingerprint: jdFingerprint,
+          ts: Date.now(),
+        }));
+      } catch {}
       increment();
       if (isTrialPro) incrementTrialRun();
       // Increment server-side daily run count

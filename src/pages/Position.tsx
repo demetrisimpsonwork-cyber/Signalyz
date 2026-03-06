@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
+import { useSubscription } from "@/hooks/useSubscription";
 import ResumeUpload from "@/components/ResumeUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -657,8 +658,7 @@ const Position = () => {
 
   const isAdmin = useIsAdmin();
   const { isTrialPro } = useReverseTrial();
-  // TODO: replace with real pro check when Stripe is wired up
-  const isPro = false;
+  const { isPro } = useSubscription();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
   const clearTimers = () => {
@@ -725,8 +725,21 @@ const Position = () => {
     }, TIMEOUT_MS);
 
     try {
+      // Check for existing alignment score from the same JD
+      let existingScore: number | undefined;
+      try {
+        const raw = sessionStorage.getItem("resumix_alignment_score");
+        if (raw) {
+          const stored = JSON.parse(raw);
+          const jdFingerprint = jd.trim().replace(/\s+/g, " ").toLowerCase().slice(0, 150);
+          if (stored.jd_fingerprint === jdFingerprint && Date.now() - stored.ts < 30 * 60 * 1000) {
+            existingScore = stored.score;
+          }
+        }
+      } catch {}
+
       const { data, error } = await supabase.functions.invoke("titan-position", {
-        body: { experience: experience.trim(), jd: jd.trim() },
+        body: { experience: experience.trim(), jd: jd.trim(), existing_alignment_score: existingScore },
       });
       clearTimeout(timeoutTimer.current!);
       timeoutTimer.current = null;
