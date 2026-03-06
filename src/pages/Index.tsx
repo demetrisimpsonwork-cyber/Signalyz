@@ -866,6 +866,8 @@ const Index = () => {
               directorResult={directorResult}
               originalResume={directorExperience}
               onSwitchToReport={() => setMode("director")}
+              hasCurrentSessionAlignment={!!result}
+              onRunAlignment={() => setMode("alignment")}
             />
           </ProGate>
         )}
