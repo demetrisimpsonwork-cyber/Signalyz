@@ -267,6 +267,12 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
   const [copied, setCopied] = useState(false);
 
   const result = normalizeResult(rawResult);
+
+  // Log debug info to console only — never render to DOM
+  if (result.run_id) {
+    console.log(`[Signal Report] Run: ${result.run_id} v${result.pipeline_version || "?"} ${result._replay ? "(replay)" : ""}`);
+  }
+
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
   const frictionStages = [
@@ -314,18 +320,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   return (
     <div className="space-y-7">
-      {/* Run ID + Replay badge */}
-      {result.run_id && (
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
-          <span>Run: {result.run_id.slice(0, 8)}</span>
-          {result._replay && (
-            <span className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider">
-              Replay
-            </span>
-          )}
-          {result.pipeline_version && <span>v{result.pipeline_version}</span>}
-        </div>
-      )}
+      {/* Debug info logged to console only */}
 
       {/* 1 — Director Signal Tier */}
       <BlockShell label="Director Signal Tier">
