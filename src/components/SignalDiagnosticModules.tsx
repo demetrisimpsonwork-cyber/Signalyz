@@ -10,6 +10,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/* ─── Dimension display label map ─── */
+const DIMENSION_DISPLAY_LABELS: Record<string, string> = {
+  role_identity: "Role Identity Clarity",
+  commercial_impact: "Commercial Impact",
+  domain_expertise: "Domain Expertise",
+  ownership_framing: "Ownership Framing",
+  stakeholder_influence: "Stakeholder Influence",
+  operational_execution: "Operational Execution",
+};
+
+function dimensionDisplayLabel(raw: string): string {
+  const key = raw.toLowerCase().replace(/\s+/g, "_");
+  return DIMENSION_DISPLAY_LABELS[key] || raw.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
 /* ─── Types ─── */
 interface SignalCategory {
   strength: "Strong" | "Moderate" | "Weak" | "Missing";
@@ -710,7 +725,7 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
       <div className={`space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
         {dims.map((d, i) => (
           <div key={i} className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-            <p className="text-xs font-medium text-foreground">{d.dimension}</p>
+            <p className="text-xs font-medium text-foreground">{dimensionDisplayLabel(d.dimension)}</p>
             <span className="text-xs font-bold text-green-600 dark:text-green-400 tabular-nums">+{d.lift}</span>
           </div>
         ))}
