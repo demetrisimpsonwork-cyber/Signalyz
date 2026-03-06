@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export type StageStatus = "complete" | "active" | "locked";
+export type StageStatus = "complete" | "active" | "locked" | "pending";
 
 export interface PipelineStage {
   id: string;
@@ -37,6 +37,7 @@ function StageNode({
   const isComplete = stage.status === "complete";
   const isActive = stage.status === "active";
   const isLocked = stage.status === "locked";
+  const isPending = stage.status === "pending";
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -47,13 +48,14 @@ function StageNode({
             className="flex flex-col items-center gap-1.5 group focus:outline-none"
             aria-label={stage.label}
           >
-            {/* circle — larger for dominance */}
+            {/* circle */}
             <span
               className={`
                 relative flex items-center justify-center rounded-full transition-colors
                 h-9 w-9 sm:h-9 sm:w-9
                 ${isComplete ? "bg-primary text-primary-foreground shadow-sm" : ""}
                 ${isActive ? "border-2 border-primary bg-card shadow-sm" : ""}
+                ${isPending ? "border border-border bg-muted/40" : ""}
                 ${isLocked ? "bg-muted text-muted-foreground" : ""}
               `}
             >
@@ -61,14 +63,18 @@ function StageNode({
               {isActive && (
                 <span className="h-2.5 w-2.5 rounded-full bg-primary active-pulse" />
               )}
+              {isPending && (
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+              )}
               {isLocked && <Lock className="h-3.5 w-3.5" />}
             </span>
 
-            {/* label — bolder */}
+            {/* label */}
             <span
               className={`text-xs leading-tight transition-colors
                 ${isComplete ? "text-foreground font-semibold" : ""}
                 ${isActive ? "text-primary font-bold" : ""}
+                ${isPending ? "text-muted-foreground/60 font-medium" : ""}
                 ${isLocked ? "text-muted-foreground font-medium" : ""}
               `}
             >
@@ -85,7 +91,7 @@ function StageNode({
           </button>
         </TooltipTrigger>
 
-        {isLocked && (
+        {(isLocked || isPending) && (
           <TooltipContent
             side="bottom"
             className="bg-foreground text-background text-xs rounded-full px-3 py-1"
@@ -155,6 +161,7 @@ const SignalPipelineProgress = ({
             {i < stages.length - 1 && (
               <StageConnector filled={stage.status === "complete"} />
             )}
+
           </div>
         ))}
       </div>
