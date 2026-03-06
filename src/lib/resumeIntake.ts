@@ -614,18 +614,14 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
 
 // ─── Quality Meter Helper ────────────────────────────────────────────────────
 
-export type PasteQuality = "good" | "usable" | "needs_more";
+export type PasteQuality = "strong" | "good" | "usable" | "needs_more";
 
 export function getPasteQuality(result: ResumeIntakeResult): PasteQuality {
   if (result.status === "error") return "needs_more";
-  const expCount = result.sections.experience.length;
-  const bulletCount = result.sections.experience.reduce((s, e) => s + e.responsibilities.length, 0);
+  const charCount = result.normalized_text_stats?.chars ?? 0;
 
-  if (expCount >= 1 && bulletCount >= 3 && result.extraction_confidence.experience >= 0.5) {
-    return "good";
-  }
-  if (expCount >= 1 || bulletCount >= 1) {
-    return "usable";
-  }
+  if (charCount >= 800) return "strong";
+  if (charCount >= 300) return "good";
+  if (charCount > 0) return "usable";
   return "needs_more";
 }
