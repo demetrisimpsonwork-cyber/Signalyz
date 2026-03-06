@@ -8,6 +8,7 @@ import ResultSection from "@/components/ResultSection";
 import KeywordChips from "@/components/KeywordChips";
 import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
+import CalibratedBulletsSection from "@/components/CalibratedBulletsSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import ResumeBuilder from "@/components/ResumeBuilder";
 import ResumeUpload from "@/components/ResumeUpload";
@@ -1210,71 +1211,11 @@ const Index = () => {
                     />
 
                     {/* Section 2: Calibrated Bullets */}
-                    <div className="space-y-4">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
-
-                      {/* Original */}
-                      <div className="rounded-xl border bg-card p-5 space-y-2">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Original Bullet</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{bullet}</p>
-                      </div>
-
-                      {/* Variant A — Ownership Elevation */}
-                      <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant A — Ownership Elevation</p>
-                        <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
-                        <div className="pt-2 space-y-1">
-                          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
-                          {(result.used_signals && result.used_signals.length > 0) ? (
-                            <ul className="space-y-0.5">
-                              {result.used_signals.map((s, i) => (
-                                <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-[11px] text-muted-foreground">Clarified ownership language and aligned terminology with hiring expectations.</p>
-                          )}
-                        </div>
-                        <EvidenceLedger
-                          entries={result.signal_model?.evidence_ledger?.filter(e => e.source === "resume").slice(0, 2).map(e => ({
-                            claim: e.evidence || e.claim,
-                            resume_snippet: e.evidence || e.claim,
-                            source_section: "Resume",
-                            confidence: "High" as const,
-                          }))}
-                        />
-                      </div>
-
-                      {/* Variant B — Outcome / Impact Framing */}
-                      {effectiveIsPro && result.alt_a !== result.optimized_bullet && (
-                        <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
-                          <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
-                          <div className="pt-2 space-y-1">
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
-                            <ul className="space-y-0.5">
-                              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Emphasized operational outcome</li>
-                              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Aligned terminology with hiring expectations</li>
-                            </ul>
-                          </div>
-                          <EvidenceLedger
-                            entries={result.signal_model?.evidence_ledger?.filter(e => e.source === "resume").slice(0, 2).map(e => ({
-                              claim: e.evidence || e.claim,
-                              resume_snippet: e.evidence || e.claim,
-                              source_section: "Resume",
-                              confidence: "High" as const,
-                            }))}
-                          />
-                        </div>
-                      )}
-                      {effectiveIsPro && result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
-                        <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
-                      )}
-
-                      <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
-                        Repositioned using only language from your original resume. No experience was invented.
-                      </p>
-                    </div>
+                    <CalibratedBulletsSection
+                      bullet={bullet}
+                      result={result}
+                      effectiveIsPro={effectiveIsPro}
+                    />
 
                     {!effectiveIsPro && <ProInsightsTeaser />}
 

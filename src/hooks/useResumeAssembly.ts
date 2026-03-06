@@ -55,34 +55,84 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
-    setLoading(true);
-    setError(null);
-    setStep(0);
-
-    // Animate through steps
-    const stepTimers = [
-      setTimeout(() => setStep(1), 1200),
-      setTimeout(() => setStep(2), 2400),
-    ];
+  const invokeWithTimeout = async (directorResult: DirectorCalibrationResult, originalResume: string): Promise<any> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("assemble-calibrated-resume", {
         body: { directorResult, originalResume },
       });
 
-      stepTimers.forEach(clearTimeout);
+      clearTimeout(timeoutId);
 
       if (fnError) throw new Error(fnError.message || "Assembly failed");
       if (data?.status === "error") throw new Error(data.message || "Assembly failed");
+      return data;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      const isTimeout = controller.signal.aborted || err?.name === "AbortError" ||
+        err?.message?.includes("NETWORK_ERROR") || err?.message?.includes("HTTP: 0") ||
+        err?.message?.includes("Failed to fetch");
+      if (isTimeout) {
+        console.warn("[useResumeAssembly] Request timed out or network error:", err?.message);
+        throw new Error("__TIMEOUT__");
+      }
+      throw err;
+    }
+  };
 
-      // Handle partial result with retry flag
+  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
+    setLoading(true);
+    setError(null);
+    setStep(0);
+
+    const stepTimers = [
+      setTimeout(() => setStep(1), 1200),
+      setTimeout(() => setStep(2), 2400),
+    ];
+
+    let data: any = null;
+    let attempts = 0;
+    const maxAttempts = 2;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        data = await invokeWithTimeout(directorResult, originalResume);
+        break;
+      } catch (err: any) {
+        if (err.message === "__TIMEOUT__" && attempts < maxAttempts) {
+          console.log("[useResumeAssembly] Attempt", attempts, "timed out, retrying...");
+          setStep(0);
+          continue;
+        }
+        if (err.message === "__TIMEOUT__") {
+          stepTimers.forEach(clearTimeout);
+          setError("Resume generation is taking longer than expected. Try again — your alignment data is saved.");
+          setLoading(false);
+          return;
+        }
+        stepTimers.forEach(clearTimeout);
+        setError(err.message || "Failed to assemble resume. Please retry.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    stepTimers.forEach(clearTimeout);
+
+    if (!data) {
+      setError("Resume generation is taking longer than expected. Try again — your alignment data is saved.");
+      setLoading(false);
+      return;
+    }
+
+    try {
       if (data?.status === "partial" && data?.retry) {
-        // Use the partial result but show a message
         console.warn("[useResumeAssembly] Received partial result, using Phase 1 structure");
       }
 
-      // Merge pre-extracted contact into header (fill gaps only)
       const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
       const mergedHeader = {
         name: rawHeader.name || preExtractedContact?.name || "",
@@ -106,9 +156,8 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       };
 
       setAssembledResume(resume);
-      setStep(3); // done
+      setStep(3);
 
-      // Persist
       try {
         localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(resume));
       } catch {}
