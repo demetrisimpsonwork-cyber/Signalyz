@@ -566,7 +566,17 @@ USER_PLAN: ${userPlan}`;
       })(),
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
-      predicted_signal_lift: titan.predicted_signal_lift || null,
+      predicted_signal_lift: (() => {
+        const psl = titan.predicted_signal_lift as any;
+        if (!psl) return null;
+        const currentScore = psl.current_score ?? (titan.match_score as any)?.score ?? 0;
+        const dims = Array.isArray(psl.dimensions) ? psl.dimensions : [];
+        const totalLift = dims.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
+        const captured = Math.round(totalLift * 0.60);
+        const predictedScore = Math.min(currentScore + captured, currentScore + 15);
+        console.log(`[predicted_score] lifts=${dims.map((d:any)=>d.lift).join('+')}, total=${totalLift}, captured=${captured}, current=${currentScore}, predicted=${predictedScore}`);
+        return { ...psl, current_score: currentScore, predicted_score: predictedScore };
+      })(),
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
