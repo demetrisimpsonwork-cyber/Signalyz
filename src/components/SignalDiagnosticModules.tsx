@@ -462,18 +462,21 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
     { key: "operational_execution" as const, label: "Operational Execution" },
   ];
 
-  // Detect the actual scale: if any score > 25, scores are on 0-100 scale
-  const maxScore = Math.max(...dimensions.map(d => data[d.key] ?? 0));
-  const isPercentScale = maxScore > 25;
-  const dimensionMax = isPercentScale ? 100 : 25;
-  const totalMax = dimensionMax * dimensions.length;
+  // Detect the actual scale: if any score > 25, scores are on 0-100 scale already
+  const maxRaw = Math.max(...dimensions.map(d => data[d.key] ?? 0));
+  const isRawScale = maxRaw <= 25;
 
-  const total = dimensions.reduce((sum, d) => sum + (data[d.key] ?? 0), 0);
+  // Always display on /100 per dimension, /600 total
+  const displayMax = 100;
+  const totalMax = 600;
+  const toDisplay = (raw: number) => isRawScale ? Math.round((raw / 25) * 100) : raw;
 
-  // Thresholds adjusted to scale
-  const strongThreshold = dimensionMax * 0.8;
-  const moderateThreshold = dimensionMax * 0.52;
-  const weakThreshold = dimensionMax * 0.28;
+  const total = dimensions.reduce((sum, d) => sum + toDisplay(data[d.key] ?? 0), 0);
+
+  // Thresholds on /100 display scale
+  const strongThreshold = displayMax * 0.8;
+  const moderateThreshold = displayMax * 0.52;
+  const weakThreshold = displayMax * 0.28;
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
@@ -486,13 +489,13 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
       </div>
       <div className="space-y-2.5">
         {dimensions.map(({ key, label }) => {
-          const score = data[key] ?? 0;
-          const pct = (score / dimensionMax) * 100;
+          const score = toDisplay(data[key] ?? 0);
+          const pct = (score / displayMax) * 100;
           return (
             <div key={key} className="space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-foreground">{label}</p>
-                <span className="text-xs font-semibold text-muted-foreground tabular-nums">{score}/{dimensionMax}</span>
+                <span className="text-xs font-semibold text-muted-foreground tabular-nums">{score}/{displayMax}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                 <div
