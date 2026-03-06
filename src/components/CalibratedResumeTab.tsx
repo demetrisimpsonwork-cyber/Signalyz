@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
