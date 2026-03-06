@@ -802,12 +802,18 @@ const Position = () => {
 
     try {
       // Check for existing alignment score from the same JD
+      // Fingerprint must match Index.tsx normalization: strip control chars, collapse whitespace, then lowercase slice
       let existingScore: number | undefined;
       try {
         const raw = sessionStorage.getItem("resumix_alignment_score");
         if (raw) {
           const stored = JSON.parse(raw);
-          const jdFingerprint = jd.trim().replace(/\s+/g, " ").toLowerCase().slice(0, 150);
+          const normalizedJd = jd.trim()
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+            .replace(/[^\S\n]+/g, " ")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+          const jdFingerprint = normalizedJd.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
           if (stored.jd_fingerprint === jdFingerprint && Date.now() - stored.ts < 30 * 60 * 1000) {
             existingScore = stored.score;
           }
