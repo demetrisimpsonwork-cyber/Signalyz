@@ -18,6 +18,23 @@ interface HistoryEntry {
   resume_built: boolean;
 }
 
+function safeParseEntry(raw: any): HistoryEntry | null {
+  try {
+    if (!raw || typeof raw !== "object") return null;
+    const id = typeof raw.id === "string" ? raw.id : String(raw.id ?? "");
+    const created_at = typeof raw.created_at === "string" ? raw.created_at : "";
+    const score = typeof raw.score === "number" ? raw.score : Number(raw.score ?? 0);
+    const strength_label = typeof raw.strength_label === "string" ? raw.strength_label : "—";
+    const inferred_role = typeof raw.inferred_role === "string" ? raw.inferred_role : "";
+    const top_gap = typeof raw.top_gap === "string" ? raw.top_gap : null;
+    const resume_built = !!raw.resume_built;
+    if (!id || !created_at || isNaN(score)) return null;
+    return { id, created_at, inferred_role, score, strength_label, top_gap, resume_built };
+  } catch {
+    return null;
+  }
+}
+
 const scoreColor = (s: number) => s >= 70 ? "text-green-600 dark:text-green-400" : s >= 50 ? "text-orange-500" : "text-destructive";
 const scoreDotColor = (s: number) => s >= 70 ? "#22c55e" : s >= 50 ? "#f97316" : "#ef4444";
 
@@ -26,6 +43,7 @@ const History = () => {
   const navigate = useNavigate();
   const { isPro, loading: subLoading } = useSubscription();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [failedCount, setFailedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -40,7 +58,16 @@ const History = () => {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setEntries((data as HistoryEntry[]) || []);
+        const raw = (data || []) as any[];
+        const parsed: HistoryEntry[] = [];
+        let failed = 0;
+        for (const item of raw) {
+          const entry = safeParseEntry(item);
+          if (entry) parsed.push(entry);
+          else failed++;
+        }
+        setEntries(parsed);
+        setFailedCount(failed);
         setLoading(false);
       });
   }, [user, authLoading]);
@@ -62,8 +89,13 @@ const History = () => {
     setExpandedResult(data?.full_result_json as Record<string, unknown> || null);
   };
 
+  // Show loading while auth or subscription check is pending — never default to gate
   if (authLoading || loading || subLoading) {
-    return <div className="container max-w-3xl py-20 text-center text-muted-foreground">Loading...</div>;
+    return (
+      <div className="container max-w-3xl py-20 flex items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   return (
@@ -130,10 +162,19 @@ const History = () => {
             )}
           </div>
         ))}
+
+        {/* Fallback for entries that failed to parse */}
+        {failedCount > 0 && (
+          <div className="rounded-lg border bg-muted/30 p-4 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {failedCount} result{failedCount > 1 ? "s" : ""} couldn't be displayed
+            </p>
+            <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+              Re-run alignment
+            </Button>
+          </div>
+        )}
       </div>
-      {!isPro && entries.length > 0 && (
-        <div className="absolute inset-0" /> // overlay handled by blur above
-      )}
 
       <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
