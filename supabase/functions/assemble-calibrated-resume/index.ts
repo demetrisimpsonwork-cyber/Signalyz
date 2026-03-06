@@ -776,10 +776,17 @@ INSTRUCTIONS:
 5. ZERO FABRICATION: Do not invent metrics, titles, responsibilities, or experience not present in the original
 6. Elevate ownership language and add outcome framing where the underlying work genuinely supports it
 
+BULLET LENGTH RULES (CRITICAL):
+- Each bullet MUST be a single clean sentence — maximum 40 words
+- If the original bullet is long, extract the SINGLE strongest signal and rewrite THAT signal only
+- Do NOT concatenate the original text with the rewrite — produce ONE clean sentence
+- NEVER include placeholders like "[Insert %]", "[Insert amount]", "[Insert metric]" — if a metric is unknown, write the bullet without it
+- Cap bullets: 3 per role for older roles, 4 for the most recent/current role, never more than 4
+
 Return ONLY valid JSON array:
 [{"company":"","title":"","dates":"","bullets":["..."]}]
 
-Keep ALL roles. Keep ALL bullets. Preserve exact order.`,
+Keep ALL roles. Preserve exact order.`,
         messages: [{ role: "user", content: expText }],
       }),
       signal: controller.signal,
@@ -889,7 +896,32 @@ serve(async (req) => {
   }
 });
 
+// Post-process: remove placeholders and enforce bullet caps
+function cleanBullet(bullet: string): string {
+  return bullet
+    .replace(/\[Insert\s+[^\]]*\]/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
 function normalizeResult(assembled: any) {
+  const experience = Array.isArray(assembled.experience)
+    ? assembled.experience.map((e: any, idx: number) => {
+        let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+        // Cap bullets: 4 for first/current role, 3 for older roles
+        const maxBullets = idx === 0 ? 4 : 3;
+        if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
+        return {
+          company: e.company || "",
+          title: e.title || "",
+          dates: e.dates || "",
+          bullets,
+        };
+      })
+    : [];
+
   return {
     header: {
       name: assembled.header?.name || "",
@@ -901,19 +933,12 @@ function normalizeResult(assembled: any) {
     },
     summary: assembled.summary || "",
     core_competencies: Array.isArray(assembled.core_competencies) ? assembled.core_competencies : [],
-    experience: Array.isArray(assembled.experience)
-      ? assembled.experience.map((e: any) => ({
-          company: e.company || "",
-          title: e.title || "",
-          dates: e.dates || "",
-          bullets: Array.isArray(e.bullets) ? e.bullets : [],
-        }))
-      : [],
+    experience,
     independent_projects: Array.isArray(assembled.independent_projects)
       ? assembled.independent_projects.map((p: any) => ({
           name: p.name || "",
           description: p.description || "",
-          bullets: Array.isArray(p.bullets) ? p.bullets : [],
+          bullets: Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [],
         }))
       : [],
     skills: Array.isArray(assembled.skills) ? assembled.skills : [],
