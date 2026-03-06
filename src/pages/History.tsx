@@ -22,17 +22,14 @@ interface HistoryEntry {
   resume_built: boolean;
 }
 
+/** Only flat, renderable primitives — no nested objects touch the DOM */
 interface ExpandedResult {
   alt_a?: string;
   alt_b?: string;
   match_score?: number;
-  missing_keywords?: string[];
+  gaps?: string[];
   suggested_verbs?: string[];
-  signal_model?: {
-    strengths?: string[];
-    gaps?: string[];
-    match_score?: { label?: string; score_rationale?: string[] };
-  };
+  top_gap?: string;
 }
 
 interface HistoryGroup {
@@ -62,25 +59,40 @@ function safeParseEntry(raw: any): HistoryEntry | null {
   }
 }
 
+/** Extract ONLY flat renderable fields — everything else is discarded */
 function safeParseExpandedResult(raw: any): ExpandedResult | null {
   try {
     if (!raw || typeof raw !== "object") return null;
     const r = raw as Record<string, any>;
-    if (typeof r.match_score !== "number" && !r.signal_model) return null;
+
+    // Extract match_score (top-level number or nested in signal_model)
+    let matchScore: number | undefined;
+    if (typeof r.match_score === "number") matchScore = r.match_score;
+    else if (r.signal_model?.match_score?.score != null) matchScore = Number(r.signal_model.match_score.score);
+
+    // Extract gaps from signal_model.gaps or top-level gaps
+    let gaps: string[] | undefined;
+    const rawGaps = r.signal_model?.gaps ?? r.gaps;
+    if (Array.isArray(rawGaps)) gaps = rawGaps.filter((g: any) => typeof g === "string").slice(0, 5);
+
+    // Extract suggested verbs
+    let suggestedVerbs: string[] | undefined;
+    const rawVerbs = r.suggested_verbs ?? r.action_verbs;
+    if (Array.isArray(rawVerbs)) suggestedVerbs = rawVerbs.filter((v: any) => typeof v === "string");
+
+    // Top gap
+    const topGap = typeof r.top_gap === "string" ? r.top_gap : (gaps?.[0] ?? undefined);
+
+    // Must have at least a score or a bullet to be worth rendering
+    if (matchScore == null && typeof r.alt_a !== "string") return null;
+
     return {
       alt_a: typeof r.alt_a === "string" ? r.alt_a : undefined,
       alt_b: typeof r.alt_b === "string" ? r.alt_b : undefined,
-      match_score: typeof r.match_score === "number" ? r.match_score : undefined,
-      missing_keywords: Array.isArray(r.missing_keywords) ? r.missing_keywords.filter((k: any) => typeof k === "string") : undefined,
-      suggested_verbs: Array.isArray(r.suggested_verbs) ? r.suggested_verbs.filter((k: any) => typeof k === "string") : undefined,
-      signal_model: r.signal_model && typeof r.signal_model === "object" ? {
-        strengths: Array.isArray(r.signal_model.strengths) ? r.signal_model.strengths : undefined,
-        gaps: Array.isArray(r.signal_model.gaps) ? r.signal_model.gaps : undefined,
-        match_score: r.signal_model.match_score && typeof r.signal_model.match_score === "object" ? {
-          label: r.signal_model.match_score.label,
-          score_rationale: Array.isArray(r.signal_model.match_score.score_rationale) ? r.signal_model.match_score.score_rationale : undefined,
-        } : undefined,
-      } : undefined,
+      match_score: matchScore,
+      gaps,
+      suggested_verbs: suggestedVerbs,
+      top_gap: topGap,
     };
   } catch {
     return null;
@@ -144,45 +156,65 @@ function ExpandedResultView({ result }: { result: ExpandedResult }) {
     toast({ title: "Copied", duration: 1500 });
   };
 
-  const sections: { label: string; content: string }[] = [];
-  if (result.alt_a) sections.push({ label: "Optimized Bullet A", content: result.alt_a });
-  if (result.alt_b) sections.push({ label: "Optimized Bullet B", content: result.alt_b });
-  if (result.missing_keywords?.length)
-    sections.push({ label: "Missing Keywords", content: result.missing_keywords.join(", ") });
-  if (result.suggested_verbs?.length)
-    sections.push({ label: "Suggested Action Verbs", content: result.suggested_verbs.join(", ") });
+  try {
+    const sections: { label: string; content: string }[] = [];
 
-  if (sections.length === 0 && !result.match_score) {
+    // 1. Optimized Bullets
+    if (result.alt_a) sections.push({ label: "Optimized Bullet", content: result.alt_a });
+    if (result.alt_b) sections.push({ label: "Optimized Bullet — Variant B", content: result.alt_b });
+
+    // 2. Top Gap callout
+    if (result.top_gap) sections.push({ label: "Top Gap", content: result.top_gap });
+
+    // 3. Gaps / Missing Keywords
+    if (result.gaps?.length)
+      sections.push({ label: "Signal Gaps", content: result.gaps.join(" · ") });
+
+    // 4. Suggested Action Verbs
+    if (result.suggested_verbs?.length)
+      sections.push({ label: "Suggested Action Verbs", content: result.suggested_verbs.join(", ") });
+
+    if (sections.length === 0 && result.match_score == null) {
+      return (
+        <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
+          <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-2 space-y-2">
+        {/* Match Score */}
+        {result.match_score != null && (
+          <div className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3 flex items-center justify-between">
+            <span className="text-xs font-medium text-foreground">Match Score</span>
+            <Badge className={`text-xs ${scoreBadgeClasses(result.match_score)}`}>{result.match_score}%</Badge>
+          </div>
+        )}
+
+        {/* Sections — only flat strings, never objects */}
+        {sections.map((s) => (
+          <div key={s.label} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{s.label}</p>
+                <p className="text-xs text-foreground leading-relaxed">{s.content}</p>
+              </div>
+              <button onClick={() => copy(s.content)} className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title="Copy">
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } catch {
     return (
       <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
-        <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
+        <p className="text-xs text-muted-foreground">Detail unavailable</p>
       </div>
     );
   }
-
-  return (
-    <div className="mt-2 space-y-2">
-      {result.match_score !== undefined && (
-        <div className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3 flex items-center justify-between">
-          <span className="text-xs font-medium text-foreground">Match Score</span>
-          <Badge className={`text-xs ${scoreBadgeClasses(result.match_score)}`}>{result.match_score}%</Badge>
-        </div>
-      )}
-      {sections.map((s) => (
-        <div key={s.label} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{s.label}</p>
-              <p className="text-xs text-foreground leading-relaxed">{s.content}</p>
-            </div>
-            <button onClick={() => copy(s.content)} className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title="Copy">
-              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 /* ── custom tooltip ── */
