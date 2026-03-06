@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
+import { useSubscription } from "@/hooks/useSubscription";
 import ResumeUpload from "@/components/ResumeUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -657,8 +658,7 @@ const Position = () => {
 
   const isAdmin = useIsAdmin();
   const { isTrialPro } = useReverseTrial();
-  // TODO: replace with real pro check when Stripe is wired up
-  const isPro = false;
+  const { isPro } = useSubscription();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
   const clearTimers = () => {

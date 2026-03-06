@@ -70,10 +70,19 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
     if (typeof r.match_score === "number") matchScore = r.match_score;
     else if (r.signal_model?.match_score?.score != null) matchScore = Number(r.signal_model.match_score.score);
 
-    // Extract gaps from signal_model.gaps or top-level gaps
+    // Extract gaps from signal_model.gaps or top-level gaps (handle both string and object shapes)
     let gaps: string[] | undefined;
     const rawGaps = r.signal_model?.gaps ?? r.gaps;
-    if (Array.isArray(rawGaps)) gaps = rawGaps.filter((g: any) => typeof g === "string").slice(0, 5);
+    if (Array.isArray(rawGaps)) {
+      gaps = rawGaps
+        .map((g: any) => {
+          if (typeof g === "string") return g;
+          if (g && typeof g === "object" && typeof g.name === "string") return g.name;
+          return null;
+        })
+        .filter((g): g is string => g !== null)
+        .slice(0, 5);
+    }
 
     // Extract suggested verbs
     let suggestedVerbs: string[] | undefined;
