@@ -676,17 +676,17 @@ function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticDat
       )}
 
       {currentScore > 0 && predictedScore > 0 && (
-        <div className="rounded-lg border bg-background p-3 space-y-2">
+        <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
           <div className="flex items-center gap-4">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground">Current</p>
-              <p className="text-lg font-bold text-orange-500 tabular-nums">{currentScore}%</p>
+              <p className="text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-primary" />
+            <ArrowRight className="h-5 w-5 text-primary" />
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground">After Calibration</p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
             </div>
           </div>
         </div>
@@ -718,17 +718,17 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
 
       {/* Score projection */}
       {currentScore > 0 && predictedScore > 0 && (
-        <div className={`rounded-lg border bg-background p-3 space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
+        <div className={`rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Signal Diagnosis After Calibration</p>
           <div className="flex items-center gap-4">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground">Current Signal Score</p>
-              <p className="text-lg font-bold text-muted-foreground tabular-nums">{currentScore}%</p>
+              <p className="text-xl font-bold text-muted-foreground tabular-nums">{currentScore}%</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-primary" />
+            <ArrowRight className="h-5 w-5 text-primary" />
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground">Predicted Score</p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
             </div>
           </div>
         </div>
