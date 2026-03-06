@@ -381,7 +381,10 @@ Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]
 Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
 
 CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
-For career_signal_map, matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first. Primary alignment gets the top 2-3 roles, secondary gets the next 2-3.
+For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
+
+IDENTITY STRENGTH INDEX DETERMINISTIC SCORING:
+Your identity_strength_index scoring must be reproducible. Given the same resume and job description inputs, you must always produce the same total_score and the same pillar scores. Do not introduce variance. Evaluate evidence strictly and assign fixed scores based on the presence or absence of specific signals.
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
@@ -489,16 +492,20 @@ USER_PLAN: ${userPlan}`;
           return [...arr].sort((a, b) => {
             const scoreDiff = (b.score ?? 0) - (a.score ?? 0);
             if (Math.abs(scoreDiff) > 5) return scoreDiff;
-            // Within 5 points: use matched_jd_dimensions as tiebreaker
             const dimDiff = (b.matched_jd_dimensions ?? 0) - (a.matched_jd_dimensions ?? 0);
             if (dimDiff !== 0) return dimDiff;
-            // Final tiebreaker: alphabetical by role name
             return (a.role ?? "").localeCompare(b.role ?? "");
           });
         };
+        // Merge all roles, sort deterministically, then cap at 1 primary + 1 secondary
+        const allRoles = [
+          ...(csm.primary_alignment || []),
+          ...(csm.secondary_alignment || []),
+        ];
+        const sorted = sortEntries(allRoles);
         return {
-          primary_alignment: sortEntries(csm.primary_alignment || []),
-          secondary_alignment: sortEntries(csm.secondary_alignment || []),
+          primary_alignment: sorted.slice(0, 1),
+          secondary_alignment: sorted.slice(1, 2),
         };
       })(),
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,

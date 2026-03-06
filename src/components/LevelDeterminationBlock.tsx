@@ -10,6 +10,21 @@ interface LevelDeterminationBlockProps {
   inferredRoleTitle?: string;
 }
 
+// ─── Role Level Detection ────────────────────────────────────────────────────
+type RoleLevel = "supervisor" | "manager" | "director" | "executive";
+
+const detectRoleLevel = (roleTitle: string): RoleLevel => {
+  const lower = roleTitle.toLowerCase();
+  const supervisorPatterns = /\b(supervisor|team\s*lead|shift\s*lead|crew\s*lead|floor\s*lead|group\s*lead|coordinator|associate\s*manager|assistant\s*manager|foreman|foreperson)\b/;
+  const directorPatterns = /\b(director|vp|vice\s*president|svp|evp|chief|head\s+of|c-suite|cto|cfo|coo|ceo|cmo|cio)\b/;
+  const executivePatterns = /\b(vp|vice\s*president|svp|evp|chief|c-suite|cto|cfo|coo|ceo|cmo|cio)\b/;
+
+  if (executivePatterns.test(lower)) return "executive";
+  if (directorPatterns.test(lower)) return "director";
+  if (supervisorPatterns.test(lower)) return "supervisor";
+  return "manager";
+};
+
 // Inference helpers
 
 const deriveInferenceConfidence = (score: number): "High" | "Moderate" | "Low" => {
