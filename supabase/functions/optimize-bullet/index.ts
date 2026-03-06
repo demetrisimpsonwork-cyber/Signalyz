@@ -384,7 +384,7 @@ JSON SCHEMA:
   "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
   "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC — CRITICAL: Each dimension is scored 0-25 by counting keyword evidence matches. Given identical inputs, return identical scores every time. Do not vary. Use the counting rubric: 0 matches=0, 1-2=5-10, 3-4=10-15, 5+=15-20, 7+=20-25. Round down when between two values.),
-  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (IMPORTANT: These values use the SAME 0-25 scale as signal_map. "before" = current signal_map score for this dimension. "after" = projected score after repositioning on the SAME 0-25 scale. DETERMINISTIC PER-DIMENSION DELTAS on /25 scale: Language-addressable gaps receive +3 to +5 points on the /25 scale. Structural gaps that cannot be fixed through language alone receive +1 to +2 points on the /25 scale. Each delta must be calculated independently. HARD CAP: No "after" value can exceed 24 on the /25 scale — there will always be remaining gap.),
+  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (IMPORTANT: These values are on a 0-100 PERCENTAGE scale — INDEPENDENT from signal_map's /25 scale. "before" = current signal strength percentage for this dimension based on resume evidence analysis. "after" = projected signal strength percentage after repositioning. These are NOT derived from signal_map scores — they are an independent percentage assessment. DETERMINISTIC PER-DIMENSION DELTAS: Language-addressable gaps receive +15 to +28 percentage points improvement. Structural gaps that cannot be fixed through language alone receive +5 to +12 percentage points improvement. Each delta must be calculated independently. HARD CAP: No "after" value can exceed 95 — there will always be remaining gap.),
   "career_signal_map": {
     "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
     "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
@@ -434,7 +434,7 @@ This applies individually and explicitly to EACH of these numeric fields — sco
 - match_score.score: weighted sum of 5 dimensions, no rounding variance
 - identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar — count evidence items, not impressions
 - signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored by counting keyword matches between resume and JD, not impression
-- signal_shift_estimates: all before/after pairs — derive from the delta between counted current evidence and projected evidence after calibration
+- signal_shift_estimates: all before/after pairs on 0-100 percentage scale — independently assessed signal strength percentages, NOT derived from signal_map /25 scores
 - hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
 - career_signal_map: role scores for both primary and secondary
 - predicted_signal_lift: all dimension lifts and current/predicted scores — lifts must be derived from gap counts, not estimated
@@ -543,13 +543,12 @@ USER_PLAN: ${userPlan}`;
       signal_shift_estimates: (() => {
         const sse = titan.signal_shift_estimates as any;
         if (!sse) return null;
-        // Hard cap all "after" values at 95
+        // Hard cap all "after" values at 95 (percentage scale)
         const capped: Record<string, any> = {};
         for (const [key, val] of Object.entries(sse)) {
           const v = val as any;
           if (v && typeof v.before === 'number' && typeof v.after === 'number') {
-            // Cap on /25 scale at 24 (which becomes 96% → capped to 95% in UI)
-            capped[key] = { before: v.before, after: Math.min(v.after, 24) };
+            capped[key] = { before: v.before, after: Math.min(v.after, 95) };
           } else {
             capped[key] = v;
           }
