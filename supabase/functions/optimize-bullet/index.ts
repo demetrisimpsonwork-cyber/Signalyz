@@ -384,7 +384,7 @@ JSON SCHEMA:
   "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
   "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC: given the same inputs always return the same dimension scores — do not vary),
-  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}},
+  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (DETERMINISTIC PER-DIMENSION DELTAS: Calculate the improvement delta for each dimension independently based on the specific gap actions for that dimension. Dimensions where the gap is directly addressed by calibration suggestions receive higher deltas 12-20 points. Dimensions where the gap is structural and cannot be addressed through language repositioning receive lower deltas 4-8 points. Each delta must be different and calculated independently — do NOT use the same delta for all dimensions.),
   "career_signal_map": {
     "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
     "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
@@ -403,6 +403,8 @@ Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]
 - '[GAP]' = the resume is missing this signal or it is weak/absent (e.g. "missing", "lacks", "no evidence of", "absent", "unclear", "not demonstrated")
 Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
 Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals from the resume relative to the JD priority signals. Always return 4 [STRENGTH] items.
+Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical absent signals relative to the JD priority signals. Always return 4 [GAP] items.
+The score_rationale array must contain exactly 8 items total: 4 prefixed with [STRENGTH] followed by 4 prefixed with [GAP]. Both sections are required. Neither can be absent.
 
 HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
 Assign risk levels based on the extracted signal gaps deterministically. For the same gap profile, always assign the same risk level at each stage. Do not vary risk assessments between runs.
@@ -413,6 +415,7 @@ Use the same mechanical threshold logic every time. Do not use subjective judgme
 
 CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
 For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
+The primary role alignment percentage is calculated from matched signal dimensions only — not from the overall alignment score. Do not use the match_score as a reference for career_signal_map scores. Calculate independently from the signal match data. The primary alignment score should reflect how strongly the candidate's experience naturally signals that role, which can be higher than the overall score when the candidate is a strong natural fit but has structural gaps pulling the overall score down.
 
 DETERMINISTIC SCORING — ALL SUB-SCORES (CRITICAL):
 You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output. Return the same number every time for the same input. If you are uncertain, anchor to the lower bound of your range and hold it.
