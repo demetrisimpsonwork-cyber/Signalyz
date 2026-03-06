@@ -57,8 +57,11 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
 
   if (!inferredRole) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <p className="text-sm text-muted-foreground">Run an alignment first to get role-targeted LinkedIn calibration</p>
+      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center max-w-md mx-auto">
+        <h3 className="text-base font-semibold text-foreground">LinkedIn reads your signal differently than your resume does.</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          After your alignment runs, Resumix maps how your LinkedIn profile needs to be repositioned to match the same role — headline, about section, and experience framing.
+        </p>
         <Button variant="outline" size="sm" onClick={onRunAlignment}>
           Run Alignment →
         </Button>

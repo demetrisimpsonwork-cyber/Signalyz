@@ -23,6 +23,7 @@ export interface PipelineStage {
 interface SignalPipelineProgressProps {
   stages: PipelineStage[];
   onStageClick: (stageId: string) => void;
+  activeStageId?: string;
 }
 
 /* ── stage node ── */
@@ -43,32 +44,32 @@ function StageNode({
         <TooltipTrigger asChild>
           <button
             onClick={onClick}
-            className="flex flex-col items-center gap-1 group focus:outline-none"
+            className="flex flex-col items-center gap-1.5 group focus:outline-none"
             aria-label={stage.label}
           >
-            {/* circle */}
+            {/* circle — larger for dominance */}
             <span
               className={`
                 relative flex items-center justify-center rounded-full transition-colors
-                h-7 w-7 sm:h-7 sm:w-7 h-[22px] w-[22px]
-                ${isComplete ? "bg-primary text-primary-foreground" : ""}
-                ${isActive ? "border-2 border-primary bg-card" : ""}
+                h-9 w-9 sm:h-9 sm:w-9
+                ${isComplete ? "bg-primary text-primary-foreground shadow-sm" : ""}
+                ${isActive ? "border-2 border-primary bg-card shadow-sm" : ""}
                 ${isLocked ? "bg-muted text-muted-foreground" : ""}
               `}
             >
-              {isComplete && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+              {isComplete && <Check className="h-4 w-4" strokeWidth={3} />}
               {isActive && (
-                <span className="h-2 w-2 rounded-full bg-primary active-pulse" />
+                <span className="h-2.5 w-2.5 rounded-full bg-primary active-pulse" />
               )}
-              {isLocked && <Lock className="h-3 w-3" />}
+              {isLocked && <Lock className="h-3.5 w-3.5" />}
             </span>
 
-            {/* label */}
+            {/* label — bolder */}
             <span
-              className={`text-[11px] leading-tight font-medium transition-colors
-                ${isComplete ? "text-foreground" : ""}
-                ${isActive ? "text-primary font-semibold" : ""}
-                ${isLocked ? "text-muted-foreground" : ""}
+              className={`text-xs leading-tight transition-colors
+                ${isComplete ? "text-foreground font-semibold" : ""}
+                ${isActive ? "text-primary font-bold" : ""}
+                ${isLocked ? "text-muted-foreground font-medium" : ""}
               `}
             >
               <span className="hidden sm:inline">{stage.label}</span>
@@ -100,7 +101,7 @@ function StageNode({
 /* ── connector line ── */
 function StageConnector({ filled }: { filled: boolean }) {
   return (
-    <div className="flex-1 flex items-start pt-3.5 sm:pt-3.5 px-1">
+    <div className="flex-1 flex items-start pt-[18px] px-1">
       <div
         className={`
           h-[1.5px] sm:h-[1.5px] w-full rounded-full transition-colors duration-500
@@ -112,16 +113,37 @@ function StageConnector({ filled }: { filled: boolean }) {
   );
 }
 
+/* ── dynamic instructional copy ── */
+function getInstructionalCopy(stages: PipelineStage[], activeStageId?: string): string | null {
+  const allLocked = stages.every((s) => s.status === "locked" || s.status === "active") && !stages.some((s) => s.status === "complete");
+  if (allLocked) return "Paste your resume and job description to begin your signal analysis.";
+
+  // Use activeStageId (current tab) to determine copy
+  if (activeStageId === "report" || activeStageId === "director") {
+    const reportStage = stages.find((s) => s.id === "report");
+    if (reportStage?.status === "complete") return "Your Signal Positioning Report is ready. Review your full diagnosis below.";
+    if (reportStage?.status === "active") return "Your Signal Positioning Report is ready. Review your full diagnosis below.";
+  }
+  if (activeStageId === "resume" || activeStageId === "calibrated") {
+    return "Generate your Calibrated Resume from your signal map.";
+  }
+  // Default: alignment active
+  const alignmentStage = stages.find((s) => s.id === "alignment");
+  if (alignmentStage?.status === "active") return "Paste your resume and job description to begin your signal analysis.";
+  return null;
+}
+
 /* ── main component ── */
 const SignalPipelineProgress = ({
   stages,
   onStageClick,
+  activeStageId,
 }: SignalPipelineProgressProps) => {
-  const allLocked = stages.every((s) => s.status === "locked" || s.status === "active") && !stages.some((s) => s.status === "complete");
+  const copy = getInstructionalCopy(stages, activeStageId);
 
   return (
-    <div className="w-full px-4 py-2 border-b border-border">
-      <div className="flex items-start justify-center max-w-md mx-auto">
+    <div className="w-full px-4 py-3 border-b border-border">
+      <div className="flex items-start justify-center max-w-lg mx-auto">
         {stages.map((stage, i) => (
           <div key={stage.id} className="contents">
             <StageNode
@@ -137,9 +159,9 @@ const SignalPipelineProgress = ({
         ))}
       </div>
 
-      {allLocked && (
+      {copy && (
         <p className="text-xs text-muted-foreground text-center mt-2">
-          Start with the Alignment Engine — paste your resume and job description to begin.
+          {copy}
         </p>
       )}
     </div>

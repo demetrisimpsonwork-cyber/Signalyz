@@ -9,7 +9,7 @@ const Footer = () => (
           Resum<span className="text-primary">ix</span>
         </p>
         <p className="text-sm text-muted-foreground">
-          AI-powered career positioning and role alignment platform.
+          Signal calibration for job seekers who already qualify — and need hiring systems to read them that way.
         </p>
       </div>
 

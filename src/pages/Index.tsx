@@ -690,7 +690,7 @@ const Index = () => {
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Resumix analyzes your resume against real job descriptions and rewrites it so hiring systems and recruiters recognize your true experience.
+            Resumix analyzes your resume against real job descriptions and repositions your signal so hiring systems and recruiters read your experience the way it was meant to be read.
           </p>
           <Button
             size="lg"
@@ -699,6 +699,30 @@ const Index = () => {
           >
             <Sparkles className="h-4 w-4 mr-2" />
             Run Your Signal Analysis
+          </Button>
+        </div>
+      </section>
+
+      {/* What you walk away with */}
+      <section className="py-12 container max-w-3xl">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[
+            { title: "Signal Diagnosis", body: "A scored read of how hiring systems and managers actually interpret your experience — not how you intended it." },
+            { title: "Gap Map", body: "The exact signals preventing callbacks, ranked by impact. Specific, not general." },
+            { title: "Reframed Bullets", body: "Your own language repositioned to hit what the role actually weights. Zero fabrication." },
+            { title: "Calibrated Resume", body: "A submission-ready version built from your signal map — not a template rewrite." },
+          ].map((card) => (
+            <div key={card.title} className="rounded-lg border bg-card p-5 space-y-2">
+              <p className="text-sm font-semibold text-foreground">{card.title}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{card.body}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center mt-6">
+          <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Run Your Signal Analysis →
           </Button>
         </div>
       </section>
@@ -781,13 +805,13 @@ const Index = () => {
       <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
-          <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not rewriting. Recalibrating. Every word came from the original resume.</p>
+          <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not reframing with synonyms. Recalibrating. Every word came from the original resume.</p>
         </div>
         <div className="space-y-4">
           {[
             {
               was: "Executed complaint routing and escalation triage across a high-volume state-managed caseload — managing 40-70 concurrent cases with 8-15 resolved daily under strict SLA requirements.",
-              now: "Directed high-volume client issue triage and resolution, ensuring expeditious throughput under stringent service level agreements while maintaining meticulous judgment on case prioritization and handoff ownership.",
+              now: "Managed 40–70 concurrent cases with 8–15 daily resolutions under strict SLA requirements — owning triage decisions and handoff accountability across a state-managed caseload.",
               signal: "Ownership language + SLA accountability framing",
             },
             {
@@ -830,7 +854,7 @@ const Index = () => {
         <div className="container max-w-2xl text-center">
           <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
           <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
-            Most tools rewrite your bullets. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and rebuilds your positioning from the threshold up.
+            Most tools reframe your bullets with synonyms. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and recalibrates your positioning from the threshold up.
           </p>
         </div>
       </section>
@@ -877,6 +901,7 @@ const Index = () => {
         {/* Pipeline progress bar */}
         <SignalPipelineProgress
           stages={pipelineStages}
+          activeStageId={mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode}
           onStageClick={(id) => {
             const tabMap: Record<string, typeof mode> = {
               alignment: "alignment",
@@ -893,31 +918,31 @@ const Index = () => {
         />
 
         {/* Mode toggle — 3 tabs */}
-        <div className="mb-6 flex justify-center mt-4">
-          <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
+        {/* Sub-navigation tabs — lighter weight to subordinate to pipeline */}
+        <div className="mb-6 flex justify-center mt-3">
+          <div className="inline-flex rounded-md border border-border/60 bg-muted/30 p-0.5 gap-0.5">
             <button
               onClick={() => setMode("alignment")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "alignment" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${mode === "alignment" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               Alignment Engine
             </button>
             <button
               onClick={() => setMode("linkedin")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "linkedin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5 ${mode === "linkedin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               LinkedIn Signal
               {!effectiveIsPro && <Lock className="h-3 w-3" />}
             </button>
             <button
               onClick={() => setMode("director")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${mode === "director" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${mode === "director" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               Signal Positioning Report
             </button>
             <button
               onClick={() => setMode("calibrated")}
-              className={`px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${mode === "calibrated" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              style={mode === "calibrated" ? { backgroundColor: "hsl(var(--primary))" } : {}}
+              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5 ${mode === "calibrated" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <span style={{ color: mode === "calibrated" ? "inherit" : "hsl(38, 92%, 50%)" }}>✦</span>
               Calibrated Resume
@@ -1315,7 +1340,7 @@ const Index = () => {
           <AccordionItem value="chatgpt">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT generates text. Resumix models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply rewriting resumes, Resumix diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
+              ChatGPT generates text. Resumix models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Resumix diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="ats">
@@ -1327,7 +1352,7 @@ const Index = () => {
           <AccordionItem value="full-analysis">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet rewrites. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet rewrites, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
+              A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet repositioning. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet recalibration, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="pricing">
