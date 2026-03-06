@@ -709,8 +709,8 @@ const Index = () => {
       </section>
 
       {/* What you walk away with */}
-      <section className="py-12 container max-w-3xl">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
+      <section className="pt-16 md:pt-20 pb-12 container max-w-3xl">
+        <h2 className="text-xl font-bold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
             { title: "Signal Diagnosis", body: "A scored read of how hiring systems and managers actually interpret your experience — not how you intended it." },
@@ -718,13 +718,13 @@ const Index = () => {
             { title: "Reframed Bullets", body: "Your own language repositioned to hit what the role actually weights. Zero fabrication." },
             { title: "Calibrated Resume", body: "A submission-ready version built from your signal map — not a template rewrite." },
           ].map((card) => (
-            <div key={card.title} className="rounded-lg border bg-card p-5 space-y-2">
+            <div key={card.title} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-5 space-y-2">
               <p className="text-sm font-semibold text-foreground">{card.title}</p>
               <p className="text-sm text-muted-foreground leading-relaxed">{card.body}</p>
             </div>
           ))}
         </div>
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-10">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             <Sparkles className="h-4 w-4 mr-2" />
             Run Your Signal Analysis →
@@ -748,19 +748,19 @@ const Index = () => {
           <div className="flex justify-center md:hidden">
             <ArrowDown className="h-6 w-6 text-muted-foreground" />
           </div>
-          <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3">
+          <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY RESUMIX</p>
             <p className="text-sm text-foreground leading-relaxed">
               Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements — translating compliance and procedural complexity into clear, actionable guidance for business owners and HR administrators.
             </p>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-4">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
+        <p className="text-center text-xs text-muted-foreground mt-4 italic opacity-70">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
       </section>
 
       {/* Testimonial */}
       <section className="py-6 container max-w-2xl">
-        <div className="rounded-xl bg-[#0F1C2E] p-6 relative">
+        <div className="rounded-xl bg-[#0F1C2E] p-6 relative border-l-[3px] border-l-primary">
           <Quote className="h-8 w-8 text-primary/40 absolute top-6 left-6" />
           <div className="pl-8">
             <p className="text-white text-sm leading-relaxed italic">
