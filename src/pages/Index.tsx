@@ -398,12 +398,17 @@ const Index = () => {
     const reportDone = !!directorResult;
     const resumeDone = sessionResumeAssembled;
 
-    const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "locked" => {
+    // Map the current tab to a pipeline stage id
+    const activeTab = mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode === "linkedin" ? "alignment" : "alignment";
+
+    const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "pending" | "locked" => {
       if (done) return "complete";
-      if (!priorDone) return "locked";
+      // If the user is viewing this stage's tab, show it as active (not locked)
+      if (id === activeTab) return "active";
+      if (!priorDone) return "pending";
       // The next actionable stage
       const nextActionable = !alignmentDone ? "alignment" : !reportDone ? "report" : !resumeDone ? "resume" : null;
-      return id === nextActionable ? "active" : "locked";
+      return id === nextActionable ? "active" : "pending";
     };
 
     return [
@@ -422,7 +427,7 @@ const Index = () => {
         sublabel: "12-section deep analysis",
         status: getStatus("report", reportDone, alignmentDone),
         completedAt: null,
-        lockedReason: "Run the Alignment Engine first",
+        lockedReason: "Complete the Alignment Engine first",
       },
       {
         id: "resume",
@@ -434,7 +439,7 @@ const Index = () => {
         lockedReason: "Run the Signal Positioning Report first",
       },
     ];
-  }, [result, directorResult, sessionResumeAssembled]);
+  }, [result, directorResult, sessionResumeAssembled, mode]);
 
   useEffect(() => {
     if (result) {
@@ -917,37 +922,37 @@ const Index = () => {
           }}
         />
 
-        {/* Mode toggle — 3 tabs */}
-        {/* Sub-navigation tabs — lighter weight to subordinate to pipeline */}
+        {/* Sub-navigation tabs — teal pill active state */}
         <div className="mb-6 flex justify-center mt-3">
-          <div className="inline-flex rounded-md border border-border/60 bg-muted/30 p-0.5 gap-0.5">
-            <button
-              onClick={() => setMode("alignment")}
-              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${mode === "alignment" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Alignment Engine
-            </button>
-            <button
-              onClick={() => setMode("linkedin")}
-              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5 ${mode === "linkedin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              LinkedIn Signal
-              {!effectiveIsPro && <Lock className="h-3 w-3" />}
-            </button>
-            <button
-              onClick={() => setMode("director")}
-              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${mode === "director" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Signal Positioning Report
-            </button>
-            <button
-              onClick={() => setMode("calibrated")}
-              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5 ${mode === "calibrated" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <span style={{ color: mode === "calibrated" ? "inherit" : "hsl(38, 92%, 50%)" }}>✦</span>
-              Calibrated Resume
-              {!effectiveIsPro && <Lock className="h-3 w-3" />}
-            </button>
+          <div className="inline-flex rounded-md bg-muted/30 p-0.5 gap-0.5">
+            {[
+              { id: "alignment" as const, label: "Alignment Engine" },
+              { id: "linkedin" as const, label: "LinkedIn Signal" },
+              { id: "director" as const, label: "Signal Positioning Report" },
+              { id: "calibrated" as const, label: "Calibrated Resume" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === "linkedin" && !effectiveIsPro) {
+                    setShowUpgrade(true);
+                    return;
+                  }
+                  if (tab.id === "calibrated" && !effectiveIsPro) {
+                    setShowUpgrade(true);
+                    return;
+                  }
+                  setMode(tab.id);
+                }}
+                className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
+                  mode === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
