@@ -100,6 +100,8 @@ const DATE_RX = /(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(
 
 const SINGLE_DATE_RX = /(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*)?\d{4}/i;
 
+const YEAR_RX = /\b(19|20)\d{2}\b/;
+
 const BULLET_RX = /^[\s]*[-•▪►*]\s+/;
 const COMPANY_SUFFIXES = /\b(inc\.?|llc|corp\.?|ltd\.?|co\.?|company|group|partners|consulting|services|solutions|technologies|enterprises|international|associates)\b/i;
 
@@ -110,6 +112,65 @@ interface ParsedRole {
   bullets: string[];
 }
 
+/**
+ * Detect if a line looks like a job entry header (Company | Title | Year pattern).
+ * Used to prevent nesting role headers as bullets inside a previous role.
+ */
+function isJobEntryHeader(line: string): boolean {
+  const trimmed = line.trim();
+  // Must contain a 4-digit year
+  if (!YEAR_RX.test(trimmed)) return false;
+  // Must be reasonably short (not a full sentence/bullet)
+  if (trimmed.length > 120) return false;
+  // Should contain a separator (|, —, –, ·) OR have multiple segments
+  const hasSeparator = /[|—–·]/.test(trimmed);
+  const hasDateRange = DATE_RX.test(trimmed);
+  // Pattern: "Company (via Something) | Title | Year"
+  if (hasSeparator && YEAR_RX.test(trimmed)) return true;
+  // Pattern: line with date range and short enough to be a header
+  if (hasDateRange && trimmed.length < 100) return true;
+  // Pattern: line has company suffix + year
+  if (COMPANY_SUFFIXES.test(trimmed) && YEAR_RX.test(trimmed) && trimmed.length < 80) return true;
+  return false;
+}
+
+function parseRoleHeaderLine(line: string): { title: string; company: string; dates: string } {
+  const trimmed = line.trim();
+  const dateMatch = trimmed.match(DATE_RX);
+  const dates = dateMatch ? dateMatch[0] : (trimmed.match(YEAR_RX)?.[0] || "");
+  let remainder = trimmed.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim();
+
+  let title = remainder;
+  let company = "";
+
+  if (remainder.includes("|")) {
+    const parts = remainder.split("|").map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      // Heuristic: part with company suffix is company
+      const compIdx = parts.findIndex(p => COMPANY_SUFFIXES.test(p));
+      if (compIdx >= 0) {
+        company = parts[compIdx];
+        title = parts.filter((_, i) => i !== compIdx).join(" | ");
+      } else {
+        company = parts[0];
+        title = parts.slice(1).join(" | ");
+      }
+    }
+  } else if (remainder.includes("—") || remainder.includes("–")) {
+    const sep = remainder.includes("—") ? "—" : "–";
+    const parts = remainder.split(sep).map(s => s.trim());
+    if (COMPANY_SUFFIXES.test(parts[1] || "")) {
+      title = parts[0]; company = parts[1];
+    } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
+      company = parts[0]; title = parts[1] || "";
+    } else {
+      title = parts[0]; company = parts[1] || "";
+    }
+  }
+
+  return { title, company, dates };
+}
+
 function parseExperienceBlock(lines: string[]): ParsedRole[] {
   const roles: ParsedRole[] = [];
   let currentRole: ParsedRole | null = null;
@@ -117,7 +178,6 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
 
   const flushPending = () => {
     if (currentRole && pendingText.length > 0) {
-      // Pending text that doesn't look like bullets — treat as bullets anyway
       for (const t of pendingText) {
         if (t.length > 15) currentRole.bullets.push(t);
       }
@@ -128,7 +188,6 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
   const commitRole = () => {
     flushPending();
     if (currentRole) {
-      // If title looks like it has company embedded (via |), split
       if (currentRole.title && !currentRole.company && currentRole.title.includes("|")) {
         const parts = currentRole.title.split("|").map(s => s.trim());
         if (parts.length >= 2) {
@@ -144,10 +203,46 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const hasDate = DATE_RX.test(line);
     const isBullet = BULLET_RX.test(line);
+
+    // CRITICAL: Before treating as bullet, check if line is a job entry header
+    if (isBullet) {
+      const bulletText = line.replace(BULLET_RX, "").trim();
+      if (isJobEntryHeader(bulletText)) {
+        // This is a role header disguised as a bullet — close current role, open new
+        commitRole();
+        const parsed = parseRoleHeaderLine(bulletText);
+        currentRole = { title: parsed.title, company: parsed.company, dates: parsed.dates, bullets: [] };
+        continue;
+      }
+      // Normal bullet
+      if (currentRole) {
+        flushPending();
+        currentRole.bullets.push(bulletText);
+      }
+      continue;
+    }
+
+    // Check if this line is a job entry header (even without bullet prefix)
+    if (isJobEntryHeader(line)) {
+      commitRole();
+      const parsed = parseRoleHeaderLine(line);
+      currentRole = { title: parsed.title, company: parsed.company, dates: parsed.dates, bullets: [] };
+
+      // Look ahead: next line might be company name if not detected
+      if (!parsed.company && i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+          currentRole.company = nextLine;
+          i++;
+        }
+      }
+      continue;
+    }
+
+    const hasDate = DATE_RX.test(line);
     const hasCompanySuffix = COMPANY_SUFFIXES.test(line);
-    const isShortLine = line.length < 80 && !isBullet;
+    const isShortLine = line.length < 80;
 
     // Detect a new role entry: line has a date range
     if (hasDate && !isBullet) {
@@ -156,7 +251,6 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       const dates = dateMatch ? dateMatch[0] : "";
       let titleCompany = line.replace(DATE_RX, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim();
 
-      // Check if title and company are on this line separated by |, —, or ,
       let title = titleCompany;
       let company = "";
 
@@ -167,37 +261,31 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       } else if (titleCompany.includes("—") || titleCompany.includes("–")) {
         const sep = titleCompany.includes("—") ? "—" : "–";
         const parts = titleCompany.split(sep).map(s => s.trim());
-        // Heuristic: if one part has company suffix, it's the company
         if (COMPANY_SUFFIXES.test(parts[1] || "")) {
-          title = parts[0];
-          company = parts[1];
+          title = parts[0]; company = parts[1];
         } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
-          company = parts[0];
-          title = parts[1] || "";
+          company = parts[0]; title = parts[1] || "";
         } else {
-          title = parts[0];
-          company = parts[1] || "";
+          title = parts[0]; company = parts[1] || "";
         }
       }
 
       currentRole = { title, company, dates, bullets: [] };
 
-      // Look ahead: next line might be company name
       if (!company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60) {
-          if (COMPANY_SUFFIXES.test(nextLine) || (!DATE_RX.test(nextLine) && nextLine.length < 50)) {
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+          if (COMPANY_SUFFIXES.test(nextLine) || nextLine.length < 50) {
             currentRole.company = nextLine;
-            i++; // consume next line
+            i++;
           }
         }
       }
       continue;
     }
 
-    // Detect role entry where company suffix is present and line is short (possible role header without date on same line)
+    // Detect role entry where company suffix is present and line is short
     if (!currentRole && isShortLine && hasCompanySuffix && !isBullet) {
-      // Look ahead for date on next line
       if (i + 1 < lines.length && DATE_RX.test(lines[i + 1].trim())) {
         commitRole();
         const nextLine = lines[i + 1].trim();
@@ -208,15 +296,6 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
         i++;
         continue;
       }
-    }
-
-    // Bullet point
-    if (isBullet) {
-      if (currentRole) {
-        flushPending();
-        currentRole.bullets.push(line.replace(BULLET_RX, "").trim());
-      }
-      continue;
     }
 
     // Plain text within a role — treat as bullet if long enough
