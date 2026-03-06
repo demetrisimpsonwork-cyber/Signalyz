@@ -8,6 +8,7 @@ import ResultSection from "@/components/ResultSection";
 import KeywordChips from "@/components/KeywordChips";
 import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
+import CalibratedBulletsSection from "@/components/CalibratedBulletsSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import ResumeBuilder from "@/components/ResumeBuilder";
 import ResumeUpload from "@/components/ResumeUpload";
