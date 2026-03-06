@@ -710,7 +710,7 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
       <div className={`space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
         {dims.map((d, i) => (
           <div key={i} className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-            <p className="text-xs font-medium text-foreground">{d.dimension}</p>
+            <p className="text-xs font-medium text-foreground">{dimensionDisplayLabel(d.dimension)}</p>
             <span className="text-xs font-bold text-green-600 dark:text-green-400 tabular-nums">+{d.lift}</span>
           </div>
         ))}
