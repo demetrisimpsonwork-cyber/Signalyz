@@ -128,7 +128,11 @@ export const EngineErrorCard = ({
         </div>
         <div className="space-y-1 flex-1">
           <p className="text-sm font-semibold text-foreground">Analysis Engine Error</p>
-          <p className="text-sm text-muted-foreground">{debugInfo.message || "Something went wrong. Please try again."}</p>
+          <p className="text-sm text-muted-foreground">
+            {debugInfo.message && !debugInfo.message.includes("index.ts") && !debugInfo.message.includes("EDGE_EXCEPTION")
+              ? debugInfo.message
+              : "Signal calibration is taking longer than expected. Tap to try again — your alignment data is saved."}
+          </p>
         </div>
       </div>
 

@@ -66,7 +66,7 @@ const deriveOwnershipVerdict = (score: number, confidence: "High" | "Moderate" |
   return `Signal density is insufficient to confirm ${roleTitle} calibration. Current evidence indicates threshold deficiency.`;
 };
 
-const extractPrimaryDeficiency = (raw: string): { name: string; status: string; pattern: string; panelRisk: string } | null => {
+const extractPrimaryDeficiency = (raw: string, roleLevel: RoleLevel): { name: string; status: string; pattern: string; panelRisk: string } | null => {
   const lines = raw
     .split(/\n|\r|;|\\d+\\.\\s+/)
     .map((l) => l.trim())
@@ -77,23 +77,28 @@ const extractPrimaryDeficiency = (raw: string): { name: string; status: string; 
   const line = lines[0];
   const lower = line.toLowerCase();
 
+  const isSupervisor = roleLevel === "supervisor";
+
   let name = "Signal Gap";
   let status = "Below Threshold";
   let panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
 
   if (lower.includes("owner") || lower.includes("scope")) {
     name = "Ownership Scope";
+  } else if (lower.includes("team") || lower.includes("supervis") || lower.includes("lead")) {
+    name = isSupervisor ? "Team Leadership Signal" : "Leadership Signal";
+    panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 3 — Cross-Functional Panel Stress Test";
   } else if (lower.includes("execut") || lower.includes("leader")) {
-    name = "Executive Signal";
-    panelRisk = "Stage 4 — Executive Strategy Calibration";
+    name = isSupervisor ? "Supervisory Evidence" : "Executive Signal";
+    panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 4 — Executive Strategy Calibration";
   } else if (lower.includes("impact") || lower.includes("metric") || lower.includes("revenue") || lower.includes("result")) {
     name = "Commercial Impact";
   } else if (lower.includes("strateg") || lower.includes("priorit") || lower.includes("roadmap")) {
-    name = "Strategic Definition";
-    panelRisk = "Stage 4 — Executive Strategy Calibration";
+    name = isSupervisor ? "Process Ownership" : "Strategic Definition";
+    panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 4 — Executive Strategy Calibration";
   } else if (lower.includes("cross") || lower.includes("stakeholder") || lower.includes("align")) {
     name = "Cross-Functional Authority";
-    panelRisk = "Stage 3 — Cross-Functional Panel Stress Test";
+    panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 3 — Cross-Functional Panel Stress Test";
   } else if (lower.includes("keyword") || lower.includes("terminolog") || lower.includes("languag")) {
     name = "Role Vocabulary Alignment";
     status = "Approaching Threshold";
@@ -117,7 +122,13 @@ const deriveStrategicPriority = (score: number, deficiencyName: string | null, r
     return `${roleTitle} threshold requires cross-functional influence at a decision-making level. Collaboration language must be replaced with alignment ownership and negotiation evidence.`;
   }
   if (deficiencyName === "Executive Signal") {
-    return `${roleTitle} threshold requires executive-facing communication signals — board-level reporting, strategic narrative ownership, or executive alignment must be present.`;
+    return `${roleTitle} threshold requires executive-facing communication signals — strategic reporting, narrative ownership, or executive alignment must be present.`;
+  }
+  if (deficiencyName === "Team Leadership Signal" || deficiencyName === "Supervisory Evidence") {
+    return `${roleTitle} threshold requires team coordination evidence — shift management, direct report oversight, and operational decision-making must be present.`;
+  }
+  if (deficiencyName === "Process Ownership") {
+    return `${roleTitle} threshold requires evidence of process ownership — workflow design, scheduling authority, and operational improvement must be demonstrated.`;
   }
   if (score >= 80) {
     return `Signal pattern meets ${roleTitle} threshold. Maintain current positioning framework and reinforce commercial attribution in all quantitative claims.`;
@@ -217,7 +228,7 @@ const LevelDeterminationBlock = ({
   const classificationConfidence = deriveClassificationConfidence(score);
   const ownershipVerdict = deriveOwnershipVerdict(score, inferenceConfidence, roleTitle);
 
-  const primaryDeficiency = gapSuggestions ? extractPrimaryDeficiency(gapSuggestions) : null;
+  const primaryDeficiency = gapSuggestions ? extractPrimaryDeficiency(gapSuggestions, roleLevel) : null;
   const strategicPriority = roleLevel === "supervisor"
     ? deriveSupervisorStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle)
     : deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);

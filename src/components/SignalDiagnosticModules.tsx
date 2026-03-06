@@ -666,7 +666,7 @@ function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticDat
         <div className="space-y-1.5">
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Three Strategic Fixes</p>
           <ol className="space-y-1">
-            {data.strategic_fixes.map((fix, i) => (
+            {data.strategic_fixes.slice(0, 3).map((fix, i) => (
               <li key={i} className="text-xs text-foreground flex gap-2">
                 <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{fix}
               </li>
