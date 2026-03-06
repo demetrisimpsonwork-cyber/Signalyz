@@ -10,6 +10,21 @@ interface LevelDeterminationBlockProps {
   inferredRoleTitle?: string;
 }
 
+// ─── Role Level Detection ────────────────────────────────────────────────────
+type RoleLevel = "supervisor" | "manager" | "director" | "executive";
+
+const detectRoleLevel = (roleTitle: string): RoleLevel => {
+  const lower = roleTitle.toLowerCase();
+  const supervisorPatterns = /\b(supervisor|team\s*lead|shift\s*lead|crew\s*lead|floor\s*lead|group\s*lead|coordinator|associate\s*manager|assistant\s*manager|foreman|foreperson)\b/;
+  const directorPatterns = /\b(director|vp|vice\s*president|svp|evp|chief|head\s+of|c-suite|cto|cfo|coo|ceo|cmo|cio)\b/;
+  const executivePatterns = /\b(vp|vice\s*president|svp|evp|chief|c-suite|cto|cfo|coo|ceo|cmo|cio)\b/;
+
+  if (executivePatterns.test(lower)) return "executive";
+  if (directorPatterns.test(lower)) return "director";
+  if (supervisorPatterns.test(lower)) return "supervisor";
+  return "manager";
+};
+
 // Inference helpers
 
 const deriveInferenceConfidence = (score: number): "High" | "Moderate" | "Low" => {
@@ -110,6 +125,19 @@ const deriveStrategicPriority = (score: number, deficiencyName: string | null, r
   return `${roleTitle} threshold requires stronger ownership and impact language throughout. Current signal pattern registers as execution-level contribution rather than strategic authorship.`;
 };
 
+const deriveSupervisorStrategicPriority = (score: number, deficiencyName: string | null, roleTitle: string): string => {
+  if (deficiencyName === "Ownership Scope" || score < 50) {
+    return `${roleTitle} threshold requires explicit team coordination and process ownership language — shift management, scheduling, and daily operational decisions must be stated.`;
+  }
+  if (deficiencyName === "Commercial Impact") {
+    return `${roleTitle} threshold requires measurable operational outcomes — customer satisfaction scores, team productivity metrics, or shrink/waste reduction must appear with attribution.`;
+  }
+  if (score >= 80) {
+    return `Signal pattern meets ${roleTitle} threshold. Maintain current operational leadership framing and reinforce team performance outcomes.`;
+  }
+  return `${roleTitle} threshold requires stronger team leadership and operational execution language. Current signal pattern registers as individual contributor rather than team-level ownership.`;
+};
+
 interface FunnelStage {
   stage: string;
   label: string;
@@ -117,16 +145,18 @@ interface FunnelStage {
   note: string;
 }
 
-const deriveFunnelStages = (score: number): FunnelStage[] => {
+const deriveFunnelStages = (score: number, roleLevel: RoleLevel): FunnelStage[] => {
   const isAbove = score >= 80;
   const isAt = score >= 65;
   const isApproaching = score >= 50;
 
+  const isSupervisor = roleLevel === "supervisor";
+
   return [
     { stage: "Stage 1", label: "Recruiter Signal Filter", risk: isAt ? "Low" : isApproaching ? "Moderate" : "High", note: isAt ? "Role vocabulary and keyword density meet recruiter pattern threshold." : isApproaching ? "Keyword alignment is partial. Role-specific terminology may not surface in automated screening." : "Signal vocabulary insufficient. Resume may not pass initial recruiter or ATS filter." },
     { stage: "Stage 2", label: "Hiring Manager Ownership Audit", risk: isAbove ? "Low" : isAt ? "Moderate" : "High", note: isAbove ? "Ownership signals are explicit and consistent with target role classification." : isAt ? "Ownership language is present but may not fully distinguish from IC-level contribution." : "Ownership scope is under-represented. Hiring managers may classify candidate as execution-level." },
-    { stage: "Stage 3", label: "Cross-Functional Panel Stress Test", risk: isAbove ? "Low" : isAt ? "Moderate" : isApproaching ? "High" : "Critical", note: isAbove ? "Cross-functional authority signals are sufficient for panel evaluation." : isAt ? "Cross-functional language is present but decision-making authority is not clearly evidenced." : "Candidate is likely to face authority challenges from panel. Stakeholder influence signals are absent." },
-    { stage: "Stage 4", label: "Executive Strategy Calibration", risk: isAbove ? "Low" : isAt ? "Moderate" : "Critical", note: isAbove ? "Strategic framing and executive-facing signals are present and consistent." : isAt ? "Strategic language is detectable but lacks sufficient executive-level evidence." : "No executive strategy signals detected. Candidate may fail calibration at senior review." },
+    { stage: "Stage 3", label: isSupervisor ? "Team & Operations Panel Review" : "Cross-Functional Panel Stress Test", risk: isAbove ? "Low" : isAt ? "Moderate" : isApproaching ? "High" : "Critical", note: isAbove ? (isSupervisor ? "Team coordination and operational leadership signals are sufficient for review." : "Cross-functional authority signals are sufficient for panel evaluation.") : isAt ? (isSupervisor ? "Team leadership language is present but daily operational ownership is not clearly evidenced." : "Cross-functional language is present but decision-making authority is not clearly evidenced.") : (isSupervisor ? "Candidate may face questions about team coordination scope. Operational leadership signals are weak." : "Candidate is likely to face authority challenges from panel. Stakeholder influence signals are absent.") },
+    { stage: "Stage 4", label: isSupervisor ? "Senior Reviewer Check" : "Executive Strategy Calibration", risk: isSupervisor ? (isAbove ? "Low" : isAt ? "Low" : isApproaching ? "Moderate" : "High") : (isAbove ? "Low" : isAt ? "Moderate" : "Critical"), note: isSupervisor ? (isAbove ? "Operational leadership and customer-facing signals are present and consistent." : isAt ? "Team management signals are present but process ownership could be strengthened." : isApproaching ? "Some team coordination evidence exists but daily operational leadership is under-represented." : "Team leadership signals are insufficient. Regional or area reviewer may question supervisory readiness.") : (isAbove ? "Strategic framing and executive-facing signals are present and consistent." : isAt ? "Strategic language is detectable but lacks sufficient executive-level evidence." : "No executive strategy signals detected. Candidate may fail calibration at senior review.") },
     { stage: "Stage 5", label: "Offer-Level Risk Check", risk: isAbove ? "Low" : isAt ? "Low" : isApproaching ? "Moderate" : "High", note: isAbove ? "Candidate signal supports offer-level confidence. No terminal risk factors identified." : isAt ? "Minor signal gaps present but unlikely to introduce offer-level risk." : isApproaching ? "Moderate risk — compensation or leveling expectations may misalign at offer stage." : "Candidate positioning may create leveling or compensation misalignment at offer." },
   ];
 };
@@ -179,6 +209,7 @@ const LevelDeterminationBlock = ({
   const [copiedAll, setCopiedAll] = useState(false);
 
   const roleTitle = inferredRoleTitle || "Target Role";
+  const roleLevel = detectRoleLevel(roleTitle);
 
   const inferenceConfidence = deriveInferenceConfidence(score);
   const signalLevel = confidenceLevel || deriveCurrentSignalLevel(score);
@@ -187,8 +218,10 @@ const LevelDeterminationBlock = ({
   const ownershipVerdict = deriveOwnershipVerdict(score, inferenceConfidence, roleTitle);
 
   const primaryDeficiency = gapSuggestions ? extractPrimaryDeficiency(gapSuggestions) : null;
-  const strategicPriority = deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);
-  const funnelStages = deriveFunnelStages(score);
+  const strategicPriority = roleLevel === "supervisor"
+    ? deriveSupervisorStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle)
+    : deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);
+  const funnelStages = deriveFunnelStages(score, roleLevel);
 
   const handleCopyAll = async () => {
     const lines = [
