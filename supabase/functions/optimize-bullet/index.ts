@@ -367,7 +367,7 @@ JSON SCHEMA:
     "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
   },
   "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]},
-  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string"],"current_score":number,"predicted_score":number},
+  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number},
   "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number},
   "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
@@ -383,8 +383,23 @@ Do NOT mix — a bullet describing something the candidate HAS is always [STRENG
 CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
 For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
 
-DETERMINISTIC SCORING — ALL SUB-SCORES:
-You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output based on phrasing flexibility or sampling. Return the same number every time for the same input. This applies to ALL numeric fields: match_score.score, identity_strength_index (total_score and all pillar scores), signal_map (all 6 dimensions), signal_shift_estimates, hiring_signal_benchmark scores, career_signal_map role scores, and predicted_signal_lift. Evaluate evidence strictly and assign fixed scores based on the presence or absence of specific signals. No randomness, no creativity in scoring.
+DETERMINISTIC SCORING — ALL SUB-SCORES (CRITICAL):
+You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output based on phrasing flexibility or sampling. Return the same number every time for the same input.
+
+This applies individually and explicitly to EACH of these numeric fields — score each one deterministically:
+- match_score.score: weighted sum of 5 dimensions, no rounding variance
+- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar
+- signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored independently based on keyword/evidence counting, not impression
+- signal_shift_estimates: all before/after pairs
+- hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
+- career_signal_map: role scores for both primary and secondary
+- predicted_signal_lift: all dimension lifts and current/predicted scores
+- interview_gap_diagnosis: current_score and predicted_score
+
+For each numeric field: count evidence tokens, apply scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
+
+STRATEGIC FIXES COUNT (CRITICAL):
+interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. The section heading is always "Three Strategic Fixes" so the list must always contain 3 items.
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
