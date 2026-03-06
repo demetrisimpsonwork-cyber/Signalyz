@@ -384,16 +384,23 @@ CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
 For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
 
 DETERMINISTIC SCORING — ALL SUB-SCORES (CRITICAL):
-You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output based on phrasing flexibility or sampling. Return the same number every time for the same input.
+You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output. Return the same number every time for the same input. If you are uncertain, anchor to the lower bound of your range and hold it.
+
+SCORING METHOD — USE COUNTING, NOT IMPRESSION:
+For every numeric score, use explicit evidence counting:
+- Count the number of matching keywords, phrases, or evidence items present in the resume relative to the JD.
+- Map the count to the score range using fixed thresholds (e.g., 0 matches = 0, 1-2 = 5-10, 3-4 = 10-15, 5+ = 15-20, 7+ = 20-25 for /25 scales).
+- Do NOT use subjective impression, "feels like", or holistic judgment for any numeric field.
+- Round down when between two values, never up.
 
 This applies individually and explicitly to EACH of these numeric fields — score each one deterministically:
 - match_score.score: weighted sum of 5 dimensions, no rounding variance
-- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar
-- signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored independently based on keyword/evidence counting, not impression
-- signal_shift_estimates: all before/after pairs
+- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar — count evidence items, not impressions
+- signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored by counting keyword matches between resume and JD, not impression
+- signal_shift_estimates: all before/after pairs — derive from the delta between counted current evidence and projected evidence after calibration
 - hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
 - career_signal_map: role scores for both primary and secondary
-- predicted_signal_lift: all dimension lifts and current/predicted scores
+- predicted_signal_lift: all dimension lifts and current/predicted scores — lifts must be derived from gap counts, not estimated
 - interview_gap_diagnosis: current_score and predicted_score
 
 For each numeric field: count evidence tokens, apply scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
