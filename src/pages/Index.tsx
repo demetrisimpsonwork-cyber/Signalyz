@@ -1071,7 +1071,7 @@ const Index = () => {
                 )}
 
                 {!loading && !result && !alignmentError && showSamples && (
-                  <div className="space-y-7">
+                  <div className="space-y-6">
                     <div>
                       <p className="text-xs font-semibold text-foreground mb-0.5">{role.label}</p>
                       <p className="text-xs text-muted-foreground">Diagnostic preview based on the original bullet.</p>
