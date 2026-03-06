@@ -412,28 +412,32 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
         {shifts.map(({ key, label }) => {
           const shift = data[key];
           if (!shift) return null;
-          const delta = shift.after - shift.before;
+          // Convert raw /25 scores to percentage; if already >25, assume already percentage
+          const isRawScale = shift.before <= 25 && shift.after <= 25;
+          const beforePct = isRawScale ? Math.round((shift.before / 25) * 100) : shift.before;
+          const afterPct = isRawScale ? Math.round((shift.after / 25) * 100) : shift.after;
+          const deltaPct = afterPct - beforePct;
           return (
             <div key={key} className="space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-foreground">{label}</p>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground tabular-nums">{shift.before}%</span>
+                  <span className="text-muted-foreground tabular-nums">{beforePct}%</span>
                   <ArrowRight className="h-3 w-3 text-primary" />
-                  <span className="font-semibold text-primary tabular-nums">{shift.after}%</span>
-                  {delta > 0 && (
-                    <span className="text-[10px] font-bold text-green-600 dark:text-green-400">+{delta}</span>
+                  <span className="font-semibold text-primary tabular-nums">{afterPct}%</span>
+                  {deltaPct > 0 && (
+                    <span className="text-[10px] font-bold text-green-600 dark:text-green-400">+{deltaPct}</span>
                   )}
                 </div>
               </div>
               <div className="relative w-full h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-muted-foreground/20 transition-all duration-700"
-                  style={{ width: `${shift.before}%` }}
+                  style={{ width: `${beforePct}%` }}
                 />
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-700"
-                  style={{ width: `${shift.after}%` }}
+                  style={{ width: `${afterPct}%` }}
                 />
               </div>
             </div>
@@ -571,9 +575,14 @@ function CareerSignalMap({ data }: { data: NonNullable<SignalDiagnosticData["car
 
 /* ─── MODULE 10: Hiring Signal Benchmark ─── */
 function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticData["hiring_signal_benchmark"]> }) {
-  const userScore = data.user_score ?? 0;
-  const medianScore = data.median_candidate_score ?? 0;
-  const topThreshold = data.top_candidate_threshold ?? 0;
+  const rawUser = data.user_score ?? 0;
+  const rawMedian = data.median_candidate_score ?? 0;
+  const rawTop = data.top_candidate_threshold ?? 0;
+  // Convert summary scores from /25 to /100 if on raw scale
+  const isRawSummary = rawUser <= 25 && rawMedian <= 25 && rawTop <= 25;
+  const userScore = isRawSummary ? Math.round((rawUser / 25) * 100) : rawUser;
+  const medianScore = isRawSummary ? Math.round((rawMedian / 25) * 100) : rawMedian;
+  const topThreshold = isRawSummary ? Math.round((rawTop / 25) * 100) : rawTop;
 
   const scoreColor = (val: number, ref: number) =>
     val >= ref ? "text-green-600 dark:text-green-400" : val >= ref - 10 ? "text-yellow-600 dark:text-yellow-400" : "text-orange-600 dark:text-orange-400";
@@ -606,26 +615,30 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
         <div className="space-y-3">
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Dimension Comparison</p>
           {data.dimension_comparison.map((dim, i) => {
-            const ahead = dim.user_score >= dim.median_score;
+            // Convert raw /25 scores to /100 scale; if already >25, assume already /100
+            const isRaw = dim.user_score <= 25 && dim.median_score <= 25;
+            const userDisp = isRaw ? Math.round((dim.user_score / 25) * 100) : dim.user_score;
+            const medianDisp = isRaw ? Math.round((dim.median_score / 25) * 100) : dim.median_score;
+            const ahead = userDisp >= medianDisp;
             return (
               <div key={i} className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-foreground">{dim.dimension}</p>
                   <div className="flex items-center gap-3 text-xs tabular-nums">
                     <span className={ahead ? "font-semibold text-green-600 dark:text-green-400" : "font-semibold text-orange-600 dark:text-orange-400"}>
-                      You: {dim.user_score}
+                      You: {userDisp}
                     </span>
-                    <span className="text-muted-foreground">Median: {dim.median_score}</span>
+                    <span className="text-muted-foreground">Median: {medianDisp}</span>
                   </div>
                 </div>
                 <div className="relative w-full h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-muted-foreground/20 transition-all duration-500"
-                    style={{ width: `${dim.median_score}%` }}
+                    style={{ width: `${medianDisp}%` }}
                   />
                   <div
                     className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${ahead ? "bg-green-500" : "bg-orange-500"}`}
-                    style={{ width: `${dim.user_score}%` }}
+                    style={{ width: `${userDisp}%` }}
                   />
                 </div>
                 {dim.gap_explanation && (
