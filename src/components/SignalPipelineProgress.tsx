@@ -120,7 +120,7 @@ const SignalPipelineProgress = ({
   const allLocked = stages.every((s) => s.status === "locked" || s.status === "active") && !stages.some((s) => s.status === "complete");
 
   return (
-    <div className="w-full px-4 py-3 border-b border-border">
+    <div className="w-full px-4 py-2 border-b border-border">
       <div className="flex items-start justify-center max-w-md mx-auto">
         {stages.map((stage, i) => (
           <div key={stage.id} className="contents">

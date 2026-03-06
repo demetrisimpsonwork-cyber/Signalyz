@@ -704,8 +704,8 @@ const Index = () => {
       </section>
 
       {/* Before/After Transformation Showcase */}
-      <section className="py-16 container max-w-3xl">
-        <div className="text-center mb-10">
+      <section className="py-12 container max-w-3xl">
+        <div className="text-center mb-8">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
           <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
         </div>
@@ -726,12 +726,12 @@ const Index = () => {
             </p>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
+        <p className="text-center text-xs text-muted-foreground mt-4">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
       </section>
 
       {/* Testimonial */}
-      <section className="py-8 container max-w-2xl">
-        <div className="rounded-xl bg-[#0F1C2E] p-8 relative">
+      <section className="py-6 container max-w-2xl">
+        <div className="rounded-xl bg-[#0F1C2E] p-6 relative">
           <Quote className="h-8 w-8 text-primary/40 absolute top-6 left-6" />
           <div className="pl-8">
             <p className="text-white text-sm leading-relaxed italic">
@@ -744,9 +744,9 @@ const Index = () => {
       </section>
 
       {/* Match Score Forecast */}
-      <section className="py-16 bg-[#F8F9FB]">
+      <section className="py-12 bg-[#F8F9FB]">
         <div className="container max-w-3xl">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h2 className="text-2xl font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>Same resume. Repositioned signal. 30-point lift.</h2>
             <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>This is what Resumix does to how hiring managers read your experience.</p>
           </div>
@@ -767,8 +767,8 @@ const Index = () => {
               <p className="text-muted-foreground" style={{ fontSize: "13px" }}>Same experience. Repositioned toward what this role weights.</p>
             </div>
           </div>
-          <p className="text-center text-muted-foreground italic mt-6" style={{ fontSize: "13px" }}>Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
-          <div className="flex justify-center mt-6">
+          <p className="text-center text-muted-foreground italic mt-4" style={{ fontSize: "13px" }}>Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
+          <div className="flex justify-center mt-4">
             <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
               <Sparkles className="h-4 w-4 mr-2" />
               Run Your Signal Analysis →
@@ -778,8 +778,8 @@ const Index = () => {
       </section>
 
       {/* WAS/NOW Transformation Section */}
-      <section className="py-16 container max-w-3xl">
-        <div className="text-center mb-10">
+      <section className="py-12 container max-w-3xl">
+        <div className="text-center mb-8">
           <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
           <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not rewriting. Recalibrating. Every word came from the original resume.</p>
         </div>
@@ -817,8 +817,8 @@ const Index = () => {
             </div>
           ))}
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">Zero fabrication. Every word came from the original.</p>
-        <div className="flex justify-center mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-4">Zero fabrication. Every word came from the original.</p>
+        <div className="flex justify-center mt-4">
           <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             Run Your Signal Analysis →
           </Button>
@@ -826,7 +826,7 @@ const Index = () => {
       </section>
 
       {/* Differentiation Statement */}
-      <section className="py-16 bg-[#0F1C2E]">
+      <section className="py-12 bg-[#0F1C2E]">
         <div className="container max-w-2xl text-center">
           <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
           <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
@@ -836,8 +836,8 @@ const Index = () => {
       </section>
 
       {/* Feature Cards */}
-      <section className="py-16 container max-w-3xl">
-        <div className="grid gap-7 md:grid-cols-3">
+      <section className="py-12 container max-w-3xl">
+        <div className="grid gap-6 md:grid-cols-3">
           {[
             { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
             { title: "5-Stage Risk Projection", sub: "From recruiter filter to executive review.", icon: Shield },
@@ -853,9 +853,9 @@ const Index = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-16 container max-w-2xl">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 mt-4" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
-        <ol className="space-y-7">
+      <section className="py-12 container max-w-2xl">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
+        <ol className="space-y-6">
           {[
             { step: "Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
             { step: "Map Your Experience to Weighted Themes", desc: "Compare how your background reads against each priority signal, identifying where alignment is strong and where perception gaps exist." },
@@ -873,7 +873,7 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-16 container max-w-6xl">
+      <section id="alignment-tool" className="py-12 container max-w-6xl">
         {/* Pipeline progress bar */}
         <SignalPipelineProgress
           stages={pipelineStages}
@@ -893,7 +893,7 @@ const Index = () => {
         />
 
         {/* Mode toggle — 3 tabs */}
-        <div className="mb-10 flex justify-center mt-6">
+        <div className="mb-6 flex justify-center mt-4">
           <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
             <button
               onClick={() => setMode("alignment")}
@@ -1057,7 +1057,7 @@ const Index = () => {
               </div>
 
               {/* Right — Results */}
-              <div className="space-y-4 md:space-y-7">
+              <div className="space-y-4 md:space-y-6">
                 {loading && <AlignmentLoader minHeight="260px" />}
 
                 {!loading && inputTruncated && (
@@ -1071,7 +1071,7 @@ const Index = () => {
                 )}
 
                 {!loading && !result && !alignmentError && showSamples && (
-                  <div className="space-y-7">
+                  <div className="space-y-6">
                     <div>
                       <p className="text-xs font-semibold text-foreground mb-0.5">{role.label}</p>
                       <p className="text-xs text-muted-foreground">Diagnostic preview based on the original bullet.</p>
@@ -1295,8 +1295,8 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 container max-w-2xl">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 mt-4 text-center" style={{ letterSpacing: "0.02em" }}>
+      <section className="py-12 container max-w-2xl">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center" style={{ letterSpacing: "0.02em" }}>
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="w-full">
