@@ -1295,8 +1295,8 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 container max-w-2xl">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-8 mt-4 text-center" style={{ letterSpacing: "0.02em" }}>
+      <section className="py-12 container max-w-2xl">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center" style={{ letterSpacing: "0.02em" }}>
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="w-full">
