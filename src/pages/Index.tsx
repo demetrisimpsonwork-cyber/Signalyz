@@ -573,6 +573,8 @@ const Index = () => {
     if (!validate()) return;
     setLoading(true);
     setResult(null);
+    setDirectorResult(null);
+    setSessionResumeAssembled(false);
     setAlignmentError(null);
     setInputTruncated(false);
     setShowSamples(false);
