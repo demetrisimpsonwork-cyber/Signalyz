@@ -1192,13 +1192,37 @@ const Index = () => {
                         )}
                       </div>
 
-                      {result.score_rationale && result.score_rationale.length > 0 && (
-                        <ul className="space-y-1">
-                          {result.score_rationale.map((r, i) => (
-                            <li key={i} className="text-xs text-muted-foreground">• {r}</li>
-                          ))}
-                        </ul>
-                      )}
+                      {result.score_rationale && result.score_rationale.length > 0 && (() => {
+                        const strengths = result.score_rationale.filter(r =>
+                          /strong|present|demonstrated|clear|solid|effective|well|good|shows|detected|aligned|evident/i.test(r) &&
+                          !/missing|lacks?|absent|no evidence|weak|gap|not|without|insufficient/i.test(r)
+                        );
+                        const gaps = result.score_rationale.filter(r => !strengths.includes(r));
+                        return (
+                          <div className="space-y-3">
+                            {strengths.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>What's Working</p>
+                                <ul className="space-y-0.5">
+                                  {strengths.map((r, i) => (
+                                    <li key={i} className="text-xs text-muted-foreground">• {r}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {gaps.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>What's Missing</p>
+                                <ul className="space-y-0.5">
+                                  {gaps.map((r, i) => (
+                                    <li key={i} className="text-xs text-muted-foreground">• {r}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Signal Diagnostic Modules */}
