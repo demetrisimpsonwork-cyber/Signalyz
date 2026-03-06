@@ -360,7 +360,7 @@ JSON SCHEMA:
   ],
   "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
-  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number},
+  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC: given the same inputs always return the same dimension scores — do not vary),
   "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}},
   "career_signal_map": {
     "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
@@ -383,8 +383,8 @@ Do NOT mix — a bullet describing something the candidate HAS is always [STRENG
 CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
 For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
 
-IDENTITY STRENGTH INDEX DETERMINISTIC SCORING:
-Your identity_strength_index scoring must be reproducible. Given the same resume and job description inputs, you must always produce the same total_score and the same pillar scores. Do not introduce variance. Evaluate evidence strictly and assign fixed scores based on the presence or absence of specific signals.
+DETERMINISTIC SCORING — ALL SUB-SCORES:
+You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output based on phrasing flexibility or sampling. Return the same number every time for the same input. This applies to ALL numeric fields: match_score.score, identity_strength_index (total_score and all pillar scores), signal_map (all 6 dimensions), signal_shift_estimates, hiring_signal_benchmark scores, career_signal_map role scores, and predicted_signal_lift. Evaluate evidence strictly and assign fixed scores based on the presence or absence of specific signals. No randomness, no creativity in scoring.
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
@@ -545,7 +545,7 @@ USER_PLAN: ${userPlan}`;
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       signal_map: titan.signal_map || null,
-      career_signal_map: titan.career_signal_map || null,
+      career_signal_map: signalModel.career_signal_map || null,
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
       predicted_signal_lift: titan.predicted_signal_lift || null,
