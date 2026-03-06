@@ -50,14 +50,7 @@ const STEPS = [
 ];
 
 export function useResumeAssembly(): UseResumeAssemblyReturn {
-  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(() => {
-    try {
-      const saved = localStorage.getItem("resumix_calibrated_resume_data");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
