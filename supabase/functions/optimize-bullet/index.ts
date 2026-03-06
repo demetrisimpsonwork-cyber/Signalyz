@@ -391,7 +391,7 @@ JSON SCHEMA:
   },
   "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]} (DETERMINISTIC BENCHMARKS: The median_candidate_score and top_candidate_threshold represent the typical applicant pool for this role type and must be consistent across runs. For a given role type, always return the same median and top threshold values. These are population-level constants, not user-specific. Do not vary these values between runs.),
   "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY ISSUE: The primary_issue field identifies the single largest structural gap. Select based on the gap with the highest weight × severity product from the gap analysis. For the same gap profile, always select the same primary issue. Do not vary between runs.),
-  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Calculate predicted_score using this exact formula every time: sum all dimension lift values, multiply by 0.60, add to current_score, round to nearest integer, cap at current_score + 15. Do not estimate. Calculate mechanically. Example: lifts 7+6+6+6=25, 25×0.60=15, current 58+15=73, cap check 58+15=73 OK. The 0.60 capture rate and +15 cap are fixed constants — never vary them.),
+  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Calculate predicted_score using this exact formula every time: sum all dimension lift values, multiply by 0.50, add to current_score, round to nearest integer, cap at current_score + 15. Do not estimate. Calculate mechanically. Example: lifts 7+7+6+6=26, 26×0.50=13, current 58+13=71, cap check 58+15=73 OK. The 0.50 capture rate and +15 cap are fixed constants — never vary them.),
   "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
 
@@ -590,7 +590,7 @@ USER_PLAN: ${userPlan}`;
         const currentScore = igd.current_score ?? (titan.match_score as any)?.score ?? 0;
         if (psl && Array.isArray(psl.dimensions)) {
           const totalLift = psl.dimensions.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
-          const captured = Math.round(totalLift * 0.60);
+          const captured = Math.round(totalLift * 0.50);
           const predictedScore = Math.min(currentScore + captured, currentScore + 15);
           return { ...igd, current_score: currentScore, predicted_score: predictedScore };
         }
@@ -602,7 +602,7 @@ USER_PLAN: ${userPlan}`;
         const currentScore = psl.current_score ?? (titan.match_score as any)?.score ?? 0;
         const dims = Array.isArray(psl.dimensions) ? psl.dimensions : [];
         const totalLift = dims.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
-        const captured = Math.round(totalLift * 0.60);
+        const captured = Math.round(totalLift * 0.50);
         const predictedScore = Math.min(currentScore + captured, currentScore + 15);
         console.log(`[predicted_score] lifts=${dims.map((d:any)=>d.lift).join('+')}, total=${totalLift}, captured=${captured}, current=${currentScore}, predicted=${predictedScore}`);
         return { ...psl, current_score: currentScore, predicted_score: predictedScore };
