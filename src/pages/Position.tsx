@@ -1025,7 +1025,7 @@ const Position = () => {
             Generate Positioning Package
           </Button>
           <p className="text-xs text-muted-foreground">
-            Takes 25–40 seconds. 11-section output. Zero fabrication.
+            Takes 30–60 seconds. 11-section output. Zero fabrication.
           </p>
         </div>
 
