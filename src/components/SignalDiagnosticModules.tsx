@@ -404,6 +404,14 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
     { key: "domain_alignment" as const, label: "Domain Alignment" },
   ];
 
+  // Detect scale from ALL values: if the max across all before/after is <=25, it's raw /25
+  const allValues = shifts
+    .map(({ key }) => data[key])
+    .filter(Boolean)
+    .flatMap((s) => [s!.before, s!.after]);
+  const maxVal = Math.max(...allValues, 0);
+  const isRawScale = maxVal <= 25;
+
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
       <SectionLabel>Signal Shift Projection</SectionLabel>
@@ -412,11 +420,12 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
         {shifts.map(({ key, label }) => {
           const shift = data[key];
           if (!shift) return null;
-          // Convert raw /25 scores to percentage; if already >25, assume already percentage
-          const isRawScale = shift.before <= 25 && shift.after <= 25;
+          // Step 1: Convert raw /25 scores to percentage
           const beforePct = isRawScale ? Math.round((shift.before / 25) * 100) : shift.before;
           const afterPctRaw = isRawScale ? Math.round((shift.after / 25) * 100) : shift.after;
+          // Step 2: Apply 95% ceiling
           const afterPct = Math.min(afterPctRaw, 95);
+          // Step 3: Recalculate delta from capped value
           const deltaPct = afterPct - beforePct;
           return (
             <div key={key} className="space-y-1">
