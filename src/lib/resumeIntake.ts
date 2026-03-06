@@ -64,7 +64,7 @@ const COMPANY_SUFFIXES = /\b(inc|llc|corp|ltd|co|solutions|technologies|group|pa
 const ROLE_TITLES = /\b(specialist|manager|analyst|coordinator|engineer|developer|director|lead|supervisor|associate|consultant|administrator|architect|designer|officer|president|vice\s+president|vp|intern|assistant|head\s+of)\b/i;
 const LOCATION_PATTERN = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
 const EMAIL_PATTERN = /[\w.+-]+@[\w.-]+\.\w{2,}/;
-const PHONE_PATTERN = /\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}/;
+const PHONE_PATTERN = /(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\b\d{10}\b)/;
 const EDUCATION_KEYWORDS = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree)\b/i;
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
 
