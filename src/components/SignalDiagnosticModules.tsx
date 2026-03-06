@@ -415,7 +415,8 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
           // Convert raw /25 scores to percentage; if already >25, assume already percentage
           const isRawScale = shift.before <= 25 && shift.after <= 25;
           const beforePct = isRawScale ? Math.round((shift.before / 25) * 100) : shift.before;
-          const afterPct = isRawScale ? Math.round((shift.after / 25) * 100) : shift.after;
+          const afterPctRaw = isRawScale ? Math.round((shift.after / 25) * 100) : shift.after;
+          const afterPct = Math.min(afterPctRaw, 95);
           const deltaPct = afterPct - beforePct;
           return (
             <div key={key} className="space-y-1">

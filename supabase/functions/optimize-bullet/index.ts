@@ -590,7 +590,7 @@ USER_PLAN: ${userPlan}`;
         const currentScore = igd.current_score ?? (titan.match_score as any)?.score ?? 0;
         if (psl && Array.isArray(psl.dimensions)) {
           const totalLift = psl.dimensions.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
-          const captured = Math.round(totalLift * 0.60);
+          const captured = Math.round(totalLift * 0.50);
           const predictedScore = Math.min(currentScore + captured, currentScore + 15);
           return { ...igd, current_score: currentScore, predicted_score: predictedScore };
         }
@@ -602,7 +602,7 @@ USER_PLAN: ${userPlan}`;
         const currentScore = psl.current_score ?? (titan.match_score as any)?.score ?? 0;
         const dims = Array.isArray(psl.dimensions) ? psl.dimensions : [];
         const totalLift = dims.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
-        const captured = Math.round(totalLift * 0.60);
+        const captured = Math.round(totalLift * 0.50);
         const predictedScore = Math.min(currentScore + captured, currentScore + 15);
         console.log(`[predicted_score] lifts=${dims.map((d:any)=>d.lift).join('+')}, total=${totalLift}, captured=${captured}, current=${currentScore}, predicted=${predictedScore}`);
         return { ...psl, current_score: currentScore, predicted_score: predictedScore };
