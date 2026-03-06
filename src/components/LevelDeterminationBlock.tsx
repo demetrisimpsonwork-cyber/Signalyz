@@ -79,12 +79,13 @@ const extractPrimaryDeficiency = (raw: string, roleLevel: RoleLevel): { name: st
 
   const isSupervisor = roleLevel === "supervisor";
 
-  let name = "Signal Gap";
+  let name = isSupervisor ? "Team Leadership Signal" : "Leadership Signal";
   let status = "Below Threshold";
-  let panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
+  let panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 3 — Cross-Functional Panel Stress Test";
 
   if (lower.includes("owner") || lower.includes("scope")) {
     name = "Ownership Scope";
+    panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
   } else if (lower.includes("team") || lower.includes("supervis") || lower.includes("lead")) {
     name = isSupervisor ? "Team Leadership Signal" : "Leadership Signal";
     panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 3 — Cross-Functional Panel Stress Test";
@@ -93,6 +94,7 @@ const extractPrimaryDeficiency = (raw: string, roleLevel: RoleLevel): { name: st
     panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 4 — Executive Strategy Calibration";
   } else if (lower.includes("impact") || lower.includes("metric") || lower.includes("revenue") || lower.includes("result")) {
     name = "Commercial Impact";
+    panelRisk = "Stage 2 — Hiring Manager Ownership Audit";
   } else if (lower.includes("strateg") || lower.includes("priorit") || lower.includes("roadmap")) {
     name = isSupervisor ? "Process Ownership" : "Strategic Definition";
     panelRisk = isSupervisor ? "Stage 3 — Team & Operations Panel Review" : "Stage 4 — Executive Strategy Calibration";
