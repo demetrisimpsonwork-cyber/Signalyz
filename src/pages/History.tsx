@@ -69,50 +69,50 @@ function safeParseEntry(raw: any): HistoryEntry | null {
   }
 }
 
-/** Extract ONLY flat renderable fields — everything else is discarded */
+/** Extract ONLY the 5 required fields — everything else is discarded */
 function safeParseExpandedResult(raw: any): ExpandedResult | null {
   try {
     if (!raw || typeof raw !== "object") return null;
     const r = raw as Record<string, any>;
+    const UNAVAILABLE = "Detail unavailable";
 
-    // Extract match_score (top-level number or nested in signal_model)
-    let matchScore: number | undefined;
-    if (typeof r.match_score === "number") matchScore = r.match_score;
-    else if (r.signal_model?.match_score?.score != null) matchScore = Number(r.signal_model.match_score.score);
+    // 1. Optimized Bullet
+    let optimized_bullet = UNAVAILABLE;
+    try { if (typeof r.alt_a === "string" && r.alt_a.trim()) optimized_bullet = r.alt_a; } catch { /* */ }
 
-    // Extract gaps from signal_model.gaps or top-level gaps (handle both string and object shapes)
-    let gaps: string[] | undefined;
-    const rawGaps = r.signal_model?.gaps ?? r.gaps;
-    if (Array.isArray(rawGaps)) {
-      gaps = rawGaps
-        .map((g: any) => {
-          if (typeof g === "string") return g;
-          if (g && typeof g === "object" && typeof g.name === "string") return g.name;
-          return null;
-        })
-        .filter((g): g is string => g !== null)
-        .slice(0, 5);
-    }
+    // 2. Match Score
+    let match_score = UNAVAILABLE;
+    try {
+      if (typeof r.match_score === "number") match_score = `${r.match_score}%`;
+      else if (r.signal_model?.match_score?.score != null) match_score = `${Number(r.signal_model.match_score.score)}%`;
+    } catch { /* */ }
 
-    // Extract suggested verbs
-    let suggestedVerbs: string[] | undefined;
-    const rawVerbs = r.suggested_verbs ?? r.action_verbs;
-    if (Array.isArray(rawVerbs)) suggestedVerbs = rawVerbs.filter((v: any) => typeof v === "string");
+    // 3. Missing Keywords
+    let missing_keywords = UNAVAILABLE;
+    try {
+      const mk = r.missing_keywords;
+      if (Array.isArray(mk) && mk.length > 0) missing_keywords = mk.filter((k: any) => typeof k === "string").join(" · ");
+      else if (typeof mk === "string" && mk.trim()) missing_keywords = mk;
+    } catch { /* */ }
 
-    // Top gap
-    const topGap = typeof r.top_gap === "string" ? r.top_gap : (gaps?.[0] ?? undefined);
+    // 4. Suggested Action Verbs
+    let suggested_verbs = UNAVAILABLE;
+    try {
+      const sv = r.suggested_verbs ?? r.action_verbs;
+      if (Array.isArray(sv) && sv.length > 0) suggested_verbs = sv.filter((v: any) => typeof v === "string").join(", ");
+    } catch { /* */ }
 
-    // Must have at least a score or a bullet to be worth rendering
-    if (matchScore == null && typeof r.alt_a !== "string") return null;
+    // 5. Top Gap
+    let top_gap = UNAVAILABLE;
+    try {
+      if (typeof r.top_gap === "string" && r.top_gap.trim()) top_gap = r.top_gap;
+      else if (typeof r.top_missing_signal === "string" && r.top_missing_signal.trim()) top_gap = r.top_missing_signal;
+    } catch { /* */ }
 
-    return {
-      alt_a: typeof r.alt_a === "string" ? r.alt_a : undefined,
-      alt_b: typeof r.alt_b === "string" ? r.alt_b : undefined,
-      match_score: matchScore,
-      gaps,
-      suggested_verbs: suggestedVerbs,
-      top_gap: topGap,
-    };
+    // Must have at least one real field
+    if (optimized_bullet === UNAVAILABLE && match_score === UNAVAILABLE) return null;
+
+    return { optimized_bullet, match_score, missing_keywords, suggested_verbs, top_gap };
   } catch {
     return null;
   }
