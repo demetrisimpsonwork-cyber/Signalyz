@@ -83,26 +83,26 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
 }
 
 function extractJSON(raw: string): Record<string, unknown> {
-  // Strip markdown code fences
-  let stripped = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  // Strip all markdown code fences (anywhere in the string, multiline)
+  let stripped = raw.replace(/```(?:json)?\s*/gi, "").trim();
 
   // Try direct parse first
   try {
     return JSON.parse(stripped);
   } catch { /* fall through */ }
 
-  // Find outermost { ... } 
+  // Find outermost { ... }
   const start = stripped.indexOf("{");
   const end = stripped.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON object found in response");
+    throw new Error("JSON_EXTRACT_FAIL");
   }
 
-  return JSON.parse(stripped.slice(start, end + 1));
+  try {
+    return JSON.parse(stripped.slice(start, end + 1));
+  } catch {
+    throw new Error("JSON_EXTRACT_FAIL");
+  }
 }
 
 // ─── Input normalization ─────────────────────────────────────────────────────
@@ -681,10 +681,8 @@ USER_PLAN: ${userPlan}`;
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("Daily free limit") ? message :
-      message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
-      message.includes("calibration") || message.includes("parse") ? "Signal calibration is taking longer than expected. Tap to try again — your alignment data is saved." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
-      "Analysis engine temporarily unavailable. Please try again.";
+      "Something went wrong. Please try again.";
     return new Response(JSON.stringify({
       status: "error",
       request_id: requestId,
