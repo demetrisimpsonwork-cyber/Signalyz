@@ -302,7 +302,7 @@ JSON SCHEMA:
 {
   "inferred_role_title": "string",
   "optimized_bullets": [{"text":"string","variant":"string","used_signals":["string"],"removed_or_softened":["string"]}],
-  "match_score": {"score":number,"label":"Weak|Moderate|Solid|Strong","score_rationale":["string"]},
+  "match_score": {"score":number,"label":"Weak|Moderate|Solid|Strong","score_rationale":["string — each item MUST be prefixed with either '[STRENGTH]' or '[GAP]' to indicate whether it describes a present positive signal or an absent/weak signal"]},
   "missing_keywords": ["string (3-10)"],
   "suggested_action_verbs": ["string (max 5)"],
   "alignment_intelligence_summary": "string (${userPlan === "pro" ? "4-6" : "2-3"} sentences)",
@@ -335,8 +335,8 @@ JSON SCHEMA:
   "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number},
   "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}},
   "career_signal_map": {
-    "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string"}],
-    "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string"}]
+    "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
+    "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
   },
   "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]},
   "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string"],"current_score":number,"predicted_score":number},
@@ -345,6 +345,15 @@ JSON SCHEMA:
 }
 
 Identity_strength_index pillars: exactly 4 (Role Signal Clarity, Commercial Framing Power, Risk Compression Strength, Narrative Cohesion), each 0-25, strict evidence-based.
+
+SCORE_RATIONALE CLASSIFICATION (CRITICAL):
+Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]':
+- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal (e.g. "aligns with", "demonstrates", "shows", "translates to", "evidenced by")
+- '[GAP]' = the resume is missing this signal or it is weak/absent (e.g. "missing", "lacks", "no evidence of", "absent", "unclear", "not demonstrated")
+Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
+
+CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
+For career_signal_map, matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first. Primary alignment gets the top 2-3 roles, secondary gets the next 2-3.
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
@@ -446,7 +455,27 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       identity_strength_index: titan.identity_strength_index || null,
-      career_signal_map: titan.career_signal_map || null,
+      career_signal_map: (() => {
+        const csm = titan.career_signal_map as any;
+        if (!csm) return null;
+        // Deterministic tiebreaker: sort by score desc, then matched_jd_dimensions desc, then role name asc
+        const sortEntries = (arr: any[]) => {
+          if (!Array.isArray(arr)) return arr;
+          return [...arr].sort((a, b) => {
+            const scoreDiff = (b.score ?? 0) - (a.score ?? 0);
+            if (Math.abs(scoreDiff) > 5) return scoreDiff;
+            // Within 5 points: use matched_jd_dimensions as tiebreaker
+            const dimDiff = (b.matched_jd_dimensions ?? 0) - (a.matched_jd_dimensions ?? 0);
+            if (dimDiff !== 0) return dimDiff;
+            // Final tiebreaker: alphabetical by role name
+            return (a.role ?? "").localeCompare(b.role ?? "");
+          });
+        };
+        return {
+          primary_alignment: sortEntries(csm.primary_alignment || []),
+          secondary_alignment: sortEntries(csm.secondary_alignment || []),
+        };
+      })(),
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
       predicted_signal_lift: titan.predicted_signal_lift || null,

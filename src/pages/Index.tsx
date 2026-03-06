@@ -1193,11 +1193,24 @@ const Index = () => {
                       </div>
 
                       {result.score_rationale && result.score_rationale.length > 0 && (() => {
-                        const strengths = result.score_rationale.filter(r =>
-                          /strong|present|demonstrated|clear|solid|effective|well|good|shows|detected|aligned|evident/i.test(r) &&
-                          !/missing|lacks?|absent|no evidence|weak|gap|not|without|insufficient/i.test(r)
-                        );
-                        const gaps = result.score_rationale.filter(r => !strengths.includes(r));
+                        // Classification: use AI prefix tags first, then fallback heuristics
+                        const strengths: string[] = [];
+                        const gaps: string[] = [];
+                        for (const r of result.score_rationale) {
+                          const cleaned = r.replace(/^\[(STRENGTH|GAP)\]\s*/i, "");
+                          if (/^\[STRENGTH\]/i.test(r)) {
+                            strengths.push(cleaned);
+                          } else if (/^\[GAP\]/i.test(r)) {
+                            gaps.push(cleaned);
+                          } else if (
+                            /missing|lacks?|absent|no evidence|weak|gap|not\s|without|insufficient|unclear|not\s+demonstrated|under-?signal/i.test(r) &&
+                            !/aligns?\s+with|translates?\s+to|demonstrates?|shows?|detected|evidenced/i.test(r)
+                          ) {
+                            gaps.push(cleaned);
+                          } else {
+                            strengths.push(cleaned);
+                          }
+                        }
                         return (
                           <div className="space-y-3">
                             {strengths.length > 0 && (
