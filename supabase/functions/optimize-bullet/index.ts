@@ -434,7 +434,7 @@ This applies individually and explicitly to EACH of these numeric fields — sco
 - match_score.score: weighted sum of 5 dimensions, no rounding variance
 - identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar — count evidence items, not impressions
 - signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored by counting keyword matches between resume and JD, not impression
-- signal_shift_estimates: all before/after pairs — derive from the delta between counted current evidence and projected evidence after calibration
+- signal_shift_estimates: all before/after pairs on 0-100 percentage scale — independently assessed signal strength percentages, NOT derived from signal_map /25 scores
 - hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
 - career_signal_map: role scores for both primary and secondary
 - predicted_signal_lift: all dimension lifts and current/predicted scores — lifts must be derived from gap counts, not estimated
