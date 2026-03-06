@@ -1329,7 +1329,7 @@ const Position = () => {
 
               {/* 12 — Interview Trajectory (pro: full, free: locked) */}
               {result.interview_trajectory && (
-                effectiveIsPro ? (
+                (effectiveIsPro || subLoading) ? (
                   <Section title="12. Interview Trajectory Preview" proLabel>
                     <div className="space-y-3">
                       <div>
