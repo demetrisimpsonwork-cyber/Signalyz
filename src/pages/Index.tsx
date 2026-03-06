@@ -388,23 +388,21 @@ const Index = () => {
 
   const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
 
-  // Check if calibrated resume exists (persisted in localStorage by useResumeAssembly)
-  const hasCalibratedResume = (() => {
-    try { return !!localStorage.getItem("resumix_calibrated_resume_data"); } catch { return false; }
-  })();
+  // Track whether calibrated resume was assembled in THIS session
+  // This is set to true when CalibratedResumeTab signals assembly complete
+  const [sessionResumeAssembled, setSessionResumeAssembled] = useState(false);
 
-  // Pipeline stages derived from existing React state
-    const pipelineStages: PipelineStage[] = useMemo(() => {
+  // Pipeline stages derived purely from current-session React state
+  const pipelineStages: PipelineStage[] = useMemo(() => {
     const alignmentDone = !!result;
     const reportDone = !!directorResult;
-    const resumeDone = hasCalibratedResume;
-
-    // Determine which stage is the "next actionable" one
-    const nextActionable = !alignmentDone ? "alignment" : !reportDone ? "report" : !resumeDone ? "resume" : null;
+    const resumeDone = sessionResumeAssembled;
 
     const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "locked" => {
       if (done) return "complete";
       if (!priorDone) return "locked";
+      // The next actionable stage
+      const nextActionable = !alignmentDone ? "alignment" : !reportDone ? "report" : !resumeDone ? "resume" : null;
       return id === nextActionable ? "active" : "locked";
     };
 
@@ -436,7 +434,7 @@ const Index = () => {
         lockedReason: "Run the Signal Positioning Report first",
       },
     ];
-  }, [result, directorResult, hasCalibratedResume]);
+  }, [result, directorResult, sessionResumeAssembled]);
 
   useEffect(() => {
     if (result) {
