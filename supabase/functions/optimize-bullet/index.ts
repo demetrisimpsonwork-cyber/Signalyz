@@ -15,16 +15,31 @@ const MAX_COMBINED_CHARS = 16000;
 const MIN_RESUME_CHARS = 20;
 const MIN_JD_CHARS = 20;
 
+const DETERMINISTIC_SYSTEM = `You are a deterministic analysis engine. Your outputs must be perfectly reproducible.
+
+EXTRACTION RULES:
+- Extract the same priority signals every time for the same input. Your extraction must be reproducible.
+- List signals in consistent priority order based on frequency and emphasis in the source text.
+- Extract the same experience signals every time for the same input. Do not vary which signals you surface based on phrasing flexibility.
+- When identifying keywords, scan the full text systematically from top to bottom. Do not skip or reorder based on salience impressions.
+
+SCORING RULES:
+- You are a deterministic scorer. The inputs you are scoring were extracted deterministically. You must return the same score for the same inputs every time.
+- Anchor to your first assessment and do not vary it.
+- If you are uncertain between two values, anchor to the lower bound and hold it.
+- Use explicit evidence counting, not subjective impression, for every numeric field.
+
+OUTPUT RULES:
+- Return only valid JSON. No markdown, no code fences, no preamble, no explanation.
+- Start your response with { and end with }.`;
+
 async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSystemNote?: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
   try {
-    const messages: { role: string; content: string }[] = [];
-    if (extraSystemNote) {
-      messages.push({ role: "user", content: extraSystemNote + "\n\n" + prompt });
-    } else {
-      messages.push({ role: "user", content: prompt });
-    }
+    const systemContent = extraSystemNote
+      ? `${DETERMINISTIC_SYSTEM}\n\n${extraSystemNote}`
+      : DETERMINISTIC_SYSTEM;
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       signal: controller.signal,
@@ -37,7 +52,8 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         temperature: 0,
-        messages,
+        system: systemContent,
+        messages: [{ role: "user", content: prompt }],
       }),
     });
     clearTimeout(timeout);
