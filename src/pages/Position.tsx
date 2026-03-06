@@ -801,24 +801,75 @@ const Position = () => {
     }, TIMEOUT_MS);
 
     try {
-      // Check for existing alignment score from the same JD
-      // Fingerprint must match Index.tsx normalization: strip control chars, collapse whitespace, then lowercase slice
+      // ── Resolve alignment score: sessionStorage → DB → undefined ──────────
+      const normalizedJd = jd.trim()
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+        .replace(/[^\S\n]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+      const jdFingerprint = normalizedJd.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
+
       let existingScore: number | undefined;
+
+      // 1) Try sessionStorage (same-session passthrough)
       try {
         const raw = sessionStorage.getItem("resumix_alignment_score");
         if (raw) {
           const stored = JSON.parse(raw);
-          const normalizedJd = jd.trim()
-            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-            .replace(/[^\S\n]+/g, " ")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim();
-          const jdFingerprint = normalizedJd.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
           if (stored.jd_fingerprint === jdFingerprint && Date.now() - stored.ts < 30 * 60 * 1000) {
             existingScore = stored.score;
+            console.log("[Position] Using sessionStorage alignment score:", existingScore);
           }
         }
       } catch {}
+
+      // 2) If no session match, query alignment_history for a recent score (last 24h)
+      if (existingScore === undefined) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: historyRows } = await supabase
+              .from("alignment_history")
+              .select("score, full_result_json, created_at")
+              .eq("user_id", user.id)
+              .gte("created_at", cutoff)
+              .order("created_at", { ascending: false })
+              .limit(10);
+
+            if (historyRows && historyRows.length > 0) {
+              // Match by JD fingerprint stored in full_result_json
+              for (const row of historyRows) {
+                try {
+                  const fullResult = row.full_result_json as any;
+                  // The full_result_json contains the original JD in the input
+                  // We need to check if the stored result matches this JD
+                  const storedJd = fullResult?.jd_text || fullResult?.input_jd || "";
+                  if (storedJd) {
+                    const storedFingerprint = storedJd.trim()
+                      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+                      .replace(/[^\S\n]+/g, " ")
+                      .replace(/\n{3,}/g, "\n\n")
+                      .trim()
+                      .replace(/\s+/g, " ")
+                      .toLowerCase()
+                      .slice(0, 150);
+                    if (storedFingerprint === jdFingerprint) {
+                      existingScore = row.score;
+                      console.log("[Position] Using alignment_history DB score:", existingScore);
+                      break;
+                    }
+                  }
+                  // Fallback: if full_result_json has match_score, use most recent
+                  if (!existingScore && typeof fullResult?.match_score === "number") {
+                    // Can't fingerprint-match without stored JD, skip
+                  }
+                } catch {}
+              }
+            }
+          }
+        } catch {}
+      }
 
       const { data, error } = await supabase.functions.invoke("titan-position", {
         body: { experience: experience.trim(), jd: jd.trim(), existing_alignment_score: existingScore },
