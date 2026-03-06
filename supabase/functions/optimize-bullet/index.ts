@@ -383,7 +383,7 @@ JSON SCHEMA:
   ],
   "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
-  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC: given the same inputs always return the same dimension scores — do not vary),
+  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC — CRITICAL: Each dimension is scored 0-25 by counting keyword evidence matches. Given identical inputs, return identical scores every time. Do not vary. Use the counting rubric: 0 matches=0, 1-2=5-10, 3-4=10-15, 5+=15-20, 7+=20-25. Round down when between two values.),
   "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (DETERMINISTIC PER-DIMENSION DELTAS: Calculate the improvement delta for each dimension independently based on the specific gap actions for that dimension. Dimensions where the gap is directly addressed by calibration suggestions receive higher deltas 12-20 points. Dimensions where the gap is structural and cannot be addressed through language repositioning receive lower deltas 4-8 points. Each delta must be different and calculated independently — do NOT use the same delta for all dimensions.),
   "career_signal_map": {
     "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
@@ -391,7 +391,7 @@ JSON SCHEMA:
   },
   "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]},
   "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number},
-  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number},
+  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Calculate predicted_score using this exact formula every time: sum all dimension lift values, multiply by 0.60, add to current_score, round to nearest integer, cap at current_score + 15. Do not estimate. Calculate mechanically. Example: lifts 7+6+6+6=25, 25×0.60=15, current 58+15=73, cap check 58+15=73 OK. The 0.60 capture rate and +15 cap are fixed constants — never vary them.),
   "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
 
@@ -565,8 +565,31 @@ USER_PLAN: ${userPlan}`;
         };
       })(),
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
-      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
-      predicted_signal_lift: titan.predicted_signal_lift || null,
+      interview_gap_diagnosis: (() => {
+        const igd = titan.interview_gap_diagnosis as any;
+        if (!igd) return null;
+        // Use the same mechanical formula for predicted_score
+        const psl = titan.predicted_signal_lift as any;
+        const currentScore = igd.current_score ?? (titan.match_score as any)?.score ?? 0;
+        if (psl && Array.isArray(psl.dimensions)) {
+          const totalLift = psl.dimensions.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
+          const captured = Math.round(totalLift * 0.60);
+          const predictedScore = Math.min(currentScore + captured, currentScore + 15);
+          return { ...igd, current_score: currentScore, predicted_score: predictedScore };
+        }
+        return igd;
+      })(),
+      predicted_signal_lift: (() => {
+        const psl = titan.predicted_signal_lift as any;
+        if (!psl) return null;
+        const currentScore = psl.current_score ?? (titan.match_score as any)?.score ?? 0;
+        const dims = Array.isArray(psl.dimensions) ? psl.dimensions : [];
+        const totalLift = dims.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
+        const captured = Math.round(totalLift * 0.60);
+        const predictedScore = Math.min(currentScore + captured, currentScore + 15);
+        console.log(`[predicted_score] lifts=${dims.map((d:any)=>d.lift).join('+')}, total=${totalLift}, captured=${captured}, current=${currentScore}, predicted=${predictedScore}`);
+        return { ...psl, current_score: currentScore, predicted_score: predictedScore };
+      })(),
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
@@ -603,8 +626,8 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       career_signal_map: signalModel.career_signal_map || null,
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
-      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
-      predicted_signal_lift: titan.predicted_signal_lift || null,
+      interview_gap_diagnosis: signalModel.interview_gap_diagnosis || null,
+      predicted_signal_lift: signalModel.predicted_signal_lift || null,
       // Unified SignalModel
       signal_model: signalModel,
     };
