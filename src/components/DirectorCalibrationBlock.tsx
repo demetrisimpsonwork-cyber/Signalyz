@@ -314,8 +314,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   return (
     <div className="space-y-7">
-      {/* Debug info — console only, never rendered */}
-      {result.run_id && console.log(`[Signal Report] Run: ${result.run_id} v${result.pipeline_version || "?"}${result._replay ? " (replay)" : ""}`) && null}
+      {/* Debug info logged to console only */}
 
       {/* 1 — Director Signal Tier */}
       <BlockShell label="Director Signal Tier">
