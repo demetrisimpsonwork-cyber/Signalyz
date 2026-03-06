@@ -734,7 +734,7 @@ const Position = () => {
 
   const isAdmin = useIsAdmin();
   const { isTrialPro } = useReverseTrial();
-  const { isPro } = useSubscription();
+  const { isPro, loading: subLoading } = useSubscription();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
   const clearTimers = () => {
@@ -874,7 +874,7 @@ const Position = () => {
       "5. OPTIMIZED SUMMARY",
       result.optimized_summary,
       "",
-      "6. BULLET REWRITES",
+      "6. CALIBRATED BULLET REPOSITIONING",
       ...result.bullet_rewrites.map((b) => `  Before: ${b.original}\n  After:  ${b.rewritten}`),
       "",
       "7. INTERVIEW DOMINANCE SCRIPT",
@@ -1235,7 +1235,7 @@ const Position = () => {
               </Section>
 
               {/* 7 — Bullet Rewrites */}
-              <Section title="7. Bullet Rewrites (Elite Version)">
+              <Section title="7. Calibrated Bullet Repositioning">
                 <div className="space-y-3">
                   {result.bullet_rewrites.map((b, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
@@ -1329,7 +1329,7 @@ const Position = () => {
 
               {/* 12 — Interview Trajectory (pro: full, free: locked) */}
               {result.interview_trajectory && (
-                effectiveIsPro ? (
+                (effectiveIsPro || subLoading) ? (
                   <Section title="12. Interview Trajectory Preview" proLabel>
                     <div className="space-y-3">
                       <div>
