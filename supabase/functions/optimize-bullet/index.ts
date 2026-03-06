@@ -626,8 +626,8 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       career_signal_map: signalModel.career_signal_map || null,
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
-      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
-      predicted_signal_lift: titan.predicted_signal_lift || null,
+      interview_gap_diagnosis: signalModel.interview_gap_diagnosis || null,
+      predicted_signal_lift: signalModel.predicted_signal_lift || null,
       // Unified SignalModel
       signal_model: signalModel,
     };
