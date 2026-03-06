@@ -402,6 +402,14 @@ Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]
 - '[STRENGTH]' = the candidate's resume demonstrably evidences this signal (e.g. "aligns with", "demonstrates", "shows", "translates to", "evidenced by")
 - '[GAP]' = the resume is missing this signal or it is weak/absent (e.g. "missing", "lacks", "no evidence of", "absent", "unclear", "not demonstrated")
 Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
+Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals from the resume relative to the JD priority signals. Always return 4 [STRENGTH] items.
+
+HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
+Assign risk levels based on the extracted signal gaps deterministically. For the same gap profile, always assign the same risk level at each stage. Do not vary risk assessments between runs.
+- Recruiter Filter: PASS only if keyword density covers 70%+ of JD priorities. Otherwise MODERATE RISK or HIGH RISK.
+- Hiring Manager Review: PASS only if ownership language and performance impact signals are present. Otherwise MODERATE RISK or HIGH RISK.
+- Panel Interview Signal: PASS only if cross-functional leadership AND domain expertise signals are both present. If either is missing or weak, assign MODERATE RISK. If both are missing, assign HIGH RISK.
+Use the same mechanical threshold logic every time. Do not use subjective judgment for risk level assignment.
 
 CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
 For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
