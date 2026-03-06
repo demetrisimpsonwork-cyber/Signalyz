@@ -761,8 +761,7 @@ const Index = () => {
       {/* Testimonial */}
       <section className="py-6 container max-w-2xl">
         <div className="rounded-xl bg-[#0F1C2E] p-6 relative border-l-[3px] border-l-primary">
-          <Quote className="h-8 w-8 text-primary/40 absolute top-6 left-6" />
-          <div className="pl-8">
+          <div>
             <p className="text-white text-sm leading-relaxed italic">
               "I ran my own resume and found out exactly why I wasn't hearing back on senior roles. The gap was real, specific, and fixable in one sitting."
             </p>
