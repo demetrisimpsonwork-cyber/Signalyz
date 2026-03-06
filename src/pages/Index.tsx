@@ -694,7 +694,7 @@ const Index = () => {
           </p>
           <Button
             size="lg"
-            className="mt-8 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+            className="mt-6 shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]"
             onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}
           >
             <Sparkles className="h-4 w-4 mr-2" />
@@ -704,7 +704,7 @@ const Index = () => {
       </section>
 
       {/* Before/After Transformation Showcase */}
-      <section className="py-12 container max-w-3xl">
+      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
           <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
@@ -769,7 +769,7 @@ const Index = () => {
           </div>
           <p className="text-center text-muted-foreground italic mt-4" style={{ fontSize: "13px" }}>Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
           <div className="flex justify-center mt-4">
-            <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
               <Sparkles className="h-4 w-4 mr-2" />
               Run Your Signal Analysis →
             </Button>
@@ -778,7 +778,7 @@ const Index = () => {
       </section>
 
       {/* WAS/NOW Transformation Section */}
-      <section className="py-12 container max-w-3xl">
+      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
           <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not rewriting. Recalibrating. Every word came from the original resume.</p>
@@ -818,8 +818,8 @@ const Index = () => {
           ))}
         </div>
         <p className="text-center text-xs text-muted-foreground mt-4">Zero fabrication. Every word came from the original.</p>
-        <div className="flex justify-center mt-4">
-          <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
+        <div className="flex justify-center mt-3">
+          <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             Run Your Signal Analysis →
           </Button>
         </div>
@@ -836,8 +836,8 @@ const Index = () => {
       </section>
 
       {/* Feature Cards */}
-      <section className="py-12 container max-w-3xl">
-        <div className="grid gap-6 md:grid-cols-3">
+      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+        <div className="grid gap-4 md:grid-cols-3">
           {[
             { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
             { title: "5-Stage Risk Projection", sub: "From recruiter filter to executive review.", icon: Shield },
@@ -855,7 +855,7 @@ const Index = () => {
       {/* How it works */}
       <section className="py-12 container max-w-2xl">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
-        <ol className="space-y-6">
+        <ol className="space-y-5">
           {[
             { step: "Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
             { step: "Map Your Experience to Weighted Themes", desc: "Compare how your background reads against each priority signal, identifying where alignment is strong and where perception gaps exist." },
