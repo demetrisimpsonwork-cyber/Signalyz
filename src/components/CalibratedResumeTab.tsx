@@ -33,6 +33,8 @@ interface CalibratedResumeTabProps {
   /** Whether an alignment run exists in the current session (not from localStorage) */
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
+  /** Called when resume assembly completes successfully */
+  onAssembled?: () => void;
 }
 
 const CalibratedResumeTab = ({
@@ -43,6 +45,7 @@ const CalibratedResumeTab = ({
   onSwitchToReport,
   hasCurrentSessionAlignment = false,
   onRunAlignment,
+  onAssembled,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
