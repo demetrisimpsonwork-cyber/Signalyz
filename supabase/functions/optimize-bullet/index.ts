@@ -15,10 +15,16 @@ const MAX_COMBINED_CHARS = 16000;
 const MIN_RESUME_CHARS = 20;
 const MIN_JD_CHARS = 20;
 
-async function callAI(apiKey: string, prompt: string): Promise<string> {
+async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSystemNote?: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
   try {
+    const messages: { role: string; content: string }[] = [];
+    if (extraSystemNote) {
+      messages.push({ role: "user", content: extraSystemNote + "\n\n" + prompt });
+    } else {
+      messages.push({ role: "user", content: prompt });
+    }
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       signal: controller.signal,
@@ -29,9 +35,9 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 3500,
+        max_tokens: maxTokens,
         temperature: 0,
-        messages: [{ role: "user", content: prompt }],
+        messages,
       }),
     });
     clearTimeout(timeout);
@@ -44,7 +50,6 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
     }
     const errBody = await aiRes.text();
     console.error("Anthropic error:", aiRes.status, errBody);
-    // Pass through the actual Anthropic error message
     try {
       const parsed = JSON.parse(errBody);
       throw new Error(`Anthropic ${aiRes.status}: ${parsed.error?.message || errBody}`);
@@ -59,6 +64,29 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
     if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 90s.");
     throw new Error(`AI call failed: ${msg}`);
   }
+}
+
+function extractJSON(raw: string): Record<string, unknown> {
+  // Strip markdown code fences
+  let stripped = raw
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  // Try direct parse first
+  try {
+    return JSON.parse(stripped);
+  } catch { /* fall through */ }
+
+  // Find outermost { ... } 
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("No JSON object found in response");
+  }
+
+  return JSON.parse(stripped.slice(start, end + 1));
 }
 
 // ─── Input normalization ─────────────────────────────────────────────────────
@@ -363,27 +391,24 @@ JOB_DESCRIPTION: ${cleanJd}
 
 USER_PLAN: ${userPlan}`;
 
-    let content = await callAI(apiKey, prompt);
-
-    // Strip markdown code fences and whitespace
-    content = content.replace(/^```(?:json)?\s*/gm, "").replace(/```\s*$/gm, "").trim();
-
     let titan: Record<string, unknown>;
+    
+    // First attempt
+    let content = await callAI(apiKey, prompt, 5000);
     try {
-      titan = JSON.parse(content);
-    } catch {
-      // Attempt to extract JSON object from surrounding text
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          titan = JSON.parse(jsonMatch[0]);
-        } catch {
-          console.error("JSON parse failed after extraction. Preview:", content.slice(0, 300));
-          throw new Error("Failed to parse AI response. Please try again.");
-        }
-      } else {
-        console.error("JSON parse failed, no JSON object found. Preview:", content.slice(0, 300));
-        throw new Error("Failed to parse AI response. Please try again.");
+      titan = extractJSON(content);
+    } catch (firstErr) {
+      console.error("First parse attempt failed. Preview:", content.slice(0, 300));
+      
+      // Retry with strict JSON instruction
+      console.log("Retrying with strict JSON instruction...");
+      const strictNote = "CRITICAL: Return only a valid JSON object. No markdown, no code fences, no preamble, no explanation. Start your response with { and end with }.";
+      const retryContent = await callAI(apiKey, prompt, 5000, strictNote);
+      try {
+        titan = extractJSON(retryContent);
+      } catch (secondErr) {
+        console.error("Second parse attempt also failed. Preview:", retryContent.slice(0, 300));
+        throw new Error("Signal calibration response could not be processed. Please try again.");
       }
     }
 
@@ -554,16 +579,15 @@ USER_PLAN: ${userPlan}`;
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("Daily free limit") ? message :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
-      message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
+      message.includes("calibration") || message.includes("parse") ? "Signal calibration is taking longer than expected. Tap to try again — your alignment data is saved." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
       "Analysis engine temporarily unavailable. Please try again.";
     return new Response(JSON.stringify({
       status: "error",
       request_id: requestId,
-      error_code: message.includes("Daily free limit") ? "RATE_LIMIT" : "EDGE_EXCEPTION",
+      error_code: message.includes("Daily free limit") ? "RATE_LIMIT" : "ENGINE_ERROR",
       message: friendly,
       limit_reached: message.includes("Daily free limit"),
-      details: { error_message: message, error_stack: stack.slice(0, 500) },
     }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

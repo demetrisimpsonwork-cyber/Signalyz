@@ -132,20 +132,6 @@ export const EngineErrorCard = ({
         </div>
       </div>
 
-      {(debugInfo.request_id || debugInfo.error_code) && (
-        <div className="flex flex-wrap gap-3 text-[10px] font-mono text-muted-foreground border-t border-border/50 pt-2">
-          {debugInfo.request_id && <span>ID: {debugInfo.request_id.slice(0, 12)}…</span>}
-          {debugInfo.error_code && <span>Code: {debugInfo.error_code}</span>}
-          {debugInfo.status_code !== undefined && <span>HTTP: {debugInfo.status_code}</span>}
-        </div>
-      )}
-
-      {debugInfo.response_snippet && (
-        <div className="p-2 rounded bg-muted/30 text-[10px] font-mono text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-wrap break-all border border-border/30">
-          {debugInfo.response_snippet.slice(0, 500)}
-        </div>
-      )}
-
       <div className="flex gap-2">
         {onRetry && (
           <Button size="sm" onClick={onRetry} className="text-xs">
