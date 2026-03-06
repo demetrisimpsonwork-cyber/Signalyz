@@ -52,6 +52,11 @@ const CalibratedResumeTab = ({
 
   const currentResume = editedResume || assembledResume;
 
+  // Notify parent when assembly completes
+  useEffect(() => {
+    if (assembledResume && onAssembled) onAssembled();
+  }, [assembledResume, onAssembled]);
+
   // Pre-extract contact info from resume text (client-side, no API)
   const preExtractedContact = useMemo(
     () => extractContactFromText(originalResume),

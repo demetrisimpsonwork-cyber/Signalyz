@@ -955,6 +955,7 @@ const Index = () => {
               onSwitchToReport={() => setMode("director")}
               hasCurrentSessionAlignment={!!result}
               onRunAlignment={() => setMode("alignment")}
+              onAssembled={() => setSessionResumeAssembled(true)}
             />
           </ProGate>
         )}
