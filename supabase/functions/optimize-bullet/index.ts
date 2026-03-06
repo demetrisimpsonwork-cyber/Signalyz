@@ -476,6 +476,9 @@ USER_PLAN: ${userPlan}`;
           secondary_alignment: sortEntries(csm.secondary_alignment || []),
         };
       })(),
+      hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
+      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
+      predicted_signal_lift: titan.predicted_signal_lift || null,
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
