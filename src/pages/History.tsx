@@ -176,52 +176,29 @@ function ExpandedResultView({ result }: { result: ExpandedResult }) {
   };
 
   try {
-    const sections: { label: string; content: string }[] = [];
-
-    // 1. Optimized Bullets
-    if (result.alt_a) sections.push({ label: "Optimized Bullet", content: result.alt_a });
-    if (result.alt_b) sections.push({ label: "Optimized Bullet — Variant B", content: result.alt_b });
-
-    // 2. Top Gap callout
-    if (result.top_gap) sections.push({ label: "Top Gap", content: result.top_gap });
-
-    // 3. Gaps / Missing Keywords
-    if (result.gaps?.length)
-      sections.push({ label: "Signal Gaps", content: result.gaps.join(" · ") });
-
-    // 4. Suggested Action Verbs
-    if (result.suggested_verbs?.length)
-      sections.push({ label: "Suggested Action Verbs", content: result.suggested_verbs.join(", ") });
-
-    if (sections.length === 0 && result.match_score == null) {
-      return (
-        <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
-          <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
-        </div>
-      );
-    }
+    const UNAVAILABLE = "Detail unavailable";
+    const sections = [
+      { label: "Optimized Bullet", content: result.optimized_bullet },
+      { label: "Match Score", content: result.match_score },
+      { label: "Missing Keywords", content: result.missing_keywords },
+      { label: "Suggested Action Verbs", content: result.suggested_verbs },
+      { label: "Top Gap", content: result.top_gap },
+    ];
 
     return (
       <div className="mt-2 space-y-2">
-        {/* Match Score */}
-        {result.match_score != null && (
-          <div className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3 flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground">Match Score</span>
-            <Badge className={`text-xs ${scoreBadgeClasses(result.match_score)}`}>{result.match_score}%</Badge>
-          </div>
-        )}
-
-        {/* Sections — only flat strings, never objects */}
         {sections.map((s) => (
           <div key={s.label} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{s.label}</p>
-                <p className="text-xs text-foreground leading-relaxed">{s.content}</p>
+                <p className={`text-xs leading-relaxed ${s.content === UNAVAILABLE ? "text-muted-foreground italic" : "text-foreground"}`}>{s.content}</p>
               </div>
-              <button onClick={() => copy(s.content)} className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title="Copy">
-                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
+              {s.content !== UNAVAILABLE && (
+                <button onClick={() => copy(s.content)} className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title="Copy">
+                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
             </div>
           </div>
         ))}
