@@ -572,7 +572,6 @@ async function callAI(
   apiKey: string,
   systemPrompt: string,
   userContent: string,
-  temperature?: number,
 ): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 120000);
@@ -588,7 +587,7 @@ async function callAI(
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 8192,
-        temperature: temperature ?? 0,
+        temperature: 0,
         system: systemPrompt,
         messages: [{ role: "user", content: userContent }],
       }),
