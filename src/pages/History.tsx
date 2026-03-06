@@ -48,12 +48,23 @@ function safeParseEntry(raw: any): HistoryEntry | null {
     const score = typeof raw.score === "number" ? raw.score : Number(raw.score ?? NaN);
     if (!id || !created_at || isNaN(score)) return null;
     const strength_label = typeof raw.strength_label === "string" ? raw.strength_label : "—";
-    const inferred_role = typeof raw.inferred_role === "string" ? raw.inferred_role : "";
+    let inferred_role = typeof raw.inferred_role === "string" ? raw.inferred_role : "";
     const top_gap = typeof raw.top_gap === "string" ? raw.top_gap : null;
     const resume_built = !!raw.resume_built;
-    // Reject entries whose "role" looks like raw resume text (>80 chars or contains newlines)
-    if (inferred_role.length > 80 || inferred_role.includes("\n")) return null;
-    return { id, created_at, inferred_role, score, strength_label, top_gap, resume_built };
+
+    // Guard: reject entries whose "role" looks like raw resume text (>80 chars, newlines, or starts with a person's name pattern / resume bullet)
+    if (inferred_role.length > 80 || inferred_role.includes("\n")) {
+      inferred_role = "";
+    }
+    // If it looks like a resume header (name, email, bullet text), clear it
+    if (/^[A-Z][a-z]+\s+[A-Z][a-z]+\s/.test(inferred_role) && !/(manager|lead|director|coordinator|supervisor|analyst|engineer|specialist|associate|officer)/i.test(inferred_role)) {
+      inferred_role = "";
+    }
+    if (/^(managed|led|oversaw|coordinated|responsible|worked|developed|created|built)/i.test(inferred_role)) {
+      inferred_role = "";
+    }
+
+    return { id, created_at, inferred_role: inferred_role || "Alignment Run", score, strength_label, top_gap, resume_built };
   } catch {
     return null;
   }
