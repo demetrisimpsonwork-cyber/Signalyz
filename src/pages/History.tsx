@@ -24,12 +24,11 @@ interface HistoryEntry {
 
 /** Only flat, renderable primitives — no nested objects touch the DOM */
 interface ExpandedResult {
-  alt_a?: string;
-  alt_b?: string;
-  match_score?: number;
-  gaps?: string[];
-  suggested_verbs?: string[];
-  top_gap?: string;
+  optimized_bullet: string;
+  match_score: string;
+  missing_keywords: string;
+  suggested_verbs: string;
+  top_gap: string;
 }
 
 interface HistoryGroup {
