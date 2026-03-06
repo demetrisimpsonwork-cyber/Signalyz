@@ -167,6 +167,19 @@ RULES:
 - Reframe existing experience in role vocabulary
 - Tone: sharp, analytical, executive. No fluff.
 - Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+- In optimized_summary: NEVER use the word "leader" or "leaders" unless that exact word appears in the resume. Use "professional" instead. Do not inflate titles.
+
+MATCH_SCORE_FORECAST.BEFORE_PERCENT — CRITICAL SCORING INSTRUCTIONS:
+before_percent must be computed using the EXACT same scoring model as the Alignment Engine. This is a 5-dimension weighted sum:
+1. Role Outcomes & Deliverables (30%) — count how many JD-required outcomes the resume evidences
+2. Tools & Workflow Signals (20%) — count keyword/tool matches between resume and JD
+3. Domain Alignment (20%) — count domain-specific terminology matches
+4. Context & Scale (15%) — count matches in scope, team size, complexity indicators
+5. Communication & Leadership Signals (15%) — count evidence of stakeholder engagement, presentations, cross-functional work
+For each dimension: (matched signals / total JD signals) × weight × 100. Sum all 5 dimensions. Round to nearest integer.
+This is a MECHANICAL COUNT, not an impression. The same resume and JD must always produce the same before_percent.
+${typeof existing_alignment_score === "number" ? `OVERRIDE: Use exactly ${existing_alignment_score} as before_percent — this was computed by the Alignment Engine for these inputs.` : ""}
+after_percent: estimate the score AFTER applying all repositioning recommendations. Must be higher than before_percent.
 
 JSON SCHEMA (return exactly this structure):
 {
