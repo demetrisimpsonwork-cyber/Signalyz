@@ -30,6 +30,9 @@ interface CalibratedResumeTabProps {
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
   onSwitchToReport?: () => void;
+  /** Whether an alignment run exists in the current session (not from localStorage) */
+  hasCurrentSessionAlignment?: boolean;
+  onRunAlignment?: () => void;
 }
 
 const CalibratedResumeTab = ({
@@ -38,6 +41,8 @@ const CalibratedResumeTab = ({
   directorResult,
   originalResume,
   onSwitchToReport,
+  hasCurrentSessionAlignment = false,
+  onRunAlignment,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
@@ -125,6 +130,27 @@ const CalibratedResumeTab = ({
               </Button>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Gate: require current-session alignment before anything else
+  if (!hasCurrentSessionAlignment) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
+          <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
+          <h3 className="text-base font-semibold text-foreground">Run an alignment first to generate your Calibrated Resume</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-md">
+            The Calibrated Resume requires a completed alignment run in this session. Paste your resume and job description in the Alignment Engine to get started.
+          </p>
+          {onRunAlignment && (
+            <Button onClick={onRunAlignment} variant="outline" className="gap-2 mt-2">
+              <Sparkles className="h-4 w-4" />
+              Run Alignment →
+            </Button>
+          )}
         </div>
       </div>
     );
