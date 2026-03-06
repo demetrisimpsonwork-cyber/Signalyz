@@ -333,6 +333,13 @@ serve(async (req) => {
 
 RULES: Never invent tools/metrics/certs. Only reframe existing experience. Return ONLY valid JSON.
 
+DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
+Step 1: JD SIGNAL EXTRACTION — Scan the job description from top to bottom. Extract priority signals in the order they appear. For each signal, count how many times it is referenced (frequency) and where it appears (title, first paragraph = high emphasis; later paragraphs = lower). Rank by frequency × emphasis. This extraction must be identical every time for the same JD text.
+
+Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, search for exact keyword matches first, then semantic matches. Record presence/absence as a boolean. This extraction must be identical every time for the same resume text. Do not vary which signals you surface based on phrasing flexibility.
+
+Step 3: SCORING — Using the extracted signals from Steps 1 and 2, compute match_score as a weighted sum. Count matches per dimension, apply the dimension weight, sum. The score is a mechanical computation from the extraction, not an impression.
+
 SCORING (5 dimensions, weights in parens):
 1) Role Outcomes (30%) 2) Tools & Workflow (20%) 3) Domain (20%) 4) Context & Scale (15%) 5) Communication & Leadership (15%)
 Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ requires top-2 JD priority match + tool match + ownership signals.
@@ -340,7 +347,7 @@ Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ re
 BULLETS: Max 35 words, high-signal verbs, ATS-safe, no semicolons/em-dashes.
 ${userPlan === "pro" ? "3 variants: [0]Impact-Focused [1]Human-Natural [2]Keyword-Maximized" : "1 variant: primary (ATS-weighted to top JD priorities)"}
 
-PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00).
+PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00). List in consistent priority order based on frequency and emphasis. Same JD must always produce the same priorities in the same order.
 
 JSON SCHEMA:
 {
