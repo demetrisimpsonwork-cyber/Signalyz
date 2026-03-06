@@ -874,7 +874,7 @@ const Position = () => {
       "5. OPTIMIZED SUMMARY",
       result.optimized_summary,
       "",
-      "6. BULLET REWRITES",
+      "6. CALIBRATED BULLET REPOSITIONING",
       ...result.bullet_rewrites.map((b) => `  Before: ${b.original}\n  After:  ${b.rewritten}`),
       "",
       "7. INTERVIEW DOMINANCE SCRIPT",
