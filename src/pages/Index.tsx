@@ -564,7 +564,7 @@ const Index = () => {
         score: res.match_score,
         strength_label: getStrengthLabel(res.match_score),
         top_gap: res.signal_model?.gaps?.[0] || res.top_missing_signal || null,
-        full_result_json: res as any,
+        full_result_json: { ...res, jd_text: jd.trim() } as any,
       });
     } catch {}
   };
