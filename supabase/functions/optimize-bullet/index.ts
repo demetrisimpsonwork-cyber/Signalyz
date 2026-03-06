@@ -548,7 +548,8 @@ USER_PLAN: ${userPlan}`;
         for (const [key, val] of Object.entries(sse)) {
           const v = val as any;
           if (v && typeof v.before === 'number' && typeof v.after === 'number') {
-            capped[key] = { before: v.before, after: Math.min(v.after, 95) };
+            // Cap on /25 scale at 24 (which becomes 96% → capped to 95% in UI)
+            capped[key] = { before: v.before, after: Math.min(v.after, 24) };
           } else {
             capped[key] = v;
           }
