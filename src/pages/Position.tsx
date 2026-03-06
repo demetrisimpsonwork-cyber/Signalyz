@@ -489,77 +489,153 @@ const LockedRiskCard = ({ category }: { category: string }) => (
   </div>
 );
 
+// ─── Role Category Detection for Calibration Template ─────────────────────────
 
+type CalibrationTemplate = "pm" | "operations_supervisor" | "general";
 
-const CalibrationLogicSummary = () => (
-  <div className="rounded-md border bg-background overflow-hidden">
-    {/* Header */}
-    <div className="px-4 py-3 border-b border-border/50 bg-muted/20 flex items-center justify-between gap-2">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">
-        Senior PM Calibration Logic
-      </p>
-      <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">
-        Evaluation Standard
-      </span>
-    </div>
+function detectCalibrationTemplate(result: PositioningResult): CalibrationTemplate {
+  // Check role_dna pillars and all text signals for operations/supervisor patterns
+  const allText = [
+    ...result.role_dna.map(p => p.pillar + " " + p.description),
+    result.optimized_summary || "",
+    ...(result.gap_strategy?.hard_gaps || []),
+  ].join(" ").toLowerCase();
 
-    {/* Threshold pass condition */}
-    <div className="px-4 py-3 border-b border-border/40">
-      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
-        Senior PM Calibration — All Four Pillars at Threshold
-      </p>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+  const opsPatterns = /\b(retail|store|team member|labor utilization|physical operations|floor|schedule|in-store|supervisory experience|supervisor|shift lead|crew|warehouse|fulfillment|inventory)\b/;
+  const pmPatterns = /\b(product|roadmap|sprint|user story|stakeholder alignment|go-to-market|product lifecycle|product manager|product management)\b/;
+
+  if (opsPatterns.test(allText)) return "operations_supervisor";
+  if (pmPatterns.test(allText)) return "pm";
+  return "general";
+}
+
+const OPS_PILLAR_STANDARDS: PillarStandard[] = [
+  {
+    pillarKey: "capability",
+    title: "Pillar 1 — Team Leadership Evidence",
+    calibrationRule: "Operations Supervisor Threshold Standard",
+    seniorThreshold: "A candidate meets Supervisor calibration when team leadership is demonstrated through direct report management, shift coordination, and performance accountability — not peer collaboration.",
+    thresholdCriteria: [
+      "Manages direct reports or team members",
+      "Coordinates shift scheduling and coverage",
+      "Handles team performance conversations",
+      "Demonstrates hiring or onboarding responsibility",
+    ],
+    patterns: [
+      { type: "below", examples: ['"Worked with team"', '"Helped train new hires"', '"Supported operations"'] },
+      { type: "threshold", examples: ['"Managed team of 8"', '"Owned shift scheduling"', '"Conducted performance reviews"'] },
+    ],
+    signalLogic: [
+      "If no direct report evidence → calibration status: Under-Signaled",
+      "If team language is peer-level only → calibration status: Authority Gap",
+    ],
+  },
+  {
+    pillarKey: "context",
+    title: "Pillar 2 — Operational Execution Scope",
+    calibrationRule: "Operations Supervisor Threshold Standard",
+    seniorThreshold: "A candidate meets Supervisor calibration when operational ownership spans daily execution decisions, process adherence, and throughput accountability.",
+    thresholdCriteria: [
+      "Owns daily operational workflow",
+      "Maintains compliance and safety standards",
+      "Manages inventory, scheduling, or labor allocation",
+      "Accountable for operational KPIs",
+    ],
+    patterns: [
+      { type: "below", examples: ["Follows procedures", "Assists with inventory", "Participates in operations"] },
+      { type: "threshold", examples: ['"Owned daily operations for department"', '"Managed labor budget"', '"Reduced shrink by X%"'] },
+    ],
+    signalLogic: [
+      "If operational ownership is implied not stated → calibration status: Under-Signaled",
+      "If execution scope is task-level only → calibration status: Execution Bias",
+    ],
+  },
+  {
+    pillarKey: "commercial",
+    title: "Pillar 3 — Customer Experience Ownership",
+    calibrationRule: "Operations Supervisor Threshold Standard",
+    seniorThreshold: "A candidate meets Supervisor calibration when customer experience outcomes are tied to team actions and measurable service metrics.",
+    thresholdCriteria: [
+      "Connects team performance to customer satisfaction",
+      "Owns service quality for their area",
+      "Resolves escalated customer issues",
+      "Tracks and improves customer-facing metrics",
+    ],
+    patterns: [
+      { type: "below", examples: ["Helped customers", "Responded to complaints", "Provided service"] },
+      { type: "threshold", examples: ['"Maintained 95% CSAT score"', '"Reduced customer complaints by X%"', '"Owned service recovery process"'] },
+    ],
+    signalLogic: [
+      "If customer outcomes are described without metrics → calibration status: Under-Signaled",
+      "If service language is reactive only → calibration status: Authority Gap",
+    ],
+  },
+  {
+    pillarKey: "stability",
+    title: "Pillar 4 — Process & Compliance Discipline",
+    calibrationRule: "Operations Supervisor Threshold Standard",
+    seniorThreshold: "A candidate meets Supervisor calibration when compliance and process adherence is actively owned — not passively followed.",
+    thresholdCriteria: [
+      "Enforces safety, food safety, or regulatory compliance",
+      "Owns process improvement within their area",
+      "Trains team on procedures and standards",
+      "Documents and audits operational compliance",
+    ],
+    patterns: [
+      { type: "below", examples: ["Followed safety procedures", "Completed checklists", "Met compliance requirements"] },
+      { type: "threshold", examples: ['"Trained team on food safety protocols"', '"Led compliance audit preparation"', '"Redesigned closing procedures"'] },
+    ],
+    signalLogic: [
+      "If compliance is described as following not enforcing → calibration status: Under-Signaled",
+      "If process improvement is absent → calibration status: Execution Bias",
+    ],
+  },
+];
+
+const CalibrationLogicSummary = ({ template }: { template: CalibrationTemplate }) => {
+  const isOps = template === "operations_supervisor";
+  const title = isOps ? "Operations Supervisor Calibration Logic" : "Senior PM Calibration Logic";
+  const subTitle = isOps ? "Operations Supervisor Calibration — All Four Pillars at Threshold" : "Senior PM Calibration — All Four Pillars at Threshold";
+  const pillars = isOps
+    ? ["Team Leadership ≥ Threshold", "Operational Execution ≥ Threshold", "Customer Experience ≥ Threshold", "Process & Compliance ≥ Threshold"]
+    : ["Ownership Scope ≥ Threshold", "Strategic Definition ≥ Threshold", "Commercial Impact ≥ Threshold", "Organizational Influence ≥ Threshold"];
+
+  return (
+    <div className="rounded-md border bg-background overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/50 bg-muted/20 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">{title}</p>
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">Evaluation Standard</span>
+      </div>
+      <div className="px-4 py-3 border-b border-border/40">
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">{subTitle}</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          {pillars.map((criterion, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-green-500 dark:bg-green-400 shrink-0" />
+              <span className="text-[10px] text-muted-foreground">{criterion}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="divide-y divide-border/40">
         {[
-          "Ownership Scope ≥ Threshold",
-          "Strategic Definition ≥ Threshold",
-          "Commercial Impact ≥ Threshold",
-          "Organizational Influence ≥ Threshold",
-        ].map((criterion, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <span className="h-1 w-1 rounded-full bg-green-500 dark:bg-green-400 shrink-0" />
-            <span className="text-[10px] text-muted-foreground">{criterion}</span>
+          { condition: "2+ Pillars Below Threshold", verdict: "Level Gap — 1 Tier Below", severity: "amber" },
+          { condition: "3+ Pillars Below Threshold", verdict: "Execution Bias", severity: "orange" },
+          { condition: "4 Pillars Below Threshold", verdict: "Contributor-Level Calibration", severity: "red" },
+        ].map(({ condition, verdict, severity }) => (
+          <div key={condition} className="px-4 py-2.5 flex items-center justify-between gap-3">
+            <span className="text-[10px] text-muted-foreground">{condition}</span>
+            <span className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
+              severity === "amber" ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
+              : severity === "orange" ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40"
+              : "bg-destructive/10 text-destructive border-destructive/20"
+            }`}>{verdict}</span>
           </div>
         ))}
       </div>
     </div>
-
-    {/* Tier-down logic */}
-    <div className="divide-y divide-border/40">
-      {[
-        {
-          condition: "2+ Pillars Below Threshold",
-          verdict: "Level Gap — 1 Tier Below",
-          severity: "amber",
-        },
-        {
-          condition: "3+ Pillars Below Threshold",
-          verdict: "Execution Bias",
-          severity: "orange",
-        },
-        {
-          condition: "4 Pillars Below Threshold",
-          verdict: "Contributor-Level Calibration",
-          severity: "red",
-        },
-      ].map(({ condition, verdict, severity }) => (
-        <div key={condition} className="px-4 py-2.5 flex items-center justify-between gap-3">
-          <span className="text-[10px] text-muted-foreground">{condition}</span>
-          <span
-            className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
-              severity === "amber"
-                ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
-                : severity === "orange"
-                ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40"
-                : "bg-destructive/10 text-destructive border-destructive/20"
-            }`}
-          >
-            {verdict}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 // ─── Timeout Error Card ───────────────────────────────────────────────────────
 
@@ -863,7 +939,7 @@ const Position = () => {
           Strategic Positioning Engine
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Shifts perceived identity — not keyword density. Role DNA extraction, commercial value conversion, gap mitigation, elite bullet rewrites, and interview scripts. Zero fabrication.
+          Shifts perceived identity — not keyword density. Role DNA extraction, commercial value conversion, gap mitigation, calibrated bullet repositioning, and interview scripts. Zero fabrication.
         </p>
       </div>
 
@@ -873,7 +949,7 @@ const Position = () => {
           {[
             { step: "Extract Role DNA", desc: "Identifies the 5 core identity pillars the employer is actually hiring for." },
             { step: "Reposition Your Experience", desc: "Maps your real background into role-native commercial language — no fabrication." },
-            { step: "Get Your Full Package", desc: "Elite bullet rewrites, gap mitigation strategy, market position assessment, and interview intelligence." },
+            { step: "Get Your Full Package", desc: "Calibrated bullet repositioning, gap mitigation strategy, market position assessment, and interview intelligence." },
           ].map((item, i) => (
             <li key={i} className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
@@ -949,14 +1025,13 @@ const Position = () => {
             Generate Positioning Package
           </Button>
           <p className="text-xs text-muted-foreground">
-            Takes 25–40 seconds. 11-section output. Zero fabrication.
+            Takes 30–60 seconds. 11-section output. Zero fabrication.
           </p>
         </div>
 
         {/* Right — Results */}
         <div className="space-y-4">
           {loading && <AlignmentLoader minHeight="320px" />}
-
 
           {timedOut && !loading && (
             <TimeoutErrorCard
@@ -991,13 +1066,19 @@ const Position = () => {
                 </div>
               </Section>
 
-              {/* 2 — PM Hiring Calibration Report */}
-              {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (
-                <Section title="2. PM Hiring Calibration Report" proLabel>
+              {/* 2 — Hiring Calibration Report (role-aware) */}
+              {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (() => {
+                const calTemplate = detectCalibrationTemplate(result);
+                const sectionTitle = calTemplate === "operations_supervisor"
+                  ? "2. Operations Supervisor Hiring Calibration"
+                  : "2. PM Hiring Calibration Report";
+                const activeStandards = calTemplate === "operations_supervisor" ? OPS_PILLAR_STANDARDS : PILLAR_STANDARDS;
+                return (
+                <Section title={sectionTitle} proLabel>
                   <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed border-l-2 border-border pl-3">
                     Structured evaluation of how each identity pillar reads across hiring stages. Grounded strictly in resume signal relative to JD weighting.
                   </p>
-                  <CalibrationLogicSummary />
+                  <CalibrationLogicSummary template={calTemplate} />
                   <div className="space-y-3 mt-3">
 
                     {result.employer_risk_perception.map((item, i) => {
@@ -1039,7 +1120,7 @@ const Position = () => {
                           </div>
                           {/* Pillar Threshold Standard — rendered when available */}
                           {(() => {
-                            const std = PILLAR_STANDARDS.find((s) =>
+                            const std = activeStandards.find((s) =>
                               item.category.toLowerCase().includes(s.pillarKey)
                             );
                             return std ? (
@@ -1064,7 +1145,8 @@ const Position = () => {
                     </div>
                   )}
                 </Section>
-              )}
+                );
+              })()}
 
               {/* 3 — Repositioning Matrix */}
               <Section title="3. Experience Repositioning Matrix">
