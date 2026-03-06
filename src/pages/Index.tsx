@@ -453,15 +453,8 @@ const Index = () => {
     }
   };
 
-  // Restore last positioning run on mount
-  useEffect(() => {
-    if (!directorResult) {
-      try {
-        const saved = localStorage.getItem("resumix_last_positioning_run");
-        if (saved) setDirectorResult(JSON.parse(saved));
-      } catch {}
-    }
-  }, []);
+  // NOTE: Do NOT restore directorResult from localStorage.
+  // The Signal Positioning Report must only show current-session data.
 
   const saveToHistory = async (res: OptimizationResult) => {
     if (!user) return;
@@ -864,7 +857,7 @@ const Index = () => {
               isPro={effectiveIsPro}
               onUpgrade={() => setShowUpgrade(true)}
               directorResult={directorResult}
-              originalResume={directorExperience}
+              originalResume={bullet}
               onSwitchToReport={() => setMode("director")}
               hasCurrentSessionAlignment={!!result}
               onRunAlignment={() => setMode("alignment")}
@@ -878,16 +871,16 @@ const Index = () => {
             featureName="Signal Positioning Report"
             featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
           >
+          {!result ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
+              <Button variant="outline" size="sm" onClick={() => setMode("alignment")}>
+                Run Alignment →
+              </Button>
+            </div>
+          ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-4">
-              {!result ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-                  <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
-                  <Button variant="outline" size="sm" onClick={() => setMode("alignment")}>
-                    Run Alignment →
-                  </Button>
-                </div>
-              ) : (
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
                 <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
@@ -919,13 +912,10 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-              )}
-              {result && (
               <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                 {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
                 Run Signal Positioning Report
               </Button>
-              )}
               <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
             </div>
             <div className="space-y-4">
@@ -946,11 +936,12 @@ const Index = () => {
               )}
               {!directorResult && !directorLoading && !directorError && (
                 <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-2">
-                  <p className="text-sm text-muted-foreground">Paste your resume and click Run to generate your report.</p>
+                  <p className="text-sm text-muted-foreground">Click Run to generate your report.</p>
                 </div>
               )}
             </div>
           </div>
+          )}
           </ProGate>
         )}
 

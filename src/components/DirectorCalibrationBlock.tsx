@@ -314,18 +314,8 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   return (
     <div className="space-y-7">
-      {/* Run ID + Replay badge */}
-      {result.run_id && (
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
-          <span>Run: {result.run_id.slice(0, 8)}</span>
-          {result._replay && (
-            <span className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider">
-              Replay
-            </span>
-          )}
-          {result.pipeline_version && <span>v{result.pipeline_version}</span>}
-        </div>
-      )}
+      {/* Debug info — console only, never rendered */}
+      {result.run_id && console.log(`[Signal Report] Run: ${result.run_id} v${result.pipeline_version || "?"}${result._replay ? " (replay)" : ""}`) && null}
 
       {/* 1 — Director Signal Tier */}
       <BlockShell label="Director Signal Tier">
