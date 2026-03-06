@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ interface CalibratedResumeTabProps {
   /** Whether an alignment run exists in the current session (not from localStorage) */
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
+  /** Called when resume assembly completes successfully */
+  onAssembled?: () => void;
 }
 
 const CalibratedResumeTab = ({
@@ -43,11 +45,17 @@ const CalibratedResumeTab = ({
   onSwitchToReport,
   hasCurrentSessionAlignment = false,
   onRunAlignment,
+  onAssembled,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
 
   const currentResume = editedResume || assembledResume;
+
+  // Notify parent when assembly completes
+  useEffect(() => {
+    if (assembledResume && onAssembled) onAssembled();
+  }, [assembledResume, onAssembled]);
 
   // Pre-extract contact info from resume text (client-side, no API)
   const preExtractedContact = useMemo(
