@@ -101,7 +101,7 @@ function StageNode({
 /* ── connector line ── */
 function StageConnector({ filled }: { filled: boolean }) {
   return (
-    <div className="flex-1 flex items-start pt-3.5 sm:pt-3.5 px-1">
+    <div className="flex-1 flex items-start pt-[18px] px-1">
       <div
         className={`
           h-[1.5px] sm:h-[1.5px] w-full rounded-full transition-colors duration-500
