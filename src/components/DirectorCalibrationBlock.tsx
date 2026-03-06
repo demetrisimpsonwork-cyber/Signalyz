@@ -267,6 +267,12 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
   const [copied, setCopied] = useState(false);
 
   const result = normalizeResult(rawResult);
+
+  // Log debug info to console only — never render to DOM
+  if (result.run_id) {
+    console.log(`[Signal Report] Run: ${result.run_id} v${result.pipeline_version || "?"} ${result._replay ? "(replay)" : ""}`);
+  }
+
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
   const frictionStages = [
