@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Download, FileText } from "lucide-react";
@@ -229,6 +229,25 @@ const ResumeBuilder = ({
   const [location, setLocation] = useState("");
   const [resumeError, setResumeError] = useState<DebugInfo | null>(null);
   const lastClickRef = useRef(0);
+  const contactExtractedRef = useRef(false);
+
+  // Auto-extract contact info from resume text when experience becomes available
+  useEffect(() => {
+    if (!experience || contactExtractedRef.current) return;
+    try {
+      const intake = parseResumeIntake(experience);
+      const contact = intake.sections?.contact;
+      if (contact) {
+        if (contact.name && !name) setName(contact.name);
+        if (contact.email && !email) setEmail(contact.email);
+        if (contact.phone && !phone) setPhone(contact.phone);
+        if (contact.location && !location) setLocation(contact.location);
+        contactExtractedRef.current = true;
+      }
+    } catch {
+      // Extraction failed — leave fields blank
+    }
+  }, [experience]);
 
   const handleBuildClick = () => {
     if (!isPro) { onUpgrade(); return; }

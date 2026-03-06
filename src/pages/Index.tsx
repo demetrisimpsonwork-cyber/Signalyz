@@ -678,7 +678,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <DebugPanel lastDebug={lastDebug} />
+      {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
 
