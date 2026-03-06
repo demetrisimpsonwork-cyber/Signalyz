@@ -537,11 +537,7 @@ const Index = () => {
       }
 
       setDirectorResult(result);
-      // telemetry: positioning_run_success
-      // Persist last successful run
-      try {
-        localStorage.setItem("resumix_last_positioning_run", JSON.stringify(result));
-      } catch {}
+      // telemetry: positioning_run_success (no localStorage persistence — session only)
     } catch (err: any) {
       clearTimeout(timeoutId);
       const msg = err.message || "We couldn't complete the analysis. Please try again.";
