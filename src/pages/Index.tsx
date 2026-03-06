@@ -232,6 +232,105 @@ function getStrengthLabel(score: number): string {
   return "Weak";
 }
 
+// ─── Director Mode Content (hard-gated) ──────────────────────────────────────
+function DirectorModeContent({
+  result,
+  bullet,
+  jd,
+  directorResult,
+  directorLoading,
+  directorError,
+  onRunAlignment,
+  onRunDirector,
+}: {
+  result: OptimizationResult | null;
+  bullet: string;
+  jd: string;
+  directorResult: DirectorCalibrationResult | null;
+  directorLoading: boolean;
+  directorError: string | null;
+  onRunAlignment: () => void;
+  onRunDirector: () => void;
+}) {
+  // HARD GATE: If no current-session alignment result, render ONLY the empty state
+  if (!result) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
+        <Button variant="outline" size="sm" onClick={onRunAlignment}>
+          Run Alignment →
+        </Button>
+      </div>
+    );
+  }
+
+  // Full report UI — only mounts when result exists
+  return (
+    <div className="grid gap-8 lg:grid-cols-2">
+      <div className="space-y-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
+          <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+            Then recalibrate it using only the experience you already have. 11-section diagnostic report. Zero fabrication. Private analysis.
+          </p>
+
+          {/* Confirmed inputs cards */}
+          <div className="space-y-3 mb-5">
+            <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Check className="h-3 w-3" strokeWidth={3} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">Resume detected from Alignment Engine</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {result.inferred_role_title ? `${result.inferred_role_title} · ` : ""}{bullet.slice(0, 80)}{bullet.length > 80 ? "…" : ""}
+                </p>
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Check className="h-3 w-3" strokeWidth={3} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">Job description loaded</p>
+                <p className="text-xs text-muted-foreground truncate">{jd.slice(0, 60)}{jd.length > 60 ? "…" : ""}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Button onClick={onRunDirector} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
+          {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
+          Run Signal Positioning Report
+        </Button>
+        <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
+      </div>
+      <div className="space-y-4">
+        {directorLoading && <PositioningLoader minHeight="300px" />}
+        {directorError && !directorLoading && (
+          <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
+            <p className="text-sm text-white leading-relaxed">{directorError}</p>
+            <Button onClick={onRunDirector} variant="outline" className="w-full gap-2 border-white/20 text-white hover:bg-white/10">
+              <RefreshCw className="h-4 w-4" />
+              Retry Analysis
+            </Button>
+          </div>
+        )}
+        {directorResult && !directorLoading && !directorError && (
+          <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
+            <DirectorCalibrationBlock result={directorResult} />
+          </DirectorCalibrationErrorBoundary>
+        )}
+        {!directorResult && !directorLoading && !directorError && (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-2">
+            <p className="text-sm text-muted-foreground">Click Run to generate your report.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const Index = () => {
   const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated">("alignment");
   const [bullet, setBullet] = useState("");
@@ -871,77 +970,16 @@ const Index = () => {
             featureName="Signal Positioning Report"
             featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
           >
-          {!result ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-              <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
-              <Button variant="outline" size="sm" onClick={() => setMode("alignment")}>
-                Run Alignment →
-              </Button>
-            </div>
-          ) : (
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
-                <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Then recalibrate it using only the experience you already have. 11-section diagnostic report. Zero fabrication. Private analysis.
-                </p>
-
-                {/* Confirmed inputs cards */}
-                <div className="space-y-3 mb-5">
-                  <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="h-3 w-3" strokeWidth={3} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">Resume detected from Alignment Engine</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {result.inferred_role_title ? `${result.inferred_role_title} · ` : ""}{bullet.slice(0, 80)}{bullet.length > 80 ? "…" : ""}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border bg-card px-4 py-3 flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="h-3 w-3" strokeWidth={3} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">Job description loaded</p>
-                      <p className="text-xs text-muted-foreground truncate">{jd.slice(0, 60)}{jd.length > 60 ? "…" : ""}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <Button onClick={handleDirectorCalibrate} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
-                Run Signal Positioning Report
-              </Button>
-              <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
-            </div>
-            <div className="space-y-4">
-              {directorLoading && <PositioningLoader minHeight="300px" />}
-              {directorError && !directorLoading && (
-                <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-                  <p className="text-sm text-white leading-relaxed">{directorError}</p>
-                  <Button onClick={handleDirectorCalibrate} variant="outline" className="w-full gap-2 border-white/20 text-white hover:bg-white/10">
-                    <RefreshCw className="h-4 w-4" />
-                    Retry Analysis
-                  </Button>
-                </div>
-              )}
-              {directorResult && !directorLoading && !directorError && (
-                <DirectorCalibrationErrorBoundary onRetry={handleDirectorCalibrate}>
-                  <DirectorCalibrationBlock result={directorResult} />
-                </DirectorCalibrationErrorBoundary>
-              )}
-              {!directorResult && !directorLoading && !directorError && (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-2">
-                  <p className="text-sm text-muted-foreground">Click Run to generate your report.</p>
-                </div>
-              )}
-            </div>
-          </div>
-          )}
+            <DirectorModeContent
+              result={result}
+              bullet={bullet}
+              jd={jd}
+              directorResult={directorResult}
+              directorLoading={directorLoading}
+              directorError={directorError}
+              onRunAlignment={() => setMode("alignment")}
+              onRunDirector={handleDirectorCalibrate}
+            />
           </ProGate>
         )}
 
