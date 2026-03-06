@@ -209,6 +209,7 @@ const LevelDeterminationBlock = ({
   const [copiedAll, setCopiedAll] = useState(false);
 
   const roleTitle = inferredRoleTitle || "Target Role";
+  const roleLevel = detectRoleLevel(roleTitle);
 
   const inferenceConfidence = deriveInferenceConfidence(score);
   const signalLevel = confidenceLevel || deriveCurrentSignalLevel(score);
@@ -217,8 +218,10 @@ const LevelDeterminationBlock = ({
   const ownershipVerdict = deriveOwnershipVerdict(score, inferenceConfidence, roleTitle);
 
   const primaryDeficiency = gapSuggestions ? extractPrimaryDeficiency(gapSuggestions) : null;
-  const strategicPriority = deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);
-  const funnelStages = deriveFunnelStages(score);
+  const strategicPriority = roleLevel === "supervisor"
+    ? deriveSupervisorStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle)
+    : deriveStrategicPriority(score, primaryDeficiency?.name ?? null, roleTitle);
+  const funnelStages = deriveFunnelStages(score, roleLevel);
 
   const handleCopyAll = async () => {
     const lines = [
