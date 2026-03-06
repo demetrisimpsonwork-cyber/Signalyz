@@ -15,16 +15,31 @@ const MAX_COMBINED_CHARS = 16000;
 const MIN_RESUME_CHARS = 20;
 const MIN_JD_CHARS = 20;
 
+const DETERMINISTIC_SYSTEM = `You are a deterministic analysis engine. Your outputs must be perfectly reproducible.
+
+EXTRACTION RULES:
+- Extract the same priority signals every time for the same input. Your extraction must be reproducible.
+- List signals in consistent priority order based on frequency and emphasis in the source text.
+- Extract the same experience signals every time for the same input. Do not vary which signals you surface based on phrasing flexibility.
+- When identifying keywords, scan the full text systematically from top to bottom. Do not skip or reorder based on salience impressions.
+
+SCORING RULES:
+- You are a deterministic scorer. The inputs you are scoring were extracted deterministically. You must return the same score for the same inputs every time.
+- Anchor to your first assessment and do not vary it.
+- If you are uncertain between two values, anchor to the lower bound and hold it.
+- Use explicit evidence counting, not subjective impression, for every numeric field.
+
+OUTPUT RULES:
+- Return only valid JSON. No markdown, no code fences, no preamble, no explanation.
+- Start your response with { and end with }.`;
+
 async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSystemNote?: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
   try {
-    const messages: { role: string; content: string }[] = [];
-    if (extraSystemNote) {
-      messages.push({ role: "user", content: extraSystemNote + "\n\n" + prompt });
-    } else {
-      messages.push({ role: "user", content: prompt });
-    }
+    const systemContent = extraSystemNote
+      ? `${DETERMINISTIC_SYSTEM}\n\n${extraSystemNote}`
+      : DETERMINISTIC_SYSTEM;
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       signal: controller.signal,
@@ -37,7 +52,8 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         temperature: 0,
-        messages,
+        system: systemContent,
+        messages: [{ role: "user", content: prompt }],
       }),
     });
     clearTimeout(timeout);
@@ -317,6 +333,13 @@ serve(async (req) => {
 
 RULES: Never invent tools/metrics/certs. Only reframe existing experience. Return ONLY valid JSON.
 
+DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
+Step 1: JD SIGNAL EXTRACTION — Scan the job description from top to bottom. Extract priority signals in the order they appear. For each signal, count how many times it is referenced (frequency) and where it appears (title, first paragraph = high emphasis; later paragraphs = lower). Rank by frequency × emphasis. This extraction must be identical every time for the same JD text.
+
+Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, search for exact keyword matches first, then semantic matches. Record presence/absence as a boolean. This extraction must be identical every time for the same resume text. Do not vary which signals you surface based on phrasing flexibility.
+
+Step 3: SCORING — Using the extracted signals from Steps 1 and 2, compute match_score as a weighted sum. Count matches per dimension, apply the dimension weight, sum. The score is a mechanical computation from the extraction, not an impression.
+
 SCORING (5 dimensions, weights in parens):
 1) Role Outcomes (30%) 2) Tools & Workflow (20%) 3) Domain (20%) 4) Context & Scale (15%) 5) Communication & Leadership (15%)
 Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ requires top-2 JD priority match + tool match + ownership signals.
@@ -324,7 +347,7 @@ Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ re
 BULLETS: Max 35 words, high-signal verbs, ATS-safe, no semicolons/em-dashes.
 ${userPlan === "pro" ? "3 variants: [0]Impact-Focused [1]Human-Natural [2]Keyword-Maximized" : "1 variant: primary (ATS-weighted to top JD priorities)"}
 
-PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00).
+PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00). List in consistent priority order based on frequency and emphasis. Same JD must always produce the same priorities in the same order.
 
 JSON SCHEMA:
 {
