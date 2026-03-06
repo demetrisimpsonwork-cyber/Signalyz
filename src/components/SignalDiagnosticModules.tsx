@@ -462,13 +462,16 @@ function SignalMapVisualization({ data }: { data: NonNullable<SignalDiagnosticDa
     { key: "operational_execution" as const, label: "Operational Execution" },
   ];
 
-  // Detect the actual scale: if any score > 25, scores are on 0-100 scale
-  const maxScore = Math.max(...dimensions.map(d => data[d.key] ?? 0));
-  const isPercentScale = maxScore > 25;
-  const dimensionMax = isPercentScale ? 100 : 25;
-  const totalMax = dimensionMax * dimensions.length;
+  // Detect the actual scale: if any score > 25, scores are on 0-100 scale already
+  const maxRaw = Math.max(...dimensions.map(d => data[d.key] ?? 0));
+  const isRawScale = maxRaw <= 25;
 
-  const total = dimensions.reduce((sum, d) => sum + (data[d.key] ?? 0), 0);
+  // Always display on /100 per dimension, /600 total
+  const displayMax = 100;
+  const totalMax = 600;
+  const toDisplay = (raw: number) => isRawScale ? Math.round((raw / 25) * 100) : raw;
+
+  const total = dimensions.reduce((sum, d) => sum + toDisplay(data[d.key] ?? 0), 0);
 
   // Thresholds adjusted to scale
   const strongThreshold = dimensionMax * 0.8;
