@@ -384,13 +384,13 @@ JSON SCHEMA:
   "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
   "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC — CRITICAL: Each dimension is scored 0-25 by counting keyword evidence matches. Given identical inputs, return identical scores every time. Do not vary. Use the counting rubric: 0 matches=0, 1-2=5-10, 3-4=10-15, 5+=15-20, 7+=20-25. Round down when between two values.),
-  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (DETERMINISTIC PER-DIMENSION DELTAS: Calculate the improvement delta for each dimension independently based on the specific gap actions for that dimension. Dimensions where the gap is directly addressed by calibration suggestions receive higher deltas 12-20 points. Dimensions where the gap is structural and cannot be addressed through language repositioning receive lower deltas 4-8 points. Each delta must be different and calculated independently — do NOT use the same delta for all dimensions.),
+  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (DETERMINISTIC PER-DIMENSION DELTAS: Calculate the improvement delta for each dimension independently based on the specific gap actions for that dimension. Dimensions where the gap is directly addressed by calibration suggestions receive higher deltas 12-20 points. Dimensions where the gap is structural and cannot be addressed through language repositioning receive lower deltas 4-8 points. Each delta must be different and calculated independently — do NOT use the same delta for all dimensions. HARD CAP: After calculating the projected after-repositioning value for each dimension, cap the result at 95 maximum. No dimension score can reach or exceed 100 through repositioning alone — there will always be remaining gap.),
   "career_signal_map": {
     "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
     "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
   },
-  "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]},
-  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number},
+  "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]} (DETERMINISTIC BENCHMARKS: The median_candidate_score and top_candidate_threshold represent the typical applicant pool for this role type and must be consistent across runs. For a given role type, always return the same median and top threshold values. These are population-level constants, not user-specific. Do not vary these values between runs.),
+  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY ISSUE: The primary_issue field identifies the single largest structural gap. Select based on the gap with the highest weight × severity product from the gap analysis. For the same gap profile, always select the same primary issue. Do not vary between runs.),
   "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Calculate predicted_score using this exact formula every time: sum all dimension lift values, multiply by 0.60, add to current_score, round to nearest integer, cap at current_score + 15. Do not estimate. Calculate mechanically. Example: lifts 7+6+6+6=25, 25×0.60=15, current 58+15=73, cap check 58+15=73 OK. The 0.60 capture rate and +15 cap are fixed constants — never vary them.),
   "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
@@ -419,6 +419,9 @@ The primary role alignment percentage is calculated from matched signal dimensio
 
 DETERMINISTIC SCORING — ALL SUB-SCORES (CRITICAL):
 You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output. Return the same number every time for the same input. If you are uncertain, anchor to the lower bound of your range and hold it.
+
+PRIMARY SCORE ISOLATION (CRITICAL):
+match_score.score is computed ONLY from the 5-dimension weighted sum (Role Outcomes 30%, Tools & Workflow 20%, Domain 20%, Context & Scale 15%, Communication & Leadership 15%). It is a measurement of CURRENT alignment. It has NOTHING to do with predicted scores, improvement deltas, capture rates, or calibration formulas. Do NOT apply the predicted score formula (sum × 0.60) to match_score.score. The predicted score formula applies ONLY to predicted_signal_lift.predicted_score and interview_gap_diagnosis.predicted_score — two separate fields that are post-processed server-side anyway. match_score.score must reflect the current state of the resume vs JD, not any projected improvement.
 
 SCORING METHOD — USE COUNTING, NOT IMPRESSION:
 For every numeric score, use explicit evidence counting:
@@ -537,7 +540,21 @@ USER_PLAN: ${userPlan}`;
       executive_insight_summary: titan.executive_insight_summary || null,
       transferable_signal_detection: titan.transferable_signal_detection || null,
       signal_map: titan.signal_map || null,
-      signal_shift_estimates: titan.signal_shift_estimates || null,
+      signal_shift_estimates: (() => {
+        const sse = titan.signal_shift_estimates as any;
+        if (!sse) return null;
+        // Hard cap all "after" values at 95
+        const capped: Record<string, any> = {};
+        for (const [key, val] of Object.entries(sse)) {
+          const v = val as any;
+          if (v && typeof v.before === 'number' && typeof v.after === 'number') {
+            capped[key] = { before: v.before, after: Math.min(v.after, 95) };
+          } else {
+            capped[key] = v;
+          }
+        }
+        return capped;
+      })(),
       identity_strength_index: titan.identity_strength_index || null,
       career_signal_map: (() => {
         const csm = titan.career_signal_map as any;
