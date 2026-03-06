@@ -85,12 +85,33 @@ async function fetchSubscriptionData() {
 
 export function useSubscription(): SubscriptionState {
   const queryClient = useQueryClient();
+  const [authReady, setAuthReady] = useState(false);
+
+  // Listen for auth state changes and invalidate subscription cache
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[SubCheck] Auth state changed:", event, "user:", session?.user?.id ?? "none");
+      setAuthReady(true);
+      // Refetch subscription data whenever auth state changes
+      queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
+    });
+
+    // Also check current session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setAuthReady(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [queryClient]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["subscription-status"],
     queryFn: fetchSubscriptionData,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    enabled: authReady, // Don't run until auth is ready
   });
 
   const refresh = useCallback(async () => {
@@ -121,7 +142,7 @@ export function useSubscription(): SubscriptionState {
     isFree: data?.isFree ?? true,
     dailyRunCount: data?.dailyRunCount ?? 0,
     dailyRunsRemaining: data?.dailyRunsRemaining ?? FREE_DAILY_LIMIT,
-    loading: isLoading,
+    loading: isLoading || !authReady,
     refresh,
   };
 }
