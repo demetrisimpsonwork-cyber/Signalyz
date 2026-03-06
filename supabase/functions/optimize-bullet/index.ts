@@ -455,10 +455,27 @@ USER_PLAN: ${userPlan}`;
       signal_map: titan.signal_map || null,
       signal_shift_estimates: titan.signal_shift_estimates || null,
       identity_strength_index: titan.identity_strength_index || null,
-      career_signal_map: titan.career_signal_map || null,
-      hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
-      interview_gap_diagnosis: titan.interview_gap_diagnosis || null,
-      predicted_signal_lift: titan.predicted_signal_lift || null,
+      career_signal_map: (() => {
+        const csm = titan.career_signal_map as any;
+        if (!csm) return null;
+        // Deterministic tiebreaker: sort by score desc, then matched_jd_dimensions desc, then role name asc
+        const sortEntries = (arr: any[]) => {
+          if (!Array.isArray(arr)) return arr;
+          return [...arr].sort((a, b) => {
+            const scoreDiff = (b.score ?? 0) - (a.score ?? 0);
+            if (Math.abs(scoreDiff) > 5) return scoreDiff;
+            // Within 5 points: use matched_jd_dimensions as tiebreaker
+            const dimDiff = (b.matched_jd_dimensions ?? 0) - (a.matched_jd_dimensions ?? 0);
+            if (dimDiff !== 0) return dimDiff;
+            // Final tiebreaker: alphabetical by role name
+            return (a.role ?? "").localeCompare(b.role ?? "");
+          });
+        };
+        return {
+          primary_alignment: sortEntries(csm.primary_alignment || []),
+          secondary_alignment: sortEntries(csm.secondary_alignment || []),
+        };
+      })(),
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
     };
