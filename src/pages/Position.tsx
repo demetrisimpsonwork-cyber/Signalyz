@@ -734,7 +734,7 @@ const Position = () => {
 
   const isAdmin = useIsAdmin();
   const { isTrialPro } = useReverseTrial();
-  const { isPro } = useSubscription();
+  const { isPro, loading: subLoading } = useSubscription();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
   const clearTimers = () => {
@@ -1235,7 +1235,7 @@ const Position = () => {
               </Section>
 
               {/* 7 — Bullet Rewrites */}
-              <Section title="7. Bullet Rewrites (Elite Version)">
+              <Section title="7. Calibrated Bullet Repositioning">
                 <div className="space-y-3">
                   {result.bullet_rewrites.map((b, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
