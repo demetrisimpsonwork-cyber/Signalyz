@@ -63,6 +63,11 @@ const CalibratedResumeTab = ({
     [originalResume]
   );
 
+  // Auto-trigger upgrade modal for non-Pro users
+  useEffect(() => {
+    if (!isPro) onUpgrade();
+  }, [isPro, onUpgrade]);
+
   const handleAssemble = () => {
     if (!hasRequiredSections(directorResult)) {
       toast.error("Run the Signal Positioning Report first to generate your calibrated resume.");
@@ -81,13 +86,8 @@ const CalibratedResumeTab = ({
     exportCalibratedPdf("resume-canvas");
   };
 
-  // Pro gate — trigger popup modal instead of inline blur
+  // Pro gate — show CTA with button that triggers popup
   if (!isPro) {
-    // Auto-trigger the upgrade modal on mount
-    useEffect(() => {
-      onUpgrade();
-    }, []);
-
     return (
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
