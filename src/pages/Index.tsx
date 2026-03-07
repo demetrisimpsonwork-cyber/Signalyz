@@ -889,7 +889,6 @@ const Index = () => {
               {([
                 { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
                 { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
-                { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
               ] as const).map((tab) => (
                 <button
                   key={tab.id}
@@ -906,6 +905,19 @@ const Index = () => {
                   {tab.label}
                 </button>
               ))}
+              <button
+                onClick={() => {
+                  if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                  setMode("calibrated");
+                }}
+                className={`col-span-2 px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
+                  mode === "calibrated"
+                    ? "bg-primary/10 border-primary text-primary"
+                    : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                }`}
+              >
+                Calibrated Resume
+              </button>
             </div>
             {/* Profile Tools divider */}
             <div className="flex items-center gap-2 my-1.5">
@@ -918,10 +930,10 @@ const Index = () => {
                 if (!effectiveIsPro) { setShowUpgrade(true); return; }
                 setMode("linkedin");
               }}
-              className={`w-full px-3 py-2.5 text-[11px] font-medium transition-colors text-center border-b-2 ${
+              className={`w-full px-3 py-2.5 text-[11px] font-normal transition-colors text-center rounded-md border ${
                 mode === "linkedin"
-                  ? "text-primary border-primary"
-                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                  ? "bg-primary/10 border-primary text-primary"
+                  : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
               }`}
             >
               LinkedIn Signal
