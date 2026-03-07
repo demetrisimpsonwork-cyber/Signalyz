@@ -78,7 +78,7 @@ const DirectorQARunner = () => {
                   {r.total_score != null ? `${r.total_score}/175` : "—"}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                  {r.top_3_gaps.length > 0 ? r.top_3_gaps.join(", ") : "—"}
+                  {r.top_3_gaps.length > 0 ? r.top_3_gaps.map(g => g.replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase())).join(", ") : "—"}
                 </TableCell>
                 <TableCell>
                   {r.replay ? (
