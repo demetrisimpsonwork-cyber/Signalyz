@@ -315,7 +315,8 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
-  const frictionStages = [
+  // Dynamic role tier label (falls back to "Director" for backward compatibility)
+  const roleLabel = result._role_tier_label || "Director";
     { stage: "Recruiter Filter Risk", key: "Recruiter Filter" as const, data: hiring_stage_friction.recruiter_filter_risk },
     { stage: "Hiring Manager Friction", key: "Hiring Manager Friction" as const, data: hiring_stage_friction.hiring_manager_friction },
     { stage: "Executive Skepticism", key: "Executive Skepticism" as const, data: hiring_stage_friction.executive_skepticism },
@@ -323,14 +324,14 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   const handleCopy = async () => {
     const lines = [
-      "DIRECTOR SIGNAL CALIBRATION",
+      `${roleLabel.toUpperCase()} SIGNAL CALIBRATION`,
       "============================",
       "",
-      "DIRECTOR SIGNAL TIER",
+      `${roleLabel.toUpperCase()} SIGNAL TIER`,
       `Tier: ${director_signal_tier.tier}`,
       `Rationale: ${director_signal_tier.rationale}`,
       "",
-      "DIRECTOR DIMENSION CALIBRATION",
+      `${roleLabel.toUpperCase()} DIMENSION CALIBRATION`,
       ...dimensions.flatMap((d) => [
         `${d.name}: ${d.classification}`,
         `  Strength — ${d.strength_signal}`,
@@ -349,7 +350,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
       "Inflation Risk:",
       ...pattern_detection.ownership_inflation_patterns.map((p) => `— ${p}`),
       "",
-      ...(recalibration_directives?.length ? ["DIRECTOR-LEVEL RECALIBRATION DIRECTIVES", ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`)] : []),
+      ...(recalibration_directives?.length ? [`${roleLabel.toUpperCase()}-LEVEL RECALIBRATION DIRECTIVES`, ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`)] : []),
     ].join("\n");
 
     await navigator.clipboard.writeText(lines);
@@ -362,12 +363,12 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
     <div className="space-y-7">
       {/* Debug info logged to console only */}
 
-      {/* 1 — Director Signal Tier */}
-      <BlockShell label="Director Signal Tier">
+      {/* 1 — Signal Tier */}
+      <BlockShell label={`${roleLabel} Signal Tier`}>
         <div className="px-4 py-3 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold text-foreground">Classification</p>
-            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded ${tierStyle[director_signal_tier.tier]}`}>
+            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded ${tierStyleFor(director_signal_tier.tier)}`}>
               {director_signal_tier.tier}
             </span>
           </div>
@@ -376,13 +377,13 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
       </BlockShell>
 
       {/* 2 — Dimension Calibration */}
-      <BlockShell label="Director Dimension Calibration">
+      <BlockShell label={`${roleLabel} Dimension Calibration`}>
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
             <div key={dim.name} className="px-4 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-foreground">{dim.name}</p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyle[dim.classification]}`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyleFor(dim.classification)}`}>
                   {dim.classification}
                 </span>
               </div>
@@ -446,7 +447,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
       {/* 5 — Recalibration Directives */}
       {recalibration_directives && recalibration_directives.length > 0 && (
-        <BlockShell label="Director-Level Recalibration Directives">
+        <BlockShell label={`${roleLabel}-Level Recalibration Directives`}>
           <div className="divide-y divide-border/50">
             {recalibration_directives.map((directive, i) => (
               <div key={i} className="px-4 py-3 flex gap-3">
