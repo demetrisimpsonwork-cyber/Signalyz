@@ -811,21 +811,32 @@ async function runPipeline(
       ? `RESUME:\n${experience}\n\nJOB DESCRIPTION:\n${jd.trim()}`
       : `RESUME:\n${experience}`;
 
-  // ── 2. Signal Classifier + Director Calibration (parallel) ──────────────────
-  console.log("[2/6] Signal Classifier + Director Calibration (parallel)");
+  // ── Detect role tier from normalizer output ─────────────────────────────────
+  const detectedTier = detectRoleTier(normalized);
+  const tierConfig = ROLE_TIER_CONFIGS[detectedTier];
+  console.log(`  → Detected role tier: ${detectedTier} (${tierConfig.label})`);
+  await storeArtifact(supabase, runId, "step_1b_role_tier", { detected_tier: detectedTier, label: tierConfig.label, target_role_title: normalized.target_role_title, target_seniority_level: normalized.target_seniority_level });
+
+  const calibrationPrompt = buildCalibrationPrompt(tierConfig);
+  const classifierSystem = buildSignalClassifierSystem(tierConfig);
+
+  // ── 2. Signal Classifier + Calibration (parallel) ──────────────────────────
+  console.log("[2/6] Signal Classifier + Calibration (parallel)");
   const [calibrationRaw, classifierRaw] = await Promise.all([
-    callAI(apiKey, DIRECTOR_PROMPT, sharedContext, 0),
-    callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
+    callAI(apiKey, calibrationPrompt, sharedContext, 0),
+    callAI(apiKey, `${classifierSystem}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
   ]);
 
-  // Director Calibration (required)
+  // Calibration (required)
   let result: Record<string, unknown>;
   try {
     result = parseJSON<Record<string, unknown>>(calibrationRaw);
-    console.log("  → Director Calibration: ok");
-    await storeArtifact(supabase, runId, "step_2_calibration", { raw: calibrationRaw, parsed: result });
+    result._detected_role_tier = detectedTier;
+    result._role_tier_label = tierConfig.label;
+    console.log(`  → ${tierConfig.label} Calibration: ok`);
+    await storeArtifact(supabase, runId, "step_2_calibration", { raw: calibrationRaw, parsed: result, role_tier: detectedTier });
   } catch {
-    throw new Error("Failed to parse Director Calibration response. Please try again.");
+    throw new Error(`Failed to parse ${tierConfig.label} Calibration response. Please try again.`);
   }
 
   // Signal Classifier (non-fatal)
