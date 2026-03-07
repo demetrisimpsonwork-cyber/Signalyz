@@ -881,24 +881,67 @@ const Index = () => {
         />
 
         {/* Sub-navigation tabs */}
+        {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
-          <div className="grid grid-cols-2 lg:inline-flex lg:flex-nowrap gap-1 w-full lg:w-auto">
-            {[
+          {/* Mobile layout */}
+          <div className="flex flex-col w-full lg:hidden gap-1">
+            <div className="grid grid-cols-2 gap-1">
+              {([
+                { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
+                { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+                { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                    setMode(tab.id);
+                  }}
+                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center border-b-2 ${
+                    mode === tab.id
+                      ? "text-primary border-primary"
+                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {/* Profile Tools divider */}
+            <div className="flex items-center gap-2 my-1.5">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Profile Tools</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <button
+              onClick={() => {
+                if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                setMode("linkedin");
+              }}
+              className={`w-full px-3 py-2.5 text-[11px] font-medium transition-colors text-center border-b-2 ${
+                mode === "linkedin"
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+              }`}
+            >
+              LinkedIn Signal
+            </button>
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden lg:inline-flex lg:flex-nowrap items-center gap-1">
+            {([
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
               { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
-            ].map((tab) => (
+            ] as const).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.proOnly && !effectiveIsPro) {
-                    setShowUpgrade(true);
-                    return;
-                  }
+                  if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
                   setMode(tab.id);
                 }}
-                className={`px-3 lg:px-4 py-2.5 text-[11px] lg:text-sm font-medium transition-colors text-center border-b-2 ${
+                className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
                   mode === tab.id
                     ? "text-primary border-primary"
                     : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
@@ -907,6 +950,21 @@ const Index = () => {
                 {tab.label}
               </button>
             ))}
+            {/* Vertical divider */}
+            <div className="h-4 w-px bg-muted-foreground/30 mx-1" />
+            <button
+              onClick={() => {
+                if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                setMode("linkedin");
+              }}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
+                mode === "linkedin"
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+              }`}
+            >
+              LinkedIn Signal
+            </button>
           </div>
         </div>
 
