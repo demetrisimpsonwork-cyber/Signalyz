@@ -885,19 +885,15 @@ const Index = () => {
         <div className="mb-6 flex justify-center mt-3">
           <div className="inline-flex rounded-md bg-muted/30 p-0.5 gap-0.5">
             {[
-              { id: "alignment" as const, label: "Alignment Engine" },
-              { id: "linkedin" as const, label: "LinkedIn Signal" },
-              { id: "director" as const, label: "Signal Positioning Report" },
-              { id: "calibrated" as const, label: "Calibrated Resume" },
+              { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
+              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
+              { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+              { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.id === "linkedin" && !effectiveIsPro) {
-                    setShowUpgrade(true);
-                    return;
-                  }
-                  if (tab.id === "calibrated" && !effectiveIsPro) {
+                  if (tab.proOnly && !effectiveIsPro) {
                     setShowUpgrade(true);
                     return;
                   }
@@ -917,46 +913,32 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <ProGate
-            featureName="LinkedIn Signal Calibration"
-            featureDescription="Calibrate your LinkedIn headline and About section to match the exact language your target role is screening for."
-          >
-            <div className="max-w-2xl mx-auto">
-              <LinkedInSignalTab
-                experience={bullet}
-                inferredRole={result?.inferred_role_title || ""}
-                signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
-                onRunAlignment={() => setMode("alignment")}
-              />
-            </div>
-          </ProGate>
+          <div className="max-w-2xl mx-auto">
+            <LinkedInSignalTab
+              experience={bullet}
+              inferredRole={result?.inferred_role_title || ""}
+              signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
+              onRunAlignment={() => setMode("alignment")}
+            />
+          </div>
         )}
 
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
-          <ProGate
-            featureName="Calibrated Resume"
-            featureDescription="Auto-assemble a polished, ATS-optimized resume from your signal analysis. Edit inline and export as .docx or .pdf."
-          >
-            <CalibratedResumeTab
-              isPro={effectiveIsPro}
-              onUpgrade={() => setShowUpgrade(true)}
-              directorResult={directorResult}
-              originalResume={bullet}
-              onSwitchToReport={() => setMode("director")}
-              hasCurrentSessionAlignment={!!result}
-              onRunAlignment={() => setMode("alignment")}
-              onAssembled={() => setSessionResumeAssembled(true)}
-            />
-          </ProGate>
+          <CalibratedResumeTab
+            isPro={effectiveIsPro}
+            onUpgrade={() => setShowUpgrade(true)}
+            directorResult={directorResult}
+            originalResume={bullet}
+            onSwitchToReport={() => setMode("director")}
+            hasCurrentSessionAlignment={!!result}
+            onRunAlignment={() => setMode("alignment")}
+            onAssembled={() => setSessionResumeAssembled(true)}
+          />
         )}
 
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
-          <ProGate
-            featureName="Signal Positioning Report"
-            featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
-          >
             <DirectorModeContent
               result={result}
               bullet={bullet}
@@ -967,7 +949,6 @@ const Index = () => {
               onRunAlignment={() => setMode("alignment")}
               onRunDirector={handleDirectorCalibrate}
             />
-          </ProGate>
         )}
 
         {/* Alignment Mode */}
