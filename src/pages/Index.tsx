@@ -244,6 +244,8 @@ function DirectorModeContent({
   directorError,
   onRunAlignment,
   onRunDirector,
+  isPro,
+  onUpgrade,
 }: {
   result: OptimizationResult | null;
   bullet: string;
@@ -253,6 +255,8 @@ function DirectorModeContent({
   directorError: string | null;
   onRunAlignment: () => void;
   onRunDirector: () => void;
+  isPro: boolean;
+  onUpgrade: () => void;
 }) {
   // HARD GATE: If no current-session alignment result, render ONLY the empty state
   if (!result) {
@@ -320,7 +324,7 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} />
+            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
@@ -1017,6 +1021,8 @@ const Index = () => {
               directorError={directorError}
               onRunAlignment={() => setMode("alignment")}
               onRunDirector={handleDirectorCalibrate}
+              isPro={effectiveIsPro}
+              onUpgrade={() => setShowUpgrade(true)}
             />
         )}
 
