@@ -317,6 +317,8 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   // Dynamic role tier label (falls back to "Director" for backward compatibility)
   const roleLabel = result._role_tier_label || "Director";
+
+  const frictionStages = [
     { stage: "Recruiter Filter Risk", key: "Recruiter Filter" as const, data: hiring_stage_friction.recruiter_filter_risk },
     { stage: "Hiring Manager Friction", key: "Hiring Manager Friction" as const, data: hiring_stage_friction.hiring_manager_friction },
     { stage: "Executive Skepticism", key: "Executive Skepticism" as const, data: hiring_stage_friction.executive_skepticism },
