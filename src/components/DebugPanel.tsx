@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bug, Copy, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { initiateCheckout } from "@/utils/stripe";
 
 export interface DebugInfo {
   request_id?: string;
@@ -130,10 +131,7 @@ export const EngineErrorCard = ({
         <Button
           size="sm"
           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-          onClick={() => {
-            const { initiateCheckout } = require("@/utils/stripe");
-            initiateCheckout();
-          }}
+          onClick={() => initiateCheckout()}
         >
           Unlock Resumix Pro — $19/month
         </Button>
