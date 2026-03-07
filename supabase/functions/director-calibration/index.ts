@@ -811,7 +811,7 @@ async function runPipeline(
       : `RESUME:\n${experience}`;
 
   // ── Detect role tier from normalizer output ─────────────────────────────────
-  const detectedTier = detectRoleTier(normalized);
+  const detectedTier = detectRoleTier(normalized, jd);
   const tierConfig = ROLE_TIER_CONFIGS[detectedTier];
   console.log(`  → Detected role tier: ${detectedTier} (${tierConfig.label})`);
   await storeArtifact(supabase, runId, "step_1b_role_tier", { detected_tier: detectedTier, label: tierConfig.label, target_role_title: normalized.target_role_title, target_seniority_level: normalized.target_seniority_level });
