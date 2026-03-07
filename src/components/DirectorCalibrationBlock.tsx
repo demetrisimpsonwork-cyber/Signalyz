@@ -74,9 +74,11 @@ export interface ExportBuilderResult {
 export interface DirectorCalibrationResult {
   dimensions: DirectorDimension[];
   director_signal_tier: {
-    tier: "Senior IC Signal" | "Emerging Director" | "Director-Calibrated" | "Scope Inflation Risk";
+    tier: string;
     rationale: string;
   };
+  _detected_role_tier?: string;
+  _role_tier_label?: string;
   hiring_stage_friction: {
     recruiter_filter_risk: { level: "Low" | "Moderate" | "Elevated"; observation: string };
     hiring_manager_friction: { level: "Low" | "Moderate" | "Elevated"; observation: string };
@@ -152,11 +154,13 @@ const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
   risk_compression: "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40",
 };
 
-const classificationStyle: Record<DirectorDimension["classification"], string> = {
-  "Below Director Threshold": "text-destructive bg-destructive/10",
-  "Near Director Threshold": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
-  "At Director Threshold": "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
-};
+/** Dynamic classification style — matches "Below X Threshold", "Near X Threshold", "At X Threshold" */
+function classificationStyleFor(classification: string): string {
+  if (classification.startsWith("Below")) return "text-destructive bg-destructive/10";
+  if (classification.startsWith("Near")) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
+  if (classification.startsWith("At")) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+  return "text-muted-foreground bg-muted/30";
+}
 
 const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
   Low: "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
@@ -164,12 +168,14 @@ const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
   Elevated: "text-destructive bg-destructive/10",
 };
 
-const tierStyle: Record<DirectorCalibrationResult["director_signal_tier"]["tier"], string> = {
-  "Director-Calibrated": "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
-  "Emerging Director": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
-  "Senior IC Signal": "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20",
-  "Scope Inflation Risk": "text-destructive bg-destructive/10",
-};
+/** Dynamic tier style — matches keywords in tier string */
+function tierStyleFor(tier: string): string {
+  if (/Calibrated/i.test(tier)) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+  if (/Emerging/i.test(tier)) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
+  if (/Signal$/i.test(tier) || /IC|Contributor|Manager Signal/i.test(tier)) return "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20";
+  if (/Inflation/i.test(tier)) return "text-destructive bg-destructive/10";
+  return "text-muted-foreground bg-muted/30";
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -309,6 +315,9 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
 
+  // Dynamic role tier label (falls back to "Director" for backward compatibility)
+  const roleLabel = result._role_tier_label || "Director";
+
   const frictionStages = [
     { stage: "Recruiter Filter Risk", key: "Recruiter Filter" as const, data: hiring_stage_friction.recruiter_filter_risk },
     { stage: "Hiring Manager Friction", key: "Hiring Manager Friction" as const, data: hiring_stage_friction.hiring_manager_friction },
@@ -317,14 +326,14 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
   const handleCopy = async () => {
     const lines = [
-      "DIRECTOR SIGNAL CALIBRATION",
+      `${roleLabel.toUpperCase()} SIGNAL CALIBRATION`,
       "============================",
       "",
-      "DIRECTOR SIGNAL TIER",
+      `${roleLabel.toUpperCase()} SIGNAL TIER`,
       `Tier: ${director_signal_tier.tier}`,
       `Rationale: ${director_signal_tier.rationale}`,
       "",
-      "DIRECTOR DIMENSION CALIBRATION",
+      `${roleLabel.toUpperCase()} DIMENSION CALIBRATION`,
       ...dimensions.flatMap((d) => [
         `${d.name}: ${d.classification}`,
         `  Strength — ${d.strength_signal}`,
@@ -343,7 +352,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
       "Inflation Risk:",
       ...pattern_detection.ownership_inflation_patterns.map((p) => `— ${p}`),
       "",
-      ...(recalibration_directives?.length ? ["DIRECTOR-LEVEL RECALIBRATION DIRECTIVES", ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`)] : []),
+      ...(recalibration_directives?.length ? [`${roleLabel.toUpperCase()}-LEVEL RECALIBRATION DIRECTIVES`, ...recalibration_directives.map((d, i) => `${i + 1}. ${d}`)] : []),
     ].join("\n");
 
     await navigator.clipboard.writeText(lines);
@@ -356,12 +365,12 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
     <div className="space-y-7">
       {/* Debug info logged to console only */}
 
-      {/* 1 — Director Signal Tier */}
-      <BlockShell label="Director Signal Tier">
+      {/* 1 — Signal Tier */}
+      <BlockShell label={`${roleLabel} Signal Tier`}>
         <div className="px-4 py-3 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold text-foreground">Classification</p>
-            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded ${tierStyle[director_signal_tier.tier]}`}>
+            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded ${tierStyleFor(director_signal_tier.tier)}`}>
               {director_signal_tier.tier}
             </span>
           </div>
@@ -370,13 +379,13 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
       </BlockShell>
 
       {/* 2 — Dimension Calibration */}
-      <BlockShell label="Director Dimension Calibration">
+      <BlockShell label={`${roleLabel} Dimension Calibration`}>
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
             <div key={dim.name} className="px-4 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-foreground">{dim.name}</p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyle[dim.classification]}`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyleFor(dim.classification)}`}>
                   {dim.classification}
                 </span>
               </div>
@@ -440,7 +449,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
 
       {/* 5 — Recalibration Directives */}
       {recalibration_directives && recalibration_directives.length > 0 && (
-        <BlockShell label="Director-Level Recalibration Directives">
+        <BlockShell label={`${roleLabel}-Level Recalibration Directives`}>
           <div className="divide-y divide-border/50">
             {recalibration_directives.map((directive, i) => (
               <div key={i} className="px-4 py-3 flex gap-3">
