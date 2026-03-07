@@ -763,52 +763,6 @@ const Index = () => {
         <p className="text-center text-xs text-muted-foreground mt-4 italic opacity-70">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
       </section>
 
-      {/* Testimonial */}
-      <section className="py-6 container max-w-2xl">
-        <div className="rounded-xl bg-[#0F1C2E] p-6 relative border-l-[3px] border-l-primary">
-          <div>
-            <p className="text-white text-sm leading-relaxed italic">
-              "I ran my own resume and found out exactly why I wasn't hearing back on senior roles. The gap was real, specific, and fixable in one sitting."
-            </p>
-            <p className="mt-4 text-white/70 text-xs font-medium">— D.S., Resumix founder & early user</p>
-            <p className="mt-1 text-white/40 text-[10px] italic">Results based on actual engine output.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Match Score Forecast */}
-      <section className="py-12 bg-[#F8F9FB]">
-        <div className="container max-w-3xl">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>Same resume. Repositioned signal. 30-point lift.</h2>
-            <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>This is what Resumix does to how hiring managers read your experience.</p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] items-center">
-            <div className="text-center space-y-2 p-6 rounded-xl border bg-card">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-destructive">BEFORE</p>
-              <p className="font-bold text-destructive tabular-nums" style={{ fontSize: "52px" }}>45%</p>
-              <p className="text-muted-foreground" style={{ fontSize: "13px" }}>Framed in procedural language. Strong experience, wrong signal.</p>
-            </div>
-            <div className="hidden md:flex items-center justify-center">
-              <div className="w-12 h-0.5 bg-primary" />
-              <div className="w-0 h-0 border-t-4 border-b-4 border-l-8 border-transparent border-l-primary" />
-            </div>
-            <div className="flex justify-center md:hidden"><ArrowDown className="h-6 w-6 text-primary" /></div>
-            <div className="text-center space-y-2 p-6 rounded-xl border border-primary/30 bg-card">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
-              <p className="font-bold text-primary tabular-nums" style={{ fontSize: "52px" }}>75%</p>
-              <p className="text-muted-foreground" style={{ fontSize: "13px" }}>Same experience. Repositioned toward what this role weights.</p>
-            </div>
-          </div>
-          <p className="text-center text-muted-foreground italic mt-4" style={{ fontSize: "13px" }}>Hard gaps remain — Resumix never fabricates. But your signal is no longer working against you.</p>
-          <div className="flex justify-center mt-4">
-           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Run Your Signal Analysis →
-            </Button>
-          </div>
-        </div>
-      </section>
 
       {/* WAS/NOW Transformation Section */}
       <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
@@ -850,10 +804,11 @@ const Index = () => {
             </div>
           ))}
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-4">Zero fabrication. Every word came from the original.</p>
-        <div className="flex justify-center mt-3">
+        <p className="text-center text-sm font-semibold text-foreground mt-6">Same experience. Different signal.</p>
+        <div className="flex justify-center mt-4">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
-            Run Your Signal Analysis →
+            <Sparkles className="h-4 w-4 mr-2" />
+            Run Your Signal Analysis
           </Button>
         </div>
       </section>
