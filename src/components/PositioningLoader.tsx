@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
-import { Check } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Check, Clock } from "lucide-react";
 
 const STEPS = [
-  "Extracting employer priority signals…",
-  "Mapping your experience to weighted role dimensions…",
-  "Detecting transferable signal patterns…",
-  "Generating strategic positioning insights…",
-  "Applying Pro calibration filter…",
+  { label: "Extracting employer priority signals…", duration: 8000 },
+  { label: "Mapping your experience to weighted role dimensions…", duration: 12000 },
+  { label: "Detecting transferable signal patterns…", duration: 14000 },
+  { label: "Generating strategic positioning insights…", duration: 14000 },
+  { label: "Applying Pro calibration filter…", duration: 12000 },
 ];
-
-const STEP_INTERVAL_MS = 3500;
 
 interface PositioningLoaderProps {
   minHeight?: string;
@@ -18,26 +16,71 @@ interface PositioningLoaderProps {
 const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [stepProgress, setStepProgress] = useState(0);
+  const stepStartRef = useRef(Date.now());
 
+  // Advance steps based on individual durations
   useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIndex((prev) => Math.min(prev + 1, STEPS.length - 1));
-    }, STEP_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
+    if (activeIndex >= STEPS.length) return;
+    stepStartRef.current = Date.now();
+    setStepProgress(0);
 
+    const stepDuration = STEPS[activeIndex].duration;
+    const progressInterval = setInterval(() => {
+      const pct = Math.min((Date.now() - stepStartRef.current) / stepDuration, 1);
+      setStepProgress(pct);
+    }, 50);
+
+    const timer = setTimeout(() => {
+      setActiveIndex((prev) => Math.min(prev + 1, STEPS.length - 1));
+    }, stepDuration);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(timer);
+    };
+  }, [activeIndex]);
+
+  // Elapsed seconds counter
   useEffect(() => {
     const id = setInterval(() => setElapsed((p) => p + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  const totalDuration = STEPS.reduce((s, step) => s + step.duration, 0) / 1000;
+  const overallProgress = Math.min(
+    ((STEPS.slice(0, activeIndex).reduce((s, step) => s + step.duration, 0) +
+      STEPS[activeIndex].duration * stepProgress) /
+      (totalDuration * 1000)) *
+      100,
+    99
+  );
 
   return (
     <div
       className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in"
       style={{ minHeight }}
     >
-      <div className="space-y-4 mb-6">
-        {STEPS.map((label, i) => {
+      {/* Overall progress bar */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium text-foreground">Generating Signal Report</span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {elapsed}s
+          </span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
+            style={{ width: `${overallProgress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-3 mb-5">
+        {STEPS.map((step, i) => {
           const done = i < activeIndex;
           const active = i === activeIndex;
           return (
@@ -68,15 +111,13 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
                       : "text-muted-foreground"
                   }`}
                 >
-                  {label}
+                  {step.label}
                 </p>
                 {active && (
-                  <div className="mt-2 h-0.5 w-full rounded-full bg-border overflow-hidden">
+                  <div className="mt-1.5 h-0.5 w-full rounded-full bg-border overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-primary"
-                      style={{
-                        animation: `loader-fill ${STEP_INTERVAL_MS}ms linear forwards`,
-                      }}
+                      className="h-full rounded-full bg-primary transition-all duration-100 ease-linear"
+                      style={{ width: `${stepProgress * 100}%` }}
                     />
                   </div>
                 )}
@@ -87,9 +128,13 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
       </div>
 
       <p className="text-center text-xs text-muted-foreground leading-relaxed">
-        {elapsed >= 18
-          ? "Signal analysis is taking longer than expected. Hang tight — complex resumes take up to 60 seconds."
-          : "Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private."}
+        {elapsed >= 50
+          ? "Almost there — finalizing your signal analysis."
+          : elapsed >= 30
+          ? "Complex resumes take up to 60 seconds. Hang tight."
+          : elapsed >= 15
+          ? "Deep analysis in progress — scoring across multiple dimensions."
+          : "Full signal analysis typically takes ~60 seconds. Zero fabrication • Your data remains private."}
       </p>
     </div>
   );
