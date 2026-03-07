@@ -105,20 +105,14 @@ export default DebugPanel;
 
 // Error card shown inline in results area
 export const EngineErrorCard = ({
-  debugInfo,
+  message,
   onRetry,
 }: {
-  debugInfo: DebugInfo;
+  message?: string;
+  debugInfo?: DebugInfo; // kept for backward compat, ignored in UI
   onRetry?: () => void;
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const copyDebug = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
-    setCopied(true);
-    toast.success("Debug info copied");
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const displayMessage = message || "Generation took longer than expected. Tap to retry.";
 
   return (
     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5 space-y-3 my-6">
@@ -128,25 +122,17 @@ export const EngineErrorCard = ({
         </div>
         <div className="space-y-1 flex-1">
           <p className="text-sm font-semibold text-foreground">Analysis Engine Error</p>
-          <p className="text-sm text-muted-foreground">
-            {debugInfo.message && !debugInfo.message.includes("index.ts") && !debugInfo.message.includes("EDGE_EXCEPTION")
-              ? debugInfo.message
-              : "Signal calibration is taking longer than expected. Tap to try again — your alignment data is saved."}
-          </p>
+          <p className="text-sm text-muted-foreground">{displayMessage}</p>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        {onRetry && (
+      {onRetry && (
+        <div className="flex gap-2">
           <Button size="sm" onClick={onRetry} className="text-xs">
             Retry Analysis
           </Button>
-        )}
-        <Button size="sm" variant="outline" onClick={copyDebug} className="text-xs">
-          {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-          Copy Debug Info
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

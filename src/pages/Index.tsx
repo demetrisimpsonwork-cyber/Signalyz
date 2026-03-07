@@ -445,6 +445,32 @@ const Index = () => {
     }
   }, [result]);
 
+  // Credential patterns that indicate a hard requirement the resume cannot satisfy via repositioning
+  const CREDENTIAL_PATTERNS = [
+    /\b(MD|M\.D\.)\b/, /\b(JD|J\.D\.)\b/, /\b(RN|BSN)\b/, /\bCPA\b/, /\bP\.?E\.?\b/,
+    /\bPharmD\b/i, /\bDO\b/, /\bDDS\b/, /\bDMD\b/, /\bNP\b/, /\bPA-C\b/,
+    /\bLCSW\b/, /\bLMFT\b/, /\bPMP\b/, /\bCFA\b/, /\bCISS?P\b/,
+    /\bbar admission\b/i, /\bmedical licen[sc]e\b/i, /\bnursing licen[sc]e\b/i,
+    /\blicensed (physician|attorney|nurse|pharmacist|engineer)\b/i,
+    /\bboard[- ]?certif/i, /\bregistered nurse\b/i, /\battorney at law\b/i,
+  ];
+
+  const CREDENTIAL_BLOCK_MSG =
+    "This role requires credentials not found in your resume. Resumix works best when your experience already qualifies you — the signal just needs repositioning.";
+
+  const checkCredentialMismatch = (resumeText: string, jdText: string): boolean => {
+    const resumeUpper = resumeText.toUpperCase();
+    for (const pattern of CREDENTIAL_PATTERNS) {
+      if (pattern.test(jdText)) {
+        // Check if the credential also appears in the resume
+        if (!pattern.test(resumeText) && !pattern.test(resumeUpper)) {
+          return true; // required credential missing from resume
+        }
+      }
+    }
+    return false;
+  };
+
   const validate = () => {
     const errs: typeof errors = {};
     if (!bullet.trim()) {
@@ -465,6 +491,11 @@ const Index = () => {
     if (jd.trim().length < 20) {
       errs.jd = "Job description must be at least 20 characters.";
       setErrors(errs);
+      return false;
+    }
+    // Credential gate
+    if (checkCredentialMismatch(bullet.trim(), jd.trim())) {
+      setAlignmentError({ message: CREDENTIAL_BLOCK_MSG });
       return false;
     }
     setErrors({});
@@ -634,11 +665,7 @@ const Index = () => {
       const msg = err.message || FRIENDLY_FAIL_MSG;
       setResult(null);
       if (!alignmentError) {
-        setAlignmentError({
-          message: msg,
-          payload_length: payloadLength,
-          timestamp: new Date().toISOString(),
-        });
+        setAlignmentError({ message: msg });
       }
     } finally {
       setLoading(false);
@@ -1010,7 +1037,7 @@ const Index = () => {
                 )}
 
                 {!loading && !result && alignmentError && (
-                  <EngineErrorCard debugInfo={alignmentError} onRetry={handleOptimize} />
+                  <EngineErrorCard message={alignmentError.message} onRetry={handleOptimize} />
                 )}
 
                 {!loading && !result && !alignmentError && showSamples && (
