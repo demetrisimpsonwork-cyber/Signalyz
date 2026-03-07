@@ -1178,7 +1178,7 @@ const Index = () => {
                     ) : (
                       <div className="rounded-xl border border-primary/20 bg-card p-6 text-center space-y-3">
                         <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
-                        <Button onClick={() => navigate("/auth")} className="w-full sm:w-auto">Get Started Free</Button>
+                        <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
