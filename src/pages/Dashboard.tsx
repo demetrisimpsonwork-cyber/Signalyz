@@ -164,7 +164,6 @@ const Dashboard = () => {
                     <ResultSection title="Missing Keywords" content={opt.missing_keywords} />
                     <ResultSection title="Suggested Action Verbs" content={opt.suggested_verbs} />
                     <ResultSection title="Alternate A — Impact-focused" content={opt.alt_a} />
-                    <ResultSection title="Alternate B — Human-natural" content={opt.alt_b} />
                   </div>
                 )}
               </div>
