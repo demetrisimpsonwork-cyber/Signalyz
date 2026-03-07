@@ -123,7 +123,7 @@ const DirectorAudit = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ experience?: string }>({});
   const [copied, setCopied] = useState(false);
-  const [deterministic, setDeterministic] = useState(true);
+  const deterministic = false;
 
   const validate = () => {
     const errs: typeof errors = {};
@@ -252,19 +252,6 @@ const DirectorAudit = () => {
                 />
               </div>
 
-              {/* Deterministic toggle */}
-              <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2.5">
-                <div>
-                  <p className="text-xs font-medium text-foreground">Deterministic Mode</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {deterministic ? "Returns cached results for identical inputs" : "Forces a fresh pipeline run"}
-                  </p>
-                </div>
-                <Switch
-                  checked={deterministic}
-                  onCheckedChange={setDeterministic}
-                />
-              </div>
 
               <Button
                 onClick={handleSubmit}
