@@ -897,10 +897,10 @@ const Index = () => {
                     if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
                     setMode(tab.id);
                   }}
-                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center border-b-2 ${
+                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
                     mode === tab.id
-                      ? "text-primary border-primary"
-                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`}
                 >
                   {tab.label}
