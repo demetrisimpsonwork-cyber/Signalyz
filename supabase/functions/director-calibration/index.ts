@@ -491,18 +491,27 @@ Return JSON:
 }`;
 
 // ─── PROMPT 4: Rewrite Modules (Dual A/B) ───────────────────────────────────
+const B_BULLET_RULES = `
+VERSION B MANDATORY RULES (Conservative Truth):
+1. PRESERVE ALL ORIGINAL METRICS EXACTLY. If the original says "8–15 resolved daily", the B bullet MUST contain "8–15 resolved daily" verbatim. Never round, estimate, or rephrase any number.
+2. NEVER introduce placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]", or any bracketed placeholder. If the original has no metric, the B bullet has no metric.
+3. NEVER downgrade ownership level. If the original says "Handled", do NOT rewrite to "participated in", "assisted with", or "supported". Ownership level must stay equal or elevate.
+4. ONLY change framing words and context positioning — not facts, numbers, scope, or role. The B bullet describes the SAME experience with stronger signal language, not a different experience.
+5. A hiring manager reading the B bullet should recognize the same work described with clearer professional framing.`;
+
 const REWRITE_MODULE_PROMPTS: Record<string, string> = {
   commercial_injection: `You elevate resume bullets by adding quantified commercial impact.
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): The strongest credible phrasing assuming the person owned the decision and drove the outcome. Maximize commercial attribution.
-Version B ("Conservative Truth"): A careful phrasing assuming the person supported execution rather than owning authority. Still metric-forward but scope-limited.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger signal language while preserving every original fact, metric, and ownership claim exactly.
 
-Rules:
-- Preserve original claim facts exactly.
+${B_BULLET_RULES}
+
+Rules for BOTH versions:
 - No generic phrases like "proactively identified" or "spearheaded initiatives".
 - Keep bullets metric-forward and scope-specific.
-- If no metrics available, insert placeholder: [Insert % or $].
+- Version A may insert placeholder metrics if needed: [Insert % or $].
 - Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
 - Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
@@ -523,7 +532,9 @@ Return JSON:
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): Strongest credible phrasing — full-stack ownership from discovery through delivery, cross-functional coordination, post-launch stewardship.
-Version B ("Conservative Truth"): Careful phrasing — contributed to lifecycle phases but did not solely own.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger ownership signal while preserving every original fact, metric, and ownership claim exactly.
+
+${B_BULLET_RULES}
 
 No generic phrases. Keep scope-specific. Do not fabricate.
 Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
@@ -543,7 +554,9 @@ Return JSON:
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): Strongest credible phrasing — escalation resolution, executive partnership, dependency arbitration, decision ownership.
-Version B ("Conservative Truth"): Careful phrasing — influenced decisions, provided recommendations, supported executive review.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger authority signal while preserving every original fact, metric, and ownership claim exactly.
+
+${B_BULLET_RULES}
 
 No generic phrases. Keep scope-specific. Do not fabricate.
 Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
@@ -563,7 +576,9 @@ Return JSON:
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Mobilized stakeholders. Shared accountability.
-Version B ("Conservative Truth"): Coordinated with cross-functional partners. Participated in alignment. Supported stakeholder communication.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger cross-functional signal while preserving every original fact, metric, and ownership claim exactly.
+
+${B_BULLET_RULES}
 
 No generic phrases. Keep scope-specific. Do not fabricate.
 Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
@@ -583,7 +598,9 @@ Return JSON:
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): Owned roadmap, production readiness, planning-through-launch governance, operational rigor frameworks.
-Version B ("Conservative Truth"): Contributed to roadmap inputs, participated in launch reviews, supported operational processes.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger lifecycle signal while preserving every original fact, metric, and ownership claim exactly.
+
+${B_BULLET_RULES}
 
 No generic phrases. Keep scope-specific. Do not fabricate.
 Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
@@ -603,7 +620,9 @@ Return JSON:
 
 Produce TWO versions:
 Version A ("Upper-bound Truth"): Risk modeling, dependency identification, mitigation strategy ownership, consequence-aware decision language.
-Version B ("Conservative Truth"): Flagged risks, contributed to mitigation plans, supported risk review processes.
+Version B ("Conservative Truth"): Reframe the original bullet with stronger risk signal while preserving every original fact, metric, and ownership claim exactly.
+
+${B_BULLET_RULES}
 
 No generic phrases. Keep scope-specific. Do not fabricate.
 Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment".
