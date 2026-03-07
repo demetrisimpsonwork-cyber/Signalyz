@@ -15,6 +15,7 @@ interface CalibratedBulletsSectionProps {
     };
   };
   effectiveIsPro: boolean;
+  onUpgrade?: () => void;
 }
 
 /**
@@ -22,7 +23,7 @@ interface CalibratedBulletsSectionProps {
  * them alongside the calibrated variants. Never show the full raw resume
  * as a single "original bullet".
  */
-const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro }: CalibratedBulletsSectionProps) => {
+const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }: CalibratedBulletsSectionProps) => {
   // Parse the resume into structured roles with individual bullets
   const parsedRoles = useMemo(() => {
     try {
@@ -124,23 +125,33 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro }: Calibrated
         <EvidenceLedger entries={evidenceEntries} />
       </div>
 
-      {/* Variant B */}
-      {effectiveIsPro && result.alt_a !== result.optimized_bullet && (
-        <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
-          <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
-          <div className="pt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
-            <ul className="space-y-0.5">
-              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Emphasized operational outcome</li>
-              <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Aligned terminology with hiring expectations</li>
-            </ul>
-          </div>
-          <EvidenceLedger entries={evidenceEntries} />
+      {/* Variant B & C — Pro only */}
+      {effectiveIsPro ? (
+        <>
+          {result.alt_a !== result.optimized_bullet && (
+            <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
+              <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
+              <div className="pt-2 space-y-1">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+                <ul className="space-y-0.5">
+                  <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Emphasized operational outcome</li>
+                  <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Aligned terminology with hiring expectations</li>
+                </ul>
+              </div>
+              <EvidenceLedger entries={evidenceEntries} />
+            </div>
+          )}
+          {result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
+            <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
+          )}
+        </>
+      ) : (
+        <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
+          <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
+          <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
+          <button onClick={onUpgrade} className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/90">Unlock Resumix Pro — $19/month</button>
         </div>
-      )}
-      {effectiveIsPro && result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
-        <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
       )}
 
       <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">

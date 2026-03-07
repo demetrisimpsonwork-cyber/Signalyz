@@ -1163,7 +1163,15 @@ const Index = () => {
                       </ul>
                     </div>
                     <ResultSection title="Repositioned Version A — Ownership Elevation" content={role.sampleA} />
-                    <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
+                    {effectiveIsPro ? (
+                      <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
+                    ) : (
+                      <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
+                        <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
+                        <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
+                        <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
                   </div>
                 )}
@@ -1311,6 +1319,7 @@ const Index = () => {
                       bullet={bullet}
                       result={result}
                       effectiveIsPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
                     />
 
                     {!effectiveIsPro && <ProInsightsTeaser />}
