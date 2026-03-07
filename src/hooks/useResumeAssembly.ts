@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
+import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 
 export interface CalibratedResumeData {
   header: {
