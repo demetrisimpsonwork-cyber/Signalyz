@@ -1164,6 +1164,7 @@ const Index = () => {
                     </div>
                     <ResultSection title="Repositioned Version A — Ownership Elevation" content={role.sampleA} />
                     <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
+                    <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
                   </div>
                 )}
 
