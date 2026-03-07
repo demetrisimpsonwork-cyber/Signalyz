@@ -156,10 +156,10 @@ const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
 
 /** Dynamic classification style — matches "Below X Threshold", "Near X Threshold", "At X Threshold" */
 function classificationStyleFor(classification: string): string {
-  if (classification.startsWith("Below")) return "text-destructive bg-destructive/10";
-  if (classification.startsWith("Near")) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
-  if (classification.startsWith("At")) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
-  return "text-muted-foreground bg-muted/30";
+  if (classification.startsWith("Below")) return "text-destructive bg-destructive/10 border border-destructive/20";
+  if (classification.startsWith("Near")) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-700/40";
+  if (classification.startsWith("At")) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20 border border-green-300 dark:border-green-700/40";
+  return "text-muted-foreground bg-muted/30 border border-border/60";
 }
 
 const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
@@ -181,8 +181,8 @@ function tierStyleFor(tier: string): string {
 
 const BlockShell = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="rounded-lg border bg-card overflow-hidden">
-    <div className="px-5 pt-4 pb-3 border-b border-border/60">
-      <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground">{label}</p>
+    <div className="px-5 pt-5 pb-3 border-b border-border/60">
+      <p className="text-xs uppercase tracking-[0.15em] font-bold text-foreground/80">{label}</p>
     </div>
     {children}
   </div>
@@ -362,7 +362,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
   };
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-10">
       {/* Debug info logged to console only */}
 
       {/* 1 — Signal Tier */}
@@ -382,7 +382,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
       <BlockShell label={`${roleLabel} Dimension Calibration`}>
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
-            <div key={dim.name} className="px-4 py-3 space-y-2.5">
+            <div key={dim.name} className="px-4 py-4 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-foreground">{dim.name}</p>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyleFor(dim.classification)}`}>
@@ -487,7 +487,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
               const dim = signal_classifier!.dimension_scores[key];
               const pct = Math.min(100, (dim.score / 25) * 100);
               return (
-                <div key={key} className="px-4 py-3 space-y-2">
+                <div key={key} className="px-4 py-4 space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold text-foreground">{DIMENSION_LABELS[key]}</p>
                     <span className={`text-xs font-bold tabular-nums ${scoreColor(dim.score)}`}>
@@ -507,10 +507,10 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
                   )}
                   {/* Evidence quotes */}
                   {dim.evidence_quotes && dim.evidence_quotes.length > 0 && (
-                    <div className="space-y-1 pt-0.5">
+                    <div className="space-y-1.5 pt-1 ml-1">
                       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Evidence</p>
                       {dim.evidence_quotes.map((q, i) => (
-                        <p key={i} className="text-[11px] text-muted-foreground/80 italic leading-relaxed pl-2 border-l-2 border-border/60">
+                        <p key={i} className="text-[10px] text-muted-foreground/80 italic leading-relaxed pl-3 border-l-2 border-primary/40">
                           "{q}"
                         </p>
                       ))}
