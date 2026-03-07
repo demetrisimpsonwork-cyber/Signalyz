@@ -35,6 +35,7 @@ import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -492,17 +493,14 @@ const Index = () => {
     setDirectorError(null);
     // telemetry: positioning_run_clicked
 
-    // 90-second timeout
-    const timeoutId = setTimeout(() => {
-      setDirectorLoading(false);
-      setDirectorError("Analysis is taking longer than expected. Your resume may be complex — click retry to try again.");
-    }, 90000);
-
     try {
-      const { data, error } = await supabase.functions.invoke("director-calibration", {
-        body: { experience: normResume.text, jd: jd?.trim() || undefined, deterministic: false },
-      });
-      clearTimeout(timeoutId);
+      const data = await invokeResilient(
+        "director",
+        "director-calibration",
+        { experience: normResume.text, jd: jd?.trim() || undefined, deterministic: false },
+        90_000,
+      );
+
       // Capture debug info from response
       const debug: DebugInfo = {
         request_id: data?.request_id,
@@ -510,38 +508,23 @@ const Index = () => {
         message: data?.message || data?.error,
         payload_length: normResume.text.length,
         timestamp: new Date().toISOString(),
-        status_code: error ? 500 : 200,
+        status_code: 200,
       };
-      if (error) {
-        debug.response_snippet = typeof error === "object" ? JSON.stringify(error).slice(0, 500) : String(error).slice(0, 500);
-        debug.status_code = 500;
-        setLastDebug(debug);
-        throw error;
-      }
       setLastDebug(debug);
-      // Handle soft errors returned as 200 with status:"error"
-      if (data?.status === "error") {
-        debug.response_snippet = JSON.stringify(data).slice(0, 500);
-        setLastDebug(debug);
-        throw new Error(data.message || data.error || "Analysis failed");
-      }
+
       if (data?.error) throw new Error(data.error);
 
       const result = data as DirectorCalibrationResult;
 
       // Validate the result has minimum required fields
       if (!result || !result.dimensions || !result.director_signal_tier) {
-        // positioning result missing required fields
         throw new Error("Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.");
       }
 
       setDirectorResult(result);
-      // telemetry: positioning_run_success (no localStorage persistence — session only)
     } catch (err: any) {
-      clearTimeout(timeoutId);
-      const msg = err.message || "We couldn't complete the analysis. Please try again.";
+      const msg = err.message || FRIENDLY_FAIL_MSG;
       setDirectorError(msg);
-      // telemetry: positioning_run_error
     } finally {
       setDirectorLoading(false);
     }
