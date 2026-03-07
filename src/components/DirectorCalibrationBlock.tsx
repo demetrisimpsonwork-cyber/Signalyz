@@ -1,4 +1,5 @@
-import { Copy, Check, Download, FileText } from "lucide-react";
+import { Copy, Check, Download, FileText, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -377,6 +378,61 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
           <p className="text-xs text-muted-foreground leading-relaxed">{director_signal_tier.rationale}</p>
         </div>
       </BlockShell>
+
+      {/* Gate: everything below Signal Tier is blurred for free users */}
+      {!isPro ? (
+        <div className="relative">
+          <div className="blur-sm select-none pointer-events-none space-y-10 max-h-[600px] overflow-hidden">
+            <BlockShell label="Dimension Calibration">
+              <div className="divide-y divide-border/50">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="px-4 py-4 space-y-2.5">
+                    <div className="h-3 bg-muted rounded w-2/3" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                    <div className="h-3 bg-muted rounded w-3/4" />
+                  </div>
+                ))}
+              </div>
+            </BlockShell>
+            <BlockShell label="Hiring Stage Risk Mapping">
+              <div className="divide-y divide-border/50">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="px-4 py-3 space-y-2">
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                  </div>
+                ))}
+              </div>
+            </BlockShell>
+            <BlockShell label="Signal Classifier">
+              <div className="px-4 py-4 space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                    <div className="h-1 bg-muted rounded w-full" />
+                  </div>
+                ))}
+              </div>
+            </BlockShell>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent via-background/60 to-background">
+            <div className="text-center space-y-4 max-w-sm px-4">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(38,92%,50%)]/10">
+                <span className="text-2xl" style={{ color: "hsl(38, 92%, 50%)" }}>✦</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-foreground tracking-tight">Unlock Full Signal Report</h3>
+                <p className="text-sm text-muted-foreground">Get the complete 11-section diagnostic with actionable recalibration directives.</p>
+              </div>
+              <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
+                <span style={{ color: "inherit" }}>✦</span>
+                Unlock Resumix Pro — $19/month
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+      <>
 
       {/* 2 — Dimension Calibration */}
       <BlockShell label={`${roleLabel} Dimension Calibration`}>
