@@ -72,38 +72,34 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
         <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
         <p className="text-xs text-muted-foreground mt-1">What's reducing your match — and exactly how to fix it</p>
       </div>
-      <div className="space-y-4">
-        {gaps.map((gap, i) => {
-          const isBlurred = !isPro && i >= 1;
-          const isPartialBlur = !isPro && i === 1;
-          return (
-            <div key={i} className="relative">
-              <div className={`rounded-lg border bg-card p-5 md:p-4 space-y-3 ${isBlurred ? "blur-sm select-none pointer-events-none" : ""} ${isPartialBlur ? "blur-[3px]" : ""}`}>
-                <div className="flex items-start justify-between">
-                  <p className="text-sm font-semibold text-foreground">{gap.gap_name}</p>
-                  <Badge className={`text-[10px] ${IMPACT_STYLES[gap.impact] || IMPACT_STYLES.Low}`}>
-                    {gap.impact}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{gap.why_it_hurts}</p>
-                <div className="flex items-start gap-2 rounded-md bg-primary/5 border border-primary/10 p-3">
-                  <span className="text-primary font-medium text-sm shrink-0">→</span>
-                  <p className="text-sm text-foreground flex-1">{gap.action}</p>
-                  <button onClick={() => handleCopy(gap.action, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
-                    {copiedIdx === i ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </button>
-                </div>
+      <div className="relative">
+        <div className={`space-y-4 ${!isPro ? "blur-sm select-none pointer-events-none" : ""}`}>
+          {gaps.map((gap, i) => (
+            <div key={i} className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <p className="text-sm font-semibold text-foreground">{gap.gap_name}</p>
+                <Badge className={`text-[10px] ${IMPACT_STYLES[gap.impact] || IMPACT_STYLES.Low}`}>
+                  {gap.impact}
+                </Badge>
               </div>
-              {isPartialBlur && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Button size="sm" onClick={onUpgrade} className="shadow-lg">
-                    Unlock All Gap Actions — Resumix Pro
-                  </Button>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground">{gap.why_it_hurts}</p>
+              <div className="flex items-start gap-2 rounded-md bg-primary/5 border border-primary/10 p-3">
+                <span className="text-primary font-medium text-sm shrink-0">→</span>
+                <p className="text-sm text-foreground flex-1">{gap.action}</p>
+                <button onClick={() => handleCopy(gap.action, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
+                  {copiedIdx === i ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+                </button>
+              </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
+        {!isPro && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Button size="sm" onClick={onUpgrade} className="shadow-lg">
+              Unlock Gap Actions — Resumix Pro
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
