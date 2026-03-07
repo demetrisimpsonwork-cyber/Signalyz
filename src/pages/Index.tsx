@@ -495,7 +495,7 @@ const Index = () => {
     }
     // Credential gate
     if (checkCredentialMismatch(bullet.trim(), jd.trim())) {
-      setAlignmentError({ message: CREDENTIAL_BLOCK_MSG });
+      setAlignmentError({ message: CREDENTIAL_BLOCK_MSG, error_code: "CREDENTIAL_MISMATCH" });
       return false;
     }
     setErrors({});
