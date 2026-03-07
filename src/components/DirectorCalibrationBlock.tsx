@@ -74,9 +74,11 @@ export interface ExportBuilderResult {
 export interface DirectorCalibrationResult {
   dimensions: DirectorDimension[];
   director_signal_tier: {
-    tier: "Senior IC Signal" | "Emerging Director" | "Director-Calibrated" | "Scope Inflation Risk";
+    tier: string;
     rationale: string;
   };
+  _detected_role_tier?: string;
+  _role_tier_label?: string;
   hiring_stage_friction: {
     recruiter_filter_risk: { level: "Low" | "Moderate" | "Elevated"; observation: string };
     hiring_manager_friction: { level: "Low" | "Moderate" | "Elevated"; observation: string };
@@ -152,11 +154,13 @@ const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
   risk_compression: "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40",
 };
 
-const classificationStyle: Record<DirectorDimension["classification"], string> = {
-  "Below Director Threshold": "text-destructive bg-destructive/10",
-  "Near Director Threshold": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
-  "At Director Threshold": "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
-};
+/** Dynamic classification style — matches "Below X Threshold", "Near X Threshold", "At X Threshold" */
+function classificationStyleFor(classification: string): string {
+  if (classification.startsWith("Below")) return "text-destructive bg-destructive/10";
+  if (classification.startsWith("Near")) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
+  if (classification.startsWith("At")) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+  return "text-muted-foreground bg-muted/30";
+}
 
 const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
   Low: "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
@@ -164,12 +168,14 @@ const riskLevelStyle: Record<"Low" | "Moderate" | "Elevated", string> = {
   Elevated: "text-destructive bg-destructive/10",
 };
 
-const tierStyle: Record<DirectorCalibrationResult["director_signal_tier"]["tier"], string> = {
-  "Director-Calibrated": "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20",
-  "Emerging Director": "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20",
-  "Senior IC Signal": "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20",
-  "Scope Inflation Risk": "text-destructive bg-destructive/10",
-};
+/** Dynamic tier style — matches keywords in tier string */
+function tierStyleFor(tier: string): string {
+  if (/Calibrated/i.test(tier)) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+  if (/Emerging/i.test(tier)) return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20";
+  if (/Signal$/i.test(tier) || /IC|Contributor|Manager Signal/i.test(tier)) return "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20";
+  if (/Inflation/i.test(tier)) return "text-destructive bg-destructive/10";
+  return "text-muted-foreground bg-muted/30";
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
