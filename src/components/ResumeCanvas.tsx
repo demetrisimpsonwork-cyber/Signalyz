@@ -463,38 +463,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
         </div>
       )}
 
-      {/* Skills */}
-      {resume.skills && resume.skills.length > 0 && (
-        <div className="mb-5">
-          <SectionHeader>Skills</SectionHeader>
-          <div className="flex flex-wrap gap-1.5">
-            {resume.skills.map((skill, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center rounded-full border px-2.5 py-0.5"
-                style={{ borderColor: "#D1D5DB", color: "#374151", fontSize: "10px", fontWeight: 500 }}
-              >
-                {editMode ? (
-                  <span
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="outline-none cursor-text min-w-[20px]"
-                    onBlur={(e) => {
-                      const updated = [...resume.skills];
-                      updated[i] = e.currentTarget.textContent || skill;
-                      onUpdate("skills", updated);
-                    }}
-                  >
-                    {skill}
-                  </span>
-                ) : (
-                  skill
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Skills section removed — Core Competencies already covers this */}
 
       {/* Certifications */}
       {resume.certifications && resume.certifications.length > 0 && (
