@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
+import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 
 export interface CalibratedResumeData {
   header: {
@@ -55,33 +55,6 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  const invokeWithTimeout = async (directorResult: DirectorCalibrationResult, originalResume: string): Promise<any> => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke("assemble-calibrated-resume", {
-        body: { directorResult, originalResume },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (fnError) throw new Error(fnError.message || "Assembly failed");
-      if (data?.status === "error") throw new Error(data.message || "Assembly failed");
-      return data;
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      const isTimeout = controller.signal.aborted || err?.name === "AbortError" ||
-        err?.message?.includes("NETWORK_ERROR") || err?.message?.includes("HTTP: 0") ||
-        err?.message?.includes("Failed to fetch");
-      if (isTimeout) {
-        console.warn("[useResumeAssembly] Request timed out or network error:", err?.message);
-        throw new Error("__TIMEOUT__");
-      }
-      throw err;
-    }
-  };
-
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
     setLoading(true);
     setError(null);
@@ -99,22 +72,22 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        data = await invokeWithTimeout(directorResult, originalResume);
+        data = await invokeResilient(
+          "assembly",
+          "assemble-calibrated-resume",
+          { directorResult, originalResume },
+          120_000,
+        );
         break;
       } catch (err: any) {
-        if (err.message === "__TIMEOUT__" && attempts < maxAttempts) {
-          console.log("[useResumeAssembly] Attempt", attempts, "timed out, retrying...");
+        const isFriendly = err.message === FRIENDLY_FAIL_MSG;
+        if (isFriendly && attempts < maxAttempts) {
+          console.log("[useResumeAssembly] Attempt", attempts, "failed, retrying...");
           setStep(0);
           continue;
         }
-        if (err.message === "__TIMEOUT__") {
-          stepTimers.forEach(clearTimeout);
-          setError("Resume generation is taking longer than expected. Try again — your alignment data is saved.");
-          setLoading(false);
-          return;
-        }
         stepTimers.forEach(clearTimeout);
-        setError(err.message || "Failed to assemble resume. Please retry.");
+        setError(isFriendly ? FRIENDLY_FAIL_MSG : (err.message || FRIENDLY_FAIL_MSG));
         setLoading(false);
         return;
       }
