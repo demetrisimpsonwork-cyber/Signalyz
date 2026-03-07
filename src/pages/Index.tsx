@@ -576,9 +576,13 @@ const Index = () => {
         ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
         : normResume.text;
       const sessionToken = user ? undefined : getSessionToken();
-      const { data, error } = await supabase.functions.invoke("optimize-bullet", {
-        body: { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
-      });
+
+      const data = await invokeResilient(
+        "alignment",
+        "optimize-bullet",
+        { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
+        90_000,
+      );
 
       // Capture debug info
       const debug: DebugInfo = {
@@ -587,26 +591,13 @@ const Index = () => {
         message: data?.message || data?.error,
         payload_length: payloadLength,
         timestamp: new Date().toISOString(),
-        status_code: error ? 500 : 200,
+        status_code: 200,
       };
-
-      if (error) {
-        debug.response_snippet = typeof error === "object" ? JSON.stringify(error).slice(0, 500) : String(error).slice(0, 500);
-        debug.status_code = 500;
-        setLastDebug(debug);
-        setAlignmentError(debug);
-        throw error;
-      }
-
       setLastDebug(debug);
 
-      // Handle soft errors (200 with status:"error")
-      if (data?.status === "error") {
-        debug.response_snippet = JSON.stringify(data).slice(0, 500);
-        setLastDebug(debug);
-        // limit_reached handling removed — server-side only
+      if (data?.error) {
         setAlignmentError(debug);
-        throw new Error(data.message || data.error || "Analysis failed");
+        throw new Error(data.error);
       }
 
       const res = data as OptimizationResult;
@@ -640,7 +631,7 @@ const Index = () => {
         });
       }
     } catch (err: any) {
-      const msg = err.message || "Something went wrong. Please try again.";
+      const msg = err.message || FRIENDLY_FAIL_MSG;
       setResult(null);
       if (!alignmentError) {
         setAlignmentError({
@@ -649,7 +640,6 @@ const Index = () => {
           timestamp: new Date().toISOString(),
         });
       }
-      // alignment engine error handled via UI
     } finally {
       setLoading(false);
     }
