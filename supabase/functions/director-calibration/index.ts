@@ -168,21 +168,23 @@ const ROLE_TIER_CONFIGS: Record<RoleTier, RoleTierConfig> = {
   },
 };
 
-function detectRoleTier(normalizedData: Record<string, unknown>): RoleTier {
+function detectRoleTier(normalizedData: Record<string, unknown>, rawJd?: string): RoleTier {
   const title = String(normalizedData.target_role_title ?? "").toLowerCase();
   const level = String(normalizedData.target_seniority_level ?? "").toLowerCase();
-  const combined = `${title} ${level}`;
+  // Also scan the raw JD text for keywords the normalizer might miss
+  const rawJdLower = (rawJd ?? "").toLowerCase();
+  const combined = `${title} ${level} ${rawJdLower}`;
 
-  // Supervisor-level keywords
-  if (/\b(supervisor|team\s*lead|shift\s*lead|floor\s*manager|crew\s*lead|frontline|retail\s*manager|store\s*manager|assistant\s*manager)\b/.test(combined)) {
+  // Supervisor-level keywords (check first — most specific non-leadership tier)
+  if (/\b(supervisor|team\s*lead|shift\s*lead|floor\s*manager|crew\s*lead|frontline|retail\s*manager|store\s*manager|assistant\s*manager|coordinator|operations\s*lead)\b/.test(combined)) {
     return "supervisor";
   }
   // Director+ keywords
-  if (/\b(director|vp|vice\s*president|head\s+of|chief|c-suite|svp|evp|principal)\b/.test(combined)) {
+  if (/\b(director|vp|vice\s*president|head\s+of|chief|c-suite|svp|evp)\b/.test(combined)) {
     return "director";
   }
   // Senior Manager keywords
-  if (/\b(senior\s*manager|sr\.?\s*manager|group\s*manager)\b/.test(combined)) {
+  if (/\b(senior\s*manager|sr\.?\s*manager|group\s*manager|principal)\b/.test(combined)) {
     return "senior_manager";
   }
   // Manager keywords
@@ -190,14 +192,11 @@ function detectRoleTier(normalizedData: Record<string, unknown>): RoleTier {
     return "manager";
   }
   // Fallback: check seniority level field
-  if (/\b(entry|junior|associate|individual\s*contributor|ic|coordinator)\b/.test(combined)) {
-    return "supervisor"; // Use supervisor thresholds for non-leadership roles
+  if (/\b(entry|junior|associate|individual\s*contributor|ic)\b/.test(combined)) {
+    return "supervisor";
   }
-  if (/\b(senior|staff|principal)\b/.test(level)) {
-    return "director";
-  }
-  // Default to director for backward compatibility
-  return "director";
+  // Default to supervisor — never assume Director without evidence
+  return "supervisor";
 }
 
 function buildCalibrationPrompt(config: RoleTierConfig): string {
@@ -812,7 +811,7 @@ async function runPipeline(
       : `RESUME:\n${experience}`;
 
   // ── Detect role tier from normalizer output ─────────────────────────────────
-  const detectedTier = detectRoleTier(normalized);
+  const detectedTier = detectRoleTier(normalized, jd);
   const tierConfig = ROLE_TIER_CONFIGS[detectedTier];
   console.log(`  → Detected role tier: ${detectedTier} (${tierConfig.label})`);
   await storeArtifact(supabase, runId, "step_1b_role_tier", { detected_tier: detectedTier, label: tierConfig.label, target_role_title: normalized.target_role_title, target_seniority_level: normalized.target_seniority_level });
