@@ -730,7 +730,10 @@ function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticDat
 function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; isPro?: boolean; onUpgrade?: () => void }) {
   const currentScore = data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
-  const dims = data.dimensions ?? [];
+  const dims = (data.dimensions ?? [])
+    .slice()
+    .sort((a, b) => (b.lift ?? 0) - (a.lift ?? 0))
+    .slice(0, 4);
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4 relative">
