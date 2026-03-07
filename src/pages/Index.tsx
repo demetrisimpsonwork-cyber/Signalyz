@@ -634,11 +634,7 @@ const Index = () => {
       const msg = err.message || FRIENDLY_FAIL_MSG;
       setResult(null);
       if (!alignmentError) {
-        setAlignmentError({
-          message: msg,
-          payload_length: payloadLength,
-          timestamp: new Date().toISOString(),
-        });
+        setAlignmentError({ message: msg });
       }
     } finally {
       setLoading(false);
@@ -1010,7 +1006,7 @@ const Index = () => {
                 )}
 
                 {!loading && !result && alignmentError && (
-                  <EngineErrorCard debugInfo={alignmentError} onRetry={handleOptimize} />
+                  <EngineErrorCard message={alignmentError.message} onRetry={handleOptimize} />
                 )}
 
                 {!loading && !result && !alignmentError && showSamples && (
