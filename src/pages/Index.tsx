@@ -668,7 +668,7 @@ const Index = () => {
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
-        <div className="container max-w-2xl text-center relative z-10">
+        <div className="container max-w-[780px] text-center relative z-10">
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
@@ -687,7 +687,7 @@ const Index = () => {
       </section>
 
       {/* What you walk away with */}
-      <section className="pt-16 md:pt-20 pb-12 container max-w-3xl">
+      <section className="pt-16 md:pt-20 pb-12 container max-w-[780px]">
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
@@ -711,7 +711,7 @@ const Index = () => {
       </section>
 
       {/* Before/After Transformation Showcase */}
-      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+      <section className="py-12 container max-w-[780px]" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
           <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
@@ -738,7 +738,7 @@ const Index = () => {
 
 
       {/* WAS/NOW Transformation Section */}
-      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+      <section className="py-12 container max-w-[780px]" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
           <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not reframing with synonyms. Recalibrating. Every word came from the original resume.</p>
@@ -788,7 +788,7 @@ const Index = () => {
 
       {/* Differentiation Statement */}
       <section className="py-12 bg-[#0F1C2E]">
-        <div className="container max-w-2xl text-center">
+        <div className="container max-w-[780px] text-center">
           <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
           <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
             Most tools reframe your bullets with synonyms. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and recalibrates your positioning from the threshold up.
@@ -797,7 +797,7 @@ const Index = () => {
       </section>
 
       {/* Feature Cards */}
-      <section className="py-12 container max-w-3xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+      <section className="py-12 container max-w-[780px]" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
@@ -814,7 +814,7 @@ const Index = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-12 container max-w-2xl">
+      <section className="py-12 container max-w-[780px]">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
         <ol className="space-y-5">
           {[
@@ -834,7 +834,7 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-12 container max-w-6xl">
+      <section id="alignment-tool" className="py-12 container max-w-5xl">
         {/* Pipeline progress bar */}
         <SignalPipelineProgress
           stages={pipelineStages}
@@ -856,7 +856,7 @@ const Index = () => {
 
         {/* Sub-navigation tabs — teal pill active state */}
         <div className="mb-6 flex justify-center mt-3">
-          <div className="inline-flex rounded-md bg-muted/30 p-0.5 gap-0.5">
+          <div className="inline-flex flex-wrap lg:flex-nowrap rounded-md bg-muted/30 p-0.5 gap-0.5">
             {[
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
               { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
@@ -872,7 +872,7 @@ const Index = () => {
                   }
                   setMode(tab.id);
                 }}
-                className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
+                className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded text-[11px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
                   mode === tab.id
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -1275,7 +1275,7 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-12 container max-w-2xl">
+      <section className="py-12 container max-w-[780px]">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center" style={{ letterSpacing: "0.02em" }}>
           Frequently Asked Questions
         </h2>
