@@ -807,6 +807,8 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
           Copy Calibration Report
         </button>
       </div>
+      </>
+      )}
     </div>
   );
 };
