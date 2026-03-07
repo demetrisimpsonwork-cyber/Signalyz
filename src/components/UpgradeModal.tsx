@@ -101,22 +101,19 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-4">
-            <div>
-              <p className="text-sm font-bold text-foreground">Resumix Pro — $19/month</p>
-              <p className="text-[11px] text-muted-foreground/70 italic mt-0.5">Less than one rejected application costs you.</p>
-            </div>
+            <Button
+              size="lg"
+              className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              onClick={() => {
+                onClose();
+                initiateCheckout();
+              }}
+            >
+              Unlock Resumix Pro — $19/month
+            </Button>
+            <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
 
             <div className="space-y-3">
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={() => {
-                  onClose();
-                  initiateCheckout();
-                }}
-              >
-                Unlock Resumix Pro
-              </Button>
 
               {!trialStarted && onStartTrial && (
                 <>

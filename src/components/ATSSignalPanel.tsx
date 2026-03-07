@@ -20,9 +20,15 @@ interface ATSSignalPanelProps {
 }
 
 const RISK_STYLES: Record<string, string> = {
-  High: "bg-destructive text-destructive-foreground",
-  Moderate: "bg-orange-500 text-white",
-  Low: "bg-green-600 text-white",
+  High: "border border-orange-500/30 bg-card",
+  Moderate: "border border-orange-400/20 bg-card",
+  Low: "border border-green-500/20 bg-card",
+};
+
+const RISK_BADGE_STYLES: Record<string, string> = {
+  High: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  Moderate: "bg-orange-400/15 text-orange-500 dark:text-orange-300",
+  Low: "bg-green-500/15 text-green-600 dark:text-green-400",
 };
 
 const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProps) => {
@@ -71,9 +77,14 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
       </div>
 
       {/* Risk badge */}
-      <div className={`rounded-lg p-5 md:p-4 text-center ${RISK_STYLES[data.ats_risk]}`}>
-        <p className="text-lg font-bold">ATS Risk: {data.ats_risk}</p>
-        <p className="text-sm opacity-90 mt-1">{data.ats_risk_explanation}</p>
+      <div className={`rounded-lg p-5 md:p-4 ${RISK_STYLES[data.ats_risk]}`}>
+        <div className="flex items-center justify-center gap-2">
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_BADGE_STYLES[data.ats_risk]}`}>
+            {data.ats_risk}
+          </span>
+          <p className="text-sm font-semibold text-foreground">ATS Risk</p>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2 text-center">{data.ats_risk_explanation}</p>
       </div>
 
       {/* Keywords — blurred for free */}
