@@ -320,7 +320,7 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} />
+            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
@@ -1017,6 +1017,8 @@ const Index = () => {
               directorError={directorError}
               onRunAlignment={() => setMode("alignment")}
               onRunDirector={handleDirectorCalibrate}
+              isPro={effectiveIsPro}
+              onUpgrade={() => setShowUpgrade(true)}
             />
         )}
 

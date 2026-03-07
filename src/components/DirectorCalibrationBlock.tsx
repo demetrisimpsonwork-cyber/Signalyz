@@ -303,7 +303,7 @@ function normalizeResult(raw: DirectorCalibrationResult): DirectorCalibrationRes
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalibrationResult }) => {
+const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void }) => {
   const [copied, setCopied] = useState(false);
 
   const result = normalizeResult(rawResult);
