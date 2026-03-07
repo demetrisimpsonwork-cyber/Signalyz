@@ -112,36 +112,6 @@ const UpgradeModal = ({
               Unlock Resumix Pro — $19/month
             </Button>
             <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
-
-            <div className="space-y-3">
-
-              {!trialStarted && onStartTrial && (
-                <>
-                  <div className="flex items-center gap-3">
-                    <Separator className="flex-1" />
-                    <span className="text-xs text-muted-foreground/50">or</span>
-                    <Separator className="flex-1" />
-                  </div>
-                  <button
-                    onClick={handleStartTrial}
-                    className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-                  >
-                    Try Pro Free — 3 Strategic Runs
-                    <span className="block text-xs text-muted-foreground/50 mt-0.5">No card required</span>
-                  </button>
-                </>
-              )}
-
-              {trialStarted && (
-                <TrialProgress used={trialRunsUsed} limit={trialLimit} />
-              )}
-
-              <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                Most candidates optimize wording.
-                <br />
-                Strategic candidates optimize perception.
-              </p>
-            </div>
           </div>
         </div>
 
