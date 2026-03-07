@@ -843,21 +843,20 @@ const Index = () => {
       {/* How it works */}
       <section className="py-12 container max-w-[780px]">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
-        <ol className="space-y-5">
+        <div className="space-y-5">
           {[
-            { step: "Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
-            { step: "Map Your Experience to Weighted Themes", desc: "Compare how your background reads against each priority signal, identifying where alignment is strong and where perception gaps exist." },
-            { step: "Refine for Strategic Alignment", desc: "Sharpen language to reflect ownership, decision authority, and measurable outcomes — without fabrication or inflation." },
+            { step: "1. Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
+            { step: "2. Map Your Experience to Weighted Themes", desc: "Compare how your background reads against each priority signal, identifying where alignment is strong and where perception gaps exist." },
+            { step: "3. Refine for Strategic Alignment", desc: "Sharpen language to reflect ownership, decision authority, and measurable outcomes — without fabrication or inflation." },
           ].map((item, i) => (
-            <li key={i} className="flex gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium text-muted-foreground">{i + 1}</span>
+            <div key={i} className="flex gap-4">
               <div>
                 <p className="text-sm font-medium text-foreground">{item.step}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
               </div>
-            </li>
+            </div>
           ))}
-        </ol>
+        </div>
       </section>
 
       {/* Mode toggle + Tool */}
@@ -883,7 +882,7 @@ const Index = () => {
 
         {/* Sub-navigation tabs — teal pill active state */}
         <div className="mb-6 flex justify-center mt-3">
-          <div className="inline-flex flex-wrap lg:flex-nowrap rounded-md bg-muted/30 p-0.5 gap-0.5">
+          <div className="inline-flex flex-wrap lg:flex-nowrap rounded-md bg-muted/30 p-0.5 gap-1 lg:gap-0.5">
             {[
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
               { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
