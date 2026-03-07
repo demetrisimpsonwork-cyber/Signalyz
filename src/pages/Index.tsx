@@ -500,7 +500,7 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
-        body: { experience: normResume.text, jd: jdText?.trim() || undefined, deterministic: false },
+        body: { experience: normResume.text, jd: jd?.trim() || undefined, deterministic: false },
       });
       clearTimeout(timeoutId);
       // Capture debug info from response
