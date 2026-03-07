@@ -1037,7 +1037,19 @@ const Index = () => {
                 )}
 
                 {!loading && !result && alignmentError && (
-                  <EngineErrorCard message={alignmentError.message} onRetry={handleOptimize} />
+                  alignmentError.error_code === "CREDENTIAL_MISMATCH" ? (
+                    <div className="rounded-lg border border-border bg-muted/30 p-5 my-6 flex items-start gap-3">
+                      <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Shield className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">Credential Mismatch Detected</p>
+                        <p className="text-sm text-muted-foreground">{alignmentError.message}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <EngineErrorCard message={alignmentError.message} onRetry={handleOptimize} />
+                  )
                 )}
 
                 {!loading && !result && !alignmentError && showSamples && (
