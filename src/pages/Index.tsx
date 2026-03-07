@@ -882,7 +882,7 @@ const Index = () => {
 
         {/* Sub-navigation tabs — teal pill active state */}
         <div className="mb-6 flex justify-center mt-3">
-          <div className="inline-flex flex-wrap lg:flex-nowrap rounded-md bg-muted/30 p-0.5 gap-1 lg:gap-0.5">
+          <div className="grid grid-cols-2 lg:inline-flex lg:flex-nowrap rounded-md bg-muted/30 p-1 gap-1 w-full lg:w-auto">
             {[
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
               { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
@@ -898,7 +898,7 @@ const Index = () => {
                   }
                   setMode(tab.id);
                 }}
-                className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded text-[11px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 lg:px-4 py-2 rounded text-[11px] lg:text-sm font-medium transition-colors text-center ${
                   mode === tab.id
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
