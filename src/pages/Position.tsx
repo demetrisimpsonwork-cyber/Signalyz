@@ -1098,23 +1098,25 @@ const Position = () => {
 
         {/* Right — Results */}
         <div className="space-y-4">
-          {loading && <AlignmentLoader minHeight="320px" />}
-
-          {timedOut && !loading && (
+          {/* Three mutually exclusive display states: IDLE, RUNNING, COMPLETE */}
+          {loading ? (
+            /* RUNNING — generation in progress */
+            <AlignmentLoader minHeight="320px" />
+          ) : timedOut ? (
             <TimeoutErrorCard
               onRetry={handleRun}
               experienceLen={experience.length}
               jdLen={jd.length}
             />
-          )}
-
-          {!loading && !timedOut && !result && (
+          ) : !result ? (
+            /* IDLE — before Generate is clicked */
             <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
               <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
             </div>
-          )}
+          ) : null}
 
-          {result && (
+          {/* COMPLETE — only render output when not loading and result exists */}
+          {!loading && !timedOut && result && (
             <>
               {/* 1 — Role DNA */}
               <Section title="1. Role DNA Extraction">
