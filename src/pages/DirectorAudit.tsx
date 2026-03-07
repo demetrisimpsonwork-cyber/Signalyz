@@ -15,10 +15,11 @@ import { saveAs } from "file-saver";
 
 const buildPlainText = (result: DirectorCalibrationResult): string => {
   const lines: string[] = [
+    const roleLabel = (result._role_tier_label || "Director").toUpperCase();
     "SIGNAL POSITIONING REPORT",
     "====================================",
     "",
-    "DIRECTOR SIGNAL TIER",
+    `${roleLabel} SIGNAL TIER`,
     `Tier: ${result.director_signal_tier.tier}`,
     `Rationale: ${result.director_signal_tier.rationale}`,
     "",

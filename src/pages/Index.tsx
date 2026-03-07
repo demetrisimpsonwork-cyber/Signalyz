@@ -322,11 +322,6 @@ function DirectorModeContent({
             <DirectorCalibrationBlock result={directorResult} />
           </DirectorCalibrationErrorBoundary>
         )}
-        {!directorResult && !directorLoading && !directorError && (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-2">
-            <p className="text-sm text-muted-foreground">Click Run to generate your report.</p>
-          </div>
-        )}
       </div>
     </div>
   );
