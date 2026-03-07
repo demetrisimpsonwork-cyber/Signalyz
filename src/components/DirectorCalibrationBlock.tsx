@@ -379,56 +379,25 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
         </div>
       </BlockShell>
 
-      {/* Gate: everything below Signal Tier is blurred for free users */}
+      {/* Gate: everything below Signal Tier is hidden for free users */}
       {!isPro ? (
-        <div className="relative">
-          <div className="blur-sm select-none pointer-events-none space-y-10 max-h-[600px] overflow-hidden">
-            <BlockShell label="Dimension Calibration">
-              <div className="divide-y divide-border/50">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="px-4 py-4 space-y-2.5">
-                    <div className="h-3 bg-muted rounded w-2/3" />
-                    <div className="h-3 bg-muted rounded w-full" />
-                    <div className="h-3 bg-muted rounded w-3/4" />
-                  </div>
-                ))}
-              </div>
-            </BlockShell>
-            <BlockShell label="Hiring Stage Risk Mapping">
-              <div className="divide-y divide-border/50">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="px-4 py-3 space-y-2">
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                    <div className="h-3 bg-muted rounded w-full" />
-                  </div>
-                ))}
-              </div>
-            </BlockShell>
-            <BlockShell label="Signal Classifier">
-              <div className="px-4 py-4 space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                    <div className="h-1 bg-muted rounded w-full" />
-                  </div>
-                ))}
-              </div>
-            </BlockShell>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent via-background/60 to-background">
-            <div className="text-center space-y-4 max-w-sm px-4">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(38,92%,50%)]/10">
-                <span className="text-2xl" style={{ color: "hsl(38, 92%, 50%)" }}>✦</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-foreground tracking-tight">Unlock Full Signal Report</h3>
-                <p className="text-sm text-muted-foreground">Get the complete 11-section diagnostic with actionable recalibration directives.</p>
-              </div>
-              <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-                <span style={{ color: "inherit" }}>✦</span>
-                Unlock Resumix Pro — $19/month
-              </Button>
+        <div className="rounded-lg border border-border bg-card p-8">
+          <div className="text-center space-y-5 max-w-sm mx-auto">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <span className="text-2xl text-primary">✦</span>
             </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-foreground tracking-tight">
+                Unlock the full Signal Positioning Report
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Resume Signal Profile, Employer Priority Signals, Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Resumix Pro.
+              </p>
+            </div>
+            <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
+              <span style={{ color: "inherit" }}>✦</span>
+              Unlock Resumix Pro — $19/month
+            </Button>
           </div>
         </div>
       ) : (
