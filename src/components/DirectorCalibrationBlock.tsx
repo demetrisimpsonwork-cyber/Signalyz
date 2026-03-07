@@ -98,10 +98,44 @@ export interface DirectorCalibrationResult {
   _replay?: boolean;
 }
 
+// ─── Label humanizer ──────────────────────────────────────────────────────────
+
+/** Known internal labels → plain English. Falls back to auto-converting snake_case. */
+const KNOWN_LABELS: Record<string, string> = {
+  // Gap labels (from GAP_LABEL_ENUM)
+  no_commercial_attribution: "No commercial impact attribution",
+  limited_ownership_scope: "Limited ownership scope",
+  weak_decision_authority: "Weak decision authority signal",
+  missing_cross_functional_leadership: "Missing cross-functional leadership",
+  incomplete_lifecycle_governance: "Incomplete lifecycle governance",
+  absent_risk_framing: "Risk framing absent",
+  fragmented_narrative: "Fragmented career narrative",
+  // Upgrade types
+  commercial_injection: "Commercial Impact",
+  ownership_elevation: "Ownership Elevation",
+  authority_framing: "Authority Framing",
+  cross_functional_leadership: "Cross-Functional Leadership",
+  lifecycle_governance: "Lifecycle Governance",
+  risk_compression: "Risk Compression",
+};
+
+function humanizeLabel(raw: string): string {
+  if (!raw) return raw;
+  const known = KNOWN_LABELS[raw];
+  if (known) return known;
+  // Auto-convert snake_case / kebab-case to Title Case
+  if (/[_-]/.test(raw)) {
+    return raw
+      .replace(/[_-]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return raw;
+}
+
 // ─── Style maps ───────────────────────────────────────────────────────────────
 
 const UPGRADE_TYPE_LABELS: Record<UpgradeType, string> = {
-  commercial_injection: "Commercial Injection",
+  commercial_injection: "Commercial Impact",
   ownership_elevation: "Ownership Elevation",
   authority_framing: "Authority Framing",
   cross_functional_leadership: "Cross-Functional Leadership",
@@ -493,7 +527,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
                 {signal_classifier.top_3_gaps.map((gap, i) => (
                   <li key={i} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
                     <span className="shrink-0 font-semibold text-foreground/60">{i + 1}.</span>
-                    {gap}
+                    {humanizeLabel(gap)}
                   </li>
                 ))}
               </ol>
@@ -675,7 +709,7 @@ const DirectorCalibrationBlock = ({ result: rawResult }: { result: DirectorCalib
                         <span className="shrink-0 text-[10px] font-semibold text-green-600 dark:text-green-400 mt-0.5">+</span>
                         <p className="text-xs text-foreground leading-relaxed">{diff.revised_bullet}</p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground/70 pl-4">Gap fixed: {diff.gap_fixed}</p>
+                      <p className="text-[10px] text-muted-foreground/70 pl-4">Gap fixed: {humanizeLabel(diff.gap_fixed)}</p>
                     </div>
                   ))}
                 </div>
