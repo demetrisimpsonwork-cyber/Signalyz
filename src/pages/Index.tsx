@@ -917,24 +917,7 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <ProGate
-            featureName="LinkedIn Signal Calibration"
-            featureDescription="Calibrate your LinkedIn headline and About section to match the exact language your target role is screening for."
-          >
-            <div className="max-w-2xl mx-auto">
-              <LinkedInSignalTab
-                experience={bullet}
-                inferredRole={result?.inferred_role_title || ""}
-                signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
-                onRunAlignment={() => setMode("alignment")}
-              />
-            </div>
-          </ProGate>
-        )}
-
-        {/* Calibrated Resume Tab */}
-        {mode === "calibrated" && (
-          <ProGate
+           <ProGate
             featureName="Calibrated Resume"
             featureDescription="Auto-assemble a polished, ATS-optimized resume from your signal analysis. Edit inline and export as .docx or .pdf."
           >
@@ -953,10 +936,6 @@ const Index = () => {
 
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
-          <ProGate
-            featureName="Signal Positioning Report"
-            featureDescription="12-section deep analysis of exactly where your signal breaks down and how to fix it. Includes hiring pipeline simulation, gap strategy, and elite bullet rewrites."
-          >
             <DirectorModeContent
               result={result}
               bullet={bullet}
@@ -967,7 +946,6 @@ const Index = () => {
               onRunAlignment={() => setMode("alignment")}
               onRunDirector={handleDirectorCalibrate}
             />
-          </ProGate>
         )}
 
         {/* Alignment Mode */}

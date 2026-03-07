@@ -81,63 +81,25 @@ const CalibratedResumeTab = ({
     exportCalibratedPdf("resume-canvas");
   };
 
-  // Pro gate — blurred preview
+  // Pro gate — trigger popup modal instead of inline blur
   if (!isPro) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Blurred ghost preview */}
-        <div className="relative">
-          <div
-            className="rounded-sm mx-auto bg-white p-10 space-y-6"
-            style={{
-              maxWidth: "720px",
-              filter: "blur(6px)",
-              boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
-              userSelect: "none",
-              pointerEvents: "none",
-            }}
-          >
-            <div className="text-center space-y-2">
-              <div className="h-6 w-48 bg-gray-200 rounded mx-auto" />
-              <div className="h-3 w-32 bg-gray-100 rounded mx-auto" />
-              <div className="h-2 w-56 bg-gray-100 rounded mx-auto" />
-            </div>
-            <div className="h-px bg-gray-200" />
-            <div className="space-y-1.5">
-              <div className="h-2.5 w-24 bg-gray-200 rounded" />
-              <div className="h-2 w-full bg-gray-100 rounded" />
-              <div className="h-2 w-5/6 bg-gray-100 rounded" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-2.5 w-28 bg-gray-200 rounded" />
-              <div className="flex flex-wrap gap-1">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-4 w-16 bg-gray-100 rounded-full" />
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-2.5 w-20 bg-gray-200 rounded" />
-              <div className="h-3 w-40 bg-gray-200 rounded" />
-              <div className="h-2 w-full bg-gray-100 rounded" />
-              <div className="h-2 w-full bg-gray-100 rounded" />
-              <div className="h-2 w-3/4 bg-gray-100 rounded" />
-            </div>
-          </div>
+    // Auto-trigger the upgrade modal on mount
+    useEffect(() => {
+      onUpgrade();
+    }, []);
 
-          {/* Overlay CTA */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="rounded-xl border bg-card p-8 text-center space-y-4 shadow-lg max-w-md">
-              <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume.
-              </p>
-              <Button onClick={onUpgrade} size="lg" className="w-full gap-2">
-                <Lock className="h-4 w-4" />
-                Unlock Calibrated Resume
-              </Button>
-            </div>
-          </div>
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
+          <Lock className="h-8 w-8 text-muted-foreground" />
+          <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+            Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume.
+          </p>
+          <Button onClick={onUpgrade} size="lg" className="gap-2">
+            <Lock className="h-4 w-4" />
+            Unlock Calibrated Resume
+          </Button>
         </div>
       </div>
     );

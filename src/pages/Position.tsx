@@ -9,6 +9,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { useSubscription } from "@/hooks/useSubscription";
 import ResumeUpload from "@/components/ResumeUpload";
+import UpgradeModal from "@/components/UpgradeModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -726,6 +727,7 @@ const Position = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [errors, setErrors] = useState<{ experience?: string; jd?: string }>({});
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const elapsedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -733,7 +735,7 @@ const Position = () => {
   const startTimeRef = useRef<number>(0);
 
   const isAdmin = useIsAdmin();
-  const { isTrialPro } = useReverseTrial();
+  const { isTrialPro, trialStarted, trialRunsUsed, trialExhausted, startTrial, TRIAL_LIMIT } = useReverseTrial();
   const { isPro, loading: subLoading } = useSubscription();
   const effectiveIsPro = isPro || isAdmin || isTrialPro;
 
@@ -1087,13 +1089,29 @@ const Position = () => {
             )}
           </div>
 
-          <Button onClick={handleRun} disabled={loading} className="gap-2">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Generate Positioning Package
-          </Button>
+          {!effectiveIsPro ? (
+            <Button onClick={() => setShowUpgrade(true)} className="gap-2">
+              <Lock className="h-4 w-4" />
+              Generate Positioning Package
+            </Button>
+          ) : (
+            <Button onClick={handleRun} disabled={loading} className="gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Generate Positioning Package
+            </Button>
+          )}
           <p className="text-xs text-muted-foreground">
             Takes 30–60 seconds. 11-section output. Zero fabrication.
           </p>
+
+          <UpgradeModal
+            open={showUpgrade}
+            onClose={() => setShowUpgrade(false)}
+            trialStarted={trialStarted}
+            trialRunsUsed={trialRunsUsed}
+            trialLimit={TRIAL_LIMIT}
+            onStartTrial={startTrial}
+          />
         </div>
 
         {/* Right — Results */}
