@@ -473,7 +473,7 @@ Your task:
 
 Rules:
 - Preserve all original content that was NOT rewritten.
-- Insert rewritten bullets (version_a by default) in place of originals.
+- Insert rewritten bullets (version_b / Conservative Truth by default) in place of originals.
 - If you cannot identify the name/contact/education from the resume, use placeholder "[Not provided]".
 - Do not add any content not in the original resume or rewrites.
 - Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
@@ -951,8 +951,8 @@ async function runPipeline(
   console.log("[6/7] Consistency Validator");
   try {
     const rewrittenBullets = rewrittenTargets
-      .filter((t) => t.version_a || t.rewritten_bullet)
-      .map((t) => `[${t.upgrade_type}] A: ${t.version_a || t.rewritten_bullet}${t.version_b ? ` | B: ${t.version_b}` : ""}`);
+      .filter((t) => t.version_b || t.version_a || t.rewritten_bullet)
+      .map((t) => `[${t.upgrade_type}] ${t.version_b || t.version_a || t.rewritten_bullet}`);
 
     const validatorContent = [
       `ORIGINAL RESUME:\n${experience}`,
@@ -964,6 +964,20 @@ async function runPipeline(
 
     const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent, 0);
     const cvParsed = parseJSON<{ status: string; issues: string[] }>(raw);
+    // Convert internal variable names to plain English in issue descriptions
+    const upgradeTypeLabels: Record<string, string> = {
+      authority_framing: "Authority Framing",
+      commercial_injection: "Commercial Impact",
+      ownership_elevation: "Ownership Elevation",
+      cross_functional_leadership: "Cross-Functional Leadership",
+      lifecycle_governance: "Lifecycle Governance",
+      risk_compression: "Risk Compression",
+    };
+    if (cvParsed.issues?.length) {
+      cvParsed.issues = cvParsed.issues.map((issue) =>
+        issue.replace(/\[([a-z_]+)\]/g, (match, key) => upgradeTypeLabels[key] ? `[${upgradeTypeLabels[key]}]` : match)
+      );
+    }
     result.consistency_validator = cvParsed;
     console.log("  → status:", cvParsed.status);
     await storeArtifact(supabase, runId, "step_6_consistency_validator", { raw, parsed: cvParsed });
@@ -977,10 +991,10 @@ async function runPipeline(
   let exportReady = false;
   try {
     const rewriteContext = rewrittenTargets
-      .filter((t) => t.version_a || t.rewritten_bullet)
+      .filter((t) => t.version_b || t.version_a || t.rewritten_bullet)
       .map((t) => JSON.stringify({
         original: t.bullet_reference,
-        rewritten: t.version_a || t.rewritten_bullet,
+        rewritten: t.version_b || t.version_a || t.rewritten_bullet,
         upgrade_type: t.upgrade_type,
       }))
       .join("\n");
