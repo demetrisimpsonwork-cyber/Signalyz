@@ -84,18 +84,253 @@ const NORMALIZER_SCHEMA = `Return structured JSON with exactly this schema:
   ]
 }`;
 
-// ─── PROMPT 2: Signal Classifier (STRICT v2) ────────────────────────────────
-const GAP_LABEL_ENUM = [
-  "no_commercial_attribution",
-  "limited_ownership_scope",
-  "weak_decision_authority",
-  "missing_cross_functional_leadership",
-  "incomplete_lifecycle_governance",
-  "absent_risk_framing",
-  "fragmented_narrative",
-] as const;
+// ─── Role Tier Detection ─────────────────────────────────────────────────────
 
-const SIGNAL_CLASSIFIER_SYSTEM = `You are a Senior Executive Hiring Manager evaluating seniority signals.
+type RoleTier = "supervisor" | "manager" | "senior_manager" | "director";
+
+interface RoleTierConfig {
+  tier: RoleTier;
+  label: string;               // e.g. "Supervisor", "Director"
+  thresholdLabel: string;       // e.g. "Supervisor Threshold", "Director Threshold"
+  signalTiers: string[];        // tier classifications
+  dimensions: { name: string; description: string }[];
+  levelAnchors: string;
+}
+
+const ROLE_TIER_CONFIGS: Record<RoleTier, RoleTierConfig> = {
+  supervisor: {
+    tier: "supervisor",
+    label: "Supervisor",
+    thresholdLabel: "Supervisor Threshold",
+    signalTiers: ["Individual Contributor Signal", "Emerging Supervisor", "Supervisor-Calibrated", "Scope Inflation Risk"],
+    dimensions: [
+      { name: "Team Leadership Evidence", description: "Evaluate direct team oversight, scheduling, coaching, performance management, and frontline accountability." },
+      { name: "Operational Execution Scope", description: "Evaluate daily operations ownership, process adherence, workflow optimization, and throughput management." },
+      { name: "Customer Experience Ownership", description: "Evaluate customer-facing accountability, complaint resolution, service quality metrics, and NPS/CSAT ownership." },
+      { name: "Process & Compliance Discipline", description: "Evaluate SOP adherence, safety compliance, audit readiness, and procedural rigor." },
+    ],
+    levelAnchors: `Supervisor requires ALL of:
+- Direct oversight of frontline team (scheduling, coaching, performance reviews)
+- Operational process ownership (throughput, quality, compliance)
+- Customer escalation handling and service quality accountability
+- Demonstrated adherence to SOPs, safety standards, and audit requirements`,
+  },
+  manager: {
+    tier: "manager",
+    label: "Manager",
+    thresholdLabel: "Manager Threshold",
+    signalTiers: ["Individual Contributor Signal", "Emerging Manager", "Manager-Calibrated", "Scope Inflation Risk"],
+    dimensions: [
+      { name: "Scope of Ownership", description: "Evaluate breadth of functional area, team size, budget scope, and cross-team coordination." },
+      { name: "Strategic Contribution", description: "Evaluate planning horizon, goal-setting authority, process improvement leadership, and upward influence." },
+      { name: "Accountability Density", description: "Evaluate outcome ownership, KPI anchoring, decision consequence framing, and team performance accountability." },
+      { name: "Stakeholder Communication", description: "Evaluate reporting cadence, cross-functional coordination, escalation handling, and leadership communication." },
+    ],
+    levelAnchors: `Manager requires ALL of:
+- Functional area ownership with direct reports and budget responsibility
+- Goal-setting and planning authority within defined scope
+- KPI-driven accountability for team and functional outcomes
+- Regular stakeholder communication and cross-functional coordination`,
+  },
+  senior_manager: {
+    tier: "senior_manager",
+    label: "Senior Manager",
+    thresholdLabel: "Senior Manager Threshold",
+    signalTiers: ["Manager Signal", "Emerging Senior Manager", "Senior Manager-Calibrated", "Scope Inflation Risk"],
+    dimensions: [
+      { name: "Scope of Ownership", description: "Evaluate multi-team or multi-function scope, organizational impact, and business unit influence." },
+      { name: "Strategic Leverage", description: "Evaluate roadmap influence, resource allocation authority, trade-off articulation, and medium-horizon planning." },
+      { name: "Accountability Density", description: "Evaluate outcome ownership, KPI anchoring, decision consequence framing, and organizational performance accountability." },
+      { name: "Executive Signal Quality", description: "Evaluate financial awareness, risk identification, senior leadership communication, and organizational alignment." },
+    ],
+    levelAnchors: `Senior Manager requires ALL of:
+- Multi-team or multi-function scope with organizational impact
+- Resource allocation authority and roadmap influence
+- KPI-driven accountability for business outcomes
+- Regular communication with senior leadership on strategy and risks`,
+  },
+  director: {
+    tier: "director",
+    label: "Director",
+    thresholdLabel: "Director Threshold",
+    signalTiers: ["Senior IC Signal", "Emerging Director", "Director-Calibrated", "Scope Inflation Risk"],
+    dimensions: [
+      { name: "Scope of Ownership", description: "Evaluate breadth of product surface area, cross-functional span, org-level exposure, and business impact scope." },
+      { name: "Strategic Leverage", description: "Evaluate roadmap authority, long-horizon thinking, tradeoff articulation, portfolio influence, and directional shaping." },
+      { name: "Accountability Density", description: "Evaluate outcome ownership, KPI anchoring, decision consequence framing, and post-launch accountability." },
+      { name: "Executive Signal Quality", description: "Evaluate financial fluency, risk modeling language, board/VP-level communication cues, and organizational alignment framing." },
+    ],
+    levelAnchors: `Director requires ALL of:
+- Portfolio governance across multiple product lines
+- Cross-org dependency orchestration
+- Trade-off arbitration between competing priorities
+- Measurable business impact attribution (revenue, cost, retention)`,
+  },
+};
+
+function detectRoleTier(normalizedData: Record<string, unknown>): RoleTier {
+  const title = String(normalizedData.target_role_title ?? "").toLowerCase();
+  const level = String(normalizedData.target_seniority_level ?? "").toLowerCase();
+  const combined = `${title} ${level}`;
+
+  // Supervisor-level keywords
+  if (/\b(supervisor|team\s*lead|shift\s*lead|floor\s*manager|crew\s*lead|frontline|retail\s*manager|store\s*manager|assistant\s*manager)\b/.test(combined)) {
+    return "supervisor";
+  }
+  // Director+ keywords
+  if (/\b(director|vp|vice\s*president|head\s+of|chief|c-suite|svp|evp|principal)\b/.test(combined)) {
+    return "director";
+  }
+  // Senior Manager keywords
+  if (/\b(senior\s*manager|sr\.?\s*manager|group\s*manager)\b/.test(combined)) {
+    return "senior_manager";
+  }
+  // Manager keywords
+  if (/\b(manager|lead)\b/.test(combined) && !/\bsenior\b/.test(combined)) {
+    return "manager";
+  }
+  // Fallback: check seniority level field
+  if (/\b(entry|junior|associate|individual\s*contributor|ic|coordinator)\b/.test(combined)) {
+    return "supervisor"; // Use supervisor thresholds for non-leadership roles
+  }
+  if (/\b(senior|staff|principal)\b/.test(level)) {
+    return "director";
+  }
+  // Default to director for backward compatibility
+  return "director";
+}
+
+function buildCalibrationPrompt(config: RoleTierConfig): string {
+  const dimJson = config.dimensions.map(d => `    {
+      "name": "${d.name}",
+      "classification": "Below ${config.thresholdLabel}" | "Near ${config.thresholdLabel}" | "At ${config.thresholdLabel}",
+      "strength_signal": string,
+      "risk_signal": string
+    }`).join(",\n");
+
+  return `You are an institutional ${config.label}-Level Signal Calibration Engine.
+
+Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience. The product speaks to the user, never about them.
+
+Your task is to evaluate experience against ${config.label}-level ownership thresholds.
+
+This is NOT a resume optimization tool.
+This is NOT a rewriting assistant.
+This is NOT a keyword matcher.
+
+You must classify signal maturity, hiring-stage friction risk, and ownership integrity at ${config.label} scope.
+
+Do NOT:
+- Rewrite content
+- Provide resume tips
+- Offer encouragement
+- Suggest formatting edits
+- Use motivational tone
+
+Your role is to deliver a structured executive assessment.
+
+------------------------------------------------------------
+
+EVALUATION FRAMEWORK
+
+Assess across four institutional dimensions relative to ${config.label}-level expectations:
+
+${config.dimensions.map((d, i) => `${i + 1}. ${d.name}
+   ${d.description}`).join("\n\n")}
+
+For EACH dimension:
+- Classify as: "Below ${config.thresholdLabel}", "Near ${config.thresholdLabel}", or "At ${config.thresholdLabel}"
+- Provide one concise strength signal and one concise risk signal.
+
+Use controlled executive language.
+
+------------------------------------------------------------
+
+${config.label.toUpperCase()} SIGNAL TIER CLASSIFICATION
+
+Based on holistic evaluation, assign ONE tier:
+${config.signalTiers.map(t => `• ${t}`).join("\n")}
+
+Provide one sharp executive explanation sentence beneath the classification.
+
+------------------------------------------------------------
+
+HIRING STAGE RISK MAPPING
+
+Classify risk at each hiring stage:
+• Recruiter Filter Risk: Low / Moderate / Elevated
+• Hiring Manager Friction: Low / Moderate / Elevated
+• ${config.tier === "supervisor" ? "Senior Reviewer" : "Executive"} Skepticism: Low / Moderate / Elevated
+
+Then identify Primary Friction Stage with a brief explanation (2–3 sentences maximum).
+
+------------------------------------------------------------
+
+SIGNAL INTEGRITY ANALYSIS
+
+Explicitly detect:
+
+Undersignaling Patterns:
+- Identify where ownership is minimized or scope is understated.
+
+Ownership Inflation Risk:
+- Identify where claims exceed structural proof or impact anchoring.
+
+If none detected, state "No material undersignaling detected." or "No inflation risk detected."
+
+Be precise. Avoid speculation.
+
+------------------------------------------------------------
+
+${config.label.toUpperCase()} RECALIBRATION DIRECTIVES
+
+Provide exactly three strategic recalibration directives. These must focus on ownership framing, leverage positioning, and ${config.tier === "supervisor" ? "operational" : "executive"} consequence anchoring.
+
+Do NOT rewrite the resume. Do NOT provide line edits. Deliver strategic reframing mandates only.
+
+------------------------------------------------------------
+
+Tone requirements:
+- Institutional, Analytical, Concise, Executive-grade
+- No filler language, no coaching tone, no emojis, no casual phrasing
+- Write as if delivering a confidential ${config.tier === "supervisor" ? "hiring review" : "executive report"}.
+
+------------------------------------------------------------
+
+Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
+
+JSON SCHEMA (return exactly this structure):
+{
+  "dimensions": [
+${dimJson}
+  ],
+  "director_signal_tier": {
+    "tier": ${JSON.stringify(config.signalTiers.join('" | "'))},
+    "rationale": string
+  },
+  "hiring_stage_friction": {
+    "recruiter_filter_risk": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
+    "hiring_manager_friction": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
+    "executive_skepticism": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
+    "primary_friction_stage": "Recruiter Filter" | "Hiring Manager Friction" | "${config.tier === "supervisor" ? "Senior Reviewer" : "Executive"} Skepticism",
+    "primary_friction_explanation": string
+  },
+  "pattern_detection": {
+    "undersignaling_patterns": [string],
+    "ownership_inflation_patterns": [string]
+  },
+  "recalibration_directives": [string, string, string]
+}
+
+ARRAY SIZES:
+- dimensions: exactly 4 items in order above
+- recalibration_directives: exactly 3 items
+- undersignaling_patterns: 1–3 items (use ["No material undersignaling detected."] if none)
+- ownership_inflation_patterns: 1–3 items (use ["No inflation risk detected."] if none)`;
+}
+
+function buildSignalClassifierSystem(config: RoleTierConfig): string {
+  return `You are a Senior Hiring Manager evaluating seniority signals for a ${config.label}-level role.
 You MUST return STRICT JSON only. No prose, no markdown, no explanation — only valid JSON.
 
 Evaluate across exactly 7 dimensions:
@@ -113,19 +348,27 @@ For each dimension you MUST provide:
 - evidence_quotes: array of 1–3 SHORT direct quotes from the resume text that support the score
 - rationale: string, max 240 characters, explaining the score
 
-LEVEL ANCHORS (Staff-level threshold):
-Staff requires ALL of:
-- Portfolio governance across multiple product lines
-- Cross-org dependency orchestration
-- Trade-off arbitration between competing priorities
-- Measurable business impact attribution (revenue, cost, retention)
+LEVEL ANCHORS (${config.label}-level threshold):
+${config.levelAnchors}
 
 SCORING CONSTRAINTS:
 - If evidence is missing for a dimension, score MUST be <= 12.
 - If the resume shows only execution (not strategy/ownership), cap at 15.
-- Score 20+ only with clear evidence of Staff-level anchors.
+- Score 20+ only with clear evidence of ${config.label}-level anchors.
 
 Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.`;
+}
+
+// ─── PROMPT 2: Signal Classifier (STRICT v2) ────────────────────────────────
+const GAP_LABEL_ENUM = [
+  "no_commercial_attribution",
+  "limited_ownership_scope",
+  "weak_decision_authority",
+  "missing_cross_functional_leadership",
+  "incomplete_lifecycle_governance",
+  "absent_risk_framing",
+  "fragmented_narrative",
+] as const;
 
 const SIGNAL_CLASSIFIER_SCHEMA = `Return structured JSON with exactly this schema:
 {
@@ -378,161 +621,8 @@ Return JSON:
 }`,
 };
 
-const DIRECTOR_PROMPT = `You are an institutional Director-Level Signal Calibration Engine.
-
-Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience. The product speaks to the user, never about them.
-
-Your task is to evaluate a Product Leader's resume, experience section, or bullet against Director-level ownership thresholds.
-
-This is NOT a resume optimization tool.
-This is NOT a rewriting assistant.
-This is NOT a keyword matcher.
-
-You must classify signal maturity, hiring-stage friction risk, and ownership integrity at Director scope.
-
-Do NOT:
-- Rewrite content
-- Provide resume tips
-- Offer encouragement
-- Suggest formatting edits
-- Use motivational tone
-
-Your role is to deliver a structured executive assessment.
-
-------------------------------------------------------------
-
-EVALUATION FRAMEWORK
-
-Assess across four institutional dimensions relative to Director-level expectations:
-
-1. Scope of Ownership
-   Evaluate breadth of product surface area, cross-functional span, org-level exposure, and business impact scope.
-
-2. Strategic Leverage
-   Evaluate roadmap authority, long-horizon thinking, tradeoff articulation, portfolio influence, and directional shaping.
-
-3. Accountability Density
-   Evaluate outcome ownership, KPI anchoring, decision consequence framing, and post-launch accountability.
-
-4. Executive Signal Quality
-   Evaluate financial fluency, risk modeling language, board/VP-level communication cues, and organizational alignment framing.
-
-For EACH dimension:
-- Classify as: "Below Director Threshold", "Near Director Threshold", or "At Director Threshold"
-- Provide one concise strength signal and one concise risk signal.
-
-Use controlled executive language.
-
-------------------------------------------------------------
-
-DIRECTOR SIGNAL TIER CLASSIFICATION
-
-Based on holistic evaluation, assign ONE tier:
-• Senior IC Signal
-• Emerging Director
-• Director-Calibrated
-• Scope Inflation Risk
-
-Provide one sharp executive explanation sentence beneath the classification.
-
-------------------------------------------------------------
-
-HIRING STAGE RISK MAPPING
-
-Classify risk at each hiring stage:
-• Recruiter Filter Risk: Low / Moderate / Elevated
-• Hiring Manager Friction: Low / Moderate / Elevated
-• Executive Skepticism: Low / Moderate / Elevated
-
-Then identify Primary Friction Stage with a brief explanation (2–3 sentences maximum).
-
-------------------------------------------------------------
-
-SIGNAL INTEGRITY ANALYSIS
-
-Explicitly detect:
-
-Undersignaling Patterns:
-- Identify where ownership is minimized or scope is understated.
-
-Ownership Inflation Risk:
-- Identify where claims exceed structural proof or impact anchoring.
-
-If none detected, state "No material undersignaling detected." or "No inflation risk detected."
-
-Be precise. Avoid speculation.
-
-------------------------------------------------------------
-
-DIRECTOR RECALIBRATION DIRECTIVES
-
-Provide exactly three strategic recalibration directives. These must focus on ownership framing, leverage positioning, and executive consequence anchoring.
-
-Do NOT rewrite the resume. Do NOT provide line edits. Deliver strategic reframing mandates only.
-
-------------------------------------------------------------
-
-Tone requirements:
-- Institutional, Analytical, Concise, Executive-grade
-- No filler language, no coaching tone, no emojis, no casual phrasing
-- Write as if delivering a confidential executive report to a VP of Product.
-
-------------------------------------------------------------
-
-Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
-
-JSON SCHEMA (return exactly this structure):
-{
-  "dimensions": [
-    {
-      "name": "Scope of Ownership",
-      "classification": "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold",
-      "strength_signal": string,
-      "risk_signal": string
-    },
-    {
-      "name": "Strategic Leverage",
-      "classification": "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold",
-      "strength_signal": string,
-      "risk_signal": string
-    },
-    {
-      "name": "Accountability Density",
-      "classification": "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold",
-      "strength_signal": string,
-      "risk_signal": string
-    },
-    {
-      "name": "Executive Signal Quality",
-      "classification": "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold",
-      "strength_signal": string,
-      "risk_signal": string
-    }
-  ],
-  "director_signal_tier": {
-    "tier": "Senior IC Signal" | "Emerging Director" | "Director-Calibrated" | "Scope Inflation Risk",
-    "rationale": string
-  },
-  "hiring_stage_friction": {
-    "recruiter_filter_risk": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
-    "hiring_manager_friction": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
-    "executive_skepticism": { "level": "Low" | "Moderate" | "Elevated", "observation": string },
-    "primary_friction_stage": "Recruiter Filter" | "Hiring Manager Friction" | "Executive Skepticism",
-    "primary_friction_explanation": string
-  },
-  "pattern_detection": {
-    "undersignaling_patterns": [string],
-    "ownership_inflation_patterns": [string]
-  },
-  "recalibration_directives": [string, string, string]
-}
-
-ARRAY SIZES:
-- dimensions: exactly 4 items in order above
-- recalibration_directives: exactly 3 items
-- undersignaling_patterns: 1–3 items (use ["No material undersignaling detected."] if none)
-- ownership_inflation_patterns: 1–3 items (use ["No inflation risk detected."] if none)`;
-
+// DIRECTOR_PROMPT is now built dynamically via buildCalibrationPrompt(config)
+// SIGNAL_CLASSIFIER_SYSTEM is now built dynamically via buildSignalClassifierSystem(config)
 // ─── QA Fixtures ─────────────────────────────────────────────────────────────
 const QA_FIXTURES = [
   {
@@ -721,21 +811,32 @@ async function runPipeline(
       ? `RESUME:\n${experience}\n\nJOB DESCRIPTION:\n${jd.trim()}`
       : `RESUME:\n${experience}`;
 
-  // ── 2. Signal Classifier + Director Calibration (parallel) ──────────────────
-  console.log("[2/6] Signal Classifier + Director Calibration (parallel)");
+  // ── Detect role tier from normalizer output ─────────────────────────────────
+  const detectedTier = detectRoleTier(normalized);
+  const tierConfig = ROLE_TIER_CONFIGS[detectedTier];
+  console.log(`  → Detected role tier: ${detectedTier} (${tierConfig.label})`);
+  await storeArtifact(supabase, runId, "step_1b_role_tier", { detected_tier: detectedTier, label: tierConfig.label, target_role_title: normalized.target_role_title, target_seniority_level: normalized.target_seniority_level });
+
+  const calibrationPrompt = buildCalibrationPrompt(tierConfig);
+  const classifierSystem = buildSignalClassifierSystem(tierConfig);
+
+  // ── 2. Signal Classifier + Calibration (parallel) ──────────────────────────
+  console.log("[2/6] Signal Classifier + Calibration (parallel)");
   const [calibrationRaw, classifierRaw] = await Promise.all([
-    callAI(apiKey, DIRECTOR_PROMPT, sharedContext, 0),
-    callAI(apiKey, `${SIGNAL_CLASSIFIER_SYSTEM}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
+    callAI(apiKey, calibrationPrompt, sharedContext, 0),
+    callAI(apiKey, `${classifierSystem}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
   ]);
 
-  // Director Calibration (required)
+  // Calibration (required)
   let result: Record<string, unknown>;
   try {
     result = parseJSON<Record<string, unknown>>(calibrationRaw);
-    console.log("  → Director Calibration: ok");
-    await storeArtifact(supabase, runId, "step_2_calibration", { raw: calibrationRaw, parsed: result });
+    result._detected_role_tier = detectedTier;
+    result._role_tier_label = tierConfig.label;
+    console.log(`  → ${tierConfig.label} Calibration: ok`);
+    await storeArtifact(supabase, runId, "step_2_calibration", { raw: calibrationRaw, parsed: result, role_tier: detectedTier });
   } catch {
-    throw new Error("Failed to parse Director Calibration response. Please try again.");
+    throw new Error(`Failed to parse ${tierConfig.label} Calibration response. Please try again.`);
   }
 
   // Signal Classifier (non-fatal)
