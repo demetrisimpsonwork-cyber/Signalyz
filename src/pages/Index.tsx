@@ -1154,22 +1154,31 @@ const Index = () => {
                         ))}
                       </ul>
                     </div>
-                    <div className="rounded-xl border bg-card p-5 space-y-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Insight</h3>
-                      <ul className="space-y-2">
-                        {role.perceptionInsights.map((insight, i) => (
-                          <li key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed">{insight}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <ResultSection title="Repositioned Version A — Ownership Elevation" content={role.sampleA} />
-                    {effectiveIsPro ? (
-                      <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
+                    {user ? (
+                      <>
+                        <div className="rounded-xl border bg-card p-5 space-y-2">
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Insight</h3>
+                          <ul className="space-y-2">
+                            {role.perceptionInsights.map((insight, i) => (
+                              <li key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed">{insight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <ResultSection title="Repositioned Version A — Ownership Elevation" content={role.sampleA} />
+                        {effectiveIsPro ? (
+                          <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
+                        ) : (
+                          <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
+                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
+                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
+                          </div>
+                        )}
+                      </>
                     ) : (
-                      <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-                        <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-                        <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-                        <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
+                      <div className="rounded-xl border border-primary/20 bg-card p-6 text-center space-y-3">
+                        <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
+                        <Button onClick={() => navigate("/auth")} className="w-full sm:w-auto">Get Started Free</Button>
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
