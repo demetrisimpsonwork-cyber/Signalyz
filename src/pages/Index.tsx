@@ -1370,6 +1370,9 @@ const Index = () => {
                         gapSuggestions={result.gap_suggestions}
                         confidenceLevel={result.alignment_confidence_level}
                         inferredRoleTitle={result.inferred_role_title}
+                        isPro={effectiveIsPro}
+                        isAuthenticated={!!user}
+                        onUpgrade={() => setShowUpgrade(true)}
                       />
                     )}
                     {result.match_score < 60 && (

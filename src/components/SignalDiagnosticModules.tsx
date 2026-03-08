@@ -727,7 +727,7 @@ function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 12: Predicted Signal Lift ─── */
-function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; isPro?: boolean; onUpgrade?: () => void }) {
+function PredictedSignalLift({ data }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]> }) {
   const currentScore = data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
   const dims = (data.dimensions ?? [])
@@ -736,12 +736,12 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
     .slice(0, 4);
 
   return (
-    <div className="rounded-xl border bg-card p-5 space-y-4 relative">
+    <div className="rounded-xl border bg-card p-5 space-y-4">
       <SectionLabel>Predicted Signal Improvement</SectionLabel>
       <SectionSub>Estimated improvement after applying calibration suggestions</SectionSub>
 
       {/* Dimension lifts */}
-      <div className={`space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
+      <div className="space-y-2">
         {dims.map((d, i) => (
           <div key={i} className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
             <p className="text-xs font-medium text-foreground">{dimensionDisplayLabel(d.dimension)}</p>
@@ -752,7 +752,7 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
 
       {/* Score projection */}
       {currentScore > 0 && predictedScore > 0 && (
-        <div className={`rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2 ${!isPro ? "blur-[3px] select-none pointer-events-none" : ""}`}>
+        <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Signal Diagnosis After Calibration</p>
           <div className="flex items-center gap-4">
             <div className="text-center">
@@ -764,19 +764,6 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
               <p className="text-[10px] text-muted-foreground">Predicted Score</p>
               <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pro gate overlay */}
-      {!isPro && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
-          <div className="text-center space-y-2 p-4">
-            <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-            <p className="text-xs font-medium text-foreground">Unlock full calibration and resume rebuild with Resumix Pro.</p>
-            {onUpgrade && (
-              <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
-            )}
           </div>
         </div>
       )}
