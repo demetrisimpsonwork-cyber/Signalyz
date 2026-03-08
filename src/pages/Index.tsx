@@ -974,6 +974,7 @@ const Index = () => {
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
               { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
+              { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
