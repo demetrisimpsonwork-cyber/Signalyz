@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ATSData {
   missing_keywords: string[];
@@ -35,17 +36,18 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   const [data, setData] = useState<ATSData | null>(null);
   const [loading, setLoading] = useState(false);
   const [copiedKw, setCopiedKw] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!experience || !jd) return;
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "ats_panel", experience, jd },
+        body: { type: "ats_signal", experience, jd },
       })
-      .then(({ data: d, error }) => {
+      .then(({ data: res, error }) => {
         if (error) throw error;
-        if (d?.ats_risk) setData(d as ATSData);
+        if (res) setData(res as ATSData);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -69,6 +71,26 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
 
   if (!data) return null;
 
+  if (!isPro) {
+    return (
+      <div className="space-y-4">
+        <div className="mt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+          <p className="text-sm font-semibold text-foreground">Unlock ATS Signal Panel — Resumix Pro</p>
+          <p className="text-xs text-muted-foreground">See how your resume reads to automated screening systems.</p>
+          {user ? (
+            <Button size="sm" onClick={onUpgrade}>Unlock Resumix Pro — $19/month</Button>
+          ) : (
+            <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="mt-6">
@@ -76,7 +98,6 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         <p className="text-xs text-muted-foreground mt-1">How your resume reads to automated screening systems</p>
       </div>
 
-      {/* Risk badge */}
       <div className={`rounded-lg p-5 md:p-4 ${RISK_STYLES[data.ats_risk]}`}>
         <div className="flex items-center justify-center gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_BADGE_STYLES[data.ats_risk]}`}>
@@ -87,42 +108,32 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         <p className="text-sm text-muted-foreground mt-2 text-center">{data.ats_risk_explanation}</p>
       </div>
 
-      {/* Keywords — blurred for free */}
-      <div className="relative">
-        <div className={`grid grid-cols-2 gap-4 ${!isPro ? "blur-sm select-none pointer-events-none" : ""}`}>
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive">Missing Keywords</p>
-            <div className="flex flex-wrap gap-1.5">
-              {data.missing_keywords.slice(0, 10).map((kw) => (
-                <button
-                  key={kw}
-                  onClick={() => handleCopyKw(kw)}
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                >
-                  {kw}
-                  {copiedKw === kw ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5 opacity-50" />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Matched Keywords</p>
-            <div className="flex flex-wrap gap-1.5">
-              {data.matched_keywords.slice(0, 10).map((kw) => (
-                <span key={kw} className="inline-flex items-center rounded-full px-2.5 py-1 text-xs bg-primary/10 text-primary">
-                  {kw}
-                </span>
-              ))}
-            </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive">Missing Keywords</p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.missing_keywords.slice(0, 10).map((kw) => (
+              <button
+                key={kw}
+                onClick={() => handleCopyKw(kw)}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+              >
+                {kw}
+                {copiedKw === kw ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5 opacity-50" />}
+              </button>
+            ))}
           </div>
         </div>
-        {!isPro && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Button size="sm" onClick={onUpgrade} className="shadow-lg">
-              Unlock ATS Panel — Resumix Pro
-            </Button>
+        <div className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Matched Keywords</p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.matched_keywords.slice(0, 10).map((kw) => (
+              <span key={kw} className="inline-flex items-center rounded-full px-2.5 py-1 text-xs bg-primary/10 text-primary">
+                {kw}
+              </span>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground italic text-center">
