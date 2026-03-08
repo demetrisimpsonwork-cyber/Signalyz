@@ -191,6 +191,6 @@ function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
     </div>
   );
 }
-};
+
 
 export default IdentityStrengthIndex;
