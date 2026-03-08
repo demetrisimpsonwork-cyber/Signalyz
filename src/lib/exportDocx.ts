@@ -49,13 +49,15 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       );
     }
 
-    // Bullets as actual list items
+    // Bullets as actual list items — keepNext keeps them grouped with the role header
     roleParts.push(
       ...exp.bullets.map(
-        (b) =>
+        (b, bi) =>
           new Paragraph({
-            spacing: { after: 40, line: 264 },
+            spacing: { after: 20, line: 264 },
             bullet: { level: 0 },
+            keepLines: true,
+            keepNext: bi < exp.bullets.length - 1,
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
       ),
