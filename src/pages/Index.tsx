@@ -680,10 +680,6 @@ const Index = () => {
     const role = SAMPLE_ROLES[roleIndex];
     setBullet(role.bullet);
     setJd(role.jd);
-    setErrors({});
-    setResult(null);
-    setShowSamples(true);
-    setSelectedSampleRole(roleIndex);
   };
 
   const role = SAMPLE_ROLES[selectedSampleRole];
