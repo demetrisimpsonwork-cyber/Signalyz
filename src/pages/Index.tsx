@@ -1018,6 +1018,7 @@ const Index = () => {
             hasCurrentSessionAlignment={!!result}
             onRunAlignment={() => setMode("alignment")}
             onAssembled={() => setSessionResumeAssembled(true)}
+            alignmentResult={result as Record<string, unknown> || undefined}
           />
         )}
 
