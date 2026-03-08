@@ -47,6 +47,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
         new Paragraph({
           spacing: { before: 0, after: 0 },
           keepNext: true,
+          keepLines: true,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
