@@ -241,10 +241,10 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             : []),
           // Skills merged into Core Competencies above
           // Certifications
-          ...(resume.certifications && resume.certifications.length > 0
+          ...(cleanedCertifications.length > 0
             ? [
                 sectionHeader("Certifications"),
-                ...resume.certifications.map(
+                ...cleanedCertifications.map(
                   (cert) =>
                     new Paragraph({
                       spacing: { after: 80 },
