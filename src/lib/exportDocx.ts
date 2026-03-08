@@ -46,7 +46,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       roleParts.push(
         new Paragraph({
           spacing: { before: 0, after: 0 },
-          keepNext: false,
+          keepNext: true,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
@@ -54,12 +54,13 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       );
     }
 
-    // Bullets — tight spacing, no keepNext
+    // Bullets — first bullet keepNext false to stop the cascade
     roleParts.push(
       ...exp.bullets.map(
-        (b) =>
+        (b, idx) =>
           new Paragraph({
             spacing: { before: 0, after: 0, line: 264 },
+            keepNext: idx === 0 ? false : undefined,
             bullet: { level: 0 },
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
