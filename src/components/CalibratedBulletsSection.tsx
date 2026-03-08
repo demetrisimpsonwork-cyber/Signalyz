@@ -90,8 +90,8 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
     <div className="space-y-4">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
 
-      {/* Individual parsed bullets */}
-      {topBullets.map((item, i) => (
+      {/* Individual parsed bullets — first 2 visible to all, 3-5 behind Pro gate */}
+      {topBullets.slice(0, 2).map((item, i) => (
         <div key={i} className="rounded-xl border bg-card p-5 space-y-2">
           <div className="flex items-baseline gap-2">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
@@ -126,9 +126,24 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         <EvidenceLedger entries={evidenceEntries} />
       </div>
 
-      {/* Variant B & C — Pro only, no individual gate card */}
+      {/* Bullets 3-5 + Variants B & C — Pro only */}
       {effectiveIsPro && (
         <>
+          {topBullets.slice(2).map((item, i) => (
+            <div key={`pro-${i}`} className="rounded-xl border bg-card p-5 space-y-2">
+              <div className="flex items-baseline gap-2">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+                  Original Bullet {i + 3}
+                </p>
+                {(item.role || item.company) && (
+                  <span className="text-[10px] text-muted-foreground/60">
+                    {[item.role, item.company].filter(Boolean).join(" · ")}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
+            </div>
+          ))}
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
               <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
