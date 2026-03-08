@@ -12,7 +12,7 @@ import CalibratedBulletsSection from "@/components/CalibratedBulletsSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import ResumeBuilder from "@/components/ResumeBuilder";
 import ResumeUpload from "@/components/ResumeUpload";
-import ProInsightsTeaser from "@/components/ProInsightsTeaser";
+// ProInsightsTeaser removed — consolidated into single gate card
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import SignalGapActions from "@/components/SignalGapActions";

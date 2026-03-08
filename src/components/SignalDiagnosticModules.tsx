@@ -771,26 +771,6 @@ function PredictedSignalLift({ data }: { data: NonNullable<SignalDiagnosticData[
   );
 }
 
-/* ─── Pro Gate Wrapper ─── */
-function ProGate({ isPro, onUpgrade, children, label, isAuthenticated = true }: { isPro?: boolean; onUpgrade?: () => void; children: React.ReactNode; label?: string; isAuthenticated?: boolean }) {
-  if (isPro) return <>{children}</>;
-  return (
-    <div className="relative">
-      <div className="blur-[3px] select-none pointer-events-none">{children}</div>
-      <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
-        <div className="text-center space-y-2 p-4">
-          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-          <p className="text-xs font-medium text-foreground">{label || "Unlock with Resumix Pro"}</p>
-          {isAuthenticated ? (
-            onUpgrade && <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
-          ) : (
-            <Button size="sm" className="text-xs" asChild><a href="/auth">Get Started Free</a></Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── MAIN COMPONENT ─── */
 interface SignalDiagnosticModulesProps {

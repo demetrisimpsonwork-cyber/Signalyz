@@ -157,19 +157,5 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   );
 };
 
-function CalibratedBulletsGateCTA({ onUpgrade }: { onUpgrade?: () => void }) {
-  const { user } = useAuth();
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-      <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-      <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-      {user ? (
-        <Button onClick={onUpgrade} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
-      ) : (
-        <Button className="w-full sm:w-auto" asChild><a href="/auth">Get Started Free</a></Button>
-      )}
-    </div>
-  );
-}
 
 export default CalibratedBulletsSection;
