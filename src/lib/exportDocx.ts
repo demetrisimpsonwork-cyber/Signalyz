@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat, TabStopPosition, TabStopType } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
