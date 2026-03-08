@@ -1296,7 +1296,7 @@ const Index = () => {
                       })()}
                     </div>
 
-                    {/* Signal Diagnostic Modules */}
+                    {/* Signal Diagnostic Modules — free sections only (Why You're Not Getting Interviews) */}
                     <SignalDiagnosticModules
                       data={{
                         jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
@@ -1318,23 +1318,6 @@ const Index = () => {
                       matchScore={result.match_score}
                     />
 
-                    {/* Calibrated Summary */}
-                    <CalibratedSummary
-                      experience={bullet}
-                      jd={jd}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {/* Signal Gap Actions */}
-                    <SignalGapActions
-                      experience={bullet}
-                      jd={jd}
-                      alignmentResult={result as any}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
                     {/* Section 2: Calibrated Bullets */}
                     <CalibratedBulletsSection
                       bullet={bullet}
@@ -1343,38 +1326,104 @@ const Index = () => {
                       onUpgrade={() => setShowUpgrade(true)}
                     />
 
-                    {!effectiveIsPro && <ProInsightsTeaser />}
-
-                    {result.identity_strength_index && (
-                      <IdentityStrengthIndex
-                        data={result.identity_strength_index}
-                        isPro={effectiveIsPro}
-                        onUpgrade={() => setShowUpgrade(true)}
-                        inferredRoleTitle={result.inferred_role_title}
-                      />
+                    {/* Single unified Pro gate card for all gated sections */}
+                    {!effectiveIsPro && (
+                      <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+                        <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Resumix Pro</p>
+                        <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
+                        {user ? (
+                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Resumix Pro — $19/month</Button>
+                        ) : (
+                          <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+                        )}
+                      </div>
                     )}
+
+                    {/* Pro-only sections — only render when Pro */}
+                    {effectiveIsPro && (
+                      <>
+                        {/* Calibrated Summary */}
+                        <CalibratedSummary
+                          experience={bullet}
+                          jd={jd}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        {/* Signal Gap Actions */}
+                        <SignalGapActions
+                          experience={bullet}
+                          jd={jd}
+                          alignmentResult={result as any}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        {result.identity_strength_index && (
+                          <IdentityStrengthIndex
+                            data={result.identity_strength_index}
+                            isPro={effectiveIsPro}
+                            onUpgrade={() => setShowUpgrade(true)}
+                            inferredRoleTitle={result.inferred_role_title}
+                          />
+                        )}
+
+                        {/* ATS Signal Panel */}
+                        <ATSSignalPanel
+                          experience={bullet}
+                          jd={jd}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        {(result.alignment_notes || result.gap_suggestions) && (
+                          <LevelDeterminationBlock
+                            score={result.match_score}
+                            alignmentNotes={result.alignment_notes}
+                            gapSuggestions={result.gap_suggestions}
+                            confidenceLevel={result.alignment_confidence_level}
+                            inferredRoleTitle={result.inferred_role_title}
+                            isPro={effectiveIsPro}
+                            isAuthenticated={!!user}
+                            onUpgrade={() => setShowUpgrade(true)}
+                          />
+                        )}
+
+                        {/* Interview Intelligence */}
+                        <InterviewIntelligence
+                          experience={bullet}
+                          jd={jd}
+                          alignmentResult={result as any}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        {/* Cover Letter Engine */}
+                        <CoverLetterEngine
+                          experience={bullet}
+                          jd={jd}
+                          alignmentResult={result as any}
+                          inferredRole={result.inferred_role_title || ""}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        {/* Resume Builder */}
+                        <ResumeBuilder
+                          experience={bullet}
+                          jd={jd}
+                          calibratedBullet={result.optimized_bullet}
+                          originalBullet={bullet}
+                          matchScore={result.match_score}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+                      </>
+                    )}
+
                     <KeywordChips keywords={result.missing_keywords} />
 
-                    {/* ATS Signal Panel */}
-                    <ATSSignalPanel
-                      experience={bullet}
-                      jd={jd}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {(result.alignment_notes || result.gap_suggestions) && (
-                      <LevelDeterminationBlock
-                        score={result.match_score}
-                        alignmentNotes={result.alignment_notes}
-                        gapSuggestions={result.gap_suggestions}
-                        confidenceLevel={result.alignment_confidence_level}
-                        inferredRoleTitle={result.inferred_role_title}
-                        isPro={effectiveIsPro}
-                        isAuthenticated={!!user}
-                        onUpgrade={() => setShowUpgrade(true)}
-                      />
-                    )}
                     {result.match_score < 60 && (
                       <WeakAlignmentNudge
                         additionalContext={additionalContext}
@@ -1382,38 +1431,8 @@ const Index = () => {
                       />
                     )}
 
-                    {/* Interview Intelligence */}
-                    <InterviewIntelligence
-                      experience={bullet}
-                      jd={jd}
-                      alignmentResult={result as any}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {/* Export — Copy Calibration Report above Resume Builder */}
+                    {/* Export — Copy Calibration Report */}
                     <ExportResults result={result} />
-
-                    {/* Resume Builder — Pro gated */}
-                    <ResumeBuilder
-                      experience={bullet}
-                      jd={jd}
-                      calibratedBullet={result.optimized_bullet}
-                      originalBullet={bullet}
-                      matchScore={result.match_score}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {/* Cover Letter Engine */}
-                    <CoverLetterEngine
-                      experience={bullet}
-                      jd={jd}
-                      alignmentResult={result as any}
-                      inferredRole={result.inferred_role_title || ""}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
                   </>
                 )}
               </div>

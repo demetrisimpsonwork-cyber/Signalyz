@@ -127,8 +127,8 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         <EvidenceLedger entries={evidenceEntries} />
       </div>
 
-      {/* Variant B & C — Pro only */}
-      {effectiveIsPro ? (
+      {/* Variant B & C — Pro only, no individual gate card */}
+      {effectiveIsPro && (
         <>
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
@@ -148,8 +148,6 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
             <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
           )}
         </>
-      ) : (
-        <CalibratedBulletsGateCTA onUpgrade={onUpgrade} />
       )}
 
       <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">

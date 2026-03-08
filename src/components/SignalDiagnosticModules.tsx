@@ -825,8 +825,8 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} />
       )}
 
-      {/* All remaining signal diagnostic sections — Pro only */}
-      {isPro ? (
+      {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
+      {isPro && (
         <>
           {data.executive_insight_summary?.primary_insight && (
             <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
@@ -871,16 +871,6 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             <PredictedSignalLift data={data.predicted_signal_lift} />
           )}
         </>
-      ) : (
-        /* Single clean locked card for all gated diagnostic modules */
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
-          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-          <p className="text-sm font-semibold text-foreground">Unlock Full Signal Diagnostics — Resumix Pro</p>
-          <p className="text-xs text-muted-foreground">Executive Insight, Signal Map, Career Signal Map, Signal Alignment Analysis, Risk Projection, and more.</p>
-          {onUpgrade && (
-            <Button onClick={onUpgrade} size="sm">Unlock Resumix Pro — $19/month</Button>
-          )}
-        </div>
       )}
     </div>
   );
