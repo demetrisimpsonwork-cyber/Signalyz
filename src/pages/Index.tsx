@@ -20,7 +20,7 @@ import SignalGapActions from "@/components/SignalGapActions";
 import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
-import CoverLetterEngine from "@/components/CoverLetterEngine";
+import CoverLetterTab from "@/components/CoverLetterTab";
 import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
 import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
 import type { SignalModel } from "@/types/SignalModel";
