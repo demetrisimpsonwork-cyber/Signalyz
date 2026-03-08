@@ -246,6 +246,7 @@ function DirectorModeContent({
   onRunDirector,
   isPro,
   onUpgrade,
+  isAuthenticated,
 }: {
   result: OptimizationResult | null;
   bullet: string;
@@ -257,6 +258,7 @@ function DirectorModeContent({
   onRunDirector: () => void;
   isPro: boolean;
   onUpgrade: () => void;
+  isAuthenticated: boolean;
 }) {
   // HARD GATE: If no current-session alignment result, render ONLY the empty state
   if (!result) {
@@ -324,7 +326,7 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} />
+            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} isAuthenticated={isAuthenticated} />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
