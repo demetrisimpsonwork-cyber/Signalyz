@@ -851,7 +851,7 @@ serve(async (req) => {
     console.log(`[assemble] [${request_id}] Phase 1: Building structure`);
     let structure;
     try {
-      structure = assembleStructureFromSignalData(directorResult, originalResume || "");
+      structure = assembleStructureFromSignalData(signalContext || {}, originalResume || "");
     } catch (err: any) {
       console.error(`[assemble] [${request_id}] Phase 1 failed:`, err.message);
       return new Response(
@@ -864,12 +864,12 @@ serve(async (req) => {
     // ── Phase 2: Sequential focused API calls ──
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
     const rewrittenSummary = await generateSummary(
-      structure.summary, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id
+      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id
     );
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, directorResult, ANTHROPIC_API_KEY, request_id
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
     );
 
     // ── Merge results ──
