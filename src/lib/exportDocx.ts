@@ -33,7 +33,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
-            ? [new TextRun({ text: "\t", size: 20, font: "Calibri" }), new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" })]
+            ? [new TextRun({ text: " ", size: 20, font: "Calibri" }), new TextRun({ text: "\t", size: 20, font: "Calibri" }), new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" })]
             : []),
         ],
         tabStops: [{ type: "right" as any, position: 9360 }],
@@ -97,6 +97,14 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     styles: {
       paragraphStyles: [
         {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { bold: true, size: 28, font: "Calibri", color: "000000" },
+          paragraph: { spacing: { after: 40 }, alignment: AlignmentType.CENTER },
+        },
+        {
           id: "Heading2",
           name: "Heading 2",
           basedOn: "Normal",
@@ -126,7 +134,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
-              new TextRun({ text: resume.header.name || "Name", bold: true, size: 28, font: "Calibri" }),
+              new TextRun({ text: resume.header.name || "Name", bold: true, size: 28, font: "Calibri", color: "000000" }),
             ],
           }),
           // Title
@@ -169,14 +177,20 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 }),
               ]
             : []),
-          // Core Competencies — render separately from Skills to match on-screen labels
-          ...(resume.core_competencies.length > 0
+          // Core Competencies — merge skills into this section, render after summary
+          ...((resume.core_competencies.length > 0 || (resume.skills && resume.skills.length > 0))
             ? [
                 sectionHeader("Core Competencies"),
                 new Paragraph({
                   spacing: { after: 200, line: 276 },
                   children: [
-                    new TextRun({ text: resume.core_competencies.join("  •  "), size: 21, font: "Calibri" }),
+                    new TextRun({
+                      text: [...(resume.core_competencies || []), ...(resume.skills || [])]
+                        .filter((v, i, a) => a.indexOf(v) === i) // deduplicate
+                        .join("  •  "),
+                      size: 21,
+                      font: "Calibri",
+                    }),
                   ],
                 }),
               ]
@@ -209,18 +223,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 ]),
               ]
             : []),
-          // Skills
-          ...(resume.skills && resume.skills.length > 0
-            ? [
-                sectionHeader("Skills"),
-                new Paragraph({
-                  spacing: { after: 200, line: 276 },
-                  children: [
-                    new TextRun({ text: resume.skills.join("  •  "), size: 21, font: "Calibri" }),
-                  ],
-                }),
-              ]
-            : []),
+          // Skills merged into Core Competencies above
           // Certifications
           ...(resume.certifications && resume.certifications.length > 0
             ? [
