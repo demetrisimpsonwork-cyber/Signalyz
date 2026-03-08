@@ -169,7 +169,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 }),
               ]
             : []),
-          // Core Competencies
+          // Core Competencies — render separately from Skills to match on-screen labels
           ...(resume.core_competencies.length > 0
             ? [
                 sectionHeader("Core Competencies"),
