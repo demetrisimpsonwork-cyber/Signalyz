@@ -40,7 +40,7 @@ interface UseResumeAssemblyReturn {
   loading: boolean;
   error: string | null;
   step: number;
-  assemble: (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => Promise<void>;
+  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
 }
 
 const STEPS = [
