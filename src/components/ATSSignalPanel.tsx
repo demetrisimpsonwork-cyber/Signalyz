@@ -43,7 +43,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "ats_signal", experience, jd },
+        body: { type: "ats_panel", experience, jd },
       })
       .then(({ data: res, error }) => {
         if (error) throw error;
