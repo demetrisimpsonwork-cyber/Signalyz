@@ -44,6 +44,7 @@ const tiers = [
 const Pricing = () => {
   const { user } = useAuth();
   const isAuthenticated = !!user;
+  const [showSticky, setShowSticky] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
