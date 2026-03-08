@@ -681,7 +681,7 @@ const Index = () => {
         try {
           console.info("[Alignment] First attempt failed, retrying silently…", firstErr.message);
           setAlignmentError(null);
-          const data = await invokeAlignment();
+          const data = await invokeAlignment(2);
           await processResult(data);
         } catch (retryErr: any) {
           const msg = retryErr.message || FRIENDLY_FAIL_MSG;
