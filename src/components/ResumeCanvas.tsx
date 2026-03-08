@@ -124,13 +124,6 @@ const CompetencyPills = ({
       {competencies.join(",  ")}
     </p>
   );
-            className="outline-none bg-transparent w-20"
-            style={{ fontSize: "10px", color: "#0D9488" }}
-          />
-        </span>
-      )}
-    </div>
-  );
 };
 
 // ─────────────────────────────────────────────────────────────
