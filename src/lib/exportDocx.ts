@@ -43,6 +43,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       roleParts.push(
         new Paragraph({
           spacing: { after: 40 },
+          keepNext: true,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
