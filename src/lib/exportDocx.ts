@@ -24,26 +24,37 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     const roleParts: Paragraph[] = [];
 
     // Role title + company as a sub-heading
-    const titleLine = [exp.title, exp.company].filter(Boolean).join(" — ");
+    const titleLine = exp.title || "";
+    const companyLine = exp.company || "";
     roleParts.push(
       new Paragraph({
-        heading: HeadingLevel.HEADING_3,
-        spacing: { before: 200, after: 40 },
+        spacing: { before: 200, after: 20 },
         children: [
-          new TextRun({ text: titleLine, bold: true, size: 22, font: "Calibri" }),
+          new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
-            ? [new TextRun({ text: `  |  ${exp.dates}`, size: 20, font: "Calibri", color: "666666" })]
+            ? [new TextRun({ text: `\t${exp.dates}`, size: 20, font: "Calibri", color: "666666" })]
             : []),
         ],
+        tabStops: [{ type: "right" as any, position: 9360 }],
       }),
     );
+    if (companyLine) {
+      roleParts.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
+          ],
+        }),
+      );
+    }
 
     // Bullets as actual list items
     roleParts.push(
       ...exp.bullets.map(
         (b) =>
           new Paragraph({
-            spacing: { after: 80, line: 276 },
+            spacing: { after: 40, line: 264 },
             bullet: { level: 0 },
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),

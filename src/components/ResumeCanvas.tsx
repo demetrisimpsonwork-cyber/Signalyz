@@ -81,8 +81,8 @@ const EditableField = ({
 // ─────────────────────────────────────────────────────────────
 
 const SectionHeader = ({ children }: { children: string }) => (
-  <div className="border-b pb-1 mb-3" style={{ borderColor: "hsl(38, 92%, 50%, 0.4)" }}>
-    <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em]" style={{ color: "#374151" }}>
+  <div className="mb-3" style={{ borderBottom: "1px solid #374151", paddingBottom: "3px" }}>
+    <h2 className="font-semibold tracking-[0.15em]" style={{ fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.15em" }}>
       {children}
     </h2>
   </div>
@@ -230,7 +230,7 @@ const BulletEditor = ({
   };
 
   return (
-    <ul className="space-y-1 ml-3">
+    <ul className="ml-3" style={{ marginTop: "2px" }}>
       {bullets.map((bullet, bi) => (
         <li
           key={bi}
@@ -247,7 +247,7 @@ const BulletEditor = ({
             }
           }}
           onKeyDown={(e) => handleKeyDown(e as any, bi)}
-          style={{ fontSize: "11px", lineHeight: "1.65" }}
+          style={{ fontSize: "11px", lineHeight: "1.55", marginBottom: "1px" }}
         >
           <span className="shrink-0 mt-0.5">•</span>
           <span>{bullet}</span>
@@ -374,28 +374,16 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
             {resume.experience.map((exp, ei) => (
               <div key={ei}>
                 <div className="mb-1">
-                  {/* Line 1: Job Title */}
-                  <EditableField
-                    value={exp.title}
-                    path={`experience.${ei}.title`}
-                    editMode={editMode}
-                    onUpdate={onUpdate}
-                    className="font-bold"
-                    style={{ fontSize: "12px", lineHeight: "1.4" }}
-                    placeholder="Job Title"
-                  />
-                  {/* Line 2: Company · Dates */}
-                  <div className="flex items-baseline justify-between gap-2 mt-0.5">
-                    {(exp.company || editMode) && (
-                      <EditableField
-                        value={exp.company}
-                        path={`experience.${ei}.company`}
-                        editMode={editMode}
-                        onUpdate={onUpdate}
-                        style={{ fontSize: "11px", color: "#4B5563" }}
-                        placeholder="Company"
-                      />
-                    )}
+                  {/* Line 1: Title (italic) + Dates (right-aligned) */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <EditableField
+                      value={exp.title}
+                      path={`experience.${ei}.title`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      style={{ fontSize: "12px", lineHeight: "1.4", fontStyle: "italic" }}
+                      placeholder="Job Title"
+                    />
                     {(exp.dates || editMode) && (
                       <EditableField
                         value={exp.dates}
@@ -403,11 +391,23 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                         editMode={editMode}
                         onUpdate={onUpdate}
                         className="shrink-0"
-                        style={{ fontSize: "10px", color: "#6B7280" }}
+                        style={{ fontSize: "10.5px", color: "#6B7280" }}
                         placeholder="Dates"
                       />
                     )}
                   </div>
+                  {/* Line 2: Company (bold) */}
+                  {(exp.company || editMode) && (
+                    <EditableField
+                      value={exp.company}
+                      path={`experience.${ei}.company`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      className="font-bold"
+                      style={{ fontSize: "11px", color: "#374151", marginTop: "1px" }}
+                      placeholder="Company"
+                    />
+                  )}
                 </div>
                 <BulletEditor
                   bullets={exp.bullets}
