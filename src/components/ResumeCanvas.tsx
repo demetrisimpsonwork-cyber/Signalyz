@@ -81,8 +81,8 @@ const EditableField = ({
 // ─────────────────────────────────────────────────────────────
 
 const SectionHeader = ({ children }: { children: string }) => (
-  <div className="border-b pb-1 mb-3" style={{ borderColor: "hsl(38, 92%, 50%, 0.4)" }}>
-    <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em]" style={{ color: "#374151" }}>
+  <div className="mb-3" style={{ borderBottom: "1px solid #374151", paddingBottom: "3px" }}>
+    <h2 className="font-semibold tracking-[0.15em]" style={{ fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.15em" }}>
       {children}
     </h2>
   </div>
