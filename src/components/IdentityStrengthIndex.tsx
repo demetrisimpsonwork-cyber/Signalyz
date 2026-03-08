@@ -67,23 +67,10 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
-const LockedPillar = ({ name }: { name: string }) => (
-  <div className="rounded-md border bg-background overflow-hidden relative min-h-[100px]">
-    <div className="p-5 space-y-2 select-none pointer-events-none blur-sm opacity-40" aria-hidden>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-foreground">{name}</p>
-        <span className="text-sm font-bold text-muted-foreground">--/25</span>
-      </div>
-      <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-        <div className="h-full w-3/5 bg-muted-foreground/30 rounded-full" />
-      </div>
-      <div className="h-2.5 w-full rounded bg-muted mt-2" />
-      <div className="h-2.5 w-4/5 rounded bg-muted" />
-    </div>
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-[2px]">
-      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-      <span className="text-[11px] text-muted-foreground font-medium tracking-wide">RESUMIX PRO</span>
-    </div>
+const LockedPillarsCard = () => (
+  <div className="rounded-md border border-border bg-card p-5 text-center space-y-2">
+    <Lock className="h-4 w-4 text-muted-foreground mx-auto" />
+    <p className="text-xs font-medium text-foreground">3 additional identity dimensions available with Pro</p>
   </div>
 );
 
@@ -160,9 +147,7 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
         {visiblePillars.map((pillar, i) => (
           <PillarCard key={i} pillar={pillar} roleTitle={roleTitle} />
         ))}
-        {lockedPillars.map((pillar, i) => (
-          <LockedPillar key={i} name={pillar.name} />
-        ))}
+        {lockedPillars.length > 0 && <LockedPillarsCard />}
       </div>
 
       {/* Free tier CTA */}
