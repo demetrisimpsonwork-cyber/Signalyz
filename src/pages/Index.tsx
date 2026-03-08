@@ -633,6 +633,10 @@ const Index = () => {
       setLastDebug(debug);
 
       if (data?.error) {
+        // Tag daily-limit errors with a distinct code so the UI can show the neutral card
+        if (data.limit_reached || data.error_code === "RATE_LIMIT") {
+          debug.error_code = "DAILY_LIMIT";
+        }
         setAlignmentError(debug);
         throw new Error(data.error);
       }
@@ -1133,6 +1137,33 @@ const Index = () => {
                         <p className="text-sm font-semibold text-foreground">Credential Mismatch Detected</p>
                         <p className="text-sm text-muted-foreground">{alignmentError.message}</p>
                       </div>
+                    </div>
+                  ) : alignmentError.error_code === "DAILY_LIMIT" ? (
+                    <div className="rounded-lg border border-border bg-card p-5 space-y-4 my-6">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-primary text-sm font-bold">3</span>
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
+                          <p className="text-sm text-muted-foreground">
+                            {user ? "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments." : "Sign up to get 3 free analyses."}
+                          </p>
+                        </div>
+                      </div>
+                      {user ? (
+                        <Button
+                          size="sm"
+                          className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+                          onClick={() => initiateCheckout()}
+                        >
+                          Unlock Resumix Pro — $19/month
+                        </Button>
+                      ) : (
+                        <Button size="sm" className="w-full gap-2" asChild>
+                          <a href="/auth">Get Started Free</a>
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <EngineErrorCard message={alignmentError.message} onRetry={handleOptimize} />
