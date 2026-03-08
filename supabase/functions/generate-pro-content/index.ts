@@ -196,11 +196,29 @@ Return ONLY valid JSON, no markdown.`;
         const companyName = sanitize(body.companyName || "the company");
         const roleTitle = inferredRole || "this role";
         const tone = sanitize(body.tone || "confident");
+
         const toneInstruction = tone === "strategic"
-          ? "Tone: strategic, measured, institutional. Emphasize foresight and systems thinking."
+          ? `TONE — STRATEGIC:
+- Use systems-thinking language throughout: "designed," "scaled," "operationalized," "built the process that."
+- Frame every achievement in terms of outcomes and scale: numbers, scope, downstream effects.
+- Reference process, infrastructure, and repeatability — not just individual actions.
+- Paragraphs can be longer; each sentence should build on the prior one logically.
+- Close with a single sentence connecting your operational systems to what the company needs to build next. Format: "I am ready to bring [specific capability] to ${companyName} [specific outcome]."
+- NEVER use "positioned to," "I am positioned," or "positions me to."`
           : tone === "direct"
-          ? "Tone: direct, concise, no-nonsense. Lead with facts and outcomes. Minimal ornamentation."
-          : "Tone: precise, confident, professional. No filler. No buzzwords. Every sentence earns its place.";
+          ? `TONE — DIRECT:
+- Fewest words possible. Every sentence is declarative. No subordinate clauses unless necessary.
+- No throat-clearing ("In my experience," "I believe that," "Having worked in"). Start sentences with subjects and verbs.
+- Paragraphs should be 2-3 sentences maximum.
+- Close with exactly one sentence stating intent. Format: "I am ready to bring [specific thing] to ${companyName} from day one."
+- NEVER use "positioned to," "I am positioned," or "positions me to."`
+          : `TONE — CONFIDENT:
+- Short paragraphs. Authority-first framing: state the claim, then the evidence.
+- No hedging words anywhere: no "I believe," "I feel," "I think," "perhaps," "likely."
+- Every sentence projects certainty. Use present tense where possible.
+- Close with a direct statement of intent. Format: "I am ready to bring [specific discipline/capability] to ${companyName} from day one."
+- NEVER use "positioned to," "I am positioned," or "positions me to."`;
+
         const prompt = `Write a professional cover letter for this candidate applying to ${roleTitle} at ${companyName}. Use only experience from the resume — zero fabrication, zero inflation.
 
 Resume: ${experience.slice(0, 3000)}
@@ -208,17 +226,22 @@ Target JD: ${jd.slice(0, 2000)}
 Top signal gaps: ${alignmentResult.top_missing_signal || "N/A"}
 Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
 
-Structure as exactly 3 paragraphs. Maximum 250 words total. Write in first person as the candidate.
+HARD RULES:
+- NEVER use the phrases "positioned to," "I am positioned," "positions me to," or any variation of "position" as a verb describing the candidate.
+- NEVER start paragraph 3 with "Your organization requires," "Your organization needs," "Your team needs," or any sentence that echoes back the job description requirements.
+- Maximum 250 words total. Exactly 3 paragraphs. First person as the candidate.
 
-Paragraph 1 — Open with a declarative statement of professional identity that names the strongest transferable signal for this specific role. Do not open with "I am writing to apply." Do not open with "I am excited." Open with a statement of what the candidate brings — present tense, first person, specific to this role.
+Structure:
 
-Paragraph 2 — Address the primary perception gap head-on in the first sentence, then immediately bridge it using a specific experience from the resume. Do not avoid the gap. Reframe it as a strength.
+Paragraph 1 — Open with a declarative statement of professional identity naming the strongest transferable signal for this specific role. Do not open with "I am writing to apply," "I am excited," or "I am thrilled." Open with what the candidate brings — present tense, first person, specific.
 
-Paragraph 3 — Connect the candidate's trajectory to what this organization is building or needs right now based on the JD. Close with one confident, forward-looking sentence. Do not close with "Thank you for your consideration." Do not close with "I look forward to hearing from you."
+Paragraph 2 — Acknowledge the candidate's background gap honestly in the first sentence (e.g., if they come from a different industry, say so directly: "My background is in [X], not [Y]."). Then immediately reframe it: explain specifically what experience transfers and why it is actually an advantage for this role. Use a concrete example from the resume. Do not pretend the gap doesn't exist. Do not avoid naming it.
+
+Paragraph 3 — Do NOT echo the job description. Do NOT start with what the organization needs. Instead, state what the candidate will do in this role based on their specific operational strengths. Reference a specific capability or system they have built/managed. Close with one direct sentence of intent — no "Thank you for your consideration," no "I look forward to hearing from you."
 
 ${toneInstruction}
 
-Return a JSON object with: "letter" (the full cover letter text), "strategy_note" (one-line explanation of strategic choices made)
+Return a JSON object with: "letter" (the full cover letter text only — no header, no salutation, no sign-off, no footnotes, no strategy notes)
 Return ONLY valid JSON, no markdown.`;
         const raw = await callAI(prompt, 2000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
