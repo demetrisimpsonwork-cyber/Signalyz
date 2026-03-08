@@ -379,31 +379,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
         </div>
       </BlockShell>
 
-      {/* Gate: everything below Signal Tier is hidden for free users */}
-      {!isPro ? (
-        <div className="rounded-lg border border-border bg-card p-8">
-          <div className="text-center space-y-5 max-w-sm mx-auto">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <span className="text-2xl text-primary">✦</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-foreground tracking-tight">
-                Unlock the full Signal Positioning Report
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Resume Signal Profile, Employer Priority Signals, Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Resumix Pro.
-              </p>
-            </div>
-            <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-              <span style={{ color: "inherit" }}>✦</span>
-              Unlock Resumix Pro — $19/month
-            </Button>
-          </div>
-        </div>
-      ) : (
-      <>
-
-      {/* 2 — Dimension Calibration */}
+      {/* 2 — Perception Snapshot (visible to all users) */}
       <BlockShell label={`${roleLabel} Dimension Calibration`}>
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
@@ -428,6 +404,30 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
           ))}
         </div>
       </BlockShell>
+
+      {/* Gate: everything below Perception Snapshot is hidden for free users */}
+      {!isPro ? (
+        <div className="rounded-lg border border-border bg-card p-8">
+          <div className="text-center space-y-5 max-w-sm mx-auto">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <span className="text-2xl text-primary">✦</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-foreground tracking-tight">
+                Unlock the full Signal Positioning Report — Resumix Pro
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Resumix Pro.
+              </p>
+            </div>
+            <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
+              <span style={{ color: "inherit" }}>✦</span>
+              Unlock Resumix Pro — $19/month
+            </Button>
+          </div>
+        </div>
+      ) : (
+      <>
 
       {/* 3 — Hiring Stage Risk Mapping */}
       <BlockShell label="Hiring Stage Risk Mapping">
