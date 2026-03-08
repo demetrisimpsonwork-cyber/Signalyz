@@ -785,7 +785,7 @@ function PredictedSignalLift({ data, isPro, onUpgrade }: { data: NonNullable<Sig
 }
 
 /* ─── Pro Gate Wrapper ─── */
-function ProGate({ isPro, onUpgrade, children, label }: { isPro?: boolean; onUpgrade?: () => void; children: React.ReactNode; label?: string }) {
+function ProGate({ isPro, onUpgrade, children, label, isAuthenticated = true }: { isPro?: boolean; onUpgrade?: () => void; children: React.ReactNode; label?: string; isAuthenticated?: boolean }) {
   if (isPro) return <>{children}</>;
   return (
     <div className="relative">
@@ -794,8 +794,10 @@ function ProGate({ isPro, onUpgrade, children, label }: { isPro?: boolean; onUpg
         <div className="text-center space-y-2 p-4">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-xs font-medium text-foreground">{label || "Unlock with Resumix Pro"}</p>
-          {onUpgrade && (
-            <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
+          {isAuthenticated ? (
+            onUpgrade && <Button onClick={onUpgrade} size="sm" className="text-xs">Upgrade to Pro</Button>
+          ) : (
+            <Button size="sm" className="text-xs" asChild><a href="/auth">Get Started Free</a></Button>
           )}
         </div>
       </div>
