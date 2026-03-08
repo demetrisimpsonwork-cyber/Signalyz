@@ -619,8 +619,11 @@ const Index = () => {
         attempt === 1 ? "alignment" : "alignment-retry",
         "optimize-bullet",
         { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
-        90_000,
+        120_000, // 120s timeout to accommodate cold starts
       );
+
+    // Track error codes locally (not via React state, which is async)
+    let localErrorCode: string | null = null;
 
     const processResult = async (data: any) => {
       const debug: DebugInfo = {
@@ -636,7 +639,9 @@ const Index = () => {
       if (data?.error) {
         if (data.limit_reached || data.error_code === "RATE_LIMIT") {
           debug.error_code = "DAILY_LIMIT";
+          localErrorCode = "DAILY_LIMIT";
         }
+        localErrorCode = localErrorCode || data.error_code || null;
         setAlignmentError(debug);
         throw new Error(data.error);
       }
@@ -674,20 +679,35 @@ const Index = () => {
       await processResult(data);
     } catch (firstErr: any) {
       // Don't retry daily-limit or credential errors — those are intentional gates
-      if (alignmentError?.error_code === "DAILY_LIMIT" || alignmentError?.error_code === "CREDENTIAL_MISMATCH") {
+      const isIntentionalBlock = localErrorCode === "DAILY_LIMIT" || localErrorCode === "CREDENTIAL_MISMATCH";
+      if (isIntentionalBlock) {
+        console.info("[Alignment] Intentional block, not retrying:", localErrorCode);
         // Already set by processResult, just stop
       } else {
         // Silent retry once for cold-start / transient failures
+        console.warn("[Alignment] Attempt 1 failed — retrying silently.", {
+          error: firstErr.message,
+          errorCode: localErrorCode,
+          timestamp: new Date().toISOString(),
+        });
         try {
-          console.info("[Alignment] First attempt failed, retrying silently…", firstErr.message);
+          localErrorCode = null;
           setAlignmentError(null);
           const data = await invokeAlignment(2);
           await processResult(data);
         } catch (retryErr: any) {
+          console.error("[Alignment] Attempt 2 also failed.", {
+            error: retryErr.message,
+            errorCode: localErrorCode,
+            timestamp: new Date().toISOString(),
+          });
           const msg = retryErr.message || FRIENDLY_FAIL_MSG;
           setResult(null);
-          if (!alignmentError) {
-            setAlignmentError({ message: msg });
+          // Use localErrorCode to determine display, not stale React state
+          if (localErrorCode === "DAILY_LIMIT") {
+            setAlignmentError({ message: msg, error_code: "DAILY_LIMIT" });
+          } else {
+            setAlignmentError({ message: msg, error_code: localErrorCode || undefined });
           }
         }
       }
