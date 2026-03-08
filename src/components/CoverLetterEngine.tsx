@@ -133,7 +133,14 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     prevToneRef.current = tone;
   }, [tone]);
 
-  const fullLetterText = useMemo(() => {
+  // Auto-generate on mount
+  useEffect(() => {
+    if (!hasGenerated && !loading && isPro) {
+      generate();
+    }
+  }, []);
+
+
     if (!letter) return "";
     const parts: string[] = [];
     // Header
