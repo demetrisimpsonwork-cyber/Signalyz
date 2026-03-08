@@ -75,7 +75,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         data = await invokeResilient(
           "assembly",
           "assemble-calibrated-resume",
-          { directorResult, originalResume },
+          { directorResult: directorResult || undefined, originalResume, alignmentResult: alignmentResult || undefined },
           120_000,
         );
         break;
