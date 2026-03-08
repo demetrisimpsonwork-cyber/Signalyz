@@ -11,7 +11,7 @@ import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
 import CalibratedBulletsSection from "@/components/CalibratedBulletsSection";
 import UpgradeModal from "@/components/UpgradeModal";
-import ResumeBuilder from "@/components/ResumeBuilder";
+// ResumeBuilder removed from alignment results — now only in Calibrated Resume tab
 import ResumeUpload from "@/components/ResumeUpload";
 // ProInsightsTeaser removed — consolidated into single gate card
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
