@@ -101,88 +101,29 @@ const CompetencyPills = ({
   editMode: boolean;
   onUpdate: (competencies: string[]) => void;
 }) => {
-  const [adding, setAdding] = useState(false);
-  const [newValue, setNewValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (adding) inputRef.current?.focus();
-  }, [adding]);
-
-  const updatePill = (index: number, value: string) => {
-    const updated = [...competencies];
-    updated[index] = value;
-    onUpdate(updated);
-  };
-
-  const removePill = (index: number) => {
-    onUpdate(competencies.filter((_, i) => i !== index));
-  };
-
-  const commitNew = () => {
-    if (newValue.trim()) {
-      onUpdate([...competencies, newValue.trim()]);
-    }
-    setNewValue("");
-    setAdding(false);
-  };
+  if (editMode) {
+    return (
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        className="outline-none cursor-text"
+        style={{ fontSize: "10px", lineHeight: "1.6", color: "#374151" }}
+        onBlur={(e) => {
+          const text = e.currentTarget.textContent || "";
+          const updated = text.split(/[,•·|]/).map(s => s.trim()).filter(Boolean);
+          onUpdate(updated);
+        }}
+      >
+        {competencies.join(",  ")}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {competencies.map((comp, i) => (
-        <span
-          key={i}
-          className="group inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5"
-          style={{ borderColor: "#D1D5DB", color: "#374151", fontSize: "10px", fontWeight: 500 }}
-        >
-          {editMode ? (
-            <>
-              <span
-                contentEditable
-                suppressContentEditableWarning
-                className="outline-none cursor-text min-w-[20px]"
-                onBlur={(e) => updatePill(i, e.currentTarget.textContent || comp)}
-              >
-                {comp}
-              </span>
-              <button
-                onClick={() => removePill(i)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"
-                style={{ color: "#0D9488" }}
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </>
-          ) : (
-            comp
-          )}
-        </span>
-      ))}
-
-      {editMode && !adding && (
-        <button
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-dashed transition-all"
-          style={{ borderColor: "#5EEAD4", color: "#0D9488", fontSize: "10px" }}
-        >
-          <Plus className="h-2.5 w-2.5" />
-          Add skill
-        </button>
-      )}
-
-      {editMode && adding && (
-        <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5"
-          style={{ borderColor: "#5EEAD4", fontSize: "10px" }}>
-          <input
-            ref={inputRef}
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitNew();
-              if (e.key === "Escape") { setAdding(false); setNewValue(""); }
-            }}
-            onBlur={commitNew}
-            placeholder="New skill…"
+    <p style={{ fontSize: "10px", lineHeight: "1.6", color: "#374151" }}>
+      {competencies.join(",  ")}
+    </p>
+  );
             className="outline-none bg-transparent w-20"
             style={{ fontSize: "10px", color: "#0D9488" }}
           />
