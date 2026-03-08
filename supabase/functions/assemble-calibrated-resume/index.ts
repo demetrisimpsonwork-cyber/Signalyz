@@ -827,11 +827,14 @@ serve(async (req) => {
       );
     }
 
-    const { directorResult, originalResume } = body;
+    const { directorResult, originalResume, alignmentResult } = body;
 
-    if (!directorResult) {
+    // Allow assembly with just alignment result (no director/positioning report required)
+    const signalContext = directorResult || alignmentResult || null;
+
+    if (!originalResume && !signalContext) {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Signal Positioning Report data is required." }),
+        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Resume text or alignment data is required." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
