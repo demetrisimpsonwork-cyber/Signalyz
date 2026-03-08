@@ -29,10 +29,11 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     roleParts.push(
       new Paragraph({
         spacing: { before: 200, after: 20 },
+        keepNext: true,
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
-            ? [new TextRun({ text: `\t${exp.dates}`, size: 20, font: "Calibri", color: "666666" })]
+            ? [new TextRun({ text: "\t", size: 20, font: "Calibri" }), new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" })]
             : []),
         ],
         tabStops: [{ type: "right" as any, position: 9360 }],
@@ -42,6 +43,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       roleParts.push(
         new Paragraph({
           spacing: { after: 40 },
+          keepNext: true,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
@@ -49,13 +51,15 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       );
     }
 
-    // Bullets as actual list items
+    // Bullets as actual list items — keepNext keeps them grouped with the role header
     roleParts.push(
       ...exp.bullets.map(
-        (b) =>
+        (b, bi) =>
           new Paragraph({
-            spacing: { after: 40, line: 264 },
+            spacing: { after: 20, line: 264 },
             bullet: { level: 0 },
+            keepLines: true,
+            keepNext: bi < exp.bullets.length - 1,
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
       ),
@@ -165,7 +169,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 }),
               ]
             : []),
-          // Core Competencies
+          // Core Competencies — render separately from Skills to match on-screen labels
           ...(resume.core_competencies.length > 0
             ? [
                 sectionHeader("Core Competencies"),
