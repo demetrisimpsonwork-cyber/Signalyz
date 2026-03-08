@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 interface CalibratedBulletsSectionProps {
@@ -127,8 +126,8 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         <EvidenceLedger entries={evidenceEntries} />
       </div>
 
-      {/* Variant B & C — Pro only */}
-      {effectiveIsPro ? (
+      {/* Variant B & C — Pro only, no individual gate card */}
+      {effectiveIsPro && (
         <>
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
@@ -148,8 +147,6 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
             <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
           )}
         </>
-      ) : (
-        <CalibratedBulletsGateCTA onUpgrade={onUpgrade} />
       )}
 
       <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
@@ -159,19 +156,5 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   );
 };
 
-function CalibratedBulletsGateCTA({ onUpgrade }: { onUpgrade?: () => void }) {
-  const { user } = useAuth();
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-      <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-      <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-      {user ? (
-        <Button onClick={onUpgrade} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
-      ) : (
-        <Button className="w-full sm:w-auto" asChild><a href="/auth">Get Started Free</a></Button>
-      )}
-    </div>
-  );
-}
 
 export default CalibratedBulletsSection;
