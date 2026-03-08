@@ -140,7 +140,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
   }, []);
 
-
+  const fullLetterText = useMemo(() => {
     if (!letter) return "";
     const parts: string[] = [];
     // Header
