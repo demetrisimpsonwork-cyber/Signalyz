@@ -1,9 +1,11 @@
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const ProInsightsTeaser = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="rounded-xl border bg-card shadow-md overflow-hidden">
@@ -31,16 +33,25 @@ const ProInsightsTeaser = () => {
         </p>
 
         <div className="space-y-2 pt-1">
-          <Button
-            onClick={() => navigate("/pricing")}
-            className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Unlock Resumix Pro — $19/month
-          </Button>
+          {user ? (
+            <Button
+              onClick={() => navigate("/pricing")}
+              className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Unlock Resumix Pro — $19/month
+            </Button>
+          ) : (
+            <Button
+              className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
+              asChild
+            >
+              <a href="/auth">Get Started Free</a>
+            </Button>
+          )}
 
           <p className="text-center text-[11px] text-muted-foreground">
-            Less than one rejected application costs you.
+            {user ? "Less than one rejected application costs you." : "3 free analyses included."}
           </p>
         </div>
       </div>
