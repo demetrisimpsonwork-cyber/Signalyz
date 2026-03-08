@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, RefreshCw, Download, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
+import { extractContactFromText } from "@/lib/contactExtractor";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -29,15 +30,53 @@ const STEPS = [
   "Assembling cover letter…",
 ];
 
+/** Try to extract a company name from the JD text */
+function inferCompanyName(jd: string): string | undefined {
+  if (!jd) return undefined;
+  // Common patterns: "at CompanyName", "Company: CompanyName", "About CompanyName"
+  const patterns = [
+    /(?:company|employer|organization)[:\s]+([A-Z][\w &.,'-]+)/i,
+    /(?:about|join|at)\s+([A-Z][\w &.,'-]{2,40})(?:\s*[,.\n])/i,
+  ];
+  for (const rx of patterns) {
+    const m = jd.match(rx);
+    if (m?.[1] && m[1].length < 50) return m[1].trim();
+  }
+  return undefined;
+}
+
+/** Try to extract a hiring manager name from the JD */
+function inferHiringManager(jd: string): string | undefined {
+  if (!jd) return undefined;
+  const patterns = [
+    /(?:hiring\s+manager|recruiter|contact)[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+    /(?:report(?:s|ing)\s+to)[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+  ];
+  for (const rx of patterns) {
+    const m = jd.match(rx);
+    if (m?.[1]) return m[1].trim();
+  }
+  return undefined;
+}
+
+function formatDate(): string {
+  return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
-  const [strategyNote, setStrategyNote] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tone, setTone] = useState<Tone>("confident");
   const [step, setStep] = useState(0);
+
+  const contact = useMemo(() => extractContactFromText(experience), [experience]);
+  const companyName = useMemo(() => inferCompanyName(jd), [jd]);
+  const hiringManager = useMemo(() => inferHiringManager(jd), [jd]);
+
+  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Manager,";
 
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
@@ -45,10 +84,8 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     setLoading(true);
     setError(null);
     setLetter("");
-    setStrategyNote("");
     setStep(0);
 
-    // Animate through steps
     const stepTimers = [
       setTimeout(() => setStep(1), 1200),
       setTimeout(() => setStep(2), 2800),
@@ -65,7 +102,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           jd: jd.trim(),
           alignmentResult: alignmentResult || {},
           inferredRole: inferredRole || "",
-          companyName: "",
+          companyName: companyName || "",
           tone,
         },
       });
@@ -76,7 +113,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
       setLetter(data.letter || "");
-      setStrategyNote(data.strategy_note || "");
       setStep(3);
     } catch (e: any) {
       stepTimers.forEach(clearTimeout);
@@ -88,16 +124,39 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
   };
 
+  const fullLetterText = useMemo(() => {
+    if (!letter) return "";
+    const parts: string[] = [];
+    // Header
+    if (contact.name) parts.push(contact.name);
+    const contactLine = [contact.email, contact.phone].filter(Boolean).join(" | ");
+    if (contactLine) parts.push(contactLine);
+    parts.push(formatDate());
+    parts.push("");
+    if (hiringManager || companyName) {
+      if (hiringManager) parts.push(hiringManager);
+      if (companyName) parts.push(companyName);
+      parts.push("");
+    }
+    parts.push(salutation);
+    parts.push("");
+    parts.push(letter);
+    parts.push("");
+    parts.push("Sincerely,");
+    if (contact.name) parts.push(contact.name);
+    return parts.join("\n");
+  }, [letter, contact, hiringManager, companyName, salutation]);
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(letter);
+    await navigator.clipboard.writeText(fullLetterText);
     setCopied(true);
     toast.success("Copied to clipboard", { duration: 1500 });
     setTimeout(() => setCopied(false), 1500);
   };
 
   const handleDownloadDocx = async () => {
-    const paragraphs = letter.split("\n\n").filter(Boolean).map(
-      (p) => new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: p, size: 24, font: "Calibri" })] })
+    const paragraphs = fullLetterText.split("\n").map(
+      (line) => new Paragraph({ spacing: { after: line === "" ? 120 : 60 }, children: [new TextRun({ text: line, size: 24, font: "Calibri" })] })
     );
     const doc = new Document({ sections: [{ children: paragraphs }] });
     const blob = await Packer.toBlob(doc);
@@ -108,7 +167,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   if (!expanded) {
     return (
       <div className="space-y-3">
-        {/* Tone selector */}
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
           <div className="flex gap-1">
@@ -138,10 +196,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   return (
     <div className="space-y-3">
-      {(letter || loading || error) && (
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>Cover Letter Engine™</p>
-      )}
-
       {loading ? (
         <div className="rounded-lg border bg-card p-6 space-y-4">
           {STEPS.map((label, i) => {
@@ -166,11 +220,11 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           })}
         </div>
       ) : error ? (
-        <div className="rounded-lg bg-[#0F1C2E] p-6 space-y-4">
-          <p className="text-sm text-white leading-relaxed">
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Cover letter generation interrupted. This can happen with complex inputs — click retry to try again.
           </p>
-          <Button onClick={generate} className="w-full gap-2">
+          <Button onClick={generate} variant="outline" className="w-full gap-2">
             <RefreshCw className="h-4 w-4" /> Retry
           </Button>
         </div>
@@ -180,17 +234,45 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             <button onClick={handleCopy} className="absolute top-3 right-3 p-1.5 rounded hover:bg-secondary transition-colors">
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
             </button>
-            <div className="space-y-4 pr-8 md:space-y-4 [&>p+p]:mt-[1.25rem]">
-              {letter.split("\n\n").filter(Boolean).map((p, i) => (
-                <p key={i} className="text-foreground leading-relaxed text-[15px] md:text-[16px]">{p}</p>
-              ))}
+            <div className="space-y-1 pr-8">
+              {/* Header block */}
+              {contact.name && (
+                <p className="text-foreground font-semibold text-[15px] md:text-[16px]">{contact.name}</p>
+              )}
+              {(contact.email || contact.phone) && (
+                <p className="text-muted-foreground text-[13px]">
+                  {[contact.email, contact.phone].filter(Boolean).join(" | ")}
+                </p>
+              )}
+              <p className="text-muted-foreground text-[13px]">{formatDate()}</p>
+
+              {(hiringManager || companyName) && (
+                <div className="pt-3">
+                  {hiringManager && <p className="text-foreground text-[15px]">{hiringManager}</p>}
+                  {companyName && <p className="text-foreground text-[15px]">{companyName}</p>}
+                </div>
+              )}
+
+              {/* Salutation */}
+              <p className="text-foreground text-[15px] md:text-[16px] pt-4">{salutation}</p>
+
+              {/* Body */}
+              <div className="space-y-4 pt-3">
+                {letter.split("\n\n").filter(Boolean).map((p, i) => (
+                  <p key={i} className="text-foreground leading-relaxed text-[15px] md:text-[16px]">{p}</p>
+                ))}
+              </div>
+
+              {/* Closing */}
+              <div className="pt-4">
+                <p className="text-foreground text-[15px] md:text-[16px]">Sincerely,</p>
+                {contact.name && (
+                  <p className="text-foreground font-semibold text-[15px] md:text-[16px]">{contact.name}</p>
+                )}
+              </div>
             </div>
           </div>
-          {strategyNote && (
-            <p className="text-xs text-muted-foreground italic">{strategyNote}</p>
-          )}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Tone selector inline */}
             <div className="flex gap-1 mr-auto">
               {TONES.map((t) => (
                 <button
@@ -213,7 +295,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               <Download className="h-3.5 w-3.5" /> Download DOCX
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground text-center italic">Built from your signal — not a template. Zero fabrication.</p>
         </>
       ) : null}
     </div>
