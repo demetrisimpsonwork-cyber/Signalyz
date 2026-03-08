@@ -11,8 +11,8 @@ const WeakAlignmentNudge = ({ additionalContext, onContextChange }: WeakAlignmen
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-2">
-      <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+    <div className="rounded-lg border border-border bg-secondary p-4 space-y-2">
+      <p className="text-xs text-muted-foreground font-medium">
         Want help strengthening this? Add more detail about tools, metrics, or frameworks below.
       </p>
       <button

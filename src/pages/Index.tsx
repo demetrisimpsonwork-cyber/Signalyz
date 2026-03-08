@@ -1455,15 +1455,6 @@ const Index = () => {
                           />
                         )}
 
-                        {/* Interview Intelligence */}
-                        <InterviewIntelligence
-                          experience={bullet}
-                          jd={jd}
-                          alignmentResult={result as any}
-                          isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
-                        />
-
                         {/* Cover Letter Engine */}
                         <CoverLetterEngine
                           experience={bullet}
@@ -1486,6 +1477,15 @@ const Index = () => {
                         />
                       </>
                     )}
+
+                    {/* Interview Intelligence — visible to all users, internally gates questions 2+ */}
+                    <InterviewIntelligence
+                      experience={bullet}
+                      jd={jd}
+                      alignmentResult={result as any}
+                      isPro={effectiveIsPro}
+                      onUpgrade={() => setShowUpgrade(true)}
+                    />
 
                     <KeywordChips keywords={result.missing_keywords} />
 
