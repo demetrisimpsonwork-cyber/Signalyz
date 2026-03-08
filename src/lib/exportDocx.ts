@@ -20,32 +20,62 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     resume.header.linkedin,
   ].filter(Boolean);
 
-  const experienceChildren = resume.experience.flatMap((exp, ri) => {
-    const roleParts: Paragraph[] = [];
+  const noBorders = {
+    top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  } as const;
 
-    // Role title + company as a sub-heading
+  const experienceChildren = resume.experience.flatMap((exp) => {
+    const roleParts: (Paragraph | Table)[] = [];
+
     const titleLine = exp.title || "";
     const companyLine = exp.company || "";
+
+    // Two-column table row: left = title italic, right = date right-aligned
     roleParts.push(
-      new Paragraph({
-        spacing: { before: 200, after: 20 },
-        keepNext: true,
-        tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
-        children: [
-          new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
-          ...(exp.dates
-            ? [
-                new TextRun({ text: "\t", size: 20, font: "Calibri" }),
-                new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" }),
-              ]
-            : []),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: TableBorders.NONE,
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                width: { size: 70, type: WidthType.PERCENTAGE },
+                borders: noBorders,
+                children: [
+                  new Paragraph({
+                    spacing: { before: 0, after: 0 },
+                    children: [
+                      new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 30, type: WidthType.PERCENTAGE },
+                borders: noBorders,
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    spacing: { before: 0, after: 0 },
+                    children: [
+                      new TextRun({ text: exp.dates || "", size: 20, font: "Calibri", color: "666666" }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
         ],
       }),
     );
+
     if (companyLine) {
       roleParts.push(
         new Paragraph({
-          spacing: { after: 40 },
+          spacing: { before: 0, after: 0 },
           keepNext: true,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
@@ -54,22 +84,19 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       );
     }
 
-    // Bullets as actual list items — keepNext keeps them grouped with the role header
+    // Bullets — tight spacing, no page breaks
     roleParts.push(
       ...exp.bullets.map(
-        (b, bi) =>
+        (b) =>
           new Paragraph({
-            spacing: { after: 20, line: 264 },
+            spacing: { before: 0, after: 0, line: 264 },
             bullet: { level: 0 },
             keepLines: true,
-            keepNext: bi < exp.bullets.length - 1,
+            keepNext: false,
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
       ),
     );
-
-    // Spacing between roles
-    // No extra spacer paragraph between roles — spacing.before on next title handles it
 
     return roleParts;
   });
