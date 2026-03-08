@@ -36,6 +36,8 @@ interface CalibratedResumeTabProps {
   onRunAlignment?: () => void;
   /** Called when resume assembly completes successfully */
   onAssembled?: () => void;
+  /** Alignment result to use when no director result exists */
+  alignmentResult?: Record<string, unknown>;
 }
 
 const CalibratedResumeTab = ({
@@ -47,6 +49,7 @@ const CalibratedResumeTab = ({
   hasCurrentSessionAlignment = false,
   onRunAlignment,
   onAssembled,
+  alignmentResult,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
@@ -70,12 +73,17 @@ const CalibratedResumeTab = ({
   }, [isPro, onUpgrade]);
 
   const handleAssemble = () => {
-    if (!hasRequiredSections(directorResult)) {
-      toast.error("Run the Signal Positioning Report first to generate your calibrated resume.");
-      return;
-    }
-    assemble(directorResult!, originalResume, preExtractedContact);
+    assemble(directorResult, originalResume, preExtractedContact, alignmentResult as Record<string, unknown>);
   };
+
+  // Auto-assemble when alignment exists and no resume yet
+  const autoAssembledRef = useRef(false);
+  useEffect(() => {
+    if (isPro && hasCurrentSessionAlignment && !currentResume && !loading && !error && !autoAssembledRef.current) {
+      autoAssembledRef.current = true;
+      handleAssemble();
+    }
+  }, [isPro, hasCurrentSessionAlignment, currentResume, loading, error]);
 
   const handleExportDocx = () => {
     if (!currentResume) return;
