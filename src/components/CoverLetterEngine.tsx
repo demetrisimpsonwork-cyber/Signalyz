@@ -71,6 +71,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const [error, setError] = useState<string | null>(null);
   const [tone, setTone] = useState<Tone>("confident");
   const [step, setStep] = useState(0);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   const contact = useMemo(() => extractContactFromText(experience), [experience]);
   const companyName = useMemo(() => inferCompanyName(jd), [jd]);

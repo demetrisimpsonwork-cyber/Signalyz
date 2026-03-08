@@ -975,6 +975,7 @@ const Index = () => {
               { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
               { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -991,21 +992,6 @@ const Index = () => {
                 {tab.label}
               </button>
             ))}
-            {/* Vertical divider */}
-            <div className="h-4 w-px bg-muted-foreground/30 mx-1" />
-            <button
-              onClick={() => {
-                if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                setMode("linkedin");
-              }}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
-                mode === "linkedin"
-                  ? "text-primary border-primary"
-                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
-              }`}
-            >
-              LinkedIn Signal
-            </button>
           </div>
         </div>
 
