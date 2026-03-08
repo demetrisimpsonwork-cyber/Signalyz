@@ -201,6 +201,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 ...resume.independent_projects.flatMap((proj) => [
                   new Paragraph({
                     heading: HeadingLevel.HEADING_3,
+                    pageBreakBefore: false,
                     spacing: { before: 160, after: 60 },
                     children: [
                       new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
