@@ -3,6 +3,22 @@ import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
 export async function exportCalibratedDocx(resume: CalibratedResumeData) {
+  // Preprocess certifications: strip URLs, markdown links, brackets — plain text only
+  const cleanedCertifications = (resume.certifications || []).map((cert) => {
+    let clean = cert
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")   // [text](url) → text
+      .replace(/https?:\/\/\S+/gi, "")            // bare URLs
+      .replace(/www\.\S+/gi, "")                   // www links
+      .replace(/<a[^>]*>(.*?)<\/a>/gi, "$1")       // <a> tags
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    // Normalize known cert pattern
+    if (/google\s+it\s+support\s+professional\s+certificate/i.test(clean)) {
+      clean = "Google IT Support Professional Certificate — Coursera";
+    }
+    return clean;
+  });
+
   const sectionHeader = (text: string) =>
     new Paragraph({
       heading: HeadingLevel.HEADING_2,
