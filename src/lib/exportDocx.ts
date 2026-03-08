@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat, Table, TableRow, TableCell, WidthType, TableBorders } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
@@ -20,54 +20,23 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     resume.header.linkedin,
   ].filter(Boolean);
 
-  const noBorders = {
-    top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-  } as const;
 
   const experienceChildren = resume.experience.flatMap((exp) => {
-    const roleParts: (Paragraph | Table)[] = [];
+    const roleParts: Paragraph[] = [];
 
     const titleLine = exp.title || "";
     const companyLine = exp.company || "";
 
-    // Two-column table row: left = title italic, right = date right-aligned
+    // Title + date in one simple paragraph: italic title, spaces, then date
     roleParts.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: TableBorders.NONE,
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({
-                width: { size: 70, type: WidthType.PERCENTAGE },
-                borders: noBorders,
-                children: [
-                  new Paragraph({
-                    spacing: { before: 0, after: 0 },
-                    children: [
-                      new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 30, type: WidthType.PERCENTAGE },
-                borders: noBorders,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    spacing: { before: 0, after: 0 },
-                    children: [
-                      new TextRun({ text: exp.dates || "", size: 20, font: "Calibri", color: "666666" }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          }),
+      new Paragraph({
+        spacing: { before: 200, after: 0 },
+        keepNext: true,
+        children: [
+          new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
+          ...(exp.dates
+            ? [new TextRun({ text: "    " + exp.dates, size: 20, font: "Calibri", color: "666666" })]
+            : []),
         ],
       }),
     );
