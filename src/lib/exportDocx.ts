@@ -222,12 +222,15 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             ? [
                 sectionHeader("Certifications"),
                 ...resume.certifications.map(
-                  (cert) =>
-                    new Paragraph({
+                  (cert) => {
+                    // Strip URLs to prevent Word from auto-creating hyperlinks
+                    const cleanCert = cert.replace(/https?:\/\/\S+/gi, "").replace(/\s{2,}/g, " ").trim();
+                    return new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
-                      children: [new TextRun({ text: cert, size: 21, font: "Calibri", color: "000000" })],
-                    }),
+                      children: [new TextRun({ text: cleanCert, size: 21, font: "Calibri", color: "000000" })],
+                    });
+                  }
                 ),
               ]
             : []),
