@@ -402,7 +402,7 @@ const Index = () => {
     const resumeDone = sessionResumeAssembled;
 
     // Map the current tab to a pipeline stage id
-    const activeTab = mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode === "linkedin" ? "alignment" : "alignment";
+    const activeTab = mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode === "coverletter" ? "alignment" : mode === "linkedin" ? "alignment" : "alignment";
 
     const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "pending" | "locked" => {
       if (done) return "complete";
