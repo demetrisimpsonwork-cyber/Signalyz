@@ -888,7 +888,7 @@ const Index = () => {
             <div className="grid grid-cols-2 gap-1">
               {([
                 { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-                { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+                { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               ] as const).map((tab) => (
                 <button
                   key={tab.id}
@@ -944,7 +944,7 @@ const Index = () => {
           <div className="hidden lg:inline-flex lg:flex-nowrap items-center gap-1">
             {([
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-              { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+              { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
             ] as const).map((tab) => (
               <button
