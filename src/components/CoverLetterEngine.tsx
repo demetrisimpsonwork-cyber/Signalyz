@@ -80,7 +80,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
-    setExpanded(true);
     setLoading(true);
     setError(null);
     setLetter("");
