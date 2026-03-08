@@ -223,18 +223,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 ]),
               ]
             : []),
-          // Skills
-          ...(resume.skills && resume.skills.length > 0
-            ? [
-                sectionHeader("Skills"),
-                new Paragraph({
-                  spacing: { after: 200, line: 276 },
-                  children: [
-                    new TextRun({ text: resume.skills.join("  •  "), size: 21, font: "Calibri" }),
-                  ],
-                }),
-              ]
-            : []),
+          // Skills merged into Core Competencies above
           // Certifications
           ...(resume.certifications && resume.certifications.length > 0
             ? [
