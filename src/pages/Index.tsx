@@ -11,7 +11,7 @@ import MatchScoreCard from "@/components/MatchScoreCard";
 import ExportResults from "@/components/ExportResults";
 import CalibratedBulletsSection from "@/components/CalibratedBulletsSection";
 import UpgradeModal from "@/components/UpgradeModal";
-import ResumeBuilder from "@/components/ResumeBuilder";
+// ResumeBuilder removed from alignment results — now only in Calibrated Resume tab
 import ResumeUpload from "@/components/ResumeUpload";
 // ProInsightsTeaser removed — consolidated into single gate card
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
@@ -20,7 +20,7 @@ import SignalGapActions from "@/components/SignalGapActions";
 import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
-import CoverLetterEngine from "@/components/CoverLetterEngine";
+import CoverLetterTab from "@/components/CoverLetterTab";
 import SignalDiagnosticModules, { ScoreExplanation } from "@/components/SignalDiagnosticModules";
 import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules";
 import type { SignalModel } from "@/types/SignalModel";
@@ -336,7 +336,7 @@ function DirectorModeContent({
 }
 
 const Index = () => {
-  const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated">("alignment");
+  const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated" | "coverletter">("alignment");
   const [bullet, setBullet] = useState("");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -402,7 +402,7 @@ const Index = () => {
     const resumeDone = sessionResumeAssembled;
 
     // Map the current tab to a pipeline stage id
-    const activeTab = mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode === "linkedin" ? "alignment" : "alignment";
+    const activeTab = mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode === "coverletter" ? "alignment" : mode === "linkedin" ? "alignment" : "alignment";
 
     const getStatus = (id: string, done: boolean, priorDone: boolean): "complete" | "active" | "pending" | "locked" => {
       if (done) return "complete";
@@ -927,19 +927,25 @@ const Index = () => {
                   {tab.label}
                 </button>
               ))}
-              <button
-                onClick={() => {
-                  if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                  setMode("calibrated");
-                }}
-                className={`col-span-2 px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
-                  mode === "calibrated"
-                    ? "bg-primary/10 border-primary text-primary"
-                    : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                }`}
-              >
-                Calibrated Resume
-              </button>
+              {([
+                { id: "calibrated" as const, label: "Calibrated Resume" },
+                { id: "coverletter" as const, label: "Cover Letter" },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                    setMode(tab.id);
+                  }}
+                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
+                    mode === tab.id
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
             {/* Profile Tools divider */}
             <div className="flex items-center gap-2 my-1.5">
@@ -968,6 +974,7 @@ const Index = () => {
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
               { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
+              { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -1025,6 +1032,20 @@ const Index = () => {
             hasCurrentSessionAlignment={!!result}
             onRunAlignment={() => setMode("alignment")}
             onAssembled={() => setSessionResumeAssembled(true)}
+          />
+        )}
+
+        {/* Cover Letter Tab */}
+        {mode === "coverletter" && (
+          <CoverLetterTab
+            isPro={effectiveIsPro}
+            onUpgrade={() => setShowUpgrade(true)}
+            experience={bullet}
+            jd={jd}
+            alignmentResult={result as any || {}}
+            inferredRole={result?.inferred_role_title || ""}
+            hasCurrentSessionAlignment={!!result}
+            onRunAlignment={() => setMode("alignment")}
           />
         )}
 
@@ -1437,26 +1458,6 @@ const Index = () => {
                           />
                         )}
 
-                        {/* Cover Letter Engine */}
-                        <CoverLetterEngine
-                          experience={bullet}
-                          jd={jd}
-                          alignmentResult={result as any}
-                          inferredRole={result.inferred_role_title || ""}
-                          isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
-                        />
-
-                        {/* Resume Builder */}
-                        <ResumeBuilder
-                          experience={bullet}
-                          jd={jd}
-                          calibratedBullet={result.optimized_bullet}
-                          originalBullet={bullet}
-                          matchScore={result.match_score}
-                          isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
-                        />
                       </>
                     )}
 
