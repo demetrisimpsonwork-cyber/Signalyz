@@ -114,6 +114,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
       setLetter(data.letter || "");
+      setHasGenerated(true);
       setStep(3);
     } catch (e: any) {
       stepTimers.forEach(clearTimeout);
@@ -124,6 +125,15 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       setLoading(false);
     }
   };
+
+  // Auto-regenerate when tone changes after first generation
+  const prevToneRef = useRef(tone);
+  useEffect(() => {
+    if (prevToneRef.current !== tone && hasGenerated && !loading) {
+      generate();
+    }
+    prevToneRef.current = tone;
+  }, [tone]);
 
   const fullLetterText = useMemo(() => {
     if (!letter) return "";
