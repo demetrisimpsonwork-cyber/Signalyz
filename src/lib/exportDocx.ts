@@ -223,8 +223,13 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 sectionHeader("Certifications"),
                 ...resume.certifications.map(
                   (cert) => {
-                    // Strip URLs to prevent Word from auto-creating hyperlinks
-                    const cleanCert = cert.replace(/https?:\/\/\S+/gi, "").replace(/\s{2,}/g, " ").trim();
+                    // Strip URLs AND domain-like text to prevent Word from auto-creating hyperlinks
+                    const cleanCert = cert
+                      .replace(/https?:\/\/\S+/gi, "")
+                      .replace(/www\.\S+/gi, "")
+                      .replace(/\b\S+\.(com|org|net|edu|io|co)\b/gi, "")
+                      .replace(/\s{2,}/g, " ")
+                      .trim();
                     return new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
