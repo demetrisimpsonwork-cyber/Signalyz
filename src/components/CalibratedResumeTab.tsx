@@ -121,37 +121,12 @@ const CalibratedResumeTab = ({
     );
   }
 
-  // No director result or missing required sections
-  if (!currentResume && !hasRequiredSections(directorResult)) {
-    return (
-      <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
-          <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
-          <h3 className="text-base font-semibold text-foreground">No signal report detected</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            Run the Signal Positioning Report first — the Calibrated Resume assembles directly from your deep analysis.
-          </p>
-          {onSwitchToReport && (
-            <Button onClick={onSwitchToReport} variant="outline" className="gap-2 mt-2">
-              <Sparkles className="h-4 w-4" />
-              Go to Signal Positioning Report
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      {/* Assembly trigger or loading */}
-      {!currentResume && !loading && (
+      {/* Loading state while auto-assembling */}
+      {!currentResume && !loading && !error && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-4 p-8">
-          <p className="text-sm text-muted-foreground">Signal Positioning Report detected. Ready to assemble.</p>
-          <Button onClick={handleAssemble} size="lg" className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Assemble Calibrated Resume
-          </Button>
+          <p className="text-sm text-muted-foreground">Preparing to assemble your calibrated resume…</p>
         </div>
       )}
 
