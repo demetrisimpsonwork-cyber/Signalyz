@@ -22,46 +22,21 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
 
 
   const experienceChildren = resume.experience.flatMap((exp) => {
-    const roleParts: (Paragraph | Table)[] = [];
+    const roleParts: Paragraph[] = [];
 
     const titleLine = exp.title || "";
     const companyLine = exp.company || "";
 
-    // Two-column table row: left = title italic, right = date right-aligned
+    // Title + date in one simple paragraph: italic title, spaces, then date
     roleParts.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: TableBorders.NONE,
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({
-                width: { size: 70, type: WidthType.PERCENTAGE },
-                borders: noBorders,
-                children: [
-                  new Paragraph({
-                    spacing: { before: 0, after: 0 },
-                    children: [
-                      new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 30, type: WidthType.PERCENTAGE },
-                borders: noBorders,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    spacing: { before: 0, after: 0 },
-                    children: [
-                      new TextRun({ text: exp.dates || "", size: 20, font: "Calibri", color: "666666" }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          }),
+      new Paragraph({
+        spacing: { before: 200, after: 0 },
+        keepNext: true,
+        children: [
+          new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
+          ...(exp.dates
+            ? [new TextRun({ text: "    " + exp.dates, size: 20, font: "Calibri", color: "666666" })]
+            : []),
         ],
       }),
     );
