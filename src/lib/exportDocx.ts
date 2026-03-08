@@ -69,9 +69,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     );
 
     // Spacing between roles
-    if (ri < resume.experience.length - 1) {
-      roleParts.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
-    }
+    // No extra spacer paragraph between roles — spacing.before on next title handles it
 
     return roleParts;
   });
