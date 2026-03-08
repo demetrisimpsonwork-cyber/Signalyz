@@ -54,7 +54,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       ...exp.bullets.map(
         (b) =>
           new Paragraph({
-            spacing: { after: 80, line: 276 },
+            spacing: { after: 40, line: 264 },
             bullet: { level: 0 },
             children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
           }),
