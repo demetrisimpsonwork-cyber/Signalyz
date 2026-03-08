@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface CalibratedBulletsSectionProps {
   bullet: string;
@@ -147,11 +149,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           )}
         </>
       ) : (
-        <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-          <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-          <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-          <button onClick={onUpgrade} className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/90">Unlock Resumix Pro — $19/month</button>
-        </div>
+        <CalibratedBulletsGateCTA onUpgrade={onUpgrade} />
       )}
 
       <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
