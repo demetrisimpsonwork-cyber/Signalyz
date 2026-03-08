@@ -901,24 +901,6 @@ const Index = () => {
 
       {/* Mode toggle + Tool */}
       <section id="alignment-tool" className="py-12 container max-w-5xl">
-        {/* Pipeline progress bar */}
-        <SignalPipelineProgress
-          stages={pipelineStages}
-          activeStageId={mode === "director" ? "report" : mode === "calibrated" ? "resume" : mode}
-          onStageClick={(id) => {
-            const tabMap: Record<string, typeof mode> = {
-              alignment: "alignment",
-              report: "director",
-              resume: "calibrated",
-            };
-            const target = tabMap[id];
-            if (target === "calibrated" && !effectiveIsPro) {
-              setShowUpgrade(true);
-              return;
-            }
-            if (target) setMode(target);
-          }}
-        />
 
         {/* Sub-navigation tabs */}
         {/* Sub-navigation tabs */}
