@@ -1472,6 +1472,7 @@ const Index = () => {
         trialRunsUsed={trialRunsUsed}
         trialLimit={TRIAL_LIMIT}
         onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
+        isAuthenticated={!!user}
       />
     </div>
   );

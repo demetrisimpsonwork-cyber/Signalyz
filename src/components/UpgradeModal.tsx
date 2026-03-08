@@ -16,6 +16,7 @@ interface UpgradeModalProps {
   trialRunsUsed?: number;
   trialLimit?: number;
   onStartTrial?: () => void;
+  isAuthenticated?: boolean;
 }
 
 const UpgradeModal = ({
@@ -25,13 +26,40 @@ const UpgradeModal = ({
   trialRunsUsed = 0,
   trialLimit = 3,
   onStartTrial,
+  isAuthenticated = true,
 }: UpgradeModalProps) => {
-  // removed unused navigate
 
   const handleStartTrial = () => {
     onStartTrial?.();
     onClose();
   };
+
+  // Unauthenticated users: simple sign-up prompt
+  if (!isAuthenticated) {
+    return (
+      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+              Create Your Free Account
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
+              Sign up to run your own alignment — 3 free analyses included.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-4">
+            <Button
+              size="lg"
+              className="w-full gap-2 bg-primary hover:bg-primary/90 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              asChild
+            >
+              <a href="/auth">Get Started Free</a>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
