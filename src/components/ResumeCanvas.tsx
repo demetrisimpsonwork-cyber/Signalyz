@@ -230,7 +230,7 @@ const BulletEditor = ({
   };
 
   return (
-    <ul className="space-y-1 ml-3">
+    <ul className="ml-3" style={{ marginTop: "2px" }}>
       {bullets.map((bullet, bi) => (
         <li
           key={bi}
