@@ -28,10 +28,11 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     const titleLine = exp.title || "";
     const companyLine = exp.company || "";
 
-    // Title + date in one paragraph — no keepNext to avoid forced page breaks
+    // Title + date — keepNext true so title stays with company on same page
     roleParts.push(
       new Paragraph({
         spacing: { before: 200, after: 0 },
+        keepNext: true,
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
@@ -45,6 +46,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       roleParts.push(
         new Paragraph({
           spacing: { before: 0, after: 0 },
+          keepNext: false,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
