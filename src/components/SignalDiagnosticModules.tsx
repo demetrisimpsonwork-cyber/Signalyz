@@ -833,68 +833,67 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
 
   return (
     <div className="space-y-4">
-      {/* Why You're Not Getting Interviews — immediately after diagnosis */}
+      {/* Why You're Not Getting Interviews — visible to all users */}
       {data.interview_gap_diagnosis?.primary_issue && (
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} />
       )}
 
-      {/* Executive Insight */}
-      {data.executive_insight_summary?.primary_insight && (
-        <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
-      )}
+      {/* All remaining signal diagnostic sections — Pro only */}
+      {isPro ? (
+        <>
+          {data.executive_insight_summary?.primary_insight && (
+            <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
+          )}
 
-      {/* Transferable Signal */}
-      {data.transferable_signal_detection?.detected_capability && (
-        <TransferableSignal data={data.transferable_signal_detection} evidenceLedger={data.evidence_ledger} />
-      )}
+          {data.transferable_signal_detection?.detected_capability && (
+            <TransferableSignal data={data.transferable_signal_detection} evidenceLedger={data.evidence_ledger} />
+          )}
 
-      {/* Signal Map */}
-      {data.signal_map && (
-        <SignalMapVisualization data={data.signal_map} />
-      )}
+          {data.signal_map && (
+            <SignalMapVisualization data={data.signal_map} />
+          )}
 
-      {/* Resume Signal Profile + Employer Priorities side by side on desktop */}
-      {(data.resume_signal_profile || data.jd_signal_extraction) && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {data.resume_signal_profile && <ResumeSignalProfile data={data.resume_signal_profile} />}
-          {data.jd_signal_extraction && <EmployerPrioritySignals data={data.jd_signal_extraction} />}
-        </div>
-      )}
+          {(data.resume_signal_profile || data.jd_signal_extraction) && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {data.resume_signal_profile && <ResumeSignalProfile data={data.resume_signal_profile} />}
+              {data.jd_signal_extraction && <EmployerPrioritySignals data={data.jd_signal_extraction} />}
+            </div>
+          )}
 
-      {/* Career Signal Map — free tier visible */}
-      {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
-        <CareerSignalMap data={data.career_signal_map} />
-      )}
+          {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+            <CareerSignalMap data={data.career_signal_map} />
+          )}
 
-      {/* Signal Alignment Analysis */}
-      {data.signal_alignment_analysis && data.signal_alignment_analysis.length > 0 && (
-        <SignalAlignmentAnalysis data={data.signal_alignment_analysis} />
-      )}
+          {data.signal_alignment_analysis && data.signal_alignment_analysis.length > 0 && (
+            <SignalAlignmentAnalysis data={data.signal_alignment_analysis} />
+          )}
 
-      {/* Hiring Pipeline Simulation — pro gated for full view */}
-      {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
-        isPro ? (
-          <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
-        ) : (
-          <ProGate isPro={isPro} onUpgrade={onUpgrade} label="Unlock full risk projection with Resumix Pro">
+          {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
             <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
-          </ProGate>
-        )
-      )}
+          )}
 
-      {/* Signal Shift Visualization */}
-      {data.signal_shift_estimates && (
-        <SignalShiftVisualization data={data.signal_shift_estimates} />
-      )}
+          {data.signal_shift_estimates && (
+            <SignalShiftVisualization data={data.signal_shift_estimates} />
+          )}
 
-      {/* Hiring Signal Benchmark */}
-      {data.hiring_signal_benchmark && data.hiring_signal_benchmark.user_score != null && (
-        <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
-      )}
+          {data.hiring_signal_benchmark && data.hiring_signal_benchmark.user_score != null && (
+            <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
+          )}
 
-      {/* Predicted Signal Lift — pro gated */}
-      {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
-        <PredictedSignalLift data={data.predicted_signal_lift} isPro={isPro} onUpgrade={onUpgrade} />
+          {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
+            <PredictedSignalLift data={data.predicted_signal_lift} isPro={true} onUpgrade={onUpgrade} />
+          )}
+        </>
+      ) : (
+        /* Single clean locked card for all gated diagnostic modules */
+        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+          <p className="text-sm font-semibold text-foreground">Unlock Full Signal Diagnostics — Resumix Pro</p>
+          <p className="text-xs text-muted-foreground">Executive Insight, Signal Map, Career Signal Map, Signal Alignment Analysis, Risk Projection, and more.</p>
+          {onUpgrade && (
+            <Button onClick={onUpgrade} size="sm">Unlock Resumix Pro — $19/month</Button>
+          )}
+        </div>
       )}
     </div>
   );
