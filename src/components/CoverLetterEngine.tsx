@@ -201,19 +201,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     </div>
   );
 
-  if (!expanded) {
-    return (
-      <div className="space-y-3">
-        {toneSelector}
-        <Button variant="secondary" onClick={generate} className="w-full gap-2">
-          <Sparkles className="h-4 w-4" />
-          Generate Signal-Calibrated Cover Letter
-          {!isPro && <span className="ml-1 text-[10px] uppercase tracking-wider text-primary font-semibold">Pro</span>}
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       {toneSelector}
