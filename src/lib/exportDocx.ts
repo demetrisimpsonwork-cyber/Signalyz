@@ -6,6 +6,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   const sectionHeader = (text: string) =>
     new Paragraph({
       heading: HeadingLevel.HEADING_2,
+      pageBreakBefore: false,
       spacing: { before: 240, after: 120 },
       border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" } },
       children: [
