@@ -28,10 +28,11 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     const titleLine = exp.title || "";
     const companyLine = exp.company || "";
 
-    // Title + date in one paragraph — no keepNext to avoid forced page breaks
+    // Title + date — keepNext true so title stays with company on same page
     roleParts.push(
       new Paragraph({
         spacing: { before: 200, after: 0 },
+        keepNext: true,
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
@@ -45,6 +46,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       roleParts.push(
         new Paragraph({
           spacing: { before: 0, after: 0 },
+          keepNext: false,
           children: [
             new TextRun({ text: companyLine, bold: true, size: 22, font: "Calibri" }),
           ],
@@ -227,16 +229,29 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 ...resume.certifications.map(
                   (cert) => {
                     // Strip URLs AND domain-like text to prevent Word from auto-creating hyperlinks
-                    const cleanCert = cert
+                    let cleanCert = cert
                       .replace(/https?:\/\/\S+/gi, "")
                       .replace(/www\.\S+/gi, "")
                       .replace(/\b\S+\.(com|org|net|edu|io|co)\b/gi, "")
                       .replace(/\s{2,}/g, " ")
                       .trim();
+
+                    // Split each word into individual TextRuns to prevent Word from
+                    // auto-detecting known brand names (e.g. "Coursera") as hyperlinks.
+                    // A zero-width space between characters breaks entity recognition.
+                    const words = cleanCert.split(/\s+/);
+                    const runs: typeof TextRun extends new (...a: any) => infer R ? R[] : never = [];
+                    words.forEach((word, idx) => {
+                      // Insert zero-width space after first char to break auto-link detection
+                      const broken = word.length > 3 ? word[0] + "\u200B" + word.slice(1) : word;
+                      if (idx > 0) runs.push(new TextRun({ text: " ", size: 21, font: "Calibri", color: "000000" }));
+                      runs.push(new TextRun({ text: broken, size: 21, font: "Calibri", color: "000000", style: undefined }));
+                    });
+
                     return new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
-                      children: [new TextRun({ text: cleanCert, size: 21, font: "Calibri", color: "000000" })],
+                      children: runs,
                     });
                   }
                 ),
