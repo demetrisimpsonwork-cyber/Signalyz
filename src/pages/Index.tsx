@@ -609,20 +609,20 @@ const Index = () => {
       setInputTruncated(true);
     }
     const payloadLength = normResume.text.length + normJd.text.length;
-    try {
-      const bulletWithContext = additionalContext.trim()
-        ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
-        : normResume.text;
-      const sessionToken = user ? undefined : getSessionToken();
+    const bulletWithContext = additionalContext.trim()
+      ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
+      : normResume.text;
+    const sessionToken = user ? undefined : getSessionToken();
 
-      const data = await invokeResilient(
+    const invokeAlignment = () =>
+      invokeResilient(
         "alignment",
         "optimize-bullet",
         { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
         90_000,
       );
 
-      // Capture debug info
+    const processResult = async (data: any) => {
       const debug: DebugInfo = {
         request_id: data?.request_id,
         error_code: data?.error_code,
@@ -634,7 +634,6 @@ const Index = () => {
       setLastDebug(debug);
 
       if (data?.error) {
-        // Tag daily-limit errors with a distinct code so the UI can show the neutral card
         if (data.limit_reached || data.error_code === "RATE_LIMIT") {
           debug.error_code = "DAILY_LIMIT";
         }
@@ -646,7 +645,6 @@ const Index = () => {
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
 
-      // Store alignment score + JD fingerprint for cross-engine consistency
       try {
         const jdFingerprint = normJd.text.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
         sessionStorage.setItem("resumix_alignment_score", JSON.stringify({
@@ -657,14 +655,11 @@ const Index = () => {
       } catch {}
       increment();
       if (isTrialPro) incrementTrialRun();
-      // Increment server-side daily run count
       if (user) {
         try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
       }
-      // Save to history
       saveToHistory(res);
-      // Guest nudge
       if (!user) {
         toast("Save your results and track your progress", {
           description: "Create a free account to keep your alignment history.",
@@ -672,11 +667,29 @@ const Index = () => {
           duration: 8000,
         });
       }
-    } catch (err: any) {
-      const msg = err.message || FRIENDLY_FAIL_MSG;
-      setResult(null);
-      if (!alignmentError) {
-        setAlignmentError({ message: msg });
+    };
+
+    try {
+      const data = await invokeAlignment();
+      await processResult(data);
+    } catch (firstErr: any) {
+      // Don't retry daily-limit or credential errors — those are intentional gates
+      if (alignmentError?.error_code === "DAILY_LIMIT" || alignmentError?.error_code === "CREDENTIAL_MISMATCH") {
+        // Already set by processResult, just stop
+      } else {
+        // Silent retry once for cold-start / transient failures
+        try {
+          console.info("[Alignment] First attempt failed, retrying silently…", firstErr.message);
+          setAlignmentError(null);
+          const data = await invokeAlignment();
+          await processResult(data);
+        } catch (retryErr: any) {
+          const msg = retryErr.message || FRIENDLY_FAIL_MSG;
+          setResult(null);
+          if (!alignmentError) {
+            setAlignmentError({ message: msg });
+          }
+        }
       }
     } finally {
       setLoading(false);
