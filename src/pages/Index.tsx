@@ -1035,6 +1035,20 @@ const Index = () => {
           />
         )}
 
+        {/* Cover Letter Tab */}
+        {mode === "coverletter" && (
+          <CoverLetterTab
+            isPro={effectiveIsPro}
+            onUpgrade={() => setShowUpgrade(true)}
+            experience={bullet}
+            jd={jd}
+            alignmentResult={result as any || {}}
+            inferredRole={result?.inferred_role_title || ""}
+            hasCurrentSessionAlignment={!!result}
+            onRunAlignment={() => setMode("alignment")}
+          />
+        )}
+
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
             <DirectorModeContent
