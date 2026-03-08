@@ -125,6 +125,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           // Name — Heading 1 style
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
+            pageBreakBefore: false,
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
