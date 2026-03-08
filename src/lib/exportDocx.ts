@@ -97,6 +97,14 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     styles: {
       paragraphStyles: [
         {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { bold: true, size: 28, font: "Calibri", color: "000000" },
+          paragraph: { spacing: { after: 40 }, alignment: AlignmentType.CENTER },
+        },
+        {
           id: "Heading2",
           name: "Heading 2",
           basedOn: "Normal",
