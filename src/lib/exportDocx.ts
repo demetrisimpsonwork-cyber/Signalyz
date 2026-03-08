@@ -126,7 +126,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
-              new TextRun({ text: resume.header.name || "Name", bold: true, size: 28, font: "Calibri" }),
+              new TextRun({ text: resume.header.name || "Name", bold: true, size: 28, font: "Calibri", color: "000000" }),
             ],
           }),
           // Title
