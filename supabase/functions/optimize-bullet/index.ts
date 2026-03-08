@@ -77,7 +77,7 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
     clearTimeout(timeout);
     if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 90s.");
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 120s.");
     throw new Error(`AI call failed: ${msg}`);
   }
 }
