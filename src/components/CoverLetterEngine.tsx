@@ -64,7 +64,6 @@ function formatDate(): string {
 }
 
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [copied, setCopied] = useState(false);
