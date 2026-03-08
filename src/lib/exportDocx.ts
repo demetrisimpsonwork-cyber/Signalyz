@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat, TabStopPosition, TabStopType } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
@@ -30,13 +30,16 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
       new Paragraph({
         spacing: { before: 200, after: 20 },
         keepNext: true,
+        tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
-            ? [new TextRun({ text: " ", size: 20, font: "Calibri" }), new TextRun({ text: "\t", size: 20, font: "Calibri" }), new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" })]
+            ? [
+                new TextRun({ text: "\t", size: 20, font: "Calibri" }),
+                new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" }),
+              ]
             : []),
         ],
-        tabStops: [{ type: "right" as any, position: 9360 }],
       }),
     );
     if (companyLine) {
@@ -66,9 +69,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     );
 
     // Spacing between roles
-    if (ri < resume.experience.length - 1) {
-      roleParts.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
-    }
+    // No extra spacer paragraph between roles — spacing.before on next title handles it
 
     return roleParts;
   });
@@ -233,7 +234,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                     new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
-                      children: [new TextRun({ text: cert, size: 21, font: "Calibri" })],
+                      children: [new TextRun({ text: cert, size: 21, font: "Calibri", color: "000000" })],
                     }),
                 ),
               ]
