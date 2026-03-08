@@ -1,6 +1,7 @@
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ISIPillar {
   name: string;
@@ -165,19 +166,31 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
       </div>
 
       {/* Free tier CTA */}
-      {!isPro && (
-        <div className="pt-1 flex flex-col items-start gap-2">
-          <p className="text-[11px] text-muted-foreground">
-            3 identity dimensions are restricted to Resumix Pro.
-          </p>
-          <Button size="sm" className="gap-1.5 text-xs h-8 px-3" onClick={onUpgrade}>
-            <Lock className="h-3 w-3" />
-            Unlock Resumix Pro
-          </Button>
-        </div>
-      )}
+      {!isPro && <IdentityGateCTA onUpgrade={onUpgrade} />}
     </div>
   );
 };
+
+function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
+  const { user } = useAuth();
+  return (
+    <div className="pt-1 flex flex-col items-start gap-2">
+      <p className="text-[11px] text-muted-foreground">
+        3 identity dimensions are restricted to Resumix Pro.
+      </p>
+      {user ? (
+        <Button size="sm" className="gap-1.5 text-xs h-8 px-3" onClick={onUpgrade}>
+          <Lock className="h-3 w-3" />
+          Unlock Resumix Pro
+        </Button>
+      ) : (
+        <Button size="sm" className="gap-1.5 text-xs h-8 px-3" asChild>
+          <a href="/auth">Get Started Free</a>
+        </Button>
+      )}
+    </div>
+  );
+}
+
 
 export default IdentityStrengthIndex;

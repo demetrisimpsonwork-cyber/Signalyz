@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
+import { useAuth } from "@/hooks/useAuth";
 
 const tiers = [
   {
@@ -41,6 +42,8 @@ const tiers = [
 ];
 
 const Pricing = () => {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [showSticky, setShowSticky] = useState(false);
 
   useEffect(() => {
@@ -90,13 +93,23 @@ const Pricing = () => {
               ))}
             </ul>
 
-            <Button
-              className={`mt-8 w-full ${tier.highlighted ? "" : ""}`}
-              variant={tier.highlighted ? "default" : "outline"}
-              onClick={tier.highlighted ? () => initiateCheckout() : undefined}
-            >
-              {tier.cta}
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                className={`mt-8 w-full`}
+                variant={tier.highlighted ? "default" : "outline"}
+                onClick={tier.highlighted ? () => initiateCheckout() : undefined}
+              >
+                {tier.cta}
+              </Button>
+            ) : (
+              <Button
+                className={`mt-8 w-full`}
+                variant={tier.highlighted ? "default" : "outline"}
+                asChild={tier.highlighted}
+              >
+                {tier.highlighted ? <a href="/auth">Get Started Free</a> : tier.cta}
+              </Button>
+            )}
           </div>
         ))}
       </div>
@@ -112,9 +125,15 @@ const Pricing = () => {
 
       {/* Sticky mobile CTA */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
-        <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
-          Unlock Resumix Pro — $19/month
-        </Button>
+        {isAuthenticated ? (
+          <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
+            Unlock Resumix Pro — $19/month
+          </Button>
+        ) : (
+          <Button className="w-full" size="lg" asChild>
+            <a href="/auth">Get Started Free</a>
+          </Button>
+        )}
       </div>
     </div>
   );

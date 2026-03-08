@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -88,21 +89,7 @@ const CalibratedResumeTab = ({
 
   // Pro gate — show CTA with button that triggers popup
   if (!isPro) {
-    return (
-      <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
-          <Lock className="h-8 w-8 text-muted-foreground" />
-          <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-            Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume.
-          </p>
-          <Button onClick={onUpgrade} size="lg" className="gap-2">
-            <Lock className="h-4 w-4" />
-            Unlock Calibrated Resume
-          </Button>
-        </div>
-      </div>
-    );
+    return <CalibratedResumeGateCTA onUpgrade={onUpgrade} />;
   }
 
   // Gate: require current-session alignment before anything else
@@ -208,5 +195,30 @@ const CalibratedResumeTab = ({
     </div>
   );
 };
+
+function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
+  const { user } = useAuth();
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
+        <Lock className="h-8 w-8 text-muted-foreground" />
+        <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+          {user ? "Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume." : "Sign up to access resume assembly — 3 free analyses included."}
+        </p>
+        {user ? (
+          <Button onClick={onUpgrade} size="lg" className="gap-2">
+            <Lock className="h-4 w-4" />
+            Unlock Calibrated Resume
+          </Button>
+        ) : (
+          <Button size="lg" className="gap-2" asChild>
+            <a href="/auth">Get Started Free</a>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default CalibratedResumeTab;

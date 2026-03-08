@@ -3,6 +3,7 @@ import { Bug, Copy, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { initiateCheckout } from "@/utils/stripe";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface DebugInfo {
   request_id?: string;
@@ -117,26 +118,7 @@ export const EngineErrorCard = ({
   const isDailyLimit = displayMessage.toLowerCase().includes("daily") || displayMessage.toLowerCase().includes("free") || displayMessage.toLowerCase().includes("limit");
 
   if (isDailyLimit) {
-    return (
-      <div className="rounded-lg border border-border bg-card p-5 space-y-4 my-6">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm font-bold">3</span>
-          </div>
-          <div className="space-y-1 flex-1">
-            <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
-            <p className="text-sm text-muted-foreground">You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments.</p>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-          onClick={() => initiateCheckout()}
-        >
-          Unlock Resumix Pro — $19/month
-        </Button>
-      </div>
-    );
+    return <DailyLimitCard />;
   }
 
   return (
@@ -161,3 +143,35 @@ export const EngineErrorCard = ({
     </div>
   );
 };
+
+function DailyLimitCard() {
+  const { user } = useAuth();
+  return (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4 my-6">
+      <div className="flex items-start gap-3">
+        <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <span className="text-primary text-sm font-bold">3</span>
+        </div>
+        <div className="space-y-1 flex-1">
+          <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
+          <p className="text-sm text-muted-foreground">
+            {user ? "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments." : "Sign up to get 3 free analyses."}
+          </p>
+        </div>
+      </div>
+      {user ? (
+        <Button
+          size="sm"
+          className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+          onClick={() => initiateCheckout()}
+        >
+          Unlock Resumix Pro — $19/month
+        </Button>
+      ) : (
+        <Button size="sm" className="w-full gap-2" asChild>
+          <a href="/auth">Get Started Free</a>
+        </Button>
+      )}
+    </div>
+  );
+}

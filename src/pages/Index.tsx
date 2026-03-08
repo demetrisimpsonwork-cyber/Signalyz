@@ -246,6 +246,7 @@ function DirectorModeContent({
   onRunDirector,
   isPro,
   onUpgrade,
+  isAuthenticated,
 }: {
   result: OptimizationResult | null;
   bullet: string;
@@ -257,6 +258,7 @@ function DirectorModeContent({
   onRunDirector: () => void;
   isPro: boolean;
   onUpgrade: () => void;
+  isAuthenticated: boolean;
 }) {
   // HARD GATE: If no current-session alignment result, render ONLY the empty state
   if (!result) {
@@ -324,7 +326,7 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} />
+            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} isAuthenticated={isAuthenticated} />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
@@ -888,7 +890,7 @@ const Index = () => {
             <div className="grid grid-cols-2 gap-1">
               {([
                 { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-                { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+                { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               ] as const).map((tab) => (
                 <button
                   key={tab.id}
@@ -944,7 +946,7 @@ const Index = () => {
           <div className="hidden lg:inline-flex lg:flex-nowrap items-center gap-1">
             {([
               { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-              { id: "director" as const, label: "Signal Positioning Report", proOnly: true },
+              { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
             ] as const).map((tab) => (
               <button
@@ -1019,6 +1021,7 @@ const Index = () => {
               onRunDirector={handleDirectorCalibrate}
               isPro={effectiveIsPro}
               onUpgrade={() => setShowUpgrade(true)}
+              isAuthenticated={!!user}
             />
         )}
 
@@ -1065,12 +1068,25 @@ const Index = () => {
                 <div className="flex items-center gap-3 flex-wrap">
                   {!effectiveIsPro && dailyRunsRemaining <= 0 ? (
                     <div className="w-full space-y-2">
-                      <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                        Upgrade to Pro for Unlimited Runs
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        You've used your 3 free analyses today. Upgrade to Pro for unlimited runs.
-                      </p>
+                      {user ? (
+                        <>
+                          <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                            Upgrade to Pro for Unlimited Runs
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            You've used your 3 free analyses today. Upgrade to Pro for unlimited runs.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" asChild>
+                            <a href="/auth">Get Started Free</a>
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Sign up to get 3 free analyses.
+                          </p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <Button onClick={handleOptimize} disabled={loading} className="gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97]">

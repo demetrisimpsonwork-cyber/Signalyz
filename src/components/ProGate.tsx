@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { initiateCheckout } from "@/utils/stripe";
 import { Loader2 } from "lucide-react";
@@ -16,6 +17,7 @@ export function ProGate({
   children,
 }: ProGateProps) {
   const { isPro, loading } = useSubscription();
+  const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   if (loading) {
@@ -30,7 +32,13 @@ export function ProGate({
     return <>{children}</>;
   }
 
+  const isAuthenticated = !!user;
+
   const handleUpgrade = async () => {
+    if (!isAuthenticated) {
+      window.location.href = "/auth";
+      return;
+    }
     setCheckoutLoading(true);
     try {
       await initiateCheckout();
@@ -57,38 +65,47 @@ export function ProGate({
 
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center space-y-5 max-w-sm px-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(38,92%,50%)]/10">
-            <span className="text-2xl" style={{ color: "hsl(38, 92%, 50%)" }}>✦</span>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <span className="text-2xl text-primary">✦</span>
           </div>
 
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-foreground tracking-tight">
-              Unlock {featureName}
+              {isAuthenticated ? `Unlock ${featureName}` : "Create Your Free Account"}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {featureDescription}
+              {isAuthenticated ? featureDescription : "Sign up to access this feature — 3 free analyses included."}
             </p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-foreground">
-              $19<span className="text-sm font-normal text-muted-foreground">/month</span>
-            </p>
-            <p className="text-xs text-muted-foreground">Cancel anytime · Instant access</p>
-          </div>
+          {isAuthenticated && (
+            <div className="space-y-1">
+              <p className="text-2xl font-bold text-foreground">
+                $19<span className="text-sm font-normal text-muted-foreground">/month</span>
+              </p>
+              <p className="text-xs text-muted-foreground">Cancel anytime · Instant access</p>
+            </div>
+          )}
 
           <Button
             onClick={handleUpgrade}
             disabled={checkoutLoading}
             className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
             size="lg"
+            {...(!isAuthenticated ? { asChild: true } : {})}
           >
-            {checkoutLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+            {isAuthenticated ? (
+              <>
+                {checkoutLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <span style={{ color: "inherit" }}>✦</span>
+                )}
+                Upgrade to Pro
+              </>
             ) : (
-              <span style={{ color: "inherit" }}>✦</span>
+              <a href="/auth">Get Started Free</a>
             )}
-            Upgrade to Pro
           </Button>
         </div>
       </div>

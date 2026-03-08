@@ -304,7 +304,7 @@ function normalizeResult(raw: DirectorCalibrationResult): DirectorCalibrationRes
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void }) => {
+const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, isAuthenticated = true }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void; isAuthenticated?: boolean }) => {
   const [copied, setCopied] = useState(false);
 
   const result = normalizeResult(rawResult);
@@ -420,10 +420,16 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade }
                 Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Resumix Pro.
               </p>
             </div>
-            <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-              <span style={{ color: "inherit" }}>✦</span>
-              Unlock Resumix Pro — $19/month
-            </Button>
+            {isAuthenticated ? (
+              <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
+                <span style={{ color: "inherit" }}>✦</span>
+                Unlock Resumix Pro — $19/month
+              </Button>
+            ) : (
+              <Button className="w-full gap-2" size="lg" asChild>
+                <a href="/auth">Get Started Free</a>
+              </Button>
+            )}
           </div>
         </div>
       ) : (
