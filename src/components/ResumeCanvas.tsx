@@ -247,7 +247,7 @@ const BulletEditor = ({
             }
           }}
           onKeyDown={(e) => handleKeyDown(e as any, bi)}
-          style={{ fontSize: "11px", lineHeight: "1.65" }}
+          style={{ fontSize: "11px", lineHeight: "1.55", marginBottom: "1px" }}
         >
           <span className="shrink-0 mt-0.5">•</span>
           <span>{bullet}</span>
