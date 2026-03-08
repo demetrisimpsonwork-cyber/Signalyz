@@ -177,14 +177,20 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 }),
               ]
             : []),
-          // Core Competencies — render separately from Skills to match on-screen labels
-          ...(resume.core_competencies.length > 0
+          // Core Competencies — merge skills into this section, render after summary
+          ...((resume.core_competencies.length > 0 || (resume.skills && resume.skills.length > 0))
             ? [
                 sectionHeader("Core Competencies"),
                 new Paragraph({
                   spacing: { after: 200, line: 276 },
                   children: [
-                    new TextRun({ text: resume.core_competencies.join("  •  "), size: 21, font: "Calibri" }),
+                    new TextRun({
+                      text: [...(resume.core_competencies || []), ...(resume.skills || [])]
+                        .filter((v, i, a) => a.indexOf(v) === i) // deduplicate
+                        .join("  •  "),
+                      size: 21,
+                      font: "Calibri",
+                    }),
                   ],
                 }),
               ]
