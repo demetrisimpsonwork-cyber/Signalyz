@@ -6,6 +6,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   const sectionHeader = (text: string) =>
     new Paragraph({
       heading: HeadingLevel.HEADING_2,
+      pageBreakBefore: false,
       spacing: { before: 240, after: 120 },
       border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" } },
       children: [
@@ -124,6 +125,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           // Name — Heading 1 style
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
+            pageBreakBefore: false,
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
@@ -199,6 +201,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 ...resume.independent_projects.flatMap((proj) => [
                   new Paragraph({
                     heading: HeadingLevel.HEADING_3,
+                    pageBreakBefore: false,
                     spacing: { before: 160, after: 60 },
                     children: [
                       new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
@@ -223,8 +226,13 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 sectionHeader("Certifications"),
                 ...resume.certifications.map(
                   (cert) => {
-                    // Strip URLs to prevent Word from auto-creating hyperlinks
-                    const cleanCert = cert.replace(/https?:\/\/\S+/gi, "").replace(/\s{2,}/g, " ").trim();
+                    // Strip URLs AND domain-like text to prevent Word from auto-creating hyperlinks
+                    const cleanCert = cert
+                      .replace(/https?:\/\/\S+/gi, "")
+                      .replace(/www\.\S+/gi, "")
+                      .replace(/\b\S+\.(com|org|net|edu|io|co)\b/gi, "")
+                      .replace(/\s{2,}/g, " ")
+                      .trim();
                     return new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
