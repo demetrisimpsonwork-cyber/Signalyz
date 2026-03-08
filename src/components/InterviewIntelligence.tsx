@@ -21,7 +21,7 @@ interface InterviewIntelligenceProps {
 
 const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgrade }: InterviewIntelligenceProps) => {
   const [questions, setQuestions] = useState<IQuestion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
 
