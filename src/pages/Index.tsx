@@ -1437,26 +1437,6 @@ const Index = () => {
                           />
                         )}
 
-                        {/* Cover Letter Engine */}
-                        <CoverLetterEngine
-                          experience={bullet}
-                          jd={jd}
-                          alignmentResult={result as any}
-                          inferredRole={result.inferred_role_title || ""}
-                          isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
-                        />
-
-                        {/* Resume Builder */}
-                        <ResumeBuilder
-                          experience={bullet}
-                          jd={jd}
-                          calibratedBullet={result.optimized_bullet}
-                          originalBullet={bullet}
-                          matchScore={result.match_score}
-                          isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
-                        />
                       </>
                     )}
 
