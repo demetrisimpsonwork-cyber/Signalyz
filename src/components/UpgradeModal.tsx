@@ -16,6 +16,7 @@ interface UpgradeModalProps {
   trialRunsUsed?: number;
   trialLimit?: number;
   onStartTrial?: () => void;
+  isAuthenticated?: boolean;
 }
 
 const UpgradeModal = ({
