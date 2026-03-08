@@ -1,6 +1,7 @@
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Lock } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface LevelDeterminationBlockProps {
   score: number;
@@ -8,6 +9,9 @@ interface LevelDeterminationBlockProps {
   alignmentNotes?: string;
   gapSuggestions?: string | null;
   inferredRoleTitle?: string;
+  isPro?: boolean;
+  isAuthenticated?: boolean;
+  onUpgrade?: () => void;
 }
 
 // ─── Role Level Detection ────────────────────────────────────────────────────
@@ -218,6 +222,9 @@ const LevelDeterminationBlock = ({
   alignmentNotes,
   gapSuggestions,
   inferredRoleTitle,
+  isPro = true,
+  isAuthenticated = true,
+  onUpgrade,
 }: LevelDeterminationBlockProps) => {
   const [copiedAll, setCopiedAll] = useState(false);
 
@@ -276,89 +283,105 @@ const LevelDeterminationBlock = ({
 
   return (
     <div className="space-y-7">
-      {/* 1 — Target Role Calibration */}
-      <BlockShell label="Target Role Calibration">
-        <div className="divide-y divide-border/50">
-          <Row label="Inferred Target Level" value={roleTitle} mono />
-          <Row label="Inference Confidence" value={inferenceConfidence} />
-          <Row label="Benchmark Applied" value={`${roleTitle} Threshold Standard`} />
-        </div>
-      </BlockShell>
-
-      {/* 2 — Ownership Classification */}
-      <BlockShell label="Ownership Classification">
-        <div className="divide-y divide-border/50">
-          <Row label="Current Signal Level" value={signalLevel} />
-          <Row label="Tier Gap" value={tierGap} />
-          <Row label="Classification Confidence" value={classificationConfidence} />
-        </div>
-        <div className="px-5 py-3.5 border-t border-border/60 bg-muted/20">
-          <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Verdict</p>
-          <p className="text-xs text-foreground leading-relaxed">{ownershipVerdict}</p>
-        </div>
-      </BlockShell>
-
-      {/* 3 — Primary Deficiency */}
-      {primaryDeficiency && (
-        <BlockShell label="Primary Deficiency">
-          <div className="px-5 py-3.5 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-foreground">{primaryDeficiency.name}</p>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${thresholdStatusStyle(primaryDeficiency.status)}`}>
-                {primaryDeficiency.status}
-              </span>
+      {isPro ? (
+        <>
+          {/* 1 — Target Role Calibration */}
+          <BlockShell label="Target Role Calibration">
+            <div className="divide-y divide-border/50">
+              <Row label="Inferred Target Level" value={roleTitle} mono />
+              <Row label="Inference Confidence" value={inferenceConfidence} />
+              <Row label="Benchmark Applied" value={`${roleTitle} Threshold Standard`} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Observed Pattern</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.pattern}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Panel Risk</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.panelRisk}</p>
-              </div>
-            </div>
-          </div>
-        </BlockShell>
-      )}
+          </BlockShell>
 
-      {/* 4 — Signal Risk Projection */}
-      <BlockShell label="Signal Risk Projection">
-        <div className="divide-y divide-border/50">
-          {funnelStages.map((s) => (
-            <div key={s.stage} className="px-5 py-3.5 space-y-1.5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-medium">{s.stage}</p>
-                  <p className="text-xs font-semibold text-foreground">{s.label}</p>
+          {/* 2 — Ownership Classification */}
+          <BlockShell label="Ownership Classification">
+            <div className="divide-y divide-border/50">
+              <Row label="Current Signal Level" value={signalLevel} />
+              <Row label="Tier Gap" value={tierGap} />
+              <Row label="Classification Confidence" value={classificationConfidence} />
+            </div>
+            <div className="px-5 py-3.5 border-t border-border/60 bg-muted/20">
+              <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Verdict</p>
+              <p className="text-xs text-foreground leading-relaxed">{ownershipVerdict}</p>
+            </div>
+          </BlockShell>
+
+          {/* 3 — Primary Deficiency */}
+          {primaryDeficiency && (
+            <BlockShell label="Primary Deficiency">
+              <div className="px-5 py-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-foreground">{primaryDeficiency.name}</p>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${thresholdStatusStyle(primaryDeficiency.status)}`}>
+                    {primaryDeficiency.status}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded shrink-0 ${riskBadgeStyles[s.risk]}`}>
-                  {s.risk}
-                </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Observed Pattern</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.pattern}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Panel Risk</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.panelRisk}</p>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{s.note}</p>
+            </BlockShell>
+          )}
+
+          {/* 4 — Signal Risk Projection */}
+          <BlockShell label="Signal Risk Projection">
+            <div className="divide-y divide-border/50">
+              {funnelStages.map((s) => (
+                <div key={s.stage} className="px-5 py-3.5 space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-medium">{s.stage}</p>
+                      <p className="text-xs font-semibold text-foreground">{s.label}</p>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded shrink-0 ${riskBadgeStyles[s.risk]}`}>
+                      {s.risk}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{s.note}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </BlockShell>
+          </BlockShell>
 
-      {/* 5 — Strategic Upgrade Priority */}
-      <BlockShell label="Strategic Upgrade Priority">
-        <div className="px-5 py-3.5">
-          <p className="text-xs text-foreground leading-relaxed">{strategicPriority}</p>
-        </div>
-      </BlockShell>
+          {/* 5 — Strategic Upgrade Priority */}
+          <BlockShell label="Strategic Upgrade Priority">
+            <div className="px-5 py-3.5">
+              <p className="text-xs text-foreground leading-relaxed">{strategicPriority}</p>
+            </div>
+          </BlockShell>
 
-      {/* Copy all */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleCopyAll}
-          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          {copiedAll ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-          Copy Calibration Report
-        </button>
-      </div>
+          {/* Copy all */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleCopyAll}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              {copiedAll ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+              Copy Calibration Report
+            </button>
+          </div>
+        </>
+      ) : (
+        /* Single locked card for free/unauthenticated users */
+        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+          <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+          <p className="text-sm font-semibold text-foreground">Unlock Signal Calibration Report — Resumix Pro</p>
+          <p className="text-xs text-muted-foreground">Target Role Calibration, Ownership Classification, Signal Risk Projection, and Strategic Upgrade Priority.</p>
+          {isAuthenticated ? (
+            onUpgrade && <Button onClick={onUpgrade} size="sm">Unlock Resumix Pro — $19/month</Button>
+          ) : (
+            <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
