@@ -20,12 +20,6 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     resume.header.linkedin,
   ].filter(Boolean);
 
-  const noBorders = {
-    top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-  } as const;
 
   const experienceChildren = resume.experience.flatMap((exp) => {
     const roleParts: (Paragraph | Table)[] = [];
