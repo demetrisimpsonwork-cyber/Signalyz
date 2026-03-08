@@ -234,7 +234,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                     new Paragraph({
                       spacing: { after: 80 },
                       bullet: { level: 0 },
-                      children: [new TextRun({ text: cert, size: 21, font: "Calibri" })],
+                      children: [new TextRun({ text: cert, size: 21, font: "Calibri", color: "000000" })],
                     }),
                 ),
               ]
