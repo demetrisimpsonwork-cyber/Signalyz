@@ -614,9 +614,9 @@ const Index = () => {
       : normResume.text;
     const sessionToken = user ? undefined : getSessionToken();
 
-    const invokeAlignment = () =>
+    const invokeAlignment = (attempt = 1) =>
       invokeResilient(
-        "alignment",
+        attempt === 1 ? "alignment" : "alignment-retry",
         "optimize-bullet",
         { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
         90_000,
