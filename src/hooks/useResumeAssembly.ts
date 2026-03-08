@@ -55,7 +55,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult, originalResume: string, preExtractedContact?: ExtractedContactInfo) => {
+  const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     setStep(0);
