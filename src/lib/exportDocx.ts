@@ -29,10 +29,11 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
     roleParts.push(
       new Paragraph({
         spacing: { before: 200, after: 20 },
+        keepNext: true,
         children: [
           new TextRun({ text: titleLine, italics: true, size: 22, font: "Calibri" }),
           ...(exp.dates
-            ? [new TextRun({ text: `\t${exp.dates}`, size: 20, font: "Calibri", color: "666666" })]
+            ? [new TextRun({ text: "\t", size: 20, font: "Calibri" }), new TextRun({ text: exp.dates, size: 20, font: "Calibri", color: "666666" })]
             : []),
         ],
         tabStops: [{ type: "right" as any, position: 9360 }],
