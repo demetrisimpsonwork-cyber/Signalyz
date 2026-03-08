@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 interface CalibratedBulletsSectionProps {
