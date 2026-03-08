@@ -374,28 +374,16 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
             {resume.experience.map((exp, ei) => (
               <div key={ei}>
                 <div className="mb-1">
-                  {/* Line 1: Job Title */}
-                  <EditableField
-                    value={exp.title}
-                    path={`experience.${ei}.title`}
-                    editMode={editMode}
-                    onUpdate={onUpdate}
-                    className="font-bold"
-                    style={{ fontSize: "12px", lineHeight: "1.4" }}
-                    placeholder="Job Title"
-                  />
-                  {/* Line 2: Company · Dates */}
-                  <div className="flex items-baseline justify-between gap-2 mt-0.5">
-                    {(exp.company || editMode) && (
-                      <EditableField
-                        value={exp.company}
-                        path={`experience.${ei}.company`}
-                        editMode={editMode}
-                        onUpdate={onUpdate}
-                        style={{ fontSize: "11px", color: "#4B5563" }}
-                        placeholder="Company"
-                      />
-                    )}
+                  {/* Line 1: Title (italic) + Dates (right-aligned) */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <EditableField
+                      value={exp.title}
+                      path={`experience.${ei}.title`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      style={{ fontSize: "12px", lineHeight: "1.4", fontStyle: "italic" }}
+                      placeholder="Job Title"
+                    />
                     {(exp.dates || editMode) && (
                       <EditableField
                         value={exp.dates}
@@ -403,11 +391,23 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                         editMode={editMode}
                         onUpdate={onUpdate}
                         className="shrink-0"
-                        style={{ fontSize: "10px", color: "#6B7280" }}
+                        style={{ fontSize: "10.5px", color: "#6B7280" }}
                         placeholder="Dates"
                       />
                     )}
                   </div>
+                  {/* Line 2: Company (bold) */}
+                  {(exp.company || editMode) && (
+                    <EditableField
+                      value={exp.company}
+                      path={`experience.${ei}.company`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      className="font-bold"
+                      style={{ fontSize: "11px", color: "#374151", marginTop: "1px" }}
+                      placeholder="Company"
+                    />
+                  )}
                 </div>
                 <BulletEditor
                   bullets={exp.bullets}
