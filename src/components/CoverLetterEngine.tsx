@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, RefreshCw, Download, Sparkles } from "lucide-react";
+import { Copy, Check, RefreshCw, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
