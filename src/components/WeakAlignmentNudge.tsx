@@ -11,7 +11,7 @@ const WeakAlignmentNudge = ({ additionalContext, onContextChange }: WeakAlignmen
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-sm p-4 space-y-2">
+    <div className="rounded-lg border border-border bg-secondary p-3 space-y-2" style={{ backgroundColor: 'hsl(0, 0%, 96%)', borderColor: 'hsl(0, 0%, 88%)' }}>
       <p className="text-xs text-foreground/70 font-medium">
         Want help strengthening this? Add more detail about tools, metrics, or frameworks below.
       </p>
