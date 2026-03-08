@@ -95,7 +95,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           basedOn: "Normal",
           next: "Normal",
           run: { bold: true, size: 28, font: "Calibri", color: "000000" },
-          paragraph: { spacing: { after: 40 }, alignment: AlignmentType.CENTER },
+          paragraph: { spacing: { after: 40 }, alignment: AlignmentType.CENTER, pageBreakBefore: false },
         },
         {
           id: "Heading2",
@@ -103,7 +103,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           basedOn: "Normal",
           next: "Normal",
           run: { bold: true, size: 22, font: "Calibri" },
-          paragraph: { spacing: { before: 240, after: 120 } },
+          paragraph: { spacing: { before: 240, after: 120 }, pageBreakBefore: false },
         },
         {
           id: "Heading3",
@@ -111,7 +111,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           basedOn: "Normal",
           next: "Normal",
           run: { bold: true, size: 22, font: "Calibri" },
-          paragraph: { spacing: { before: 200, after: 40 } },
+          paragraph: { spacing: { before: 200, after: 40 }, pageBreakBefore: false },
         },
       ],
     },
