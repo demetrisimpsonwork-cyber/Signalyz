@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, RefreshCw, Download, Sparkles } from "lucide-react";
+import { Copy, Check, RefreshCw, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
@@ -64,7 +64,6 @@ function formatDate(): string {
 }
 
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [copied, setCopied] = useState(false);
@@ -81,7 +80,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
-    setExpanded(true);
     setLoading(true);
     setError(null);
     setLetter("");
@@ -134,6 +132,13 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
     prevToneRef.current = tone;
   }, [tone]);
+
+  // Auto-generate on mount
+  useEffect(() => {
+    if (!hasGenerated && !loading && isPro) {
+      generate();
+    }
+  }, []);
 
   const fullLetterText = useMemo(() => {
     if (!letter) return "";
@@ -195,19 +200,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       </div>
     </div>
   );
-
-  if (!expanded) {
-    return (
-      <div className="space-y-3">
-        {toneSelector}
-        <Button variant="secondary" onClick={generate} className="w-full gap-2">
-          <Sparkles className="h-4 w-4" />
-          Generate Signal-Calibrated Cover Letter
-          {!isPro && <span className="ml-1 text-[10px] uppercase tracking-wider text-primary font-semibold">Pro</span>}
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-3">
