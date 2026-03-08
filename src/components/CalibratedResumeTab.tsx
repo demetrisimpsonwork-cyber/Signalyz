@@ -14,16 +14,8 @@ import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
 
-/** Check if the director result has the minimum sections needed for assembly */
-function hasRequiredSections(result: DirectorCalibrationResult | null): boolean {
-  if (!result) return false;
-  // Need at least gap_analyzer (bullets) or export_builder (resume text) or signal_classifier
-  const hasGapAnalyzer = !!(result as any).gap_analyzer?.rewrite_targets?.length;
-  const hasExportBuilder = !!(result as any).export_builder?.final_resume_text;
-  const hasSignalClassifier = !!(result as any).signal_classifier;
-  const hasDimensions = !!(result as any).dimensions?.length;
-  return hasGapAnalyzer || hasExportBuilder || hasSignalClassifier || hasDimensions;
-}
+
+
 
 interface CalibratedResumeTabProps {
   isPro: boolean;
