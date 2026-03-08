@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
@@ -14,16 +14,8 @@ import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
 
-/** Check if the director result has the minimum sections needed for assembly */
-function hasRequiredSections(result: DirectorCalibrationResult | null): boolean {
-  if (!result) return false;
-  // Need at least gap_analyzer (bullets) or export_builder (resume text) or signal_classifier
-  const hasGapAnalyzer = !!(result as any).gap_analyzer?.rewrite_targets?.length;
-  const hasExportBuilder = !!(result as any).export_builder?.final_resume_text;
-  const hasSignalClassifier = !!(result as any).signal_classifier;
-  const hasDimensions = !!(result as any).dimensions?.length;
-  return hasGapAnalyzer || hasExportBuilder || hasSignalClassifier || hasDimensions;
-}
+
+
 
 interface CalibratedResumeTabProps {
   isPro: boolean;
@@ -36,6 +28,8 @@ interface CalibratedResumeTabProps {
   onRunAlignment?: () => void;
   /** Called when resume assembly completes successfully */
   onAssembled?: () => void;
+  /** Alignment result to use when no director result exists */
+  alignmentResult?: Record<string, unknown>;
 }
 
 const CalibratedResumeTab = ({
@@ -47,6 +41,7 @@ const CalibratedResumeTab = ({
   hasCurrentSessionAlignment = false,
   onRunAlignment,
   onAssembled,
+  alignmentResult,
 }: CalibratedResumeTabProps) => {
   const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
@@ -70,12 +65,17 @@ const CalibratedResumeTab = ({
   }, [isPro, onUpgrade]);
 
   const handleAssemble = () => {
-    if (!hasRequiredSections(directorResult)) {
-      toast.error("Run the Signal Positioning Report first to generate your calibrated resume.");
-      return;
-    }
-    assemble(directorResult!, originalResume, preExtractedContact);
+    assemble(directorResult, originalResume, preExtractedContact, alignmentResult as Record<string, unknown>);
   };
+
+  // Auto-assemble when alignment exists and no resume yet
+  const autoAssembledRef = useRef(false);
+  useEffect(() => {
+    if (isPro && hasCurrentSessionAlignment && !currentResume && !loading && !error && !autoAssembledRef.current) {
+      autoAssembledRef.current = true;
+      handleAssemble();
+    }
+  }, [isPro, hasCurrentSessionAlignment, currentResume, loading, error]);
 
   const handleExportDocx = () => {
     if (!currentResume) return;
@@ -113,37 +113,12 @@ const CalibratedResumeTab = ({
     );
   }
 
-  // No director result or missing required sections
-  if (!currentResume && !hasRequiredSections(directorResult)) {
-    return (
-      <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
-          <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
-          <h3 className="text-base font-semibold text-foreground">No signal report detected</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            Run the Signal Positioning Report first — the Calibrated Resume assembles directly from your deep analysis.
-          </p>
-          {onSwitchToReport && (
-            <Button onClick={onSwitchToReport} variant="outline" className="gap-2 mt-2">
-              <Sparkles className="h-4 w-4" />
-              Go to Signal Positioning Report
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      {/* Assembly trigger or loading */}
-      {!currentResume && !loading && (
+      {/* Loading state while auto-assembling */}
+      {!currentResume && !loading && !error && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-4 p-8">
-          <p className="text-sm text-muted-foreground">Signal Positioning Report detected. Ready to assemble.</p>
-          <Button onClick={handleAssemble} size="lg" className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Assemble Calibrated Resume
-          </Button>
+          <p className="text-sm text-muted-foreground">Preparing to assemble your calibrated resume…</p>
         </div>
       )}
 

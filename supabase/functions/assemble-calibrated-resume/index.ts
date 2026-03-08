@@ -827,11 +827,14 @@ serve(async (req) => {
       );
     }
 
-    const { directorResult, originalResume } = body;
+    const { directorResult, originalResume, alignmentResult } = body;
 
-    if (!directorResult) {
+    // Allow assembly with just alignment result (no director/positioning report required)
+    const signalContext = directorResult || alignmentResult || null;
+
+    if (!originalResume && !signalContext) {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Signal Positioning Report data is required." }),
+        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Resume text or alignment data is required." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -848,7 +851,7 @@ serve(async (req) => {
     console.log(`[assemble] [${request_id}] Phase 1: Building structure`);
     let structure;
     try {
-      structure = assembleStructureFromSignalData(directorResult, originalResume || "");
+      structure = assembleStructureFromSignalData(signalContext || {}, originalResume || "");
     } catch (err: any) {
       console.error(`[assemble] [${request_id}] Phase 1 failed:`, err.message);
       return new Response(
@@ -861,12 +864,12 @@ serve(async (req) => {
     // ── Phase 2: Sequential focused API calls ──
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
     const rewrittenSummary = await generateSummary(
-      structure.summary, directorResult, originalResume || "", ANTHROPIC_API_KEY, request_id
+      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id
     );
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, directorResult, ANTHROPIC_API_KEY, request_id
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
     );
 
     // ── Merge results ──
