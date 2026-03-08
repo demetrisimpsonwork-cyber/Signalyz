@@ -175,27 +175,31 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     toast.success("DOCX downloaded");
   };
 
+  const toneSelector = (
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
+      <div className="flex gap-1">
+        {TONES.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setTone(t.value)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              tone === t.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (!expanded) {
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
-          <div className="flex gap-1">
-            {TONES.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => setTone(t.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  tone === t.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {toneSelector}
         <Button variant="secondary" onClick={generate} className="w-full gap-2">
           <Sparkles className="h-4 w-4" />
           Generate Signal-Calibrated Cover Letter
@@ -207,6 +211,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   return (
     <div className="space-y-3">
+      {toneSelector}
       {loading ? (
         <div className="rounded-lg border bg-card p-6 space-y-4">
           {STEPS.map((label, i) => {
@@ -246,7 +251,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
             </button>
             <div className="space-y-1 pr-8">
-              {/* Header block */}
               {contact.name && (
                 <p className="text-foreground font-semibold text-[15px] md:text-[16px]">{contact.name}</p>
               )}
@@ -264,17 +268,14 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 </div>
               )}
 
-              {/* Salutation */}
               <p className="text-foreground text-[15px] md:text-[16px] pt-4">{salutation}</p>
 
-              {/* Body */}
               <div className="space-y-4 pt-3">
                 {letter.split("\n\n").filter(Boolean).map((p, i) => (
                   <p key={i} className="text-foreground leading-relaxed text-[15px] md:text-[16px]">{p}</p>
                 ))}
               </div>
 
-              {/* Closing */}
               <div className="pt-4">
                 <p className="text-foreground text-[15px] md:text-[16px]">Sincerely,</p>
                 {contact.name && (
@@ -283,22 +284,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 mr-auto">
-              {TONES.map((t) => (
-                <button
-                  key={t.value}
-                  onClick={() => setTone(t.value)}
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
-                    tone === t.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 justify-end">
             <Button variant="outline" size="sm" onClick={generate} className="gap-1.5">
               <RefreshCw className="h-3.5 w-3.5" /> Regenerate
             </Button>
