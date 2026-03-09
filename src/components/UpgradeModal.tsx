@@ -67,7 +67,7 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              Unlock Resumix Pro
+              Unlock Full Signal Intelligence
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
               You are currently seeing surface-level alignment only.
@@ -95,7 +95,7 @@ const UpgradeModal = ({
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Resumix Pro</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Full Signal Intelligence</p>
               <ul className="space-y-2">
                 {[
                   "Unlimited alignments",
@@ -129,6 +129,7 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-4">
+            <p className="text-sm font-semibold text-foreground text-center leading-snug">The average job search takes 5 months. Most candidates never know why.</p>
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
@@ -137,7 +138,7 @@ const UpgradeModal = ({
                 initiateCheckout();
               }}
             >
-              Unlock Resumix Pro — $19/month
+              Unlock Full Signal Intelligence — $19/month
             </Button>
             <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
           </div>
@@ -150,7 +151,7 @@ const UpgradeModal = ({
             className="w-full text-muted-foreground/50 hover:text-muted-foreground"
             onClick={onClose}
           >
-            Continue with free tier
+            Continue with Signal Preview
           </Button>
         </div>
       </DialogContent>

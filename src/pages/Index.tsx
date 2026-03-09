@@ -1148,7 +1148,7 @@ const Index = () => {
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
                           onClick={() => initiateCheckout()}
                         >
-                          Unlock Resumix Pro — $19/month
+                          Unlock Full Signal Intelligence — $19/month
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
@@ -1203,9 +1203,9 @@ const Index = () => {
                           <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
                         ) : (
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
+                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Full Signal Intelligence</p>
+                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Full Signal Intelligence.</p>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence — $19/month</Button>
                           </div>
                         )}
                       </>
@@ -1352,10 +1352,10 @@ const Index = () => {
                     {!effectiveIsPro && (
                       <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
                         <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Resumix Pro</p>
+                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Full Signal Intelligence</p>
                         <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
                         {user ? (
-                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Resumix Pro — $19/month</Button>
+                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Full Signal Intelligence — $19/month</Button>
                         ) : (
                           <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
                         )}
@@ -1482,7 +1482,7 @@ const Index = () => {
           <AccordionItem value="pricing">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Resumix cost?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              You can run up to 3 free alignments per day at no cost. Resumix Pro is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. You can cancel anytime — no contracts, no commitments.
+              You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. You can cancel anytime — no contracts, no commitments.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="data-privacy">

@@ -335,7 +335,7 @@ const History = () => {
       <div className="relative rounded-xl border bg-card p-4 mb-8">
         {!isPro && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
-            <Button onClick={() => setShowUpgrade(true)}>Unlock History — Resumix Pro</Button>
+            <Button onClick={() => setShowUpgrade(true)}>Unlock History — Full Signal Intelligence</Button>
           </div>
         )}
         {entries.length === 0 ? (

@@ -12,7 +12,7 @@ const ProInsightsTeaser = () => {
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-primary">Resumix Pro</h3>
+          <h3 className="text-sm font-semibold text-primary">Full Signal Intelligence</h3>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           Full signal calibration engine — unlimited alignments, all diagnostic modules.
@@ -39,7 +39,7 @@ const ProInsightsTeaser = () => {
               className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
             >
               <Lock className="h-3.5 w-3.5" />
-              Unlock Resumix Pro — $19/month
+              Unlock Full Signal Intelligence — $19/month
             </Button>
           ) : (
             <Button

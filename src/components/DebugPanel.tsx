@@ -165,7 +165,7 @@ function DailyLimitCard() {
           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
           onClick={() => initiateCheckout()}
         >
-          Unlock Resumix Pro — $19/month
+          Unlock Full Signal Intelligence — $19/month
         </Button>
       ) : (
         <Button size="sm" className="w-full gap-2" asChild>

@@ -414,16 +414,16 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-foreground tracking-tight">
-                Unlock the full Signal Positioning Report — Resumix Pro
+                Unlock the full Signal Positioning Report — Full Signal Intelligence
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Resumix Pro.
+                Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Full Signal Intelligence.
               </p>
             </div>
             {isAuthenticated ? (
               <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
                 <span style={{ color: "inherit" }}>✦</span>
-                Unlock Resumix Pro — $19/month
+                Unlock Full Signal Intelligence — $19/month
               </Button>
             ) : (
               <Button className="w-full gap-2" size="lg" asChild>

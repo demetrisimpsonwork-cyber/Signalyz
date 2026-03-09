@@ -19,7 +19,7 @@ const tiers = [
     highlighted: false,
   },
   {
-    name: "Resumix Pro",
+    name: "Full Signal Intelligence",
     price: "$19",
     period: "/mo",
     description: "Full signal calibration engine",
@@ -36,7 +36,7 @@ const tiers = [
       "LinkedIn Signal calibration",
       "Alignment history",
     ],
-    cta: "Unlock Resumix Pro",
+    cta: "Unlock Full Signal Intelligence",
     highlighted: true,
   },
 ];
@@ -56,9 +56,14 @@ const Pricing = () => {
 
   return (
     <div className="container max-w-5xl py-20 px-4 pb-32 md:pb-20">
-      <div className="mb-14 text-center">
+      <div className="mb-14 text-center space-y-6">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        <div className="space-y-3 max-w-lg mx-auto">
+          <p className="text-base font-medium text-foreground leading-relaxed">Know exactly why you're not getting interviews.</p>
+          <p className="text-base font-medium text-foreground leading-relaxed">See how hiring managers actually read your experience.</p>
+          <p className="text-base font-medium text-foreground leading-relaxed">Get the repositioned version of your resume — same experience, stronger signal.</p>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
           Most candidates optimize wording. Strategic candidates optimize perception.
         </p>
       </div>
@@ -93,9 +98,15 @@ const Pricing = () => {
               ))}
             </ul>
 
+            {tier.highlighted && isAuthenticated && (
+              <p className={`mt-6 text-sm font-semibold text-center leading-snug ${tier.highlighted ? "text-white" : "text-foreground"}`}>
+                The average job search takes 5 months. Most candidates never know why.
+              </p>
+            )}
+
             {isAuthenticated ? (
               <Button
-                className={`mt-8 w-full`}
+                className={`${tier.highlighted && "mt-3"} ${!tier.highlighted && "mt-8"} w-full`}
                 variant={tier.highlighted ? "default" : "outline"}
                 onClick={tier.highlighted ? () => initiateCheckout() : undefined}
               >
@@ -110,6 +121,12 @@ const Pricing = () => {
                 {tier.highlighted ? <a href="/auth">Get Started Free</a> : tier.cta}
               </Button>
             )}
+
+            {tier.highlighted && isAuthenticated && (
+              <p className={`mt-2 text-xs italic text-center ${tier.highlighted ? "text-white/50" : "text-muted-foreground"}`}>
+                Less than one rejected application costs you.
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -119,16 +136,19 @@ const Pricing = () => {
       </p>
 
       <p className="mt-4 text-center text-xs text-muted-foreground leading-relaxed">
-        Less than one rejected application costs you.<br />
         Every insight is grounded in real resume + job description signals — zero fabrication.
       </p>
 
       {/* Sticky mobile CTA */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
         {isAuthenticated ? (
-          <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
-            Unlock Resumix Pro — $19/month
-          </Button>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
+            <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
+              Unlock Full Signal Intelligence — $19/month
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
+          </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
             <a href="/auth">Get Started Free</a>

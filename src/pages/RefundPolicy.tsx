@@ -15,7 +15,7 @@ const RefundPolicy = () => (
     </Section>
 
     <Section title="Subscription Billing">
-      <p>Resumix Pro is billed at <strong>$19 per month</strong>. Your subscription grants full access to the platform's advanced resume optimization, signal analysis, and calibrated resume features.</p>
+      <p>Full Signal Intelligence is billed at <strong>$19 per month</strong>. Your subscription grants full access to the platform's advanced resume optimization, signal analysis, and calibrated resume features.</p>
     </Section>
 
     <Section title="Cancellation">

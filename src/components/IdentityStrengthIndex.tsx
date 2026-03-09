@@ -161,12 +161,12 @@ function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div className="pt-1 flex flex-col items-start gap-2">
       <p className="text-[11px] text-muted-foreground">
-        3 identity dimensions are restricted to Resumix Pro.
+        3 identity dimensions are restricted to Full Signal Intelligence.
       </p>
       {user ? (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" onClick={onUpgrade}>
           <Lock className="h-3 w-3" />
-          Unlock Resumix Pro
+          Unlock Full Signal Intelligence
         </Button>
       ) : (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" asChild>

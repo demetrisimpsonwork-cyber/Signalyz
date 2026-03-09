@@ -79,10 +79,10 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         </div>
         <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-          <p className="text-sm font-semibold text-foreground">Unlock ATS Signal Panel — Resumix Pro</p>
+          <p className="text-sm font-semibold text-foreground">Unlock ATS Signal Panel — Full Signal Intelligence</p>
           <p className="text-xs text-muted-foreground">See how your resume reads to automated screening systems.</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Unlock Resumix Pro — $19/month</Button>
+            <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence — $19/month</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
