@@ -39,7 +39,7 @@ const ProInsightsTeaser = () => {
               className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
             >
               <Lock className="h-3.5 w-3.5" />
-              Unlock Resumix Pro — $19/month
+              Unlock Full Signal Intelligence — $19/month
             </Button>
           ) : (
             <Button
