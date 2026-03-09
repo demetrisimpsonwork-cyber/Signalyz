@@ -362,29 +362,26 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
               <div key={pi}>
-                <div className="mb-1 flex items-baseline gap-1 flex-wrap">
-                  <EditableField
-                    value={proj.name}
-                    path={`independent_projects.${pi}.name`}
-                    editMode={editMode}
-                    onUpdate={onUpdate}
-                    className="font-bold shrink-0"
-                    style={{ fontSize: "12px" }}
-                    placeholder="Project Name"
-                  />
+                <div className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55" }}>
+                  <span className="font-bold" style={{ fontSize: "12px" }}>{proj.name}</span>
                   {(proj.description || editMode) && (
-                    <>
-                      <span style={{ fontSize: "11px", color: "#4B5563" }}>—</span>
-                      <EditableField
-                        value={proj.description}
-                        path={`independent_projects.${pi}.description`}
-                        editMode={editMode}
-                        onUpdate={onUpdate}
-                        className="font-normal"
-                        style={{ fontSize: "11px", color: "#4B5563" }}
-                        placeholder="Brief description"
-                      />
-                    </>
+                    <span className="font-normal" style={{ color: "#4B5563" }}>
+                      {" — "}
+                      {editMode ? (
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
+                          onBlur={(e) => {
+                            onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
+                          }}
+                        >
+                          {proj.description}
+                        </span>
+                      ) : (
+                        proj.description
+                      )}
+                    </span>
                   )}
                 </div>
                 {proj.bullets.length > 0 && (
