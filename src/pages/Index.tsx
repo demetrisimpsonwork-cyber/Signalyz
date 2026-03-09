@@ -960,7 +960,9 @@ const Index = () => {
             <button
               onClick={() => {
                 if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                const scrollY = window.scrollY;
                 setMode("linkedin");
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
               }}
               className={`w-full px-3 py-2.5 text-[11px] font-normal transition-colors text-center rounded-md border ${
                 mode === "linkedin"
