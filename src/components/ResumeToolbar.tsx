@@ -43,16 +43,16 @@ const ResumeToolbar = ({
           {editMode ? "Preview" : "Edit Mode"}
         </Button>
       </div>
-      <div className="flex items-center gap-2 md:flex-row flex-wrap md:flex-nowrap">
+      <div className="flex items-center gap-2 flex-col w-full md:w-auto md:flex-row">
         {saved && (
           <span className="text-[10px] font-medium text-primary animate-fade-in">Calibration saved</span>
         )}
-        <Button variant="outline" size="sm" onClick={onExportDocx} className="gap-1.5 text-xs whitespace-nowrap">
+        <Button variant="outline" size="sm" onClick={onExportDocx} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
           <Download className="h-3 w-3" />
           <span className="hidden md:inline">Export ATS (.docx)</span>
           <span className="md:hidden">ATS (.docx)</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={onExportPdf} className="gap-1.5 text-xs whitespace-nowrap">
+        <Button variant="outline" size="sm" onClick={onExportPdf} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
           <Download className="h-3 w-3" />
           <span className="hidden md:inline">Export Designed (.pdf)</span>
           <span className="md:hidden">PDF (.pdf)</span>
