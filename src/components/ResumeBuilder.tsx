@@ -674,7 +674,7 @@ const ResumeBuilder = ({
 
   if (showContactForm) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Contact Information
         </h3>
