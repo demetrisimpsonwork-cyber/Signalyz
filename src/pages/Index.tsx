@@ -864,7 +864,7 @@ const Index = () => {
       </section>
 
       {/* Feature Cards */}
-      <section className="py-12 container max-w-[780px]" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+      <section className="py-12 container max-w-5xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
