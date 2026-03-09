@@ -908,11 +908,11 @@ const Index = () => {
           {/* Mobile layout */}
           <div className="flex lg:hidden overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {([
-              { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-              { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
-              { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
+              { id: "alignment" as const, label: "Align", proOnly: false },
+              { id: "director" as const, label: "Position", proOnly: false },
+              { id: "calibrated" as const, label: "Resume", proOnly: true },
               { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
