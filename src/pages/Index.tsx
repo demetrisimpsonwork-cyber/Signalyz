@@ -1168,7 +1168,7 @@ const Index = () => {
                       <p className="text-xs text-muted-foreground">Diagnostic preview based on the original bullet.</p>
                     </div>
                     <div className="rounded-xl border bg-card p-5 space-y-3">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Snapshot</h3>
+                      <h3 className="section-label mt-2">Perception Snapshot</h3>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(role.perceptionSnapshot).map(([dimension, level]) => (
                           <div key={dimension} className="rounded-md border bg-background p-2.5 space-y-1">
