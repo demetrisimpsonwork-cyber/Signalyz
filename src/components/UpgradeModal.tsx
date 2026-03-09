@@ -129,6 +129,7 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-4">
+            <p className="text-sm font-semibold text-foreground text-center leading-snug">The average job search takes 5 months. Most candidates never know why.</p>
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
@@ -137,7 +138,7 @@ const UpgradeModal = ({
                 initiateCheckout();
               }}
             >
-              Unlock Resumix Pro — $19/month
+              Unlock Full Signal Intelligence — $19/month
             </Button>
             <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
           </div>
