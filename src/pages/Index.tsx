@@ -1215,7 +1215,7 @@ const Index = () => {
                         <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
+                    <p className="context-text text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
                   </div>
                 )}
 
