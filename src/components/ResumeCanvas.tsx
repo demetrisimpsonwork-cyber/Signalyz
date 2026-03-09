@@ -213,11 +213,11 @@ const BulletEditor = ({
 const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanvasProps) => {
   return (
     <div
-      className="mx-auto bg-white rounded-sm relative"
+      className="mx-auto bg-white rounded-sm relative px-5 py-8 sm:px-10 sm:py-10 md:px-14 md:py-12"
       style={{
         maxWidth: "720px",
+        minWidth: 0,
         boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
-        padding: "48px 56px",
         fontFamily: "'Georgia', 'Times New Roman', serif",
         color: "#1A1A2E",
       }}
