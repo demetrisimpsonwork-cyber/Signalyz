@@ -127,6 +127,7 @@ const Pricing = () => {
                 Less than one rejected application costs you.
               </p>
             )}
+          </div>
         ))}
       </div>
 
