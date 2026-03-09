@@ -264,7 +264,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
             : [resume.header.location, resume.header.email, resume.header.phone, resume.header.linkedin]
                 .filter(Boolean)
                 .map((item, i, arr) => (
-                  <span key={i}>
+                  <span key={i} className="whitespace-nowrap">
                     {item}
                     {i < arr.length - 1 && <span className="mx-1.5">|</span>}
                   </span>
