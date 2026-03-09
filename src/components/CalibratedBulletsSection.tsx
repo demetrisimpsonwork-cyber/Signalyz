@@ -164,7 +164,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         </>
       )}
 
-      <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
+      <p className="context-text text-center pt-1">
         Repositioned using only language from your original resume. No experience was invented.
       </p>
     </div>
