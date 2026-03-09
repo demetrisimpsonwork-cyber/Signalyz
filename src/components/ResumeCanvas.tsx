@@ -246,7 +246,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
             placeholder="Professional Title"
           />
         )}
-        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap" style={{ fontSize: "11px", color: "#6B7280" }}>
+        <div className="flex items-center justify-center gap-x-3 gap-y-1 mt-2 flex-wrap" style={{ fontSize: "11px", color: "#6B7280" }}>
           {editMode
             ? (["email", "phone", "location", "linkedin"] as const).map((field, i, arr) => (
                 <span key={field} className="flex items-center gap-1">
@@ -263,10 +263,10 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
               ))
             : [resume.header.location, resume.header.email, resume.header.phone, resume.header.linkedin]
                 .filter(Boolean)
-                .map((item, i) => (
+                .map((item, i, arr) => (
                   <span key={i} className="whitespace-nowrap">
-                    {i > 0 && <span className="mx-1.5">|</span>}
                     {item}
+                    {i < arr.length - 1 && <span className="ml-3">|</span>}
                   </span>
                 ))}
         </div>
