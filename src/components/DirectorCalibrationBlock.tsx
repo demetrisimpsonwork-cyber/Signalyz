@@ -358,7 +358,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
 
     await navigator.clipboard.writeText(lines);
     setCopied(true);
-    toast.success("Calibration report copied", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
 
