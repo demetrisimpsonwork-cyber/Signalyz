@@ -37,7 +37,7 @@ const CoverLetterTab = ({
   if (!hasCurrentSessionAlignment) {
     return (
       <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-5">
           <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
           <h3 className="text-base font-semibold text-foreground">Run an alignment first to generate your Cover Letter</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
