@@ -51,7 +51,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
+        <p className="section-label section-header">Interview Intelligence™</p>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-lg bg-muted" />)}
         </div>
