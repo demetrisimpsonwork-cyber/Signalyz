@@ -266,7 +266,7 @@ const DirectorAudit = () => {
 
           {/* Legend */}
           <div className="rounded-lg border bg-card p-4 space-y-2">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+             <p className="section-label">
               Evaluation Dimensions
             </p>
             {[
