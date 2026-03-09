@@ -1203,9 +1203,9 @@ const Index = () => {
                           <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
                         ) : (
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Resumix Pro</p>
-                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Pro.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Resumix Pro — $19/month</Button>
+                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Full Signal Intelligence</p>
+                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Full Signal Intelligence.</p>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence — $19/month</Button>
                           </div>
                         )}
                       </>
