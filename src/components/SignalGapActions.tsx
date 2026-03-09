@@ -58,7 +58,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+        <p className="section-label section-header">Signal Gap Actions</p>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-lg bg-muted" />)}
         </div>
@@ -71,10 +71,10 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   if (!isPro) {
     return (
       <div className="space-y-4">
-        <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+        <div className="section-header">
+          <p className="section-label">Signal Gap Actions</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock Signal Gap Actions — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">See exactly what's reducing your match and how to fix it.</p>
@@ -90,13 +90,13 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+      <div className="section-header">
+        <p className="section-label">Signal Gap Actions</p>
         <p className="text-xs text-muted-foreground mt-1">What's reducing your match — and exactly how to fix it</p>
       </div>
       <div className="space-y-4">
         {gaps.map((gap, i) => (
-          <div key={i} className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+          <div key={i} className="rounded-lg border bg-card p-5 space-y-3">
             <div className="flex items-start justify-between">
               <p className="text-sm font-semibold text-foreground">{gap.gap_name}</p>
               <Badge className={`text-[10px] ${IMPACT_STYLES[gap.impact] || IMPACT_STYLES.Low}`}>

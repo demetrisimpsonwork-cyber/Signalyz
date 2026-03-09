@@ -51,7 +51,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
+        <p className="section-label section-header">Interview Intelligence™</p>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-lg bg-muted" />)}
         </div>
@@ -63,15 +63,15 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Interview Intelligence™</p>
+      <div className="section-header">
+        <p className="section-label">Interview Intelligence™</p>
         <p className="text-xs text-muted-foreground mt-1">The questions this role will probe — built from your specific gaps</p>
       </div>
       <div className="space-y-4">
         {/* Show first question to all users */}
         {questions.slice(0, 1).map((q, i) => (
           <div key={i}>
-            <div className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+            <div className="rounded-lg border bg-card p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-3">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
@@ -97,7 +97,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
 
         {/* Gate remaining questions */}
         {!isPro && questions.length > 1 && (
-          <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+          <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
             <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
             <p className="text-sm font-semibold text-foreground">Unlock All {questions.length} Questions — Resumix Pro</p>
             <p className="text-xs text-muted-foreground">See every question this role will probe and how to answer.</p>
@@ -112,7 +112,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         {/* Pro users see all questions */}
         {isPro && questions.slice(1).map((q, i) => (
           <div key={i + 1}>
-            <div className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+            <div className="rounded-lg border bg-card p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-3">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 2}</span>

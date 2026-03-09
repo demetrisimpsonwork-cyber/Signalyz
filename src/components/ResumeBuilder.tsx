@@ -658,7 +658,7 @@ const ResumeBuilder = ({
         {/* Interview Preparation Notice — OUTSIDE the resume */}
         {resumeResult.interview_preparation_notice && (
           <div className="rounded-lg border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 p-5 max-w-[640px] mx-auto">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-400 mb-2">
+            <p className="subsection-label text-amber-700 dark:text-amber-400 mb-2">
               Interview Preparation Notice
             </p>
             <p className="text-xs text-amber-900 dark:text-amber-300 leading-relaxed">
@@ -674,7 +674,7 @@ const ResumeBuilder = ({
 
   if (showContactForm) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Contact Information
         </h3>

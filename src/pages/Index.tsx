@@ -882,7 +882,7 @@ const Index = () => {
 
       {/* How it works */}
       <section className="py-12 container max-w-[780px]">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6" style={{ letterSpacing: "0.02em" }}>How Resumix Works</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Resumix Works</h2>
         <div className="space-y-5">
           {[
             { step: "1. Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
@@ -1168,7 +1168,7 @@ const Index = () => {
                       <p className="text-xs text-muted-foreground">Diagnostic preview based on the original bullet.</p>
                     </div>
                     <div className="rounded-xl border bg-card p-5 space-y-3">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Snapshot</h3>
+                      <h3 className="section-label mt-2">Perception Snapshot</h3>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(role.perceptionSnapshot).map(([dimension, level]) => (
                           <div key={dimension} className="rounded-md border bg-background p-2.5 space-y-1">
@@ -1179,7 +1179,7 @@ const Index = () => {
                       </div>
                     </div>
                     <div className="rounded-xl border bg-card p-5 space-y-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">What This Role Actually Weighs Most</h3>
+                      <h3 className="section-label mt-2">What This Role Actually Weighs Most</h3>
                       <ul className="space-y-1.5">
                         {role.roleWeightsMost.map((theme, i) => (
                           <li key={i} className="flex gap-2 text-xs text-muted-foreground">
@@ -1191,7 +1191,7 @@ const Index = () => {
                     {user ? (
                       <>
                         <div className="rounded-xl border bg-card p-5 space-y-2">
-                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Insight</h3>
+                          <h3 className="section-label mt-2">Perception Insight</h3>
                           <ul className="space-y-2">
                             {role.perceptionInsights.map((insight, i) => (
                               <li key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed">{insight}</li>
@@ -1210,12 +1210,12 @@ const Index = () => {
                         )}
                       </>
                     ) : (
-                      <div className="rounded-xl border border-primary/20 bg-card p-6 text-center space-y-3">
+                      <div className="rounded-xl border border-primary/20 bg-card p-5 text-center space-y-3">
                         <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
                         <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground italic text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
+                    <p className="context-text text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
                   </div>
                 )}
 
@@ -1235,9 +1235,9 @@ const Index = () => {
                     )}
 
                     {/* Section 1: Signal Diagnosis with glow */}
-                    <div className={`rounded-xl border bg-card p-5 md:p-6 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
+                    <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2" style={{ letterSpacing: "0.15em" }}>Signal Diagnosis</h3>
+                        <h3 className="section-label mt-2">Signal Diagnosis</h3>
                         <ScoreExplanation score={result.match_score} />
                       </div>
                       <div className="flex items-baseline gap-3">
@@ -1295,7 +1295,7 @@ const Index = () => {
                           <div className="space-y-3">
                             {strengths.length > 0 && (
                               <div className="space-y-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>What's Working</p>
+                                <p className="section-label">What's Working</p>
                                 <ul className="space-y-0.5">
                                   {strengths.map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
@@ -1305,7 +1305,7 @@ const Index = () => {
                             )}
                             {gaps.length > 0 && (
                               <div className="space-y-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>What's Missing</p>
+                                <p className="section-label">What's Missing</p>
                                 <ul className="space-y-0.5">
                                   {gaps.map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
@@ -1350,7 +1350,7 @@ const Index = () => {
 
                     {/* Single unified Pro gate card for all gated sections */}
                     {!effectiveIsPro && (
-                      <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+                      <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
                         <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
                         <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Resumix Pro</p>
                         <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
@@ -1445,7 +1445,7 @@ const Index = () => {
 
       {/* FAQ */}
       <section className="py-12 container max-w-[780px]">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center" style={{ letterSpacing: "0.02em" }}>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center">
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="w-full">

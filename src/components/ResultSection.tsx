@@ -20,7 +20,7 @@ const ResultSection = ({ title, content }: ResultSectionProps) => {
   };
 
   return (
-    <div className="rounded-lg border bg-card p-5 md:p-4">
+    <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <button

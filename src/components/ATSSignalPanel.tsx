@@ -63,7 +63,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+        <p className="section-label section-header">ATS Signal Panel</p>
         <div className="animate-pulse h-40 rounded-lg bg-muted" />
       </div>
     );
@@ -74,10 +74,10 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   if (!isPro) {
     return (
       <div className="space-y-4">
-        <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+        <div className="section-header">
+          <p className="section-label">ATS Signal Panel</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock ATS Signal Panel — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">See how your resume reads to automated screening systems.</p>
@@ -93,12 +93,12 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+      <div className="section-header">
+        <p className="section-label">ATS Signal Panel</p>
         <p className="text-xs text-muted-foreground mt-1">How your resume reads to automated screening systems</p>
       </div>
 
-      <div className={`rounded-lg p-5 md:p-4 ${RISK_STYLES[data.ats_risk]}`}>
+      <div className={`rounded-lg p-5 ${RISK_STYLES[data.ats_risk]}`}>
         <div className="flex items-center justify-center gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_BADGE_STYLES[data.ats_risk]}`}>
             {data.ats_risk}
@@ -136,7 +136,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground italic text-center">
+      <p className="context-text text-center">
         We never recommend keyword stuffing. Every suggestion shows how to integrate naturally.
       </p>
     </div>

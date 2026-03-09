@@ -73,13 +73,13 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   if (!parsedRoles || topBullets.length === 0) {
     return (
       <div className="space-y-4">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
+        <h3 className="section-label section-header">Calibrated Bullets</h3>
         <div className="rounded-xl border bg-card p-5 space-y-2">
           <p className="text-sm text-muted-foreground">Could not extract individual bullets from your resume. Showing calibrated output only.</p>
         </div>
         {/* Still show the calibrated variant */}
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant A — Ownership Elevation</p>
+          <p className="section-label text-primary">Variant A — Ownership Elevation</p>
           <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
         </div>
       </div>
@@ -88,13 +88,13 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
 
   return (
     <div className="space-y-4">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
+      <h3 className="section-label section-header">Calibrated Bullets</h3>
 
       {/* Individual parsed bullets — first 2 visible to all, 3-5 behind Pro gate */}
       {topBullets.slice(0, 2).map((item, i) => (
         <div key={i} className="rounded-xl border bg-card p-5 space-y-2">
           <div className="flex items-baseline gap-2">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+             <p className="section-label">
               Original Bullet {topBullets.length > 1 ? `${i + 1}` : ""}
             </p>
             {(item.role || item.company) && (
@@ -109,10 +109,10 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
 
       {/* Variant A — Ownership Elevation */}
       <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant A — Ownership Elevation</p>
+        <p className="section-label text-primary">Variant A — Ownership Elevation</p>
         <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
         <div className="pt-2 space-y-1">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+          <p className="section-label">What changed</p>
           {(result.used_signals && result.used_signals.length > 0) ? (
             <ul className="space-y-0.5">
               {result.used_signals.map((s, i) => (
@@ -132,7 +132,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           {topBullets.slice(2).map((item, i) => (
             <div key={`pro-${i}`} className="rounded-xl border bg-card p-5 space-y-2">
               <div className="flex items-baseline gap-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+                <p className="section-label">
                   Original Bullet {i + 3}
                 </p>
                 {(item.role || item.company) && (
@@ -146,10 +146,10 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           ))}
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-              <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
+              <p className="section-label text-primary">Variant B — Outcome / Impact Framing</p>
               <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
               <div className="pt-2 space-y-1">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+                <p className="section-label">What changed</p>
                 <ul className="space-y-0.5">
                   <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Emphasized operational outcome</li>
                   <li className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>Aligned terminology with hiring expectations</li>
@@ -164,7 +164,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         </>
       )}
 
-      <p className="text-[10px] text-muted-foreground/70 italic text-center pt-1">
+      <p className="context-text text-center pt-1">
         Repositioned using only language from your original resume. No experience was invented.
       </p>
     </div>

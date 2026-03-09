@@ -49,7 +49,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+        <p className="section-label">Calibrated Summary</p>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-muted" />)}
         </div>
@@ -62,10 +62,10 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
   if (!isPro) {
     return (
       <div className="space-y-4">
-        <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+        <div className="section-header">
+          <p className="section-label">Calibrated Summary</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock Calibrated Summary — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">Your professional identity, repositioned for this role.</p>
@@ -81,14 +81,14 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+      <div className="section-header">
+        <p className="section-label">Calibrated Summary</p>
         <p className="text-xs text-muted-foreground mt-1">Your professional identity, repositioned for this role</p>
       </div>
       <div className="space-y-4">
         {variants.map((v, i) => (
           <div key={i} style={{ animationDelay: `${i * 200}ms` }}>
-            <div className="rounded-lg border-l-4 border-l-primary border bg-card p-5 md:p-4 space-y-2">
+            <div className="rounded-lg border-l-4 border-l-primary border bg-card p-5 space-y-2">
               <div className="flex items-start justify-between">
                 <p className="text-xs font-semibold uppercase tracking-widest text-primary">{v.name}</p>
                 <button onClick={() => handleCopy(v.text, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
@@ -96,7 +96,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
                 </button>
               </div>
               <p className="text-sm text-foreground leading-relaxed">{v.text}</p>
-              <p className="text-xs text-muted-foreground italic">{v.why_this_works}</p>
+              <p className="context-text">{v.why_this_works}</p>
             </div>
           </div>
         ))}

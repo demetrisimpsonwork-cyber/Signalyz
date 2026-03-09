@@ -387,7 +387,7 @@ const LevelDeterminationBlock = ({
         </>
       ) : (
         /* Single locked card for free/unauthenticated users */
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock Signal Calibration Report — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">Target Role Calibration, Ownership Classification, Signal Risk Projection, and Strategic Upgrade Priority.</p>

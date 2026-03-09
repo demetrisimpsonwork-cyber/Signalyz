@@ -188,7 +188,7 @@ const DirectorAudit = () => {
     <div className="container max-w-5xl py-10">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
+        <p className="section-label mb-1.5">
           Signal Positioning Engine
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
@@ -204,7 +204,7 @@ const DirectorAudit = () => {
         <div className="space-y-5">
           <div className="rounded-lg border bg-card overflow-hidden">
             <div className="px-4 pt-3.5 pb-2.5 border-b border-border/60">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+              <p className="section-label">
                 Input
               </p>
             </div>
@@ -266,7 +266,7 @@ const DirectorAudit = () => {
 
           {/* Legend */}
           <div className="rounded-lg border bg-card p-4 space-y-2">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+             <p className="section-label">
               Evaluation Dimensions
             </p>
             {[

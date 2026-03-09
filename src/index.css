@@ -112,13 +112,47 @@
   }
 }
 
-/* ─── Mobile spacing consistency ─── */
+/* ─── Typography System ─── */
 @layer utilities {
-  /* Section label: consistent 24px margin-bottom on mobile */
-  @media (max-width: 767px) {
-    .mobile-section-label {
-      margin-bottom: 24px !important;
-      letter-spacing: 0.15em !important;
-    }
+  /* Section labels: small all-caps with letter spacing */
+  .section-label {
+    @apply text-[10px] font-semibold uppercase text-muted-foreground;
+    letter-spacing: 0.15em;
+  }
+  
+  /* Subsection labels: slightly larger for hierarchy */
+  .subsection-label {
+    @apply text-[11px] font-semibold uppercase text-muted-foreground;
+    letter-spacing: 0.12em;
+  }
+
+  /* Body text: consistent readable line height */
+  .body-text {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+
+  /* Metric text: bold for scores and key figures */
+  .metric-text {
+    @apply font-bold tabular-nums;
+  }
+
+  /* Context text: italic for explanatory notes */
+  .context-text {
+    @apply text-xs text-muted-foreground italic;
+  }
+
+  /* Card container: standardized padding */
+  .card-padding {
+    @apply p-5;
+  }
+
+  /* Section spacing: consistent vertical gaps */
+  .section-gap {
+    @apply space-y-4;
+  }
+
+  /* Section header margin */
+  .section-header {
+    @apply mt-6 mb-2;
   }
 }

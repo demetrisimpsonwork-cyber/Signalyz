@@ -81,7 +81,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Signal keywords */}
       {signalKeywords.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Your Resume Signal Keywords</p>
+          <p className="section-label">Your Resume Signal Keywords</p>
           <div className="flex flex-wrap gap-2">
             {signalKeywords.slice(0, 5).map((kw, i) => (
               <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
@@ -96,7 +96,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Headline input */}
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>LinkedIn Headline</p>
+          <p className="section-label">LinkedIn Headline</p>
           <p className="text-xs text-muted-foreground mt-1">Paste your current headline, or leave blank to build from scratch.</p>
         </div>
         <Textarea
@@ -110,7 +110,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* About input */}
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>LinkedIn About Section</p>
+          <p className="section-label">LinkedIn About Section</p>
           <p className="text-xs text-muted-foreground mt-1">Paste your current About section, or leave blank.</p>
         </div>
         <Textarea
@@ -130,7 +130,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Results: Headlines */}
       {headlineVariants.length > 0 && (
         <div className="space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Headline Variants</p>
+          <p className="section-label">Headline Variants</p>
           {headlineVariants.map((v, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Before */}
@@ -158,7 +158,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Results: About */}
       {calibratedAbout && (
         <div className="space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">About Section</p>
+          <p className="section-label">About Section</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Before */}
             <div className="rounded-lg border bg-muted/30 p-4">

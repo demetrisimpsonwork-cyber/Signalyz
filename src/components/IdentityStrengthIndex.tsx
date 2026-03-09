@@ -92,7 +92,7 @@ const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: strin
       <p className="text-xs text-muted-foreground leading-relaxed pt-1">{pillar.explanation}</p>
     </div>
     <div className="px-5 py-3 border-t border-border/60 bg-muted/20">
-      <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
+      <p className="section-label text-primary mb-1">
         Threshold Requirement
       </p>
       <p className="text-xs text-foreground leading-relaxed">
@@ -117,7 +117,7 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground mt-2" style={{ letterSpacing: "0.02em" }}>Identity Strength Index™</h3>
+            <h3 className="text-sm font-semibold text-foreground mt-2">Identity Strength Index™</h3>
             {!isPro && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
                 Pro
