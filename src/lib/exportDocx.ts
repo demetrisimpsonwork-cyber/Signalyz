@@ -220,12 +220,11 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                 sectionHeader("Independent Projects"),
                 ...resume.independent_projects.flatMap((proj) => [
                   new Paragraph({
-                    heading: HeadingLevel.HEADING_3,
                     pageBreakBefore: false,
                     spacing: { before: 160, after: 60 },
                     children: [
                       new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri" }),
-                      ...(proj.description ? [new TextRun({ text: ` — ${proj.description}`, size: 21, font: "Calibri", color: "666666" })] : []),
+                      ...(proj.description ? [new TextRun({ text: ` — ${proj.description}`, bold: false, size: 21, font: "Calibri", color: "666666" })] : []),
                     ],
                   }),
                   ...proj.bullets.map(
