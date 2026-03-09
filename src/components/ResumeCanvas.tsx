@@ -362,7 +362,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
               <div key={pi} className="font-normal">
-                <p className="font-normal mb-1" style={{ fontSize: "11px", lineHeight: "1.55" }}>
+                <p className="font-normal mb-1" style={{ fontSize: "11px", lineHeight: "1.55", fontWeight: 400 }}>
                   <span className="font-bold" style={{ fontSize: "12px" }}>{proj.name}</span>
                   {(proj.description || editMode) && (
                     <>
