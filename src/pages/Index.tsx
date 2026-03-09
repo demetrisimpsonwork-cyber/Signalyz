@@ -1352,10 +1352,10 @@ const Index = () => {
                     {!effectiveIsPro && (
                       <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
                         <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Resumix Pro</p>
+                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Full Signal Intelligence</p>
                         <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
                         {user ? (
-                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Resumix Pro — $19/month</Button>
+                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Full Signal Intelligence — $19/month</Button>
                         ) : (
                           <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
                         )}
