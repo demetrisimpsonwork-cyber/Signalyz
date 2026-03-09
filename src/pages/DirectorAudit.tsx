@@ -259,7 +259,7 @@ const DirectorAudit = () => {
                 className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Running Analysis…" : "✦ Run Positioning Report"}
+                {loading ? "Running Analysis…" : (<><span className="hidden md:inline">✦ Run Signal Positioning Report</span><span className="md:hidden">✦ Run Signal Report</span></>)}
               </Button>
             </div>
           </div>
