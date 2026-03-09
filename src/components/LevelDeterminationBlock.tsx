@@ -244,36 +244,52 @@ const LevelDeterminationBlock = ({
   const funnelStages = deriveFunnelStages(score, roleLevel);
 
   const handleCopyAll = async () => {
+    const topGap = primaryDeficiency?.name || "None identified";
+    const primaryStrengthText = score >= 65
+      ? `Signal pattern meets ${roleTitle} threshold across primary dimensions.`
+      : `Partial alignment with ${roleTitle} threshold detected.`;
+    const repositioning = strategicPriority;
+
+    const working: string[] = [];
+    const missing: string[] = [];
+    funnelStages.forEach((s) => {
+      if (s.risk === "Low") working.push(`${s.label} — ${s.note}`);
+      else missing.push(`${s.label} (${s.risk}) — ${s.note}`);
+    });
+
+    const fixes: string[] = [];
+    if (primaryDeficiency) fixes.push(`Address ${primaryDeficiency.name}: ${primaryDeficiency.pattern}`);
+    if (tierGap && !tierGap.startsWith("None")) fixes.push(`Close tier gap: ${tierGap}`);
+    fixes.push(strategicPriority);
+
+    const predicted = score >= 80
+      ? "Signal already meets threshold. Maintain current positioning."
+      : `Addressing top gaps could move signal from ${signalLevel} toward At Threshold or above.`;
+
     const lines = [
-      "TARGET ROLE CALIBRATION",
-      `Inferred Target Level: ${roleTitle}`,
-      `Inference Confidence: ${inferenceConfidence}`,
-      `Benchmark Applied: ${roleTitle} Threshold Standard`,
+      `SIGNAL DIAGNOSIS: ${score}% — ${signalLevel}`,
       "",
-      "OWNERSHIP CLASSIFICATION",
-      `Current Signal Level: ${signalLevel}`,
-      `Tier Gap: ${tierGap}`,
-      `Classification Confidence: ${classificationConfidence}`,
-      `Verdict: ${ownershipVerdict}`,
+      "TOP GAP",
+      topGap,
       "",
-      primaryDeficiency
-        ? [
-            "PRIMARY DEFICIENCY",
-            `Deficiency: ${primaryDeficiency.name}`,
-            `Threshold Status: ${primaryDeficiency.status}`,
-            `Observed Pattern: ${primaryDeficiency.pattern}`,
-            `Panel Risk: ${primaryDeficiency.panelRisk}`,
-          ].join("\n")
-        : "",
+      "PRIMARY STRENGTH",
+      primaryStrengthText,
       "",
-      "SIGNAL RISK PROJECTION",
-      ...funnelStages.map((s) => `${s.stage} — ${s.label}: ${s.risk} — ${s.note}`),
+      "REPOSITIONING OPPORTUNITY",
+      repositioning,
       "",
-      "STRATEGIC UPGRADE PRIORITY",
-      strategicPriority,
-    ]
-      .filter((l) => l !== undefined)
-      .join("\n");
+      "WHAT'S WORKING",
+      ...(working.length > 0 ? working.map(w => `- ${w}`) : ["- None identified"]),
+      "",
+      "WHAT'S MISSING",
+      ...(missing.length > 0 ? missing.map(m => `- ${m}`) : ["- None identified"]),
+      "",
+      "THREE STRATEGIC FIXES",
+      ...fixes.slice(0, 3).map((f, i) => `${i + 1}. ${f}`),
+      "",
+      "PREDICTED SIGNAL IMPROVEMENT",
+      predicted,
+    ].join("\n");
 
     await navigator.clipboard.writeText(lines);
     setCopiedAll(true);
