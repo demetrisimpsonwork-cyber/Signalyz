@@ -306,7 +306,7 @@ const History = () => {
 
   if (authLoading || loading || subLoading) {
     return (
-      <div className="container max-w-3xl py-20 flex items-center justify-center">
+      <div className="container max-w-5xl py-20 flex items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
