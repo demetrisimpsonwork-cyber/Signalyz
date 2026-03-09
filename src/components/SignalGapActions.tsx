@@ -96,7 +96,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
       </div>
       <div className="space-y-4">
         {gaps.map((gap, i) => (
-          <div key={i} className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+          <div key={i} className="rounded-lg border bg-card p-5 space-y-3">
             <div className="flex items-start justify-between">
               <p className="text-sm font-semibold text-foreground">{gap.gap_name}</p>
               <Badge className={`text-[10px] ${IMPACT_STYLES[gap.impact] || IMPACT_STYLES.Low}`}>
