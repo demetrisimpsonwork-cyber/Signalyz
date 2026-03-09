@@ -317,7 +317,7 @@ const History = () => {
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Alignment History</p>
+          <p className="section-label">Alignment History</p>
           <p className="text-xs text-muted-foreground mt-1">Your signal trajectory over time</p>
         </div>
         {entries.length > 0 && (

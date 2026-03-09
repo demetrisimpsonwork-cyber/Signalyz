@@ -1191,7 +1191,7 @@ const Index = () => {
                     {user ? (
                       <>
                         <div className="rounded-xl border bg-card p-5 space-y-2">
-                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">Perception Insight</h3>
+                          <h3 className="section-label mt-2">Perception Insight</h3>
                           <ul className="space-y-2">
                             {role.perceptionInsights.map((insight, i) => (
                               <li key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed">{insight}</li>
