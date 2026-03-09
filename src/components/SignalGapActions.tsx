@@ -51,7 +51,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   const handleCopy = async (text: string, idx: number) => {
     await navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopiedIdx(null), 1500);
   };
 

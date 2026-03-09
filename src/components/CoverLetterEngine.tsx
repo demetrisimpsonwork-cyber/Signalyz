@@ -166,7 +166,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullLetterText);
     setCopied(true);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
 

@@ -44,7 +44,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
     const text = `QUESTION: ${q.question}\nWHY THEY'RE ASKING THIS: ${q.why_asking}\nSIGNAL ANGLE TO HIT: ${q.signal_angle}`;
     await navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopiedIdx(null), 1500);
   };
 

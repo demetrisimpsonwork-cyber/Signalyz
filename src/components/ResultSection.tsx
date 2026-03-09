@@ -15,7 +15,7 @@ const ResultSection = ({ title, content }: ResultSectionProps) => {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(displayText);
     setCopied(true);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
 

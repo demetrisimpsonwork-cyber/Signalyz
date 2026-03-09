@@ -47,7 +47,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
     const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
 

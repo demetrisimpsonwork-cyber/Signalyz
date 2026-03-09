@@ -293,7 +293,7 @@ const LevelDeterminationBlock = ({
 
     await navigator.clipboard.writeText(lines);
     setCopiedAll(true);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopiedAll(false), 1500);
   };
 
