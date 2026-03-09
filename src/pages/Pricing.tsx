@@ -19,7 +19,7 @@ const tiers = [
     highlighted: false,
   },
   {
-    name: "Resumix Pro",
+    name: "Full Signal Intelligence",
     price: "$19",
     period: "/mo",
     description: "Full signal calibration engine",
@@ -36,7 +36,7 @@ const tiers = [
       "LinkedIn Signal calibration",
       "Alignment history",
     ],
-    cta: "Unlock Resumix Pro",
+    cta: "Unlock Full Signal Intelligence",
     highlighted: true,
   },
 ];
