@@ -63,7 +63,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-6 mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+        <p className="section-label section-header">ATS Signal Panel</p>
         <div className="animate-pulse h-40 rounded-lg bg-muted" />
       </div>
     );
