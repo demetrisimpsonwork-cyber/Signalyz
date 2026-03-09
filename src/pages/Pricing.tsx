@@ -56,9 +56,14 @@ const Pricing = () => {
 
   return (
     <div className="container max-w-5xl py-20 px-4 pb-32 md:pb-20">
-      <div className="mb-14 text-center">
+      <div className="mb-14 text-center space-y-6">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        <div className="space-y-3 max-w-lg mx-auto">
+          <p className="text-base font-medium text-foreground leading-relaxed">Know exactly why you're not getting interviews.</p>
+          <p className="text-base font-medium text-foreground leading-relaxed">See how hiring managers actually read your experience.</p>
+          <p className="text-base font-medium text-foreground leading-relaxed">Get the repositioned version of your resume — same experience, stronger signal.</p>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
           Most candidates optimize wording. Strategic candidates optimize perception.
         </p>
       </div>
