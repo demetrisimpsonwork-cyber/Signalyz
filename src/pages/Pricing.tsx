@@ -98,9 +98,15 @@ const Pricing = () => {
               ))}
             </ul>
 
+            {tier.highlighted && isAuthenticated && (
+              <p className={`mt-6 text-sm font-semibold text-center leading-snug ${tier.highlighted ? "text-white" : "text-foreground"}`}>
+                The average job search takes 5 months. Most candidates never know why.
+              </p>
+            )}
+
             {isAuthenticated ? (
               <Button
-                className={`mt-8 w-full`}
+                className={`${tier.highlighted && "mt-3"} ${!tier.highlighted && "mt-8"} w-full`}
                 variant={tier.highlighted ? "default" : "outline"}
                 onClick={tier.highlighted ? () => initiateCheckout() : undefined}
               >
@@ -115,7 +121,12 @@ const Pricing = () => {
                 {tier.highlighted ? <a href="/auth">Get Started Free</a> : tier.cta}
               </Button>
             )}
-          </div>
+
+            {tier.highlighted && isAuthenticated && (
+              <p className={`mt-2 text-xs italic text-center ${tier.highlighted ? "text-white/50" : "text-muted-foreground"}`}>
+                Less than one rejected application costs you.
+              </p>
+            )}
         ))}
       </div>
 
