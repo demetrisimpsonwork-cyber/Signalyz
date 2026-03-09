@@ -188,7 +188,7 @@ const DirectorAudit = () => {
     <div className="container max-w-5xl py-10">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">
+        <p className="section-label mb-1.5">
           Signal Positioning Engine
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
