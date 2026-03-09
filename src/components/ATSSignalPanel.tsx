@@ -93,8 +93,8 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>ATS Signal Panel</p>
+      <div className="section-header">
+        <p className="section-label">ATS Signal Panel</p>
         <p className="text-xs text-muted-foreground mt-1">How your resume reads to automated screening systems</p>
       </div>
 
