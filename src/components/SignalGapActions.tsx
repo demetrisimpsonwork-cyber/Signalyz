@@ -90,8 +90,8 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+      <div className="section-header">
+        <p className="section-label">Signal Gap Actions</p>
         <p className="text-xs text-muted-foreground mt-1">What's reducing your match — and exactly how to fix it</p>
       </div>
       <div className="space-y-4">
