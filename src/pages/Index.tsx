@@ -987,7 +987,9 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  const scrollY = window.scrollY;
                   setMode(tab.id);
+                  requestAnimationFrame(() => window.scrollTo(0, scrollY));
                 }}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
                   mode === tab.id
