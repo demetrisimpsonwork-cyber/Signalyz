@@ -95,7 +95,7 @@ const UpgradeModal = ({
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Resumix Pro</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Full Signal Intelligence</p>
               <ul className="space-y-2">
                 {[
                   "Unlimited alignments",
