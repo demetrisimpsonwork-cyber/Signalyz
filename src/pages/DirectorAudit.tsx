@@ -163,7 +163,7 @@ const DirectorAudit = () => {
     if (!result) return;
     await navigator.clipboard.writeText(buildPlainText(result));
     setCopied(true);
-    toast.success("Report copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
 

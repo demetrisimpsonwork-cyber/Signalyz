@@ -111,7 +111,7 @@ const CopyButton = ({ text, label }: { text: string; label: string }) => {
   const handle = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success("Copied to clipboard", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 1500);
   };
   return (
