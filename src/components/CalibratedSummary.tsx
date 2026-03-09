@@ -88,7 +88,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
       <div className="space-y-4">
         {variants.map((v, i) => (
           <div key={i} style={{ animationDelay: `${i * 200}ms` }}>
-            <div className="rounded-lg border-l-4 border-l-primary border bg-card p-5 md:p-4 space-y-2">
+            <div className="rounded-lg border-l-4 border-l-primary border bg-card p-5 space-y-2">
               <div className="flex items-start justify-between">
                 <p className="text-xs font-semibold uppercase tracking-widest text-primary">{v.name}</p>
                 <button onClick={() => handleCopy(v.text, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
