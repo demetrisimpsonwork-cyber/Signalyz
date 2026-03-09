@@ -1179,7 +1179,7 @@ const Index = () => {
                       </div>
                     </div>
                     <div className="rounded-xl border bg-card p-5 space-y-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-2">What This Role Actually Weighs Most</h3>
+                      <h3 className="section-label mt-2">What This Role Actually Weighs Most</h3>
                       <ul className="space-y-1.5">
                         {role.roleWeightsMost.map((theme, i) => (
                           <li key={i} className="flex gap-2 text-xs text-muted-foreground">
