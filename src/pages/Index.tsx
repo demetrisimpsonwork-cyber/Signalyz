@@ -805,7 +805,7 @@ const Index = () => {
 
 
       {/* WAS/NOW Transformation Section */}
-      <section className="py-12 container max-w-[780px]" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
+      <section className="py-12 container max-w-5xl" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="font-bold tracking-tight text-foreground" style={{ fontSize: "28px" }}>This is what repositioning looks like.</h2>
           <p className="mt-2 text-muted-foreground" style={{ fontSize: "16px" }}>Not reframing with synonyms. Recalibrating. Every word came from the original resume.</p>
