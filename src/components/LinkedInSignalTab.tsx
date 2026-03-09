@@ -81,7 +81,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Signal keywords */}
       {signalKeywords.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Your Resume Signal Keywords</p>
+          <p className="section-label">Your Resume Signal Keywords</p>
           <div className="flex flex-wrap gap-2">
             {signalKeywords.slice(0, 5).map((kw, i) => (
               <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
