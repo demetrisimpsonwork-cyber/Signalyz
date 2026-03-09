@@ -361,18 +361,18 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <SectionHeader>Independent Projects</SectionHeader>
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
-              <div key={pi}>
+              <div key={pi} style={{ fontWeight: 400 }}>
                 <p className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55", fontWeight: 400 }}>
-                  <strong style={{ fontSize: "12px" }}>{proj.name}</strong>
+                  <span style={{ fontSize: "12px", fontWeight: 700 }}>{proj.name}</span>
                   {(proj.description || editMode) && (
                     <>
-                      <span style={{ color: "#4B5563", fontWeight: 400 }}> — </span>
+                      <span style={{ fontWeight: 400, color: "#4B5563" }}>{" — "}</span>
                       {editMode ? (
                         <span
                           contentEditable
                           suppressContentEditableWarning
                           className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
-                          style={{ color: "#4B5563", fontWeight: 400 }}
+                          style={{ fontWeight: 400, color: "#4B5563" }}
                           onBlur={(e) => {
                             onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
                           }}
@@ -380,7 +380,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                           {proj.description}
                         </span>
                       ) : (
-                        <span style={{ color: "#4B5563", fontWeight: 400 }}>{proj.description}</span>
+                        <span style={{ fontWeight: 400, color: "#4B5563" }}>{proj.description}</span>
                       )}
                     </>
                   )}
