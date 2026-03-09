@@ -313,7 +313,7 @@ const History = () => {
   }
 
   return (
-    <div className="container max-w-3xl py-10 px-4">
+    <div className="container max-w-5xl py-10 px-4">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>

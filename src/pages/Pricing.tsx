@@ -55,7 +55,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <div className="container max-w-4xl py-20 px-4 pb-32 md:pb-20">
+    <div className="container max-w-5xl py-20 px-4 pb-32 md:pb-20">
       <div className="mb-14 text-center">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">

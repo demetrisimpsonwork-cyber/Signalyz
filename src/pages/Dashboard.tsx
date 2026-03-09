@@ -80,7 +80,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="container max-w-3xl py-10">
+    <div className="container max-w-5xl py-10">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-foreground">Your Alignments</h1>

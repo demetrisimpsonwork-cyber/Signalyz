@@ -114,7 +114,7 @@ const CalibratedResumeTab = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
       {/* Loading state while auto-assembling */}
       {!currentResume && !loading && !error && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-4 p-8">
