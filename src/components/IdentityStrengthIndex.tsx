@@ -117,7 +117,7 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground mt-2" style={{ letterSpacing: "0.02em" }}>Identity Strength Index™</h3>
+            <h3 className="text-sm font-semibold text-foreground mt-2">Identity Strength Index™</h3>
             {!isPro && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
                 Pro

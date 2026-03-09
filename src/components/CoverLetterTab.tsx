@@ -72,7 +72,7 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-5 text-center">
         <Lock className="h-8 w-8 text-muted-foreground" />
         <h3 className="text-lg font-bold text-foreground">Your Signal-Calibrated Cover Letter is ready</h3>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
