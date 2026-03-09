@@ -71,7 +71,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         {/* Show first question to all users */}
         {questions.slice(0, 1).map((q, i) => (
           <div key={i}>
-            <div className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+            <div className="rounded-lg border bg-card p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-3">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
