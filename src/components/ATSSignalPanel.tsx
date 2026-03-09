@@ -98,7 +98,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         <p className="text-xs text-muted-foreground mt-1">How your resume reads to automated screening systems</p>
       </div>
 
-      <div className={`rounded-lg p-5 md:p-4 ${RISK_STYLES[data.ats_risk]}`}>
+      <div className={`rounded-lg p-5 ${RISK_STYLES[data.ats_risk]}`}>
         <div className="flex items-center justify-center gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_BADGE_STYLES[data.ats_risk]}`}>
             {data.ats_risk}
