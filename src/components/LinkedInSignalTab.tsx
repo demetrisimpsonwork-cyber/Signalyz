@@ -130,7 +130,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Results: Headlines */}
       {headlineVariants.length > 0 && (
         <div className="space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Headline Variants</p>
+          <p className="section-label">Headline Variants</p>
           {headlineVariants.map((v, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Before */}
