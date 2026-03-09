@@ -71,10 +71,10 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   if (!isPro) {
     return (
       <div className="space-y-4">
-        <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Signal Gap Actions</p>
+        <div className="section-header">
+          <p className="section-label">Signal Gap Actions</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock Signal Gap Actions — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">See exactly what's reducing your match and how to fix it.</p>
