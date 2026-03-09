@@ -204,7 +204,7 @@ const DirectorAudit = () => {
         <div className="space-y-5">
           <div className="rounded-lg border bg-card overflow-hidden">
             <div className="px-4 pt-3.5 pb-2.5 border-b border-border/60">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+              <p className="section-label">
                 Input
               </p>
             </div>
