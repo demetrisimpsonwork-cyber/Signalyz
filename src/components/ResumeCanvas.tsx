@@ -362,25 +362,29 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
               <div key={pi}>
-                <div className="mb-1">
+                <div className="mb-1 flex items-baseline gap-1 flex-wrap">
                   <EditableField
                     value={proj.name}
                     path={`independent_projects.${pi}.name`}
                     editMode={editMode}
                     onUpdate={onUpdate}
-                    className="font-bold"
+                    className="font-bold shrink-0"
                     style={{ fontSize: "12px" }}
                     placeholder="Project Name"
                   />
                   {(proj.description || editMode) && (
-                    <EditableField
-                      value={proj.description}
-                      path={`independent_projects.${pi}.description`}
-                      editMode={editMode}
-                      onUpdate={onUpdate}
-                      style={{ fontSize: "11px", color: "#4B5563" }}
-                      placeholder="Brief description"
-                    />
+                    <>
+                      <span style={{ fontSize: "11px", color: "#4B5563" }}>—</span>
+                      <EditableField
+                        value={proj.description}
+                        path={`independent_projects.${pi}.description`}
+                        editMode={editMode}
+                        onUpdate={onUpdate}
+                        className="font-normal"
+                        style={{ fontSize: "11px", color: "#4B5563" }}
+                        placeholder="Brief description"
+                      />
+                    </>
                   )}
                 </div>
                 {proj.bullets.length > 0 && (
