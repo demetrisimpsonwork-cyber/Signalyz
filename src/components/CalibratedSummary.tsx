@@ -62,10 +62,10 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
   if (!isPro) {
     return (
       <div className="space-y-4">
-        <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+        <div className="section-header">
+          <p className="section-label">Calibrated Summary</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">Unlock Calibrated Summary — Resumix Pro</p>
           <p className="text-xs text-muted-foreground">Your professional identity, repositioned for this role.</p>
