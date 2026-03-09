@@ -81,8 +81,8 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
 
   return (
     <div className="space-y-4">
-      <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Summary</p>
+      <div className="section-header">
+        <p className="section-label">Calibrated Summary</p>
         <p className="text-xs text-muted-foreground mt-1">Your professional identity, repositioned for this role</p>
       </div>
       <div className="space-y-4">
