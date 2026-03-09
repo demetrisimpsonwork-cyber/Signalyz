@@ -96,7 +96,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Headline input */}
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>LinkedIn Headline</p>
+          <p className="section-label">LinkedIn Headline</p>
           <p className="text-xs text-muted-foreground mt-1">Paste your current headline, or leave blank to build from scratch.</p>
         </div>
         <Textarea
