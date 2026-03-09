@@ -67,7 +67,7 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              Unlock Resumix Pro
+              Unlock Full Signal Intelligence
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
               You are currently seeing surface-level alignment only.
