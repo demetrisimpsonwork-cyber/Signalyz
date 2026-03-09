@@ -112,7 +112,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         <p className="section-label text-primary">Variant A — Ownership Elevation</p>
         <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
         <div className="pt-2 space-y-1">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
+          <p className="section-label">What changed</p>
           {(result.used_signals && result.used_signals.length > 0) ? (
             <ul className="space-y-0.5">
               {result.used_signals.map((s, i) => (
