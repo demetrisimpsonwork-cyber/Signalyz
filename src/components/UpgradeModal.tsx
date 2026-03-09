@@ -151,7 +151,7 @@ const UpgradeModal = ({
             className="w-full text-muted-foreground/50 hover:text-muted-foreground"
             onClick={onClose}
           >
-            Continue with free tier
+            Continue with Signal Preview
           </Button>
         </div>
       </DialogContent>

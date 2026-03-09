@@ -99,10 +99,10 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         {!isPro && questions.length > 1 && (
           <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
             <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-            <p className="text-sm font-semibold text-foreground">Unlock All {questions.length} Questions — Resumix Pro</p>
+            <p className="text-sm font-semibold text-foreground">Unlock All {questions.length} Questions — Full Signal Intelligence</p>
             <p className="text-xs text-muted-foreground">See every question this role will probe and how to answer.</p>
             {user ? (
-              <Button size="sm" onClick={onUpgrade}>Unlock Resumix Pro — $19/month</Button>
+              <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence — $19/month</Button>
             ) : (
               <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
             )}
