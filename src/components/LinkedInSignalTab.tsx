@@ -28,7 +28,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   const handleCopy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedIdx(key);
-    toast.success("Copied", { duration: 1500 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopiedIdx(null), 1500);
   };
 

@@ -29,7 +29,7 @@ const DebugPanel = ({ lastDebug }: DebugPanelProps) => {
     const info = JSON.stringify(lastDebug, null, 2);
     await navigator.clipboard.writeText(info);
     setCopied(true);
-    toast.success("Debug info copied to clipboard");
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
 

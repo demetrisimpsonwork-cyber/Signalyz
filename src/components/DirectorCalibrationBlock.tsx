@@ -761,7 +761,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               <button
                 onClick={async () => {
                   await navigator.clipboard.writeText(result.export_builder!.final_resume_text);
-                  toast.success("ATS resume copied to clipboard", { duration: 1500 });
+                  toast.success("Copied to clipboard");
                 }}
                 className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground border border-border/60 transition-colors hover:bg-secondary hover:text-foreground"
               >

@@ -56,7 +56,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
   const handleCopyKw = async (kw: string) => {
     await navigator.clipboard.writeText(kw);
     setCopiedKw(kw);
-    toast.success("Copied", { duration: 1000 });
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopiedKw(null), 1500);
   };
 
