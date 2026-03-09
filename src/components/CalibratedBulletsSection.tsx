@@ -132,7 +132,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           {topBullets.slice(2).map((item, i) => (
             <div key={`pro-${i}`} className="rounded-xl border bg-card p-5 space-y-2">
               <div className="flex items-baseline gap-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+                <p className="section-label">
                   Original Bullet {i + 3}
                 </p>
                 {(item.role || item.company) && (
