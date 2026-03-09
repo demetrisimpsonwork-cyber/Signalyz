@@ -390,7 +390,7 @@ const History = () => {
           return (
             <div key={group.key}>
               {/* Group header card */}
-              <div className="rounded-lg border border-l-[3px] border-l-primary bg-card p-5 md:p-4">
+              <div className="rounded-lg border border-l-[3px] border-l-primary bg-card p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{group.role || "Alignment Run"}</p>

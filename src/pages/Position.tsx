@@ -138,7 +138,7 @@ const Section = ({
   badge?: React.ReactNode;
   proLabel?: boolean;
 }) => (
-  <div className="rounded-lg border bg-card p-5 md:p-4 space-y-3">
+  <div className="rounded-lg border bg-card p-5 space-y-3">
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
