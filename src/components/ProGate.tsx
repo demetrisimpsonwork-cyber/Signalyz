@@ -101,7 +101,7 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                Upgrade to Pro
+                Upgrade to Full Signal Intelligence
               </>
             ) : (
               <a href="/auth">Get Started Free</a>
