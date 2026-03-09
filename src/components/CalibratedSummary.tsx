@@ -96,7 +96,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
                 </button>
               </div>
               <p className="text-sm text-foreground leading-relaxed">{v.text}</p>
-              <p className="text-xs text-muted-foreground italic">{v.why_this_works}</p>
+              <p className="context-text">{v.why_this_works}</p>
             </div>
           </div>
         ))}
