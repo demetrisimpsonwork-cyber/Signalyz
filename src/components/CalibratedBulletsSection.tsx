@@ -73,7 +73,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   if (!parsedRoles || topBullets.length === 0) {
     return (
       <div className="space-y-4">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
+        <h3 className="section-label section-header">Calibrated Bullets</h3>
         <div className="rounded-xl border bg-card p-5 space-y-2">
           <p className="text-sm text-muted-foreground">Could not extract individual bullets from your resume. Showing calibrated output only.</p>
         </div>
