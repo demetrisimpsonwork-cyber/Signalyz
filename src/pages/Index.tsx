@@ -1350,7 +1350,7 @@ const Index = () => {
 
                     {/* Single unified Pro gate card for all gated sections */}
                     {!effectiveIsPro && (
-                      <div className="rounded-lg border border-border bg-card p-6 text-center space-y-3">
+                      <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
                         <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
                         <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Resumix Pro</p>
                         <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
