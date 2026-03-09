@@ -361,18 +361,17 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <SectionHeader>Independent Projects</SectionHeader>
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
-              <div key={pi} style={{ fontWeight: 400 }}>
-                <p className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55", fontWeight: 400 }}>
-                  <span style={{ fontSize: "12px", fontWeight: 700 }}>{proj.name}</span>
+              <div key={pi} className="font-normal">
+                <p className="font-normal mb-1" style={{ fontSize: "11px", lineHeight: "1.55" }}>
+                  <span className="font-bold" style={{ fontSize: "12px" }}>{proj.name}</span>
                   {(proj.description || editMode) && (
                     <>
-                      <span style={{ fontWeight: 400, color: "#4B5563" }}>{" — "}</span>
+                      <span className="font-normal text-muted-foreground">{" — "}</span>
                       {editMode ? (
                         <span
                           contentEditable
                           suppressContentEditableWarning
-                          className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
-                          style={{ fontWeight: 400, color: "#4B5563" }}
+                          className="font-normal text-muted-foreground outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
                           onBlur={(e) => {
                             onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
                           }}
@@ -380,7 +379,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                           {proj.description}
                         </span>
                       ) : (
-                        <span style={{ fontWeight: 400, color: "#4B5563" }}>{proj.description}</span>
+                        <span className="font-normal text-muted-foreground">{proj.description}</span>
                       )}
                     </>
                   )}
