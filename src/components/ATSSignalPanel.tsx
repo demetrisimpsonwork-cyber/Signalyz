@@ -136,7 +136,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground italic text-center">
+      <p className="context-text text-center">
         We never recommend keyword stuffing. Every suggestion shows how to integrate naturally.
       </p>
     </div>
