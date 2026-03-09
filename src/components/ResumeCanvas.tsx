@@ -362,16 +362,17 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
               <div key={pi}>
-                <div className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55" }}>
-                  <span className="font-bold" style={{ fontSize: "12px" }}>{proj.name}</span>
+                <p className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55", fontWeight: 400 }}>
+                  <strong style={{ fontSize: "12px" }}>{proj.name}</strong>
                   {(proj.description || editMode) && (
-                    <span className="font-normal" style={{ color: "#4B5563" }}>
-                      {" — "}
+                    <>
+                      <span style={{ color: "#4B5563", fontWeight: 400 }}> — </span>
                       {editMode ? (
                         <span
                           contentEditable
                           suppressContentEditableWarning
                           className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
+                          style={{ color: "#4B5563", fontWeight: 400 }}
                           onBlur={(e) => {
                             onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
                           }}
@@ -379,11 +380,11 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                           {proj.description}
                         </span>
                       ) : (
-                        proj.description
+                        <span style={{ color: "#4B5563", fontWeight: 400 }}>{proj.description}</span>
                       )}
-                    </span>
+                    </>
                   )}
-                </div>
+                </p>
                 {proj.bullets.length > 0 && (
                   <BulletEditor
                     bullets={proj.bullets}
