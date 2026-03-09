@@ -124,16 +124,19 @@ const Pricing = () => {
       </p>
 
       <p className="mt-4 text-center text-xs text-muted-foreground leading-relaxed">
-        Less than one rejected application costs you.<br />
         Every insight is grounded in real resume + job description signals — zero fabrication.
       </p>
 
       {/* Sticky mobile CTA */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
         {isAuthenticated ? (
-          <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
-            Unlock Resumix Pro — $19/month
-          </Button>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
+            <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
+              Unlock Full Signal Intelligence — $19/month
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
+          </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
             <a href="/auth">Get Started Free</a>
