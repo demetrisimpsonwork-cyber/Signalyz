@@ -110,7 +110,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* About input */}
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground" style={{ letterSpacing: "0.15em" }}>LinkedIn About Section</p>
+          <p className="section-label">LinkedIn About Section</p>
           <p className="text-xs text-muted-foreground mt-1">Paste your current About section, or leave blank.</p>
         </div>
         <Textarea
