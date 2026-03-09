@@ -205,7 +205,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     <div className="space-y-3">
       {toneSelector}
       {loading ? (
-        <div className="rounded-lg border bg-card p-6 space-y-4">
+        <div className="rounded-lg border bg-card p-5 space-y-4">
           {STEPS.map((label, i) => {
             const done = i < step;
             const active = i === step;
