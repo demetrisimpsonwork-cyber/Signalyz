@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { Check, Clock } from "lucide-react";
 
 const STEPS = [
-  { label: "Extracting employer priority signals…", duration: 8000 },
-  { label: "Mapping your experience to weighted role dimensions…", duration: 12000 },
-  { label: "Detecting transferable signal patterns…", duration: 14000 },
-  { label: "Generating strategic positioning insights…", duration: 14000 },
-  { label: "Applying Pro calibration filter…", duration: 12000 },
+  { label: "Mapping signal dimensions across hiring pipeline…", duration: 12000 },
+  { label: "Benchmarking against role threshold standards…", duration: 12000 },
+  { label: "Identifying panel risk stages…", duration: 12000 },
+  { label: "Projecting signal shift after repositioning…", duration: 12000 },
+  { label: "Assembling full diagnostic report…", duration: 12000 },
 ];
 
 interface PositioningLoaderProps {
