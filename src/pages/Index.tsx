@@ -916,7 +916,9 @@ const Index = () => {
                   key={tab.id}
                   onClick={() => {
                     if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                    const scrollY = window.scrollY;
                     setMode(tab.id);
+                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
                   className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
                     mode === tab.id
@@ -935,7 +937,9 @@ const Index = () => {
                   key={tab.id}
                   onClick={() => {
                     if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                    const scrollY = window.scrollY;
                     setMode(tab.id);
+                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
                   className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
                     mode === tab.id
@@ -956,7 +960,9 @@ const Index = () => {
             <button
               onClick={() => {
                 if (!effectiveIsPro) { setShowUpgrade(true); return; }
+                const scrollY = window.scrollY;
                 setMode("linkedin");
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
               }}
               className={`w-full px-3 py-2.5 text-[11px] font-normal transition-colors text-center rounded-md border ${
                 mode === "linkedin"
@@ -981,7 +987,9 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  const scrollY = window.scrollY;
                   setMode(tab.id);
+                  requestAnimationFrame(() => window.scrollTo(0, scrollY));
                 }}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
                   mode === tab.id
