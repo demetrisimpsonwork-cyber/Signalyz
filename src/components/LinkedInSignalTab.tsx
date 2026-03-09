@@ -158,7 +158,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
       {/* Results: About */}
       {calibratedAbout && (
         <div className="space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">About Section</p>
+          <p className="section-label">About Section</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Before */}
             <div className="rounded-lg border bg-muted/30 p-4">
