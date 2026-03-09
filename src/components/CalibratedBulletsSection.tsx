@@ -88,7 +88,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
 
   return (
     <div className="space-y-4">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mt-4 mb-2 md:mb-0" style={{ letterSpacing: "0.15em" }}>Calibrated Bullets</h3>
+      <h3 className="section-label section-header">Calibrated Bullets</h3>
 
       {/* Individual parsed bullets — first 2 visible to all, 3-5 behind Pro gate */}
       {topBullets.slice(0, 2).map((item, i) => (
