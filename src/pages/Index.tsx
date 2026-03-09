@@ -881,7 +881,7 @@ const Index = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-12 container max-w-[780px]">
+      <section className="py-12 container max-w-5xl">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Resumix Works</h2>
         <div className="space-y-5">
           {[
