@@ -146,7 +146,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           ))}
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-              <p className="text-[10px] uppercase tracking-[0.15em] text-primary font-semibold">Variant B — Outcome / Impact Framing</p>
+              <p className="section-label text-primary">Variant B — Outcome / Impact Framing</p>
               <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
               <div className="pt-2 space-y-1">
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">What changed</p>
