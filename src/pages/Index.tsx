@@ -906,72 +906,31 @@ const Index = () => {
         {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
-          <div className="flex flex-col w-full lg:hidden gap-1">
-            <div className="grid grid-cols-2 gap-1">
-              {([
-                { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-                { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
-              ] as const).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
-                    const scrollY = window.scrollY;
-                    setMode(tab.id);
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
-                  }}
-                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
-                    mode === tab.id
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              {([
-                { id: "calibrated" as const, label: "Calibrated Resume" },
-                { id: "coverletter" as const, label: "Cover Letter" },
-              ] as const).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                    const scrollY = window.scrollY;
-                    setMode(tab.id);
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
-                  }}
-                  className={`px-3 py-2.5 text-[11px] font-medium transition-colors text-center rounded-md border ${
-                    mode === tab.id
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            {/* Profile Tools divider */}
-            <div className="flex items-center gap-2 my-1.5">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Profile Tools</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <button
-              onClick={() => {
-                if (!effectiveIsPro) { setShowUpgrade(true); return; }
-                const scrollY = window.scrollY;
-                setMode("linkedin");
-                requestAnimationFrame(() => window.scrollTo(0, scrollY));
-              }}
-              className={`w-full px-3 py-2.5 text-[11px] font-normal transition-colors text-center rounded-md border ${
-                mode === "linkedin"
-                  ? "bg-primary/10 border-primary text-primary"
-                  : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              }`}
-            >
-              LinkedIn Signal
-            </button>
+          <div className="flex lg:hidden overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {([
+              { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
+              { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
+              { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
+              { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  const scrollY = window.scrollY;
+                  setMode(tab.id);
+                  requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                }}
+                className={`px-3 py-2.5 text-sm font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                  mode === tab.id
+                    ? "text-primary border-primary"
+                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Desktop layout */}
