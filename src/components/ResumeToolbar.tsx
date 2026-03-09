@@ -28,7 +28,7 @@ const ResumeToolbar = ({
           size="sm"
           onClick={onReassemble}
           disabled={loading}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-xs whitespace-nowrap"
         >
           <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
           Re-Assemble
@@ -37,23 +37,25 @@ const ResumeToolbar = ({
           variant={editMode ? "default" : "outline"}
           size="sm"
           onClick={onToggleEdit}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-xs whitespace-nowrap"
         >
           {editMode ? <Eye className="h-3 w-3" /> : <Edit3 className="h-3 w-3" />}
           {editMode ? "Preview" : "Edit Mode"}
         </Button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 md:flex-row flex-wrap md:flex-nowrap">
         {saved && (
           <span className="text-[10px] font-medium text-primary animate-fade-in">Calibration saved</span>
         )}
-        <Button variant="outline" size="sm" onClick={onExportDocx} className="gap-1.5 text-xs">
+        <Button variant="outline" size="sm" onClick={onExportDocx} className="gap-1.5 text-xs whitespace-nowrap">
           <Download className="h-3 w-3" />
-          Export ATS (.docx)
+          <span className="hidden md:inline">Export ATS (.docx)</span>
+          <span className="md:hidden">ATS (.docx)</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={onExportPdf} className="gap-1.5 text-xs">
+        <Button variant="outline" size="sm" onClick={onExportPdf} className="gap-1.5 text-xs whitespace-nowrap">
           <Download className="h-3 w-3" />
-          Export Designed (.pdf)
+          <span className="hidden md:inline">Export Designed (.pdf)</span>
+          <span className="md:hidden">PDF (.pdf)</span>
         </Button>
       </div>
     </div>
