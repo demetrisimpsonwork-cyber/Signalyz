@@ -92,7 +92,7 @@ const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: strin
       <p className="text-xs text-muted-foreground leading-relaxed pt-1">{pillar.explanation}</p>
     </div>
     <div className="px-5 py-3 border-t border-border/60 bg-muted/20">
-      <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">
+      <p className="section-label text-primary mb-1">
         Threshold Requirement
       </p>
       <p className="text-xs text-foreground leading-relaxed">
