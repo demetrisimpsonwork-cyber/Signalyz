@@ -1033,6 +1033,10 @@ const Index = () => {
                       setBullet(text);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
+                    onClear={() => {
+                      setBullet("");
+                      setErrors((p) => ({ ...p, bullet: undefined }));
+                    }}
                   />
                   <Textarea
                     placeholder="Paste a resume bullet, summary, or short experience section here..."

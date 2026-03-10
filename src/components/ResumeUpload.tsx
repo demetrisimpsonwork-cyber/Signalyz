@@ -11,9 +11,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface ResumeUploadProps {
   onTextExtracted: (text: string) => void;
+  onClear?: () => void;
 }
 
-const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
+const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
   const [extracting, setExtracting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +85,7 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
   const handleClear = () => {
     setFileName(null);
     if (inputRef.current) inputRef.current.value = "";
+    onClear?.();
   };
 
   return (
