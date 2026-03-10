@@ -327,6 +327,115 @@ function cleanArtifacts(text: string): string {
   return t;
 }
 
+// ── Force section headers onto standalone lines ─────────────────────────────
+
+const SECTION_HEADER_STANDALONE_RE =
+  /\b(EDUCATION|WORK\s+EXPERIENCE|PROFESSIONAL\s+EXPERIENCE|EXPERIENCE|SKILLS|TECHNICAL\s+SKILLS|CORE\s+COMPETENCIES|LANGUAGES|CONTACT|SUMMARY|PROFESSIONAL\s+SUMMARY|PROFILE|OBJECTIVE|CERTIFICATIONS?|LICENSES?|CREDENTIALS?|EMPLOYMENT|QUALIFICATIONS?|PROJECTS?)\b/i;
+
+/**
+ * Ensure recognised section headers always start on their own line.
+ * If a header keyword appears mid-line, insert a line break before it.
+ */
+function forceSectionBreaks(text: string): string {
+  const lines = text.split("\n");
+  const out: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) { out.push(""); continue; }
+
+    // Check if line *contains* a section header but has other text around it
+    const match = trimmed.match(SECTION_HEADER_STANDALONE_RE);
+    if (match) {
+      const idx = trimmed.indexOf(match[0]);
+      const before = trimmed.slice(0, idx).trim();
+      const header = match[0].trim();
+      const after = trimmed.slice(idx + match[0].length).replace(/^[\s:\-_=]+/, "").trim();
+
+      // Push any content before the header as its own line
+      if (before) out.push(before);
+      // Always push a blank line before the header for separation
+      if (out.length > 0 && out[out.length - 1] !== "") out.push("");
+      out.push(header);
+      // Push any trailing content after the header as its own line
+      if (after) out.push(after);
+    } else {
+      out.push(trimmed);
+    }
+  }
+
+  return out.join("\n");
+}
+
+// ── Strip contact-info lines from body content ──────────────────────────────
+
+const CONTACT_EMAIL_RX = /[\w.+-]+@[\w.-]+\.\w{2,}/;
+const CONTACT_PHONE_RX = /(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+const CONTACT_ADDRESS_RX = /\d{1,5}\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct|way|circle|cir)\b/i;
+const CONTACT_LINKEDIN_RX = /linkedin\.com\/in\//i;
+
+/**
+ * Keep contact lines only in the header area (before the first section header).
+ * After the first section header, remove lines that are purely contact info
+ * so they don't get mistaken for experience bullets.
+ */
+function stripContactLines(text: string): string {
+  const lines = text.split("\n");
+  let pastFirstSection = false;
+  const out: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Detect when we've hit the first real section header
+    if (!pastFirstSection && SECTION_HEADER_STANDALONE_RE.test(trimmed)) {
+      pastFirstSection = true;
+    }
+
+    // Before first section: keep everything (header/contact area)
+    if (!pastFirstSection) {
+      out.push(line);
+      continue;
+    }
+
+    // After first section: filter out pure contact-info lines
+    if (isContactOnlyLine(trimmed)) continue;
+
+    out.push(line);
+  }
+
+  return out.join("\n");
+}
+
+/**
+ * Returns true if the line is purely contact information
+ * (email, phone, street address, or LinkedIn URL) with no substantial text.
+ */
+function isContactOnlyLine(line: string): boolean {
+  if (!line || line.length > 120) return false;
+
+  // Remove the contact pattern and see if anything meaningful remains
+  let remaining = line
+    .replace(CONTACT_EMAIL_RX, "")
+    .replace(CONTACT_PHONE_RX, "")
+    .replace(CONTACT_ADDRESS_RX, "")
+    .replace(CONTACT_LINKEDIN_RX, "")
+    .replace(/[|,;•·\-–—\s]/g, "")
+    .trim();
+
+  // If the line was entirely composed of contact info
+  if (remaining.length === 0 && (
+    CONTACT_EMAIL_RX.test(line) ||
+    CONTACT_PHONE_RX.test(line) ||
+    CONTACT_ADDRESS_RX.test(line) ||
+    CONTACT_LINKEDIN_RX.test(line)
+  )) {
+    return true;
+  }
+
+  return false;
+}
+
 // ── De-hyphenate broken words ───────────────────────────────────────────────
 
 function deHyphenate(text: string): string {
@@ -380,6 +489,12 @@ export function reconstructPdfText(pages: { content: any; viewport: any }[]): st
   result = cleanArtifacts(result);
   result = normalizeBullets(result);
   result = deHyphenate(result);
+
+  // Step 6: Force section headers onto standalone lines
+  result = forceSectionBreaks(result);
+
+  // Step 7: Strip contact-info lines from body (keep only in header area)
+  result = stripContactLines(result);
 
   // Final cleanup: trim lines, remove excessive blank lines
   result = result
