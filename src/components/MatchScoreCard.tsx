@@ -75,20 +75,26 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-80 text-sm space-y-4" side="bottom" align="start">
-            <p className="font-semibold text-foreground">How this score was calculated</p>
-            <div className="space-y-2">
-              {[
-                { label: "Role & Outcomes", value: breakdown.role_outcomes_alignment },
-                { label: "Tools & Workflow", value: breakdown.tools_and_workflow_alignment },
-                { label: "Domain & Context", value: breakdown.domain_and_context_alignment },
-                { label: "Context & Scale", value: breakdown.context_and_scale_alignment },
-                { label: "Communication & Leadership", value: breakdown.communication_and_leadership_alignment },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className="text-xs font-medium text-foreground">{item.value}%</span>
-                </div>
-              ))}
+            <p className="font-semibold text-foreground">What this score means</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Signal Diagnosis measures how clearly your experience aligns with the target role as written. It does not judge your capability or invent qualifications. A lower score simply means the signal is not landing clearly yet — not that you cannot perform the role.
+            </p>
+            <div className="border-t pt-3">
+              <p className="text-xs font-medium text-foreground mb-2">Score Breakdown</p>
+              <div className="space-y-2">
+                {[
+                  { label: "Role & Outcomes", value: breakdown.role_outcomes_alignment },
+                  { label: "Tools & Workflow", value: breakdown.tools_and_workflow_alignment },
+                  { label: "Domain & Context", value: breakdown.domain_and_context_alignment },
+                  { label: "Context & Scale", value: breakdown.context_and_scale_alignment },
+                  { label: "Communication & Leadership", value: breakdown.communication_and_leadership_alignment },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                    <span className="text-xs font-medium text-foreground">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Score reflects weighted alignment to employer priority signals detected in the job description.

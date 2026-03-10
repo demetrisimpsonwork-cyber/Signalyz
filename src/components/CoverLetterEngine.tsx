@@ -30,10 +30,8 @@ const STEPS = [
   "Assembling cover letter…",
 ];
 
-/** Try to extract a company name from the JD text */
 function inferCompanyName(jd: string): string | undefined {
   if (!jd) return undefined;
-  // Common patterns: "at CompanyName", "Company: CompanyName", "About CompanyName"
   const patterns = [
     /(?:company|employer|organization)[:\s]+([A-Z][\w &.,'-]+)/i,
     /(?:about|join|at)\s+([A-Z][\w &.,'-]{2,40})(?:\s*[,.\n])/i,
@@ -45,7 +43,6 @@ function inferCompanyName(jd: string): string | undefined {
   return undefined;
 }
 
-/** Try to extract a hiring manager name from the JD */
 function inferHiringManager(jd: string): string | undefined {
   if (!jd) return undefined;
   const patterns = [
@@ -143,10 +140,10 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const fullLetterText = useMemo(() => {
     if (!letter) return "";
     const parts: string[] = [];
-    // Header
     if (contact.name) parts.push(contact.name);
     const contactLine = [contact.email, contact.phone].filter(Boolean).join(" | ");
     if (contactLine) parts.push(contactLine);
+    parts.push("");
     parts.push(formatDate());
     parts.push("");
     if (hiringManager || companyName) {
@@ -156,7 +153,12 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
     parts.push(salutation);
     parts.push("");
-    parts.push(letter);
+    // Preserve paragraph breaks
+    const paragraphs = letter.split("\n\n").filter(Boolean);
+    paragraphs.forEach((p, i) => {
+      parts.push(p);
+      if (i < paragraphs.length - 1) parts.push("");
+    });
     parts.push("");
     parts.push("Sincerely,");
     if (contact.name) parts.push(contact.name);
@@ -171,39 +173,54 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   };
 
   const handleDownloadDocx = async () => {
-    const paragraphs = fullLetterText.split("\n").map(
-      (line) => new Paragraph({ spacing: { after: line === "" ? 120 : 60 }, children: [new TextRun({ text: line, size: 24, font: "Calibri" })] })
-    );
+    const lines = fullLetterText.split("\n");
+    const paragraphs = lines.map((line, i) => {
+      const isName = i === 0 && contact.name && line === contact.name;
+      const isClosingName = i === lines.length - 1 && contact.name && line === contact.name;
+      const isSalutation = line === salutation;
+      const isSincerely = line === "Sincerely,";
+
+      return new Paragraph({
+        spacing: { after: line === "" ? 200 : 80 },
+        children: [
+          new TextRun({
+            text: line,
+            size: 24,
+            font: "Calibri",
+            bold: isName || isClosingName || false,
+            italics: false,
+          }),
+        ],
+      });
+    });
     const doc = new Document({ sections: [{ children: paragraphs }] });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "Cover_Letter.docx");
-    toast.success("DOCX downloaded");
+    toast.success("Copied to clipboard");
   };
-
-  const toneSelector = (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
-      <div className="flex gap-1">
-        {TONES.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setTone(t.value)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              tone === t.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-3">
-      {toneSelector}
+      {/* Tone selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
+        <div className="flex gap-1">
+          {TONES.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTone(t.value)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                tone === t.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading ? (
         <div className="rounded-lg border bg-card p-5 space-y-4">
           {STEPS.map((label, i) => {
@@ -238,51 +255,86 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
         </div>
       ) : letter ? (
         <>
-          <div className="relative rounded-lg border bg-card p-5 md:p-6">
-            <button onClick={handleCopy} className="absolute top-3 right-3 p-1.5 rounded hover:bg-secondary transition-colors">
-              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
-            </button>
-            <div className="space-y-1 pr-8">
-              {contact.name && (
-                <p className="text-foreground font-semibold text-[15px] md:text-[16px]">{contact.name}</p>
-              )}
-              {(contact.email || contact.phone) && (
-                <p className="text-muted-foreground text-[13px]">
-                  {[contact.email, contact.phone].filter(Boolean).join(" | ")}
-                </p>
-              )}
-              <p className="text-muted-foreground text-[13px]">{formatDate()}</p>
-
-              {(hiringManager || companyName) && (
-                <div className="pt-3">
-                  {hiringManager && <p className="text-foreground text-[15px]">{hiringManager}</p>}
-                  {companyName && <p className="text-foreground text-[15px]">{companyName}</p>}
-                </div>
-              )}
-
-              <p className="text-foreground text-[15px] md:text-[16px] pt-4">{salutation}</p>
-
-              <div className="space-y-4 pt-3">
-                {letter.split("\n\n").filter(Boolean).map((p, i) => (
-                  <p key={i} className="text-foreground leading-relaxed text-[15px] md:text-[16px]">{p}</p>
-                ))}
-              </div>
-
-              <div className="pt-4">
-                <p className="text-foreground text-[15px] md:text-[16px]">Sincerely,</p>
-                {contact.name && (
-                  <p className="text-foreground font-semibold text-[15px] md:text-[16px]">{contact.name}</p>
-                )}
-              </div>
+          {/* Toolbar — matches Resume module pattern */}
+          <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs whitespace-nowrap">
+                <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                Regenerate
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 flex-col w-full md:w-auto md:flex-row">
+              <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+                {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy Letter"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+                <Download className="h-3 w-3" />
+                <span className="hidden md:inline">Export Letter (.docx)</span>
+                <span className="md:hidden">DOCX (.docx)</span>
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={generate} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" /> Regenerate
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5">
-              <Download className="h-3.5 w-3.5" /> Download DOCX
-            </Button>
+
+          {/* Letter card — styled to match ResumeCanvas */}
+          <div
+            className="mx-auto bg-white rounded-sm relative"
+            style={{
+              maxWidth: "720px",
+              boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
+              fontFamily: "'Georgia', 'Times New Roman', serif",
+              color: "#1A1A2E",
+              padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
+            }}
+          >
+            {/* Candidate Header */}
+            <div style={{ marginBottom: "20px" }}>
+              {contact.name && (
+                <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px" }}>{contact.name}</p>
+              )}
+              {(contact.email || contact.phone) && (
+                <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0" }}>
+                  {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
+                </p>
+              )}
+            </div>
+
+            {/* Date */}
+            <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px" }}>{formatDate()}</p>
+
+            {/* Recipient */}
+            {(hiringManager || companyName) && (
+              <div style={{ marginBottom: "16px" }}>
+                {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{hiringManager}</p>}
+                {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{companyName}</p>}
+              </div>
+            )}
+
+            {/* Salutation */}
+            <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px" }}>{salutation}</p>
+
+            {/* Body */}
+            <div style={{ marginBottom: "20px" }}>
+              {letter.split("\n\n").filter(Boolean).map((p, i) => (
+                <p key={i} style={{
+                  fontSize: "11.5px",
+                  lineHeight: "1.7",
+                  color: "#1A1A2E",
+                  marginBottom: "14px",
+                  fontWeight: 400,
+                }}>
+                  {p}
+                </p>
+              ))}
+            </div>
+
+            {/* Closing */}
+            <div>
+              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px" }}>Sincerely,</p>
+              {contact.name && (
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E" }}>{contact.name}</p>
+              )}
+            </div>
           </div>
         </>
       ) : null}
