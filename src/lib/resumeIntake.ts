@@ -360,7 +360,7 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
           role_title = parts[0].trim();
           company = parts[1].trim();
         }
-        if (parts.length >= 3 && LOCATION_PATTERN.test(parts[2]?.trim())) {
+      if (parts.length >= 3 && LOCATION_PATTERN.test(parts[2]?.trim()) && isValidLocationString(parts[2].trim())) {
           location = parts[2].trim();
         }
       } else {
