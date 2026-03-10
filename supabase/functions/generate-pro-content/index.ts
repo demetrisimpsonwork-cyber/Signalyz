@@ -199,51 +199,84 @@ Return ONLY valid JSON, no markdown.`;
 
         const toneInstruction = tone === "strategic"
           ? `TONE — STRATEGIC:
-- Use systems-thinking language throughout: "designed," "scaled," "operationalized," "built the process that."
-- Frame every achievement in terms of outcomes and scale: numbers, scope, downstream effects.
-- Reference process, infrastructure, and repeatability — not just individual actions.
-- Paragraphs can be longer; each sentence should build on the prior one logically.
-- Close with a single sentence connecting your operational systems to what the company needs to build next. Format: "I am ready to bring [specific capability] to ${companyName} [specific outcome]."
+- Most analytical and intelligent mode. Frame the letter through systems-thinking language: "designed," "scaled," "operationalized," "built the process that."
+- Every achievement should be contextualized with outcomes, scale, and downstream effects.
+- Bridge logic must be the strongest here — connect seemingly unrelated experience to role requirements through clear analytical reasoning.
+- Paragraphs can be longer; each sentence should build on the prior one logically, creating a chain of reasoning.
+- Sentence construction: compound-complex sentences that layer evidence. Use semicolons and em dashes to connect related ideas.
+- Close with a single sentence connecting your operational systems to what the company needs to build next.
 - NEVER use "positioned to," "I am positioned," or "positions me to."`
           : tone === "direct"
           ? `TONE — DIRECT:
-- Fewest words possible. Every sentence is declarative. No subordinate clauses unless necessary.
-- No throat-clearing ("In my experience," "I believe that," "Having worked in"). Start sentences with subjects and verbs.
-- Paragraphs should be 2-3 sentences maximum.
-- Close with exactly one sentence stating intent. Format: "I am ready to bring [specific thing] to ${companyName} from day one."
+- Tightest possible writing. Every sentence is declarative. No subordinate clauses unless absolutely necessary.
+- No throat-clearing phrases: never use "In my experience," "I believe that," "Having worked in," "It is worth noting."
+- Start sentences with subjects and verbs. Prefer active voice exclusively.
+- Paragraphs: 2-3 sentences maximum. White space between ideas.
+- More operational language: "I run," "I built," "I manage," "I delivered."
+- Sentence construction: short, punchy, subject-verb-object. Minimal adjectives.
+- Close with exactly one sentence stating intent. No pleasantries.
 - NEVER use "positioned to," "I am positioned," or "positions me to."`
           : `TONE — CONFIDENT:
-- Short paragraphs. Authority-first framing: state the claim, then the evidence.
-- No hedging words anywhere: no "I believe," "I feel," "I think," "perhaps," "likely."
-- Every sentence projects certainty. Use present tense where possible.
-- Close with a direct statement of intent. Format: "I am ready to bring [specific discipline/capability] to ${companyName} from day one."
+- Warm but authoritative. Professional credibility without stiffness.
+- Authority-first framing: state the claim, then back it with evidence.
+- No hedging words anywhere: no "I believe," "I feel," "I think," "perhaps," "likely," "potentially."
+- Every sentence projects certainty while remaining personable. Use present tense where possible.
+- Sentence construction: medium-length sentences with natural rhythm. Vary sentence length for pacing — a short declarative sentence after a longer one creates emphasis.
+- Balanced persuasion: confident without being aggressive.
+- Close with a direct statement of intent that feels natural, not formulaic.
 - NEVER use "positioned to," "I am positioned," or "positions me to."`;
 
-        const prompt = `Write a professional cover letter for this candidate applying to ${roleTitle} at ${companyName}. Use only experience from the resume — zero fabrication, zero inflation.
+        const prompt = `You are writing a cover letter for a real person. Before writing, perform this internal reasoning (do not include it in the output):
+
+INTERNAL REASONING (silent — do not output):
+1. PRIMARY SIGNAL ANGLE: What is the single strongest reason this candidate should plausibly succeed in ${roleTitle}? Identify the most compelling transferable signal from their resume.
+2. SUPPORTING EVIDENCE: Which 2-3 specific experiences from the resume best demonstrate that signal? Look for concrete responsibilities, decisions, or measurable outcomes.
+3. PRIMARY GAP: What is the most obvious mismatch between this candidate's background and the job description? Name it honestly.
+4. STRATEGIC BRIDGE: How does the candidate's real experience still map to the role despite that gap? What adjacent capability or transferable pattern makes the gap less significant than it appears?
+
+Now write the letter using that reasoning.
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 Top signal gaps: ${alignmentResult.top_missing_signal || "N/A"}
 Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
+Score rationale: ${(alignmentResult.score_rationale || []).join("; ")}
 
 HARD RULES:
-- NEVER use the phrases "positioned to," "I am positioned," "positions me to," or any variation of "position" as a verb describing the candidate.
-- NEVER start paragraph 3 with "Your organization requires," "Your organization needs," "Your team needs," or any sentence that echoes back the job description requirements.
-- Maximum 250 words total. Exactly 3 paragraphs. First person as the candidate.
+- NEVER use "positioned to," "I am positioned," "positions me to," or any variation of "position" as a verb describing the candidate.
+- NEVER start any paragraph with "Your organization requires," "Your organization needs," "Your team needs," or any sentence that echoes back JD requirements.
+- NEVER use "I am writing to apply," "I am excited," "I am thrilled," "eager to contribute," or any generic application phrases.
+- NEVER use filler transitions: "Furthermore," "Additionally," "Moreover," "In addition."
+- NEVER pad with vague soft skills: "strong communicator," "team player," "detail-oriented" unless backed by specific evidence in the same sentence.
+- NEVER fabricate experience or inflate claims beyond what the resume states.
+- Maximum 280 words total. Exactly 4 paragraphs. First person as the candidate.
 
-Structure:
+STRUCTURE:
 
-Paragraph 1 — Open with a declarative statement of professional identity naming the strongest transferable signal for this specific role. Do not open with "I am writing to apply," "I am excited," or "I am thrilled." Open with what the candidate brings — present tense, first person, specific.
+Paragraph 1 — OPENING SIGNAL (2-3 sentences)
+Lead with the primary signal angle from your reasoning. Open with a declarative statement of professional identity that names the strongest transferable signal for this specific role. The reader should immediately understand what this candidate brings and why it matters for THIS role. No generic openers.
 
-Paragraph 2 — Acknowledge the candidate's background gap honestly in the first sentence (e.g., if they come from a different industry, say so directly: "My background is in [X], not [Y]."). Then immediately reframe it: explain specifically what experience transfers and why it is actually an advantage for this role. Use a concrete example from the resume. Do not pretend the gap doesn't exist. Do not avoid naming it.
+Paragraph 2 — EVIDENCE OF FIT (3-4 sentences)
+Use your supporting evidence. Describe specific experience that directly aligns with the role's requirements. Reference concrete responsibilities, decisions, or outcomes from the resume. Each sentence should deepen the case, not repeat it. Show the candidate operating at the level this role demands.
 
-Paragraph 3 — Do NOT echo the job description. Do NOT start with what the organization needs. Instead, state what the candidate will do in this role based on their specific operational strengths. Reference a specific capability or system they have built/managed. Close with one direct sentence of intent — no "Thank you for your consideration," no "I look forward to hearing from you."
+Paragraph 3 — HONEST GAP ACKNOWLEDGMENT + BRIDGE (2-3 sentences)
+Name the primary gap directly in the first sentence (e.g., "My background is in X, not Y."). Then immediately reframe: explain specifically what experience transfers and why it is relevant. Use a concrete example. Do not minimize the gap or pretend it doesn't exist — reframe it as a different kind of qualification.
+
+Paragraph 4 — CLOSING INTENT (1-2 sentences)
+State what the candidate will do in this role based on their specific operational strengths. Reference a specific capability. One direct sentence of intent — no "Thank you for your consideration," no "I look forward to hearing from you."
 
 ${toneInstruction}
 
-Return a JSON object with: "letter" (the full cover letter text only — no header, no salutation, no sign-off, no footnotes, no strategy notes)
+WRITING QUALITY:
+- The letter must read as if a thoughtful human wrote it after deeply analyzing both the resume and job description.
+- Natural paragraph rhythm — vary sentence length and structure.
+- No robotic repetition of sentence patterns.
+- Every claim must be traceable to actual resume content.
+- The overall effect should be: intelligent, grounded, credible, signal-aware.
+
+Return a JSON object with: "letter" (the full cover letter body text only — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
-        const raw = await callAI(prompt, 2000);
+        const raw = await callAI(prompt, 2500);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
         break;
