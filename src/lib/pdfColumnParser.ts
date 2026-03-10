@@ -316,6 +316,12 @@ function cleanArtifacts(text: string): string {
   t = t.replace(/([a-z])([A-Z])/g, "$1 $2");
   // Insert space before uppercase letter sequences that start a new word after another uppercase+lowercase
   t = t.replace(/([A-Z][a-z]+)([A-Z])/g, "$1 $2");
+  // Split all-caps concatenated words (e.g. "DIRECTOROFHUMANRESOURCES")
+  // by inserting spaces before common title/section keywords
+  t = t.replace(
+    /(?<=\w)(DIRECTOR|MANAGER|SPECIALIST|ANALYST|ENGINEER|COORDINATOR|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT|EDUCATION|EXPERIENCE|SKILLS|SUMMARY|CERTIFICATIONS?|HUMAN|RESOURCES|OPERATIONS|MARKETING|FINANCE|TECHNOLOGY|INFORMATION)/g,
+    " $1"
+  );
 
   // Collapse multiple spaces
   t = t.replace(/[ \t]+/g, " ");
