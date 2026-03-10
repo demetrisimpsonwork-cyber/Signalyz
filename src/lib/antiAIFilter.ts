@@ -1,0 +1,148 @@
+/**
+ * Anti-AI Signal Filter
+ * 
+ * Post-processes generated text to remove overused AI patterns,
+ * ensuring output reads as confident, specific human writing.
+ * 
+ * Applied ONLY to: calibrated bullets, calibrated summary, cover letter body.
+ * NOT applied to: diagnostic sections, scoring, analysis output.
+ */
+
+// ─── Overused AI phrases → cleaner replacements ─────────────────────────────
+
+const PHRASE_REPLACEMENTS: [RegExp, string][] = [
+  // Inflated verbs
+  [/\\bLeveraged\\b/g, "Used"],
+  [/\\bleveraged\\b/g, "used"],
+  [/\\bSpearheaded\\b/g, "Led"],
+  [/\\bspearheaded\\b/g, "led"],
+  [/\\bPioneered\\b/g, "Built"],
+  [/\\bpioneered\\b/g, "built"],
+  [/\\bOrchestrated\\b/g, "Coordinated"],
+  [/\\borchestrated\\b/g, "coordinated"],
+  [/\\bChampioned\\b/g, "Drove"],
+  [/\\bchampioned\\b/g, "drove"],
+  [/\\bCatalyzed\\b/g, "Started"],
+  [/\\bcatalyzed\\b/g, "started"],
+  [/\\bFacilitated\\b/g, "Ran"],
+  [/\\bfacilitated\\b/g, "ran"],
+  [/\\bSynergized\\b/g, "Combined"],
+  [/\\bsynergized\\b/g, "combined"],
+
+  // Passive/weak ownership
+  [/\\bWas responsible for\\b/gi, "Owned"],
+  [/\\bwas responsible for\\b/gi, "owned"],
+  [/\\bResponsible for\\b/g, "Owned"],
+  [/\\bresponsible for\\b/g, "owned"],
+  [/\\bAssisted with\\b/g, "Supported"],
+  [/\\bassisted with\\b/g, "supported"],
+  [/\\bHelped to\\b/g, ""],
+  [/\\bhelped to\\b/g, ""],
+  [/\\bHelped\s+(?=[a-z])/g, ""],
+  [/\\bhelped\s+(?=[a-z])/g, ""],
+  [/\\bPlayed a key role in\\b/gi, ""],
+  [/\\bplayed a key role in\\b/gi, ""],
+  [/\\bPlayed an instrumental role in\\b/gi, ""],
+  [/\\bServed as\\b/g, "Worked as"],
+  [/\\bserved as\\b/g, "worked as"],
+  [/\\bTasked with\\b/g, ""],
+  [/\\btasked with\\b/g, ""],
+
+  // Generic AI filler phrases
+  [/\\bdemonstrated ability to\\b/gi, ""],
+  [/\\bDemonstrated a proven ability to\\b/gi, ""],
+  [/\\bproven ability to\\b/gi, ""],
+  [/\\bProven track record of\\b/gi, ""],
+  [/\\bproven track record of\\b/gi, ""],
+  [/\\bresults-driven\\b/gi, ""],
+  [/\\bResults-oriented\\b/gi, ""],
+  [/\\bresults-oriented\\b/gi, ""],
+  [/\\bself-starter\\b/gi, ""],
+  [/\\bSelf-motivated\\b/gi, ""],
+  [/\\bself-motivated\\b/gi, ""],
+  [/\\bhighly motivated\\b/gi, ""],
+  [/\\bdetail-oriented\\b/gi, ""],
+  [/\\bteam player\\b/gi, ""],
+  [/\\bgo-getter\\b/gi, ""],
+  [/\\bthought leader\\b/gi, ""],
+  [/\\bin a dynamic environment\\b/gi, ""],
+  [/\\bin a fast-paced environment\\b/gi, ""],
+  [/\\bfast-paced team\\b/gi, "team"],
+  [/\\bdynamic team\\b/gi, "team"],
+  [/\\bleveraging synergies\\b/gi, ""],
+  [/\\bcross-functional alignment\\b/gi, "cross-team coordination"],
+  [/\\bpassionate about\\b/gi, "focused on"],
+  [/\\bthrilled to\\b/gi, "ready to"],
+  [/\\bexcited to\\b/gi, "ready to"],
+  [/\\benthusiastic about\\b/gi, "focused on"],
+  [/\\bdedicated to\\b/gi, "focused on"],
+  [/\\bcommitted to\\b/gi, "focused on"],
+  [/\\bI am writing to express my interest\\b/gi, ""],
+  [/\\bI am eager to\\b/gi, "I am ready to"],
+  [/\\bI am excited to\\b/gi, "I am ready to"],
+];
+
+// ─── Em dash cleanup ────────────────────────────────────────────────────────
+
+function reduceEmDashes(text: string): string {
+  // Replace patterns like "word — word" used as sentence connectors
+  // Keep the first occurrence per paragraph, replace subsequent ones
+  const paragraphs = text.split(/\n\n+/);
+  return paragraphs.map(para => {
+    let dashCount = 0;
+    return para.replace(/\s*—\s*/g, (match) => {
+      dashCount++;
+      if (dashCount <= 1) return match; // keep first em dash
+      return ". "; // replace subsequent em dashes with period
+    });
+  }).join("\n\n");
+}
+
+// ─── Post-cleanup: fix double spaces, capitalization after removals ──────────
+
+function cleanupWhitespace(text: string): string {
+  return text
+    // Fix double/triple spaces from removed phrases
+    .replace(/  +/g, " ")
+    // Fix leading space after period
+    .replace(/\.\s{2,}/g, ". ")
+    // Fix comma followed by removed phrase leaving orphan comma
+    .replace(/,\s*,/g, ",")
+    // Fix sentence starting with lowercase after removal
+    .replace(/(?:^|\.\s+)([a-z])/gm, (match, letter) => {
+      return match.slice(0, -1) + letter.toUpperCase();
+    })
+    // Fix bullet starting with lowercase
+    .replace(/^([a-z])/gm, (match) => match.toUpperCase())
+    // Remove orphan leading commas
+    .replace(/^\s*,\s*/gm, "")
+    .trim();
+}
+
+// ─── Main filter ────────────────────────────────────────────────────────────
+
+export function antiAIFilter(text: string): string {
+  if (!text || typeof text !== "string") return text;
+
+  let result = text;
+
+  // Step 1: Replace overused AI phrases
+  for (const [pattern, replacement] of PHRASE_REPLACEMENTS) {
+    result = result.replace(pattern, replacement);
+  }
+
+  // Step 2: Reduce excessive em dashes
+  result = reduceEmDashes(result);
+
+  // Step 3: Clean up whitespace and capitalization
+  result = cleanupWhitespace(result);
+
+  return result;
+}
+
+/**
+ * Filter an array of bullet strings
+ */
+export function filterBullets(bullets: string[]): string[] {
+  return bullets.map(b => antiAIFilter(b));
+}

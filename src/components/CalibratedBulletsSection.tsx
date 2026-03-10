@@ -3,6 +3,7 @@ import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake"
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
 import { Button } from "@/components/ui/button";
+import { antiAIFilter } from "@/lib/antiAIFilter";
 
 interface CalibratedBulletsSectionProps {
   bullet: string;
@@ -80,7 +81,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         {/* Still show the calibrated variant */}
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
           <p className="section-label text-primary">Variant A — Ownership Elevation</p>
-          <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
+          <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
         </div>
       </div>
     );
@@ -110,7 +111,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
       {/* Variant A — Ownership Elevation */}
       <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
         <p className="section-label text-primary">Variant A — Ownership Elevation</p>
-        <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
+        <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
         <div className="pt-2 space-y-1">
           <p className="section-label">What changed</p>
           {(result.used_signals && result.used_signals.length > 0) ? (
@@ -147,7 +148,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
               <p className="section-label text-primary">Variant B — Outcome / Impact Framing</p>
-              <p className="text-sm text-foreground leading-relaxed">{result.alt_a}</p>
+              <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.alt_a)}</p>
               <div className="pt-2 space-y-1">
                 <p className="section-label">What changed</p>
                 <ul className="space-y-0.5">
@@ -159,7 +160,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
             </div>
           )}
           {result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
-            <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
+            <ResultSection title="Variant C — Strategic Depth Expansion" content={antiAIFilter(result.alt_b)} />
           )}
         </>
       )}

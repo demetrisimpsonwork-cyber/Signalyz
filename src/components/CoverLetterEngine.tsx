@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import { antiAIFilter } from "@/lib/antiAIFilter";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -108,7 +109,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
-      setLetter(data.letter || "");
+      setLetter(antiAIFilter(data.letter || ""));
       setHasGenerated(true);
       setStep(3);
     } catch (e: any) {
