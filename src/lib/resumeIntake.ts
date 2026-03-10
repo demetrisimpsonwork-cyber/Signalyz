@@ -604,6 +604,7 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
           }
         }
         break;
+      }
       case "skills": {
         // Split comma-separated
         for (const line of seg.lines) {
