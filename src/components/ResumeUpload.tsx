@@ -85,6 +85,7 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
   const handleClear = () => {
     setFileName(null);
     if (inputRef.current) inputRef.current.value = "";
+    onClear?.();
   };
 
   return (

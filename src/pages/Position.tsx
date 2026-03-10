@@ -1060,7 +1060,7 @@ const Position = () => {
                 💡 For best speed, paste your most recent 1–2 roles or a shortened resume.
               </p>
             )}
-            <ResumeUpload onTextExtracted={(text) => { setExperience(text); setErrors((p) => ({ ...p, experience: undefined })); }} />
+            <ResumeUpload onTextExtracted={(text) => { setExperience(text); setErrors((p) => ({ ...p, experience: undefined })); }} onClear={() => { setExperience(""); setErrors((p) => ({ ...p, experience: undefined })); }} />
           </div>
 
           <div>
