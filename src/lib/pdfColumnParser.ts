@@ -41,7 +41,10 @@ export function extractPositionedItems(content: any): TextItem[] {
     const x = tx[4];
     const y = tx[5];
     const height = Math.abs(tx[3]) || Math.abs(tx[0]) || 12;
-    const width = item.width || item.str.length * height * 0.5;
+    // Use pdfjs-reported width; estimate from string length only as fallback
+    const width = (item.width != null && item.width > 0)
+      ? item.width
+      : item.str.length * height * 0.5;
 
     items.push({
       str: item.str,
@@ -101,6 +104,14 @@ function buildLine(items: TextItem[]): TextLine {
   const minX = Math.min(...items.map((i) => i.x));
   const maxX = Math.max(...items.map((i) => i.x + i.width));
 
+  // Compute median character width for this line to detect spacing
+  const charWidths = items
+    .filter((it) => it.str.length > 0)
+    .map((it) => it.width / it.str.length);
+  const medianCharW = charWidths.length > 0
+    ? charWidths.sort((a, b) => a - b)[Math.floor(charWidths.length / 2)]
+    : 5;
+
   // Join items with appropriate spacing
   let text = "";
   for (let i = 0; i < items.length; i++) {
@@ -111,14 +122,32 @@ function buildLine(items: TextItem[]): TextLine {
       // Large gap = tab/column separator within line
       if (gap > prev.height * 2) {
         text += "    ";
-      } else if (gap > prev.height * 0.3) {
+      } else if (gap > medianCharW * 0.3) {
+        // Normal word space — use character-width metric instead of font height
         text += " ";
       }
+      // Tiny/negative gap = same word, no space needed
     }
     text += item.str;
   }
 
+  // Post-process: collapse spaced-out capital letters (e.g. "E D U C A T I O N" → "EDUCATION")
+  text = collapseSpacedLetters(text);
+
   return { items, y: avgY, minX, maxX, text: text.trim() };
+}
+
+/**
+ * Collapse sequences of single uppercase letters separated by spaces
+ * into a single word. Handles headers like "E D U C A T I O N" → "EDUCATION"
+ * and "S K I L L S" → "SKILLS". Only collapses runs of 3+ single chars.
+ */
+function collapseSpacedLetters(text: string): string {
+  // Match 3+ single uppercase letters separated by single spaces
+  return text.replace(
+    /\b([A-Z])((?:\s[A-Z]){2,})\b/g,
+    (match) => match.replace(/\s/g, "")
+  );
 }
 
 // ── Detect columns ──────────────────────────────────────────────────────────
@@ -282,13 +311,11 @@ function cleanArtifacts(text: string): string {
   // Fix orphaned punctuation from extraction
   t = t.replace(/\s+([.,;:!?])/g, "$1");
 
-  // Fix broken words from character-by-character extraction
-  // Pattern: single chars separated by spaces that form a word
-  t = t.replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, (match) => {
-    const word = match.replace(/\s+/g, "");
-    // Only collapse if it looks like a word (not an acronym in context)
-    return word.length <= 6 ? word : match;
-  });
+  // Split merged CamelCase name blocks (e.g. "MyoJungKimDirectorOfHumanResources")
+  // Insert space before uppercase letters preceded by lowercase
+  t = t.replace(/([a-z])([A-Z])/g, "$1 $2");
+  // Insert space before uppercase letter sequences that start a new word after another uppercase+lowercase
+  t = t.replace(/([A-Z][a-z]+)([A-Z])/g, "$1 $2");
 
   // Collapse multiple spaces
   t = t.replace(/[ \t]+/g, " ");
