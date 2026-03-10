@@ -11,6 +11,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface ResumeUploadProps {
   onTextExtracted: (text: string) => void;
+  onClear?: () => void;
 }
 
 const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
