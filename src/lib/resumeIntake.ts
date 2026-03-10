@@ -579,8 +579,30 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
       case "projects":
         experience.push(...extractExperienceBlocks(seg.lines, true));
         break;
-      case "education":
-        education.push(...seg.lines);
+      case "education": {
+        // Filter education lines: only keep lines with education keywords,
+        // year references, or short descriptive lines — reject experience bullets
+        // and CamelCase artifacts
+        for (const line of seg.lines) {
+          const trimmed = line.trim();
+          // Skip CamelCase artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+          if (/^[A-Z]{15,}$/.test(trimmed)) continue;
+          // Skip contact info lines
+          if (isContactInfoLine(trimmed)) continue;
+          // Skip lines that look like experience bullets (start with action verb + long)
+          if (startsWithVerb(trimmed) && trimmed.length > 60) continue;
+          // Skip lines with role titles but no education keywords
+          if (ROLE_TITLES.test(trimmed) && !EDUCATION_KEYWORDS.test(trimmed)) continue;
+          // Keep lines with education keywords, year references, or short descriptive content
+          if (
+            EDUCATION_KEYWORDS.test(trimmed) ||
+            YEAR_ONLY.test(trimmed) ||
+            trimmed.length < 80 ||
+            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed)
+          ) {
+            education.push(trimmed);
+          }
+        }
         break;
       case "skills": {
         // Split comma-separated
