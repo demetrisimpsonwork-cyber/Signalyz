@@ -1444,7 +1444,7 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-12 container max-w-5xl">
+      <section className="py-12 container max-w-5xl md:max-w-content">
         <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center">
           Frequently Asked Questions
         </h2>
