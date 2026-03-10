@@ -900,7 +900,7 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-12 container max-w-6xl">
+      <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool">
 
         {/* Sub-navigation tabs */}
         {/* Sub-navigation tabs */}
