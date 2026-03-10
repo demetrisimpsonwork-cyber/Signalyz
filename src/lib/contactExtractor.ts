@@ -59,9 +59,9 @@ export function extractContactFromText(text: string): ExtractedContactInfo {
 
     // Name — highest confidence: first line that isn't an email/phone/URL/location
     if (
-      i === 0 &&
       !result.name &&
-      line.length < 50 &&
+      i <= 1 &&
+      line.length < 60 &&
       line.length > 1 &&
       !EMAIL_RX.test(line) &&
       !PHONE_RX.test(line) &&
@@ -69,7 +69,13 @@ export function extractContactFromText(text: string): ExtractedContactInfo {
       !/linkedin|github|http/i.test(line) &&
       /[a-zA-Z]/.test(line)
     ) {
-      result.name = line;
+      // Strip professional title suffixes that may be on the same line
+      let nameLine = line
+        .replace(/\s*[-–—|,]\s*(director|manager|specialist|analyst|coordinator|engineer|developer|lead|supervisor|consultant|administrator|officer|president|vp|vice\s+president|head\s+of)\b.*/i, "")
+        .trim();
+      // If the entire line was a title, fall back to the raw line
+      if (nameLine.length < 2) nameLine = line;
+      result.name = nameLine;
     }
   }
 

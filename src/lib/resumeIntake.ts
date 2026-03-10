@@ -65,8 +65,27 @@ const ROLE_TITLES = /\b(specialist|manager|analyst|coordinator|engineer|develope
 const LOCATION_PATTERN = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
 const EMAIL_PATTERN = /[\w.+-]+@[\w.-]+\.\w{2,}/;
 const PHONE_PATTERN = /(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\b\d{10}\b)/;
+const ADDRESS_PATTERN = /\d{1,5}\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct|way|circle|cir)\b/i;
 const EDUCATION_KEYWORDS = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree)\b/i;
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
+
+// ─── Contact Line Detection ──────────────────────────────────────────────────
+
+function isContactInfoLine(line: string): boolean {
+  if (!line || line.length > 120) return false;
+  const trimmed = line.trim();
+  // Pure email line
+  if (EMAIL_PATTERN.test(trimmed) && trimmed.replace(EMAIL_PATTERN, "").replace(/[|,;•·\-–—\s]/g, "").length < 5) return true;
+  // Pure phone line
+  if (PHONE_PATTERN.test(trimmed) && trimmed.replace(PHONE_PATTERN, "").replace(/[|,;•·\-–—\s]/g, "").length < 5) return true;
+  // Pure address line
+  if (ADDRESS_PATTERN.test(trimmed) && trimmed.length < 80) return true;
+  // LinkedIn/GitHub URL line
+  if (/linkedin\.com|github\.com/i.test(trimmed) && trimmed.length < 80) return true;
+  // Multi-contact line (email + phone on same line)
+  if (EMAIL_PATTERN.test(trimmed) && PHONE_PATTERN.test(trimmed)) return true;
+  return false;
+}
 
 // ─── STEP A: Raw Text Normalization ──────────────────────────────────────────
 
@@ -181,21 +200,24 @@ function segmentDocument(text: string): Segment[] {
   let currentLines: string[] = [];
   let headerDetected = false;
 
-  // Extract contact from top
+  // Extract contact from top — scan until first section header
   const contactLines: string[] = [];
   let contentStart = 0;
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+  for (let i = 0; i < Math.min(lines.length, 12); i++) {
     const line = lines[i].trim();
     if (!line) continue;
     // Stop at first section header or date pattern
     const headerType = classifyLine(line);
     if (headerType || DATE_PATTERN.test(line)) break;
+    
+    const isEmail = EMAIL_PATTERN.test(line);
+    const isPhone = PHONE_PATTERN.test(line);
+    const isLocation = LOCATION_PATTERN.test(line);
+    const isAddress = ADDRESS_PATTERN.test(line);
+    const isLink = /^https?:\/\//.test(line) || /linkedin\.com|github\.com/i.test(line);
+    
     if (
-      EMAIL_PATTERN.test(line) ||
-      PHONE_PATTERN.test(line) ||
-      LOCATION_PATTERN.test(line) ||
-      /^https?:\/\//.test(line) ||
-      /linkedin\.com|github\.com/i.test(line) ||
+      isEmail || isPhone || isLocation || isAddress || isLink ||
       (i < 3 && line.length < 60 && !COMPANY_SUFFIXES.test(line) && !ROLE_TITLES.test(line))
     ) {
       contactLines.push(line);
@@ -263,6 +285,17 @@ function isResponsibilityLine(line: string): boolean {
 }
 
 function extractExperienceBlocks(lines: string[], isProjects: boolean): ExtractedExperience[] {
+  // Pre-filter: remove contact-info lines that leaked into experience segments
+  lines = lines.filter((l) => !isContactInfoLine(l));
+  
+  // Also filter out CamelCase header artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+  lines = lines.filter((l) => {
+    const trimmed = l.trim();
+    // All-caps single "word" >15 chars with no spaces is likely a broken header artifact
+    if (/^[A-Z]{15,}$/.test(trimmed)) return false;
+    return true;
+  });
+
   const blocks: ExtractedExperience[] = [];
   let current: ExtractedExperience | null = null;
 
@@ -284,6 +317,9 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].replace(/^-\s*/, "").trim();
     if (!line) continue;
+
+    // Skip lines that are purely contact info even after pre-filter
+    if (isContactInfoLine(lines[i])) continue;
 
     const hasDate = DATE_PATTERN.test(line);
     const hasCompany = COMPANY_SUFFIXES.test(line);
@@ -329,10 +365,15 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         role_title = withoutDate;
       }
 
+      // Validate company isn't actually contact info
+      if (company && isContactInfoLine(company)) {
+        company = "";
+      }
+
       // Check next line for company if only title detected
       if (role_title && !company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine)) {
+        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine)) {
           company = nextLine;
           i++;
         }
@@ -538,9 +579,32 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
       case "projects":
         experience.push(...extractExperienceBlocks(seg.lines, true));
         break;
-      case "education":
-        education.push(...seg.lines);
+      case "education": {
+        // Filter education lines: only keep lines with education keywords,
+        // year references, or short descriptive lines — reject experience bullets
+        // and CamelCase artifacts
+        for (const line of seg.lines) {
+          const trimmed = line.trim();
+          // Skip CamelCase artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+          if (/^[A-Z]{15,}$/.test(trimmed)) continue;
+          // Skip contact info lines
+          if (isContactInfoLine(trimmed)) continue;
+          // Skip lines that look like experience bullets (start with action verb + long)
+          if (startsWithVerb(trimmed) && trimmed.length > 60) continue;
+          // Skip lines with role titles but no education keywords
+          if (ROLE_TITLES.test(trimmed) && !EDUCATION_KEYWORDS.test(trimmed)) continue;
+          // Keep lines with education keywords, year references, or short descriptive content
+          if (
+            EDUCATION_KEYWORDS.test(trimmed) ||
+            YEAR_ONLY.test(trimmed) ||
+            trimmed.length < 80 ||
+            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed)
+          ) {
+            education.push(trimmed);
+          }
+        }
         break;
+      }
       case "skills": {
         // Split comma-separated
         for (const line of seg.lines) {
