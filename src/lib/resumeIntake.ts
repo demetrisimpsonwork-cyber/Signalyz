@@ -558,7 +558,7 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
           if (emailMatch) contact.email = emailMatch[0];
           const phoneMatch = line.match(PHONE_PATTERN);
           if (phoneMatch) contact.phone = phoneMatch[0];
-          if (LOCATION_PATTERN.test(line)) contact.location = line;
+          if (LOCATION_PATTERN.test(line) && isValidLocationString(line)) contact.location = line;
           if (/linkedin\.com|github\.com/i.test(line)) {
             (contact.links ??= []).push(line);
           }
