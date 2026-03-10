@@ -111,7 +111,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
       {/* Variant A — Ownership Elevation */}
       <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
         <p className="section-label text-primary">Variant A — Ownership Elevation</p>
-        <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
+        <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
         <div className="pt-2 space-y-1">
           <p className="section-label">What changed</p>
           {(result.used_signals && result.used_signals.length > 0) ? (
