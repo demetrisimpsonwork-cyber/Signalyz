@@ -111,6 +111,31 @@ function isPhoneOrEmail(text: string): boolean {
 }
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
 
+// ─── Person Name Detection ───────────────────────────────────────────────────
+
+const SECTION_HEADER_RX_NAME = /^(professional\s+summary|summary|profile|objective|experience|education|skills|certifications?|core\s+competencies)/i;
+
+function looksLikePersonName(line: string): boolean {
+  if (!line || line.length > 50 || line.length < 3) return false;
+  if (EMAIL_PATTERN.test(line) || PHONE_PATTERN.test(line)) return false;
+  if (/linkedin|github|http/i.test(line)) return false;
+  if (SECTION_HEADER_RX_NAME.test(line.trim())) return false;
+  if (LOCATION_PATTERN.test(line)) return false;
+  if (ADDRESS_PATTERN.test(line)) return false;
+  if (!/[a-zA-Z]/.test(line)) return false;
+  const words = line.replace(/[.,\-|]/g, " ").trim().split(/\s+/);
+  if (words.length < 1 || words.length > 5) return false;
+  // At least 1 word should start with uppercase
+  const capWords = words.filter(w => /^[A-Z]/.test(w));
+  if (capWords.length < 1) return false;
+  // First word must not be an action verb
+  const firstWordLower = words[0]?.toLowerCase();
+  if (ACTION_VERB_SET.has(firstWordLower)) return false;
+  // Single all-caps long word is a header artifact
+  if (words.length === 1 && /^[A-Z]{8,}$/.test(words[0])) return false;
+  return true;
+}
+
 // ─── Contact Line Detection ──────────────────────────────────────────────────
 
 function isContactInfoLine(line: string): boolean {
