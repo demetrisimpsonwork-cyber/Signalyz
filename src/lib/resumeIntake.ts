@@ -367,9 +367,13 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         role_title = withoutDate;
       }
 
-      // Validate company isn't actually contact info
-      if (company && isContactInfoLine(company)) {
+      // Validate company isn't actually contact info or a bullet fragment
+      if (company && (isContactInfoLine(company) || isPhoneOrEmail(company))) {
         company = "";
+      }
+      // Validate role_title isn't contact info
+      if (role_title && (isContactInfoLine(role_title) || isPhoneOrEmail(role_title))) {
+        role_title = "";
       }
 
       // Check next line for company if only title detected
