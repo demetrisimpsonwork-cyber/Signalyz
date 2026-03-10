@@ -3,6 +3,7 @@ import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake"
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
 import { Button } from "@/components/ui/button";
+import { antiAIFilter } from "@/lib/antiAIFilter";
 
 interface CalibratedBulletsSectionProps {
   bullet: string;
