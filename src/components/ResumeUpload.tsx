@@ -14,7 +14,7 @@ interface ResumeUploadProps {
   onClear?: () => void;
 }
 
-const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
+const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
   const [extracting, setExtracting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
