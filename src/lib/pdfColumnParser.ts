@@ -381,6 +381,12 @@ export function reconstructPdfText(pages: { content: any; viewport: any }[]): st
   result = normalizeBullets(result);
   result = deHyphenate(result);
 
+  // Step 6: Force section headers onto standalone lines
+  result = forceSectionBreaks(result);
+
+  // Step 7: Strip contact-info lines from body (keep only in header area)
+  result = stripContactLines(result);
+
   // Final cleanup: trim lines, remove excessive blank lines
   result = result
     .split("\n")
