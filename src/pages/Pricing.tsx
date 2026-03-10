@@ -151,7 +151,7 @@ const Pricing = () => {
           </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
-            <a href="/auth">Get Started Free</a>
+            <a href="/auth">Get Started</a>
           </Button>
         )}
       </div>
