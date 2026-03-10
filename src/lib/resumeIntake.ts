@@ -285,6 +285,17 @@ function isResponsibilityLine(line: string): boolean {
 }
 
 function extractExperienceBlocks(lines: string[], isProjects: boolean): ExtractedExperience[] {
+  // Pre-filter: remove contact-info lines that leaked into experience segments
+  lines = lines.filter((l) => !isContactInfoLine(l));
+  
+  // Also filter out CamelCase header artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+  lines = lines.filter((l) => {
+    const trimmed = l.trim();
+    // All-caps single "word" >15 chars with no spaces is likely a broken header artifact
+    if (/^[A-Z]{15,}$/.test(trimmed)) return false;
+    return true;
+  });
+
   const blocks: ExtractedExperience[] = [];
   let current: ExtractedExperience | null = null;
 
@@ -306,6 +317,9 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].replace(/^-\s*/, "").trim();
     if (!line) continue;
+
+    // Skip lines that are purely contact info even after pre-filter
+    if (isContactInfoLine(lines[i])) continue;
 
     const hasDate = DATE_PATTERN.test(line);
     const hasCompany = COMPANY_SUFFIXES.test(line);
@@ -351,10 +365,15 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         role_title = withoutDate;
       }
 
+      // Validate company isn't actually contact info
+      if (company && isContactInfoLine(company)) {
+        company = "";
+      }
+
       // Check next line for company if only title detected
       if (role_title && !company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine)) {
+        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine)) {
           company = nextLine;
           i++;
         }
