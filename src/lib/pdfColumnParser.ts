@@ -41,7 +41,10 @@ export function extractPositionedItems(content: any): TextItem[] {
     const x = tx[4];
     const y = tx[5];
     const height = Math.abs(tx[3]) || Math.abs(tx[0]) || 12;
-    const width = item.width || item.str.length * height * 0.5;
+    // Use pdfjs-reported width; estimate from string length only as fallback
+    const width = (item.width != null && item.width > 0)
+      ? item.width
+      : item.str.length * height * 0.5;
 
     items.push({
       str: item.str,
