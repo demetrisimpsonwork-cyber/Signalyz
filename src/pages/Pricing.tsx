@@ -118,7 +118,7 @@ const Pricing = () => {
                 variant={tier.highlighted ? "default" : "outline"}
                 asChild={tier.highlighted}
               >
-                {tier.highlighted ? <a href="/auth">Get Started Free</a> : tier.cta}
+                {tier.highlighted ? <a href="/auth">Get Started</a> : tier.cta}
               </Button>
             )}
 
@@ -151,7 +151,7 @@ const Pricing = () => {
           </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
-            <a href="/auth">Get Started Free</a>
+            <a href="/auth">Get Started</a>
           </Button>
         )}
       </div>
