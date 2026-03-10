@@ -200,21 +200,24 @@ function segmentDocument(text: string): Segment[] {
   let currentLines: string[] = [];
   let headerDetected = false;
 
-  // Extract contact from top
+  // Extract contact from top — scan until first section header
   const contactLines: string[] = [];
   let contentStart = 0;
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+  for (let i = 0; i < Math.min(lines.length, 12); i++) {
     const line = lines[i].trim();
     if (!line) continue;
     // Stop at first section header or date pattern
     const headerType = classifyLine(line);
     if (headerType || DATE_PATTERN.test(line)) break;
+    
+    const isEmail = EMAIL_PATTERN.test(line);
+    const isPhone = PHONE_PATTERN.test(line);
+    const isLocation = LOCATION_PATTERN.test(line);
+    const isAddress = ADDRESS_PATTERN.test(line);
+    const isLink = /^https?:\/\//.test(line) || /linkedin\.com|github\.com/i.test(line);
+    
     if (
-      EMAIL_PATTERN.test(line) ||
-      PHONE_PATTERN.test(line) ||
-      LOCATION_PATTERN.test(line) ||
-      /^https?:\/\//.test(line) ||
-      /linkedin\.com|github\.com/i.test(line) ||
+      isEmail || isPhone || isLocation || isAddress || isLink ||
       (i < 3 && line.length < 60 && !COMPANY_SUFFIXES.test(line) && !ROLE_TITLES.test(line))
     ) {
       contactLines.push(line);
