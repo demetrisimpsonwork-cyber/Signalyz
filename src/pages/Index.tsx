@@ -1024,7 +1024,7 @@ const Index = () => {
         {/* Alignment Mode */}
         {mode === "alignment" && (
           <>
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className={`grid gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
               <div className="space-y-4">
                 <div>
