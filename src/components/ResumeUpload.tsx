@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import mammoth from "mammoth";
 import { validateFileUpload } from "@/lib/sanitize";
 import * as pdfjsLib from "pdfjs-dist";
+import { reconstructPdfText } from "@/lib/pdfColumnParser";
 
 // Use CDN worker to avoid build issues with pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
