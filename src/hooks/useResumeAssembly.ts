@@ -147,11 +147,31 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         header: mergedHeader,
         summary: data.summary || "",
         core_competencies: data.core_competencies || [],
-        experience: data.experience || [],
+        experience: (data.experience || []).filter((exp: any) => {
+          // Filter out experience entries that are actually contact info
+          const companyOrTitle = `${exp.company || ""} ${exp.title || ""}`.trim();
+          if (/^[\d()+\-.\s]+$/.test(companyOrTitle)) return false; // phone number as company
+          if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(companyOrTitle)) return false; // email as company
+          return true;
+        }),
         independent_projects: data.independent_projects || [],
         skills: data.skills || [],
         certifications: data.certifications || [],
-        education: data.education || [],
+        education: (data.education || []).filter((edu: any) => {
+          // Filter out education entries that are actually work bullets or header artifacts
+          const inst = (edu.institution || "").trim();
+          const deg = (edu.degree || "").trim();
+          const combined = `${inst} ${deg}`;
+          // Reject entries with no meaningful education content
+          if (/^[A-Z]{15,}$/.test(inst)) return false; // CamelCase artifact
+          if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST)/i.test(inst)) return false;
+          // Reject phone/email in institution field
+          if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(inst)) return false;
+          if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(inst)) return false;
+          // Must have at least institution or degree
+          if (!inst && !deg) return false;
+          return true;
+        }),
         signal_keywords: data.signal_keywords || [],
       };
 
