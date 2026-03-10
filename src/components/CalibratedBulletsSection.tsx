@@ -81,7 +81,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         {/* Still show the calibrated variant */}
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
           <p className="section-label text-primary">Variant A — Ownership Elevation</p>
-          <p className="text-sm text-foreground leading-relaxed">{result.optimized_bullet}</p>
+          <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
         </div>
       </div>
     );
