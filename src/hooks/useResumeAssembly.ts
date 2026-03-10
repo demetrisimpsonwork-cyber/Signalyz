@@ -107,24 +107,71 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       }
 
       const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
+
+      // Sanitize header fields: reject values that look like bullet fragments or contact info in wrong fields
+      const sanitizeName = (name: string): string => {
+        if (!name || name === "Full Name") return "";
+        // Reject names that are obviously section headers or bullet text
+        if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT)/i.test(name.trim())) return "";
+        if (name.length > 60) return "";
+        return name;
+      };
+      const sanitizeLocation = (loc: string): string => {
+        if (!loc) return "";
+        // Reject locations that contain action verbs or resume keywords
+        const firstWord = loc.split(/[\s,]/)[0]?.toLowerCase() || "";
+        const actionVerbs = ["communicate","communicated","managed","led","developed","created","built","improved","directed","established","implemented","executed","organized","analyzed","designed","maintained","delivered","coordinated","supported","reduced","increased","streamlined","automated","facilitated","negotiated","spearheaded","launched","oversaw","supervised","trained","partnered","resolved","provided","reported","documented","monitored","tracked","planned","produced","optimized"];
+        if (actionVerbs.includes(firstWord)) return "";
+        if (/\b(benefits|resources|operations|marketing|finance|technology|information|administration|management)\b/i.test(loc)) return "";
+        return loc;
+      };
+      const sanitizeField = (val: string): string => {
+        if (!val) return "";
+        // A field value should not be a phone number if it's not the phone field, etc.
+        return val;
+      };
+
+      const cleanName = sanitizeName(rawHeader.name) || sanitizeName(preExtractedContact?.name || "") || "";
+      const cleanLocation = sanitizeLocation(rawHeader.location) || sanitizeLocation(preExtractedContact?.location || "") || "";
+
       const mergedHeader = {
-        name: rawHeader.name || preExtractedContact?.name || "",
+        name: cleanName,
         title: rawHeader.title || "",
         email: rawHeader.email || preExtractedContact?.email || "",
         phone: rawHeader.phone || preExtractedContact?.phone || "",
         linkedin: rawHeader.linkedin || preExtractedContact?.linkedin || "",
-        location: rawHeader.location || preExtractedContact?.location || "",
+        location: cleanLocation,
       };
 
       const resume: CalibratedResumeData = {
         header: mergedHeader,
         summary: data.summary || "",
         core_competencies: data.core_competencies || [],
-        experience: data.experience || [],
+        experience: (data.experience || []).filter((exp: any) => {
+          // Filter out experience entries that are actually contact info
+          const companyOrTitle = `${exp.company || ""} ${exp.title || ""}`.trim();
+          if (/^[\d()+\-.\s]+$/.test(companyOrTitle)) return false; // phone number as company
+          if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(companyOrTitle)) return false; // email as company
+          return true;
+        }),
         independent_projects: data.independent_projects || [],
         skills: data.skills || [],
         certifications: data.certifications || [],
-        education: data.education || [],
+        education: (data.education || []).filter((edu: any) => {
+          // Filter out education entries that are actually work bullets or header artifacts
+          const inst = (edu.institution || "").trim();
+          const deg = (edu.degree || "").trim();
+          const combined = `${inst} ${deg}`;
+          // Reject entries with no meaningful education content
+          if (/^[A-Z]{15,}$/.test(inst)) return false; // CamelCase artifact
+          if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST)/i.test(inst)) return false;
+          // Reject phone/email in institution field
+          if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(inst)) return false;
+          if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(inst)) return false;
+          // Must have at least institution or degree
+          if (!inst && !deg) return false;
+          return true;
+        }),
         signal_keywords: data.signal_keywords || [],
       };
 
