@@ -630,26 +630,29 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
         experience.push(...extractExperienceBlocks(seg.lines, true));
         break;
       case "education": {
-        // Filter education lines: only keep lines with education keywords,
-        // year references, or short descriptive lines — reject experience bullets
-        // and CamelCase artifacts
+        // Strict education extraction: only allow lines that are clearly education content
         for (const line of seg.lines) {
           const trimmed = line.trim();
-          // Skip CamelCase artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
-          if (/^[A-Z]{15,}$/.test(trimmed)) continue;
-          // Skip contact info lines
+          if (!trimmed) continue;
+          // Reject: CamelCase header artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+          if (/^[A-Z]{10,}$/.test(trimmed.replace(/\s+/g, ""))) continue;
+          // Reject: contact info of any kind
           if (isContactInfoLine(trimmed)) continue;
-          // Skip lines that look like experience bullets (start with action verb + long)
-          if (startsWithVerb(trimmed) && trimmed.length > 60) continue;
-          // Skip lines with role titles but no education keywords
+          if (isPhoneOrEmail(trimmed)) continue;
+          // Reject: any line starting with an action verb (experience bullet)
+          if (startsWithVerb(trimmed)) continue;
+          // Reject: lines with job titles but no education keywords
           if (ROLE_TITLES.test(trimmed) && !EDUCATION_KEYWORDS.test(trimmed)) continue;
-          // Keep lines with education keywords, year references, or short descriptive content
-          if (
+          // Reject: long lines (>100 chars) without education keywords (likely experience bullets)
+          if (trimmed.length > 100 && !EDUCATION_KEYWORDS.test(trimmed)) continue;
+          // Accept: lines with education keywords, academic honors, or year references
+          const isEducationContent =
             EDUCATION_KEYWORDS.test(trimmed) ||
-            YEAR_ONLY.test(trimmed) ||
-            trimmed.length < 80 ||
-            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed)
-          ) {
+            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed) ||
+            (YEAR_ONLY.test(trimmed) && trimmed.length < 60);
+          // Accept short descriptive lines (<60 chars) that aren't clearly non-education
+          const isShortDescriptive = trimmed.length < 60 && !COMPANY_SUFFIXES.test(trimmed);
+          if (isEducationContent || isShortDescriptive) {
             education.push(trimmed);
           }
         }
