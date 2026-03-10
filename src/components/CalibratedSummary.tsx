@@ -96,7 +96,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
                   {copiedIdx === i ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
                 </button>
               </div>
-              <p className="text-sm text-foreground leading-relaxed">{v.text}</p>
+              <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(v.text)}</p>
               <p className="context-text">{v.why_this_works}</p>
             </div>
           </div>

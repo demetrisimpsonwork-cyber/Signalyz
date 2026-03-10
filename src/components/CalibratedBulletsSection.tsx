@@ -160,7 +160,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
             </div>
           )}
           {result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
-            <ResultSection title="Variant C — Strategic Depth Expansion" content={result.alt_b} />
+            <ResultSection title="Variant C — Strategic Depth Expansion" content={antiAIFilter(result.alt_b)} />
           )}
         </>
       )}
