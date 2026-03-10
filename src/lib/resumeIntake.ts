@@ -65,8 +65,27 @@ const ROLE_TITLES = /\b(specialist|manager|analyst|coordinator|engineer|develope
 const LOCATION_PATTERN = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
 const EMAIL_PATTERN = /[\w.+-]+@[\w.-]+\.\w{2,}/;
 const PHONE_PATTERN = /(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\b\d{10}\b)/;
+const ADDRESS_PATTERN = /\d{1,5}\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct|way|circle|cir)\b/i;
 const EDUCATION_KEYWORDS = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree)\b/i;
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
+
+// ─── Contact Line Detection ──────────────────────────────────────────────────
+
+function isContactInfoLine(line: string): boolean {
+  if (!line || line.length > 120) return false;
+  const trimmed = line.trim();
+  // Pure email line
+  if (EMAIL_PATTERN.test(trimmed) && trimmed.replace(EMAIL_PATTERN, "").replace(/[|,;•·\-–—\s]/g, "").length < 5) return true;
+  // Pure phone line
+  if (PHONE_PATTERN.test(trimmed) && trimmed.replace(PHONE_PATTERN, "").replace(/[|,;•·\-–—\s]/g, "").length < 5) return true;
+  // Pure address line
+  if (ADDRESS_PATTERN.test(trimmed) && trimmed.length < 80) return true;
+  // LinkedIn/GitHub URL line
+  if (/linkedin\.com|github\.com/i.test(trimmed) && trimmed.length < 80) return true;
+  // Multi-contact line (email + phone on same line)
+  if (EMAIL_PATTERN.test(trimmed) && PHONE_PATTERN.test(trimmed)) return true;
+  return false;
+}
 
 // ─── STEP A: Raw Text Normalization ──────────────────────────────────────────
 
