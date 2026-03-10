@@ -101,6 +101,14 @@ function buildLine(items: TextItem[]): TextLine {
   const minX = Math.min(...items.map((i) => i.x));
   const maxX = Math.max(...items.map((i) => i.x + i.width));
 
+  // Compute median character width for this line to detect spacing
+  const charWidths = items
+    .filter((it) => it.str.length > 0)
+    .map((it) => it.width / it.str.length);
+  const medianCharW = charWidths.length > 0
+    ? charWidths.sort((a, b) => a - b)[Math.floor(charWidths.length / 2)]
+    : 5;
+
   // Join items with appropriate spacing
   let text = "";
   for (let i = 0; i < items.length; i++) {
@@ -111,14 +119,32 @@ function buildLine(items: TextItem[]): TextLine {
       // Large gap = tab/column separator within line
       if (gap > prev.height * 2) {
         text += "    ";
-      } else if (gap > prev.height * 0.3) {
+      } else if (gap > medianCharW * 0.3) {
+        // Normal word space — use character-width metric instead of font height
         text += " ";
       }
+      // Tiny/negative gap = same word, no space needed
     }
     text += item.str;
   }
 
+  // Post-process: collapse spaced-out capital letters (e.g. "E D U C A T I O N" → "EDUCATION")
+  text = collapseSpacedLetters(text);
+
   return { items, y: avgY, minX, maxX, text: text.trim() };
+}
+
+/**
+ * Collapse sequences of single uppercase letters separated by spaces
+ * into a single word. Handles headers like "E D U C A T I O N" → "EDUCATION"
+ * and "S K I L L S" → "SKILLS". Only collapses runs of 3+ single chars.
+ */
+function collapseSpacedLetters(text: string): string {
+  // Match 3+ single uppercase letters separated by single spaces
+  return text.replace(
+    /\b([A-Z])((?:\s[A-Z]){2,})\b/g,
+    (match) => match.replace(/\s/g, "")
+  );
 }
 
 // ── Detect columns ──────────────────────────────────────────────────────────
