@@ -1,46 +1,246 @@
-import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
+import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
+/**
+ * Export the calibrated resume as a clean, formatted PDF document
+ * built directly from structured data (not html2canvas).
+ */
 export async function exportCalibratedPdf(canvasElementId: string = "resume-canvas") {
-  const element = document.getElementById(canvasElementId);
-  if (!element) {
-    toast.error("Resume canvas not found.");
+  // Try to get resume data from localStorage (set during assembly)
+  let resume: CalibratedResumeData | null = null;
+  try {
+    const stored = localStorage.getItem("resumix_calibrated_resume_data");
+    if (stored) resume = JSON.parse(stored);
+  } catch {}
+
+  if (!resume) {
+    toast.error("No resume data found. Please assemble your resume first.");
     return;
   }
 
   try {
     toast.info("Generating PDF...");
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#FFFFFF",
-    });
-
-    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginLeft = 15;
+    const marginRight = 15;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+    let y = 18;
 
-    const imgWidth = pageWidth - 20; // 10mm margins
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const checkPageBreak = (needed: number) => {
+      if (y + needed > pageHeight - 15) {
+        pdf.addPage();
+        y = 15;
+      }
+    };
 
-    let heightLeft = imgHeight;
-    let position = 10; // top margin
+    // ─── Header ───
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(20);
+    pdf.setTextColor(26, 26, 46);
+    const name = resume.header.name || "Name";
+    pdf.text(name, pageWidth / 2, y, { align: "center" });
+    y += 7;
 
-    // First page
-    pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight - 20;
-
-    // Additional pages if needed
-    while (heightLeft > 0) {
-      position = -(pageHeight - 20 - 10) + 10;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight - 20;
+    if (resume.header.title) {
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text(resume.header.title, pageWidth / 2, y, { align: "center" });
+      y += 5;
     }
 
-    pdf.save("Calibrated_Resume_Designed.pdf");
+    const contactParts = [
+      resume.header.location,
+      resume.header.email,
+      resume.header.phone,
+      resume.header.linkedin,
+    ].filter(Boolean);
+    if (contactParts.length) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text(contactParts.join("  |  "), pageWidth / 2, y, { align: "center" });
+      y += 4;
+    }
+
+    // HR line
+    y += 2;
+    pdf.setDrawColor(209, 213, 219);
+    pdf.setLineWidth(0.3);
+    pdf.line(marginLeft, y, pageWidth - marginRight, y);
+    y += 6;
+
+    // ─── Section header helper ───
+    const drawSectionHeader = (title: string) => {
+      checkPageBreak(10);
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text(title.toUpperCase(), marginLeft, y);
+      y += 1.5;
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.2);
+      pdf.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 5;
+    };
+
+    // ─── Wrapped text helper ───
+    const drawWrappedText = (text: string, fontSize: number, fontStyle: string = "normal", indent: number = 0, color: number[] = [26, 26, 46]) => {
+      pdf.setFont("times", fontStyle);
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(color[0], color[1], color[2]);
+      const lines = pdf.splitTextToSize(text, contentWidth - indent);
+      for (const line of lines) {
+        checkPageBreak(5);
+        pdf.text(line, marginLeft + indent, y);
+        y += fontSize * 0.45;
+      }
+    };
+
+    // ─── Professional Summary ───
+    if (resume.summary) {
+      drawSectionHeader("Professional Summary");
+      drawWrappedText(resume.summary, 10);
+      y += 3;
+    }
+
+    // ─── Core Competencies ───
+    const competencies = [
+      ...(resume.core_competencies || []),
+      ...(resume.skills || []),
+    ].filter((v, i, a) => a.indexOf(v) === i);
+    if (competencies.length) {
+      drawSectionHeader("Core Competencies");
+      drawWrappedText(competencies.join(",  "), 9.5);
+      y += 3;
+    }
+
+    // ─── Experience ───
+    if (resume.experience.length) {
+      drawSectionHeader("Professional Experience");
+      for (const exp of resume.experience) {
+        checkPageBreak(14);
+        // Title (italic) + dates
+        pdf.setFont("times", "italic");
+        pdf.setFontSize(10.5);
+        pdf.setTextColor(26, 26, 46);
+        pdf.text(exp.title || "", marginLeft, y);
+        if (exp.dates) {
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9);
+          pdf.setTextColor(107, 114, 128);
+          pdf.text(exp.dates, pageWidth - marginRight, y, { align: "right" });
+        }
+        y += 4.5;
+
+        // Company (bold)
+        if (exp.company) {
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(10);
+          pdf.setTextColor(55, 65, 81);
+          pdf.text(exp.company, marginLeft, y);
+          y += 4.5;
+        }
+
+        // Bullets
+        for (const bullet of exp.bullets) {
+          checkPageBreak(6);
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9.5);
+          pdf.setTextColor(26, 26, 46);
+          pdf.text("•", marginLeft + 2, y);
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - 8);
+          for (let li = 0; li < bulletLines.length; li++) {
+            if (li > 0) checkPageBreak(4.5);
+            pdf.text(bulletLines[li], marginLeft + 6, y);
+            y += 4;
+          }
+        }
+        y += 2;
+      }
+    }
+
+    // ─── Independent Projects ───
+    if (resume.independent_projects?.length) {
+      drawSectionHeader("Independent Projects");
+      for (const proj of resume.independent_projects) {
+        checkPageBreak(10);
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10.5);
+        pdf.setTextColor(26, 26, 46);
+        let projLine = proj.name;
+        pdf.text(projLine, marginLeft, y);
+        if (proj.description) {
+          const nameWidth = pdf.getTextWidth(projLine);
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9.5);
+          pdf.setTextColor(107, 114, 128);
+          const descText = ` — ${proj.description}`;
+          const descLines = pdf.splitTextToSize(descText, contentWidth - nameWidth - 2);
+          pdf.text(descLines[0] || "", marginLeft + nameWidth, y);
+          y += 4.5;
+          for (let di = 1; di < descLines.length; di++) {
+            checkPageBreak(4.5);
+            pdf.text(descLines[di], marginLeft + 2, y);
+            y += 4;
+          }
+        } else {
+          y += 4.5;
+        }
+
+        for (const bullet of proj.bullets) {
+          checkPageBreak(6);
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9.5);
+          pdf.setTextColor(26, 26, 46);
+          pdf.text("•", marginLeft + 2, y);
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - 8);
+          for (let li = 0; li < bulletLines.length; li++) {
+            if (li > 0) checkPageBreak(4.5);
+            pdf.text(bulletLines[li], marginLeft + 6, y);
+            y += 4;
+          }
+        }
+        y += 2;
+      }
+    }
+
+    // ─── Certifications ───
+    if (resume.certifications?.length) {
+      drawSectionHeader("Certifications");
+      for (const cert of resume.certifications) {
+        checkPageBreak(5);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(26, 26, 46);
+        pdf.text("•", marginLeft + 2, y);
+        const certLines = pdf.splitTextToSize(cert, contentWidth - 8);
+        for (let li = 0; li < certLines.length; li++) {
+          if (li > 0) checkPageBreak(4.5);
+          pdf.text(certLines[li], marginLeft + 6, y);
+          y += 4;
+        }
+      }
+      y += 2;
+    }
+
+    // ─── Education ───
+    if (resume.education?.length) {
+      drawSectionHeader("Education");
+      for (const edu of resume.education) {
+        checkPageBreak(5);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(26, 26, 46);
+        const eduText = [edu.degree, edu.institution, edu.year].filter(Boolean).join(" — ");
+        drawWrappedText(eduText, 9.5);
+        y += 1;
+      }
+    }
+
+    pdf.save("Calibrated_Resume.pdf");
     toast.success("PDF exported");
   } catch (err) {
     console.error("PDF export error:", err);

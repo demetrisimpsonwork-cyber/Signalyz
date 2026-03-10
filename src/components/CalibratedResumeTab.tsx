@@ -84,6 +84,11 @@ const CalibratedResumeTab = ({
   };
 
   const handleExportPdf = () => {
+    if (!currentResume) return;
+    // Ensure latest data is in localStorage for PDF export
+    try {
+      localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(currentResume));
+    } catch {}
     exportCalibratedPdf("resume-canvas");
   };
 

@@ -3,6 +3,10 @@ import { Upload, Loader2, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 import mammoth from "mammoth";
 import { validateFileUpload } from "@/lib/sanitize";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Use CDN worker to avoid build issues with pdfjs-dist
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface ResumeUploadProps {
   onTextExtracted: (text: string) => void;
@@ -19,20 +23,25 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
     return result.value.trim();
   };
 
-  const extractFromPdf = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = (e.target?.result as string) || "";
-        if (!text || text.length < 10) {
-          reject(new Error("Could not extract meaningful text from this PDF."));
-          return;
-        }
-        resolve(text.trim());
-      };
-      reader.onerror = () => reject(new Error("Failed to read PDF file."));
-      reader.readAsText(file);
-    });
+  const extractFromPdf = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages: string[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items
+        .map((item: any) => item.str)
+        .join(" ");
+      pages.push(pageText);
+    }
+
+    const text = pages.join("\n\n").trim();
+    if (!text || text.length < 10) {
+      throw new Error("Could not extract meaningful text from this PDF. Try pasting your resume text directly.");
+    }
+    return text;
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +65,6 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
         text = await extractFromDocx(file);
       } else {
         text = await extractFromPdf(file);
-        toast.info("PDF text extracted. If formatting looks off, paste your resume text directly for best results.");
       }
 
       if (!text || text.length < 10) {
