@@ -107,13 +107,40 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       }
 
       const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
+
+      // Sanitize header fields: reject values that look like bullet fragments or contact info in wrong fields
+      const sanitizeName = (name: string): string => {
+        if (!name || name === "Full Name") return "";
+        // Reject names that are obviously section headers or bullet text
+        if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT)/i.test(name.trim())) return "";
+        if (name.length > 60) return "";
+        return name;
+      };
+      const sanitizeLocation = (loc: string): string => {
+        if (!loc) return "";
+        // Reject locations that contain action verbs or resume keywords
+        const firstWord = loc.split(/[\s,]/)[0]?.toLowerCase() || "";
+        const actionVerbs = ["communicate","communicated","managed","led","developed","created","built","improved","directed","established","implemented","executed","organized","analyzed","designed","maintained","delivered","coordinated","supported","reduced","increased","streamlined","automated","facilitated","negotiated","spearheaded","launched","oversaw","supervised","trained","partnered","resolved","provided","reported","documented","monitored","tracked","planned","produced","optimized"];
+        if (actionVerbs.includes(firstWord)) return "";
+        if (/\b(benefits|resources|operations|marketing|finance|technology|information|administration|management)\b/i.test(loc)) return "";
+        return loc;
+      };
+      const sanitizeField = (val: string): string => {
+        if (!val) return "";
+        // A field value should not be a phone number if it's not the phone field, etc.
+        return val;
+      };
+
+      const cleanName = sanitizeName(rawHeader.name) || sanitizeName(preExtractedContact?.name || "") || "";
+      const cleanLocation = sanitizeLocation(rawHeader.location) || sanitizeLocation(preExtractedContact?.location || "") || "";
+
       const mergedHeader = {
-        name: rawHeader.name || preExtractedContact?.name || "",
+        name: cleanName,
         title: rawHeader.title || "",
         email: rawHeader.email || preExtractedContact?.email || "",
         phone: rawHeader.phone || preExtractedContact?.phone || "",
         linkedin: rawHeader.linkedin || preExtractedContact?.linkedin || "",
-        location: rawHeader.location || preExtractedContact?.location || "",
+        location: cleanLocation,
       };
 
       const resume: CalibratedResumeData = {

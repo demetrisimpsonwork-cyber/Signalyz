@@ -66,7 +66,49 @@ const LOCATION_PATTERN = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5
 const EMAIL_PATTERN = /[\w.+-]+@[\w.-]+\.\w{2,}/;
 const PHONE_PATTERN = /(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\b\d{10}\b)/;
 const ADDRESS_PATTERN = /\d{1,5}\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct|way|circle|cir)\b/i;
-const EDUCATION_KEYWORDS = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree)\b/i;
+const EDUCATION_KEYWORDS = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree|school)\b/i;
+
+// Action verbs that indicate bullet fragments, not location cities
+const ACTION_VERB_SET = new Set([
+  "communicate","communicated","manage","managed","lead","led","develop","developed",
+  "create","created","build","built","improve","improved","direct","directed",
+  "establish","established","implement","implemented","execute","executed",
+  "organize","organized","analyze","analyzed","design","designed","maintain",
+  "maintained","deliver","delivered","coordinate","coordinated","support","supported",
+  "reduce","reduced","increase","increased","streamline","streamlined","automate",
+  "automated","facilitate","facilitated","negotiate","negotiated","spearhead",
+  "spearheaded","launch","launched","oversee","oversaw","supervise","supervised",
+  "train","trained","partner","partnered","resolve","resolved","provide","provided",
+  "report","reported","document","documented","monitor","monitored","track","tracked",
+  "plan","planned","produce","produced","optimize","optimized",
+]);
+
+/**
+ * Validates that a "City, ST" string is actually a location, not a bullet fragment.
+ */
+function isValidLocationString(text: string): boolean {
+  const match = text.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?),?\s+([A-Z]{2})(?:\s+\d{5})?$/);
+  if (!match) return false;
+  const cityWords = match[1].toLowerCase().split(/\s+/);
+  for (const w of cityWords) {
+    if (ACTION_VERB_SET.has(w)) return false;
+  }
+  // Also reject common resume keywords as "city" names
+  if (/\b(benefits|resources|operations|marketing|finance|technology|information|administration|management|services|solutions)\b/i.test(match[1])) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Check if a string is primarily a phone number or email (not a company name).
+ */
+function isPhoneOrEmail(text: string): boolean {
+  const trimmed = text.trim();
+  if (EMAIL_PATTERN.test(trimmed) && trimmed.replace(EMAIL_PATTERN, "").replace(/[\s|,;•·\-–—]/g, "").length < 5) return true;
+  if (PHONE_PATTERN.test(trimmed) && trimmed.replace(PHONE_PATTERN, "").replace(/[\s|,;•·\-–—]/g, "").length < 5) return true;
+  return false;
+}
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
 
 // ─── Contact Line Detection ──────────────────────────────────────────────────
