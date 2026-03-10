@@ -439,14 +439,16 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
       continue;
     }
 
-    // Responsibility line
+    // Responsibility line — reject contact info and header artifacts from bullets
     if (current) {
+      if (isContactInfoLine(line) || isPhoneOrEmail(line)) continue;
+      if (/^[A-Z]{15,}$/.test(line.trim())) continue;
       if (isResponsibilityLine(lines[i])) {
         current.responsibilities.push(line);
       } else if (line.length > 15) {
         current.responsibilities.push(line);
       }
-    } else if (isResponsibilityLine(lines[i]) && line.length > 15) {
+    } else if (isResponsibilityLine(lines[i]) && line.length > 15 && !isContactInfoLine(line) && !isPhoneOrEmail(line)) {
       // No header yet, create implicit block
       current = {
         company: "",
