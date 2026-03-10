@@ -1001,7 +1001,7 @@ const Position = () => {
   };
 
   return (
-    <div className="container max-w-6xl py-8">
+    <div className="container max-w-6xl md:max-w-tool py-8">
       {/* Header */}
       <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
