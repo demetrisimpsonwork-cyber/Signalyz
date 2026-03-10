@@ -111,6 +111,31 @@ function isPhoneOrEmail(text: string): boolean {
 }
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
 
+// ─── Person Name Detection ───────────────────────────────────────────────────
+
+const SECTION_HEADER_RX_NAME = /^(professional\s+summary|summary|profile|objective|experience|education|skills|certifications?|core\s+competencies)/i;
+
+function looksLikePersonName(line: string): boolean {
+  if (!line || line.length > 50 || line.length < 3) return false;
+  if (EMAIL_PATTERN.test(line) || PHONE_PATTERN.test(line)) return false;
+  if (/linkedin|github|http/i.test(line)) return false;
+  if (SECTION_HEADER_RX_NAME.test(line.trim())) return false;
+  if (LOCATION_PATTERN.test(line)) return false;
+  if (ADDRESS_PATTERN.test(line)) return false;
+  if (!/[a-zA-Z]/.test(line)) return false;
+  const words = line.replace(/[.,\-|]/g, " ").trim().split(/\s+/);
+  if (words.length < 1 || words.length > 5) return false;
+  // At least 1 word should start with uppercase
+  const capWords = words.filter(w => /^[A-Z]/.test(w));
+  if (capWords.length < 1) return false;
+  // First word must not be an action verb
+  const firstWordLower = words[0]?.toLowerCase();
+  if (ACTION_VERB_SET.has(firstWordLower)) return false;
+  // Single all-caps long word is a header artifact
+  if (words.length === 1 && /^[A-Z]{8,}$/.test(words[0])) return false;
+  return true;
+}
+
 // ─── Contact Line Detection ──────────────────────────────────────────────────
 
 function isContactInfoLine(line: string): boolean {
@@ -439,14 +464,16 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
       continue;
     }
 
-    // Responsibility line
+    // Responsibility line — reject contact info and header artifacts from bullets
     if (current) {
+      if (isContactInfoLine(line) || isPhoneOrEmail(line)) continue;
+      if (/^[A-Z]{15,}$/.test(line.trim())) continue;
       if (isResponsibilityLine(lines[i])) {
         current.responsibilities.push(line);
       } else if (line.length > 15) {
         current.responsibilities.push(line);
       }
-    } else if (isResponsibilityLine(lines[i]) && line.length > 15) {
+    } else if (isResponsibilityLine(lines[i]) && line.length > 15 && !isContactInfoLine(line) && !isPhoneOrEmail(line)) {
       // No header yet, create implicit block
       current = {
         company: "",
@@ -597,23 +624,25 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
       case "contact": {
         for (const line of seg.lines) {
           const emailMatch = line.match(EMAIL_PATTERN);
-          if (emailMatch) contact.email = emailMatch[0];
+          if (emailMatch && !contact.email) contact.email = emailMatch[0];
           const phoneMatch = line.match(PHONE_PATTERN);
-          if (phoneMatch) contact.phone = phoneMatch[0];
-          if (LOCATION_PATTERN.test(line) && isValidLocationString(line)) contact.location = line;
+          if (phoneMatch && !contact.phone) contact.phone = phoneMatch[0];
+          if (LOCATION_PATTERN.test(line) && isValidLocationString(line) && !contact.location) contact.location = line;
           if (/linkedin\.com|github\.com/i.test(line)) {
             (contact.links ??= []).push(line);
           }
-          // First short non-pattern line is likely the name
+          // Name: must look like a real person name — not a section header, verb phrase, or contact pattern
           if (
             !contact.name &&
-            line.length < 50 &&
-            !EMAIL_PATTERN.test(line) &&
-            !PHONE_PATTERN.test(line) &&
-            !LOCATION_PATTERN.test(line) &&
-            !/linkedin|github|http/i.test(line)
+            looksLikePersonName(line)
           ) {
-            contact.name = line;
+            // Strip trailing professional title if appended (e.g. "Jane Doe — Director of HR")
+            let cleanName = line
+              .replace(/\s*[-–—|,]\s*(director|manager|specialist|analyst|coordinator|engineer|developer|lead|supervisor|consultant|administrator|officer|president|vp|vice\s+president|head\s+of)\b.*/i, "")
+              .trim();
+            if (cleanName.length >= 2) {
+              contact.name = cleanName;
+            }
           }
         }
         break;
@@ -628,26 +657,29 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
         experience.push(...extractExperienceBlocks(seg.lines, true));
         break;
       case "education": {
-        // Filter education lines: only keep lines with education keywords,
-        // year references, or short descriptive lines — reject experience bullets
-        // and CamelCase artifacts
+        // Strict education extraction: only allow lines that are clearly education content
         for (const line of seg.lines) {
           const trimmed = line.trim();
-          // Skip CamelCase artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
-          if (/^[A-Z]{15,}$/.test(trimmed)) continue;
-          // Skip contact info lines
+          if (!trimmed) continue;
+          // Reject: CamelCase header artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+          if (/^[A-Z]{10,}$/.test(trimmed.replace(/\s+/g, ""))) continue;
+          // Reject: contact info of any kind
           if (isContactInfoLine(trimmed)) continue;
-          // Skip lines that look like experience bullets (start with action verb + long)
-          if (startsWithVerb(trimmed) && trimmed.length > 60) continue;
-          // Skip lines with role titles but no education keywords
+          if (isPhoneOrEmail(trimmed)) continue;
+          // Reject: any line starting with an action verb (experience bullet)
+          if (startsWithVerb(trimmed)) continue;
+          // Reject: lines with job titles but no education keywords
           if (ROLE_TITLES.test(trimmed) && !EDUCATION_KEYWORDS.test(trimmed)) continue;
-          // Keep lines with education keywords, year references, or short descriptive content
-          if (
+          // Reject: long lines (>100 chars) without education keywords (likely experience bullets)
+          if (trimmed.length > 100 && !EDUCATION_KEYWORDS.test(trimmed)) continue;
+          // Accept: lines with education keywords, academic honors, or year references
+          const isEducationContent =
             EDUCATION_KEYWORDS.test(trimmed) ||
-            YEAR_ONLY.test(trimmed) ||
-            trimmed.length < 80 ||
-            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed)
-          ) {
+            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed) ||
+            (YEAR_ONLY.test(trimmed) && trimmed.length < 60);
+          // Accept short descriptive lines (<60 chars) that aren't clearly non-education
+          const isShortDescriptive = trimmed.length < 60 && !COMPANY_SUFFIXES.test(trimmed);
+          if (isEducationContent || isShortDescriptive) {
             education.push(trimmed);
           }
         }
