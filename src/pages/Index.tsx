@@ -856,9 +856,9 @@ const Index = () => {
 
       {/* Differentiation Statement */}
       <section className="py-12 bg-[#0F1C2E]">
-        <div className="container max-w-5xl md:max-w-content text-center">
+        <div className="container max-w-5xl md:max-w-tool text-center">
           <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
-          <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
+          <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-2xl mx-auto">
             Most tools reframe your bullets with synonyms. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and recalibrates your positioning from the threshold up.
           </p>
         </div>
