@@ -217,6 +217,18 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return true;
       });
 
+      const resume: CalibratedResumeData = {
+        header: mergedHeader,
+        summary: data.summary || "",
+        core_competencies: data.core_competencies || [],
+        experience: cleanExperience,
+        independent_projects: data.independent_projects || [],
+        skills: data.skills || [],
+        certifications: data.certifications || [],
+        education: cleanEducation,
+        signal_keywords: data.signal_keywords || [],
+      };
+
       setAssembledResume(resume);
       setStep(3);
 
