@@ -77,7 +77,13 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
           <PopoverContent className="w-80 text-sm space-y-4" side="bottom" align="start">
             <p className="font-semibold text-foreground">What this score means</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Signal Diagnosis measures how clearly your experience aligns with the target role as written. It does not judge your capability or invent qualifications. A lower score simply means the signal is not landing clearly yet — not that you cannot perform the role.
+              Signal Diagnosis measures how clearly your current experience aligns with the target role as written.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              It does not judge your ability or invent qualifications. A lower score simply means the signal from your resume is not landing clearly yet with hiring systems and managers.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Resumix analyzes where that signal breaks and shows how to reposition your real experience so it reads the way it was meant to be understood.
             </p>
             <div className="border-t pt-3">
               <p className="text-xs font-medium text-foreground mb-2">Score Breakdown</p>
@@ -96,9 +102,6 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
                 ))}
               </div>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Score reflects weighted alignment to employer priority signals detected in the job description.
-            </p>
             {topMatchedSignal && (
               <div>
                 <p className="text-xs font-medium text-foreground">✓ Matched Signal</p>
