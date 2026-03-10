@@ -754,7 +754,7 @@ const Index = () => {
       </section>
 
       {/* What you walk away with */}
-      <section className="pt-16 md:pt-20 pb-12 container max-w-5xl">
+      <section className="pt-16 md:pt-20 pb-12 container max-w-5xl md:max-w-content">
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
