@@ -311,13 +311,11 @@ function cleanArtifacts(text: string): string {
   // Fix orphaned punctuation from extraction
   t = t.replace(/\s+([.,;:!?])/g, "$1");
 
-  // Fix broken words from character-by-character extraction
-  // Pattern: single chars separated by spaces that form a word
-  t = t.replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, (match) => {
-    const word = match.replace(/\s+/g, "");
-    // Only collapse if it looks like a word (not an acronym in context)
-    return word.length <= 6 ? word : match;
-  });
+  // Split merged CamelCase name blocks (e.g. "MyoJungKimDirectorOfHumanResources")
+  // Insert space before uppercase letters preceded by lowercase
+  t = t.replace(/([a-z])([A-Z])/g, "$1 $2");
+  // Insert space before uppercase letter sequences that start a new word after another uppercase+lowercase
+  t = t.replace(/([A-Z][a-z]+)([A-Z])/g, "$1 $2");
 
   // Collapse multiple spaces
   t = t.replace(/[ \t]+/g, " ");
