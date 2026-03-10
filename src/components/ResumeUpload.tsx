@@ -27,18 +27,16 @@ const ResumeUpload = ({ onTextExtracted }: ResumeUploadProps) => {
   const extractFromPdf = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const pages: string[] = [];
+    const pageData: { content: any; viewport: any }[] = [];
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item: any) => item.str)
-        .join(" ");
-      pages.push(pageText);
+      const viewport = page.getViewport({ scale: 1 });
+      pageData.push({ content, viewport });
     }
 
-    const text = pages.join("\n\n").trim();
+    const text = reconstructPdfText(pageData);
     if (!text || text.length < 10) {
       throw new Error("Could not extract meaningful text from this PDF. Try pasting your resume text directly.");
     }
