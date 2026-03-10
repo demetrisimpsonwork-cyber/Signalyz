@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import { antiAIFilter } from "@/lib/antiAIFilter";
 
 interface CoverLetterEngineProps {
   experience: string;
