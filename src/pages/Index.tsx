@@ -736,11 +736,12 @@ const Index = () => {
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
         <div className="container max-w-5xl md:max-w-content text-center relative z-10">
+          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Most qualified candidates never know why they're not getting interviews.</p>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Resumix analyzes your resume against real job descriptions and repositions your signal so hiring systems and recruiters read your experience the way it was meant to be read.
+            Resumix reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
           <Button
             size="lg"
@@ -748,7 +749,7 @@ const Index = () => {
             onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            Run Your Signal Analysis
+            Run Signal Analysis
           </Button>
         </div>
       </section>
