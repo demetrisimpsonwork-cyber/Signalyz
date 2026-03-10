@@ -727,7 +727,7 @@ const Index = () => {
   const usedCount = DAILY_FREE_LIMIT - remaining;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-0">
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
