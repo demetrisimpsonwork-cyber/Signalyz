@@ -597,23 +597,25 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
       case "contact": {
         for (const line of seg.lines) {
           const emailMatch = line.match(EMAIL_PATTERN);
-          if (emailMatch) contact.email = emailMatch[0];
+          if (emailMatch && !contact.email) contact.email = emailMatch[0];
           const phoneMatch = line.match(PHONE_PATTERN);
-          if (phoneMatch) contact.phone = phoneMatch[0];
-          if (LOCATION_PATTERN.test(line) && isValidLocationString(line)) contact.location = line;
+          if (phoneMatch && !contact.phone) contact.phone = phoneMatch[0];
+          if (LOCATION_PATTERN.test(line) && isValidLocationString(line) && !contact.location) contact.location = line;
           if (/linkedin\.com|github\.com/i.test(line)) {
             (contact.links ??= []).push(line);
           }
-          // First short non-pattern line is likely the name
+          // Name: must look like a real person name — not a section header, verb phrase, or contact pattern
           if (
             !contact.name &&
-            line.length < 50 &&
-            !EMAIL_PATTERN.test(line) &&
-            !PHONE_PATTERN.test(line) &&
-            !LOCATION_PATTERN.test(line) &&
-            !/linkedin|github|http/i.test(line)
+            looksLikePersonName(line)
           ) {
-            contact.name = line;
+            // Strip trailing professional title if appended (e.g. "Jane Doe — Director of HR")
+            let cleanName = line
+              .replace(/\s*[-–—|,]\s*(director|manager|specialist|analyst|coordinator|engineer|developer|lead|supervisor|consultant|administrator|officer|president|vp|vice\s+president|head\s+of)\b.*/i, "")
+              .trim();
+            if (cleanName.length >= 2) {
+              contact.name = cleanName;
+            }
           }
         }
         break;
