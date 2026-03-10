@@ -84,6 +84,8 @@ function isContactInfoLine(line: string): boolean {
   if (/linkedin\.com|github\.com/i.test(trimmed) && trimmed.length < 80) return true;
   // Multi-contact line (email + phone on same line)
   if (EMAIL_PATTERN.test(trimmed) && PHONE_PATTERN.test(trimmed)) return true;
+  // Line that is just a phone number with optional label
+  if (/^(?:phone|tel|mobile|cell)?[:\s]*(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\s*$/i.test(trimmed)) return true;
   return false;
 }
 
