@@ -416,9 +416,18 @@ function extractHeaderFromResume(text: string): any {
     if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
     if (!header.linkedin) { const m = line.match(linkedinRx); if (m) header.linkedin = m[0]; }
     if (!header.location && locationRx.test(line)) header.location = line;
-    // Name: first line that's short, not an email/phone, not a section header
-    if (i === 0 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
-      header.name = line;
+    // Name: first line that's short, not an email/phone, not a section header, not a placeholder
+    if (i === 0 && !header.name && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
+      // Reject known placeholders and non-name patterns
+      if (/^full\s+name$/i.test(line.trim())) continue;
+      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(line.trim())) continue;
+      // Reject lines that are all digits/symbols
+      if (/^[\d()+\-.\s]+$/.test(line.trim())) continue;
+      // Must contain at least one letter and look like a name (2-4 capitalized words)
+      if (/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,3}$/.test(line.trim()) || /^[A-Z][a-z]+\s+[A-Z]\.?\s+[A-Z][a-z]+$/.test(line.trim())) {
+        header.name = line.trim();
+      }
+      // If it doesn't match name pattern, leave blank rather than inserting garbage
     }
   }
 
