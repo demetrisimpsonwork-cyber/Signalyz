@@ -305,27 +305,28 @@ State one specific thing the candidate will do in this role. End with a single d
 ${toneInstruction}
 
 WRITING QUALITY — CRITICAL:
+- PARAGRAPH LENGTH: Default to 2 sentences per paragraph. A third sentence is permitted ONLY if it introduces a concrete metric, number, or specific example not present in the first two sentences. If the third sentence restates or explains the same idea as sentence 1 or 2, delete it.
+- PATTERN TO ELIMINATE: Statement → explanation → restatement. Instead use: Statement → supporting detail. Two sentences. Stop.
 - TARGET SENTENCE LENGTH: 14–20 words per sentence. If a sentence exceeds 25 words, split it or cut it.
 - SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I," "My," or "This." Vary openings: lead with outcomes, objects, timeframes, or teams.
-- ONE EXPLANATION PER CONCEPT: If you state a skill transfer or operational connection, you get ONE sentence. No follow-up sentence that restates, extends, or re-explains the same idea. If you catch yourself writing a second sentence about the same concept, delete it.
+- ONE IDEA PER PARAGRAPH: Each paragraph gets one concept. Do not restate that concept using different words. If you wrote "led pricing strategy across 3 markets" do not follow with "this pricing work spanned multiple regions."
 - ZERO TRANSFER CHAINS: These patterns are absolutely forbidden:
   * "X requires the same skills as Y"
   * "This demonstrates the same capabilities needed for Z"
   * "X translates directly to Y"
   * "X demonstrates the approach needed for Y"
-  * "The skills required for X are the same as Y"
   Just state what you did. One sentence. The reader connects it to the role.
-- NATURAL VOICE: Write like a professional explaining their work to a peer. Short, plain, specific. No polished abstractions.
-- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "the analytical approach needed to," "the systems thinking required for," "the same capabilities needed for," "the skills required for," "mirrors the demands of," "parallels the requirements of."
+- NATURAL VOICE: Write like a professional explaining their work to a peer. Short, plain, specific.
+- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of."
 - CONCRETENESS: Replace every abstract claim with the specific thing. Not "managed complex stakeholder environments" but "reported to CFO and two VPs weekly on pipeline status."
-- WORD CHOICE: Use the candidate's own vocabulary from the resume. If they say "ran" not "oversaw," keep "ran."
-- REDUNDANCY CHECK: Before finalizing, scan every paragraph. If any skill, capability, or signal appears in more than one sentence across the entire letter, keep only the first mention and delete the rest.
+- WORD CHOICE: Use the candidate's own vocabulary from the resume.
+- REDUNDANCY CHECK: Before finalizing, scan the entire letter. If any skill or signal appears in more than one sentence, keep only the first mention.
 - Every claim must be traceable to actual resume content. Zero fabrication.
 
 TONE STRUCTURE EFFECTS:
-- If CONFIDENT: medium-length sentences, natural rhythm, warm authority.
-- If STRATEGIC: allow slightly more connective reasoning between sentences, but still 3-sentence max per paragraph.
-- If DIRECT: target 2 sentences per paragraph where possible. Shortest version. Declarative only. Cut every subordinate clause you can.
+- If CONFIDENT: 2 sentences per paragraph default. Third only with a metric. Warm authority.
+- If STRATEGIC: 2–3 sentences allowed. Third sentence must add connective reasoning, not restate.
+- If DIRECT: 2 sentences per paragraph. No exceptions. Declarative only.
 
 Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
