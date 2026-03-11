@@ -10,12 +10,10 @@ import ResumeAssemblyLoader from "@/components/ResumeAssemblyLoader";
 import ResumeCanvas from "@/components/ResumeCanvas";
 import ResumeToolbar from "@/components/ResumeToolbar";
 import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
+import ResumeStructureConfirm from "@/components/ResumeStructureConfirm";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
-
-
-
 
 interface CalibratedResumeTabProps {
   isPro: boolean;
@@ -23,12 +21,9 @@ interface CalibratedResumeTabProps {
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
   onSwitchToReport?: () => void;
-  /** Whether an alignment run exists in the current session (not from localStorage) */
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
-  /** Called when resume assembly completes successfully */
   onAssembled?: () => void;
-  /** Alignment result to use when no director result exists */
   alignmentResult?: Record<string, unknown>;
 }
 
@@ -43,23 +38,23 @@ const CalibratedResumeTab = ({
   onAssembled,
   alignmentResult,
 }: CalibratedResumeTabProps) => {
-  const { assembledResume, loading, error, step, assemble } = useResumeAssembly();
+  const {
+    assembledResume, loading, error, step, assemble,
+    confidence, pendingResume, confirmResume, skipConfirmation,
+  } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
 
   const currentResume = editedResume || assembledResume;
 
-  // Notify parent when assembly completes
   useEffect(() => {
     if (assembledResume && onAssembled) onAssembled();
   }, [assembledResume, onAssembled]);
 
-  // Pre-extract contact info from resume text (client-side, no API)
   const preExtractedContact = useMemo(
     () => extractContactFromText(originalResume),
     [originalResume]
   );
 
-  // Auto-trigger upgrade modal for non-Pro users
   useEffect(() => {
     if (!isPro) onUpgrade();
   }, [isPro, onUpgrade]);
@@ -68,14 +63,13 @@ const CalibratedResumeTab = ({
     assemble(directorResult, originalResume, preExtractedContact, alignmentResult as Record<string, unknown>);
   };
 
-  // Auto-assemble when alignment exists and no resume yet
   const autoAssembledRef = useRef(false);
   useEffect(() => {
-    if (isPro && hasCurrentSessionAlignment && !currentResume && !loading && !error && !autoAssembledRef.current) {
+    if (isPro && hasCurrentSessionAlignment && !currentResume && !pendingResume && !loading && !error && !autoAssembledRef.current) {
       autoAssembledRef.current = true;
       handleAssemble();
     }
-  }, [isPro, hasCurrentSessionAlignment, currentResume, loading, error]);
+  }, [isPro, hasCurrentSessionAlignment, currentResume, pendingResume, loading, error]);
 
   const handleExportDocx = () => {
     if (!currentResume) return;
@@ -85,19 +79,16 @@ const CalibratedResumeTab = ({
 
   const handleExportPdf = () => {
     if (!currentResume) return;
-    // Ensure latest data is in localStorage for PDF export
     try {
       localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(currentResume));
     } catch {}
     exportCalibratedPdf("resume-canvas");
   };
 
-  // Pro gate — show CTA with button that triggers popup
   if (!isPro) {
     return <CalibratedResumeGateCTA onUpgrade={onUpgrade} />;
   }
 
-  // Gate: require current-session alignment before anything else
   if (!hasCurrentSessionAlignment) {
     return (
       <div className="max-w-3xl mx-auto">
@@ -120,8 +111,7 @@ const CalibratedResumeTab = ({
 
   return (
     <div className="max-w-5xl md:max-w-tool mx-auto space-y-4">
-      {/* Loading state while auto-assembling */}
-      {!currentResume && !loading && !error && (
+      {!currentResume && !pendingResume && !loading && !error && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[200px] gap-4 p-8">
           <p className="text-sm text-muted-foreground">Preparing to assemble your calibrated resume…</p>
         </div>
@@ -143,6 +133,16 @@ const CalibratedResumeTab = ({
         </div>
       )}
 
+      {/* Low-confidence confirmation step */}
+      {pendingResume && !loading && !currentResume && confidence && (
+        <ResumeStructureConfirm
+          resume={pendingResume}
+          issues={confidence.issues}
+          onConfirm={confirmResume}
+          onSkip={skipConfirmation}
+        />
+      )}
+
       {currentResume && !loading && (
         <>
           <ResumeToolbar
@@ -159,7 +159,7 @@ const CalibratedResumeTab = ({
             className="rounded-lg py-8 px-4"
             style={{ backgroundColor: "#F3F4F6" }}
           >
-          <div id="resume-canvas">
+            <div id="resume-canvas">
               <ResumeCanvas
                 resume={currentResume}
                 editMode={editMode}
