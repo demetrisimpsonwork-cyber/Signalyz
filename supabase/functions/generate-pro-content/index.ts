@@ -244,37 +244,51 @@ EXAMPLE of Direct tone (do NOT copy — match the style):
 EXAMPLE of Confident tone (do NOT copy — match the style):
 "Regulated environments taught me something most operations professionals learn the hard way — speed without accuracy is just noise. Managing 40-70 concurrent escalations daily, I built the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to be escalated before they cost the company a client."`;
 
-        const prompt = `Ghostwrite a cover letter. The candidate is applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. They are sending this today.
+        const prompt = `You are a sharp, experienced candidate writing your own cover letter for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. You are not an AI assistant. You are not an analyst. You are a professional who has done real work and wants this job.
 
-DO NOT explain why their experience is relevant. Instead, DESCRIBE their work using the language of ${roleTitle} so the reader naturally sees the fit.
+Your job: make the reader think "we should interview this person." Not "this person explained their transferable skills well."
 
 ${signalIntelligence}
 
-Resume: ${experience.slice(0, 3000)}
+Resume (YOUR actual experience — everything you write must come from here): ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 
 ${toneBlock}
 
-Write exactly 5 paragraphs, separated by blank lines:
+VOICE RULES:
+- Write as "I" — you are the candidate, speaking to a hiring manager.
+- Sound like a real person who has done real work and knows what this role requires.
+- DO NOT explain why your experience is relevant. Just describe your work so the relevance is obvious.
+- DO NOT act as a translator between resume and JD. Act as a candidate making a case.
+- If you catch yourself writing "this taught me," "this required," "this mirrors," "this translates," "this supports," "this demonstrates," "which prepared me," or "this directly applies" — STOP and rewrite that sentence as a direct claim about what you did or what you'll do.
 
-P1 — HOOK (2 sentences): Who they are + one striking proof point. The reader should want to keep reading. Not "I am writing to apply." Open with something specific.
+STRUCTURE — exactly 5 paragraphs separated by blank lines:
 
-P2 — PROOF (2-3 sentences): Their strongest real evidence — numbers, systems, outcomes from THEIR resume. Each sentence = different evidence. Start sentences with the work, not "I."
+P1 — THE CLAIM (2 sentences):
+State who you are in this field and why you're pursuing this specific role. Ground it in one concrete detail from your actual work — a number, a system, a scope. The reader should feel "this person knows this world." Not "this person is enthusiastic."
 
-P3 — FIT (2 sentences): Show how their work connects to what this role needs. Do this by describing their work in the role's language — never by explaining the connection. If you write "translates to" or "mirrors" or "demonstrates," delete it and rewrite.
+P2 — OPERATIONAL PROOF (2-3 sentences):
+Your strongest evidence of doing work that matters for this role. Lead with outcomes and specifics — volumes handled, processes built, problems solved. Each sentence should advance a DIFFERENT point. This paragraph answers: "what have you actually done?"
 
-P4 — GAP (2 sentences): Half a sentence acknowledging what's missing, then pivot hard to what they bring that matters more. Sound like someone who's already thought this through.
+P3 — PEOPLE & STAKEHOLDER PROOF (2 sentences):
+Show how you've worked with people — customers, teams, partners, leadership. This is DIFFERENT from P2. P2 = what you built/ran. P3 = how you worked with humans. Use specific examples: who you served, what you managed interpersonally, what judgment calls you made with people involved.
 
-P5 — CLOSE (1-2 sentences): One specific thing they'll contribute. End with conviction. No pleasantries.
+P4 — THE GAP, HANDLED (2 sentences):
+Acknowledge what you haven't done yet — briefly, honestly, in half a sentence. Then immediately show why you're ready anyway. Sound like someone who's already thought about this and isn't worried. Not defensive. Not inflated. Just clear-eyed.
 
-CONSTRAINTS:
-- 250 words max. First person.
-- Zero fabrication. No invented employers, metrics, systems, titles, or supervisory scope.
-- Max 1 "I" sentence start per paragraph.
-- Never use: "positioned to," "passionate about," "eager to," "I believe," "strong foundation," "proven ability," "this translates," "this mirrors," "this demonstrates," "Furthermore," "Additionally," "Moreover."
-- No noun phrase used twice in the letter.
+P5 — CLOSE (1-2 sentences):
+Name one specific thing you'll do or bring. End with forward motion. No "thank you for your consideration." No "I look forward to." Just a clean statement of what happens next if they're smart enough to call you.
 
-Return ONLY a JSON object: {"letter": "..."} — body text only, no header/date/salutation/sign-off/labels.`;
+HARD CONSTRAINTS:
+- 250 words max. First person throughout.
+- ZERO fabrication. Nothing invented — no fake employers, metrics, systems, titles, team sizes, or supervisory roles.
+- Max 1 sentence per paragraph may start with "I." Vary openings: lead with the work, the outcome, the context.
+- BANNED PHRASES (if you write any of these, the letter fails): "positioned to," "passionate about," "eager to," "I believe that," "strong foundation," "proven ability," "results-driven," "dynamic environment," "thrilled to," "excited to apply," "I am writing to express," "Furthermore," "Additionally," "Moreover," "In conclusion."
+- BANNED PATTERNS: "this [verb]s" constructions that explain relevance (e.g., "this taught me," "this mirrors," "this translates to," "this required me to," "this supports," "this demonstrates"). Maximum ONE such construction in the entire letter, only if truly unavoidable.
+- No operational noun phrase repeated twice in the letter (e.g., don't say "operational discipline" twice).
+- Every claim must trace to something in the resume. If it's not in the resume, don't write it.
+
+Return ONLY a JSON object: {"letter": "..."} — body paragraphs only, no header/date/salutation/sign-off/paragraph labels.`;
         const raw = await callAI(prompt, 3000, toneTemp);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
