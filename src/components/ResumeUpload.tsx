@@ -73,7 +73,7 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
         throw new Error("Could not extract meaningful text from this file.");
       }
 
-      onTextExtracted(text);
+      onTextExtracted(text, ext === "docx" ? "docx" : "pdf");
       toast.success("Resume text extracted successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to extract text from file.");
