@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
-async function callAI(prompt: string, maxTokens = 4000): Promise<string> {
+async function callAI(prompt: string, maxTokens = 4000, temperature = 0): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -19,7 +19,7 @@ async function callAI(prompt: string, maxTokens = 4000): Promise<string> {
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
-      temperature: 0,
+      temperature: temperature,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -227,101 +227,62 @@ SIGNAL INTELLIGENCE (use to shape the letter — do NOT dump these diagnostics i
 - Missing Keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}
 - Score Rationale: ${(alignmentResult.score_rationale || []).join("; ") || "N/A"}`;
 
+        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.3 : 0.8;
+
         const toneInstruction = tone === "strategic"
           ? `TONE — STRATEGIC:
-- Most analytical and intelligent mode. Frame the letter through systems-thinking language: "designed," "scaled," "operationalized," "built the process that."
-- Every achievement should be contextualized with outcomes, scale, and downstream effects.
-- Bridge logic must be the strongest here — connect seemingly unrelated experience to role requirements through clear analytical reasoning.
-- Paragraphs can be longer; each sentence should build on the prior one logically, creating a chain of reasoning.
-- Sentence construction: compound-complex sentences that layer evidence. Use semicolons and em dashes to connect related ideas.
-- Close with a single sentence connecting your operational systems to what the company needs to build next.
-- NEVER use "positioned to," "I am positioned," or "positions me to."`
+Write like a management consultant making a business case. Frame everything through systems, scale, and commercial impact. Use compound sentences that layer evidence logically. Semicolons and em dashes connect related ideas. The reader should feel they're reading someone who thinks in architectures and outcomes — someone who sees the whole board. Vocabulary: "designed," "operationalized," "scaled," "restructured." Closing should connect the candidate's operational systems to what the organization needs to build next. This tone should feel noticeably more cerebral, analytical, and commercially framed than the other modes.`
           : tone === "direct"
           ? `TONE — DIRECT:
-- Tightest possible writing. Every sentence is declarative. No subordinate clauses unless absolutely necessary.
-- No throat-clearing phrases: never use "In my experience," "I believe that," "Having worked in," "It is worth noting."
-- Start sentences with subjects and verbs. Prefer active voice exclusively.
-- Paragraphs: 2-3 sentences maximum. White space between ideas.
-- More operational language: "I run," "I built," "I manage," "I delivered."
-- Sentence construction: short, punchy, subject-verb-object. Minimal adjectives.
-- Close with exactly one sentence stating intent. No pleasantries.
-- NEVER use "positioned to," "I am positioned," or "positions me to."`
+Write like someone who respects the reader's time. Every sentence is declarative, subject-verb-object. No subordinate clauses unless essential. No warming-up phrases. Paragraphs are tight — 2 sentences preferred. More white space between ideas. Sentence length: 8-15 words typical. The letter should feel like a confident professional who says what they mean and stops. Vocabulary: plain, operational, concrete. "I run." "I built." "I delivered." Closing is one sentence. Period. This tone should feel noticeably shorter, sharper, and more plainspoken than the other modes.`
           : `TONE — CONFIDENT:
-- Warm but authoritative. Professional credibility without stiffness.
-- Authority-first framing: state the claim, then back it with evidence.
-- No hedging words anywhere: no "I believe," "I feel," "I think," "perhaps," "likely," "potentially."
-- Every sentence projects certainty while remaining personable. Use present tense where possible.
-- Sentence construction: medium-length sentences with natural rhythm. Vary sentence length for pacing — a short declarative sentence after a longer one creates emphasis.
-- Balanced persuasion: confident without being aggressive.
-- Close with a direct statement of intent that feels natural, not formulaic.
-- NEVER use "positioned to," "I am positioned," or "positions me to."`;
+Write like a candidate who knows they belong in this conversation. Warm authority — professional credibility with personal weight behind it. The reader should feel the candidate's presence, not just their resume. Mix medium and short sentences for natural rhythm. Allow a touch of personality — a well-placed dash, a sentence that shows self-awareness, a moment of directness that breaks the professional veneer just enough to feel real. No hedging. No "I believe" or "I feel." State things as facts with the warmth of someone who earned the right to. This tone should feel noticeably more personable and assertive than the other modes.`;
 
-        const prompt = `You are a professional cover letter writer. Your client is applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. Write a letter they would confidently submit — persuasive, human, and grounded in their actual experience.
+        const prompt = `You are ghostwriting a cover letter for a real person applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. They need to send this today.
 
-Before writing, reason silently (do not include any of this in output):
+Your job is NOT to explain why their experience transfers. Your job is to write a letter so grounded in their actual work that the hiring manager thinks: "This person already does what we need."
 
-INTERNAL REASONING (silent — do not output):
-1. What is the single most compelling reason a hiring manager should consider this candidate for ${roleTitle}? Ground this in real experience, not transferability arguments.
-2. Which 2-3 specific achievements or responsibilities from the resume would matter most to THIS employer based on the JD?
-3. What is the biggest gap, and what is the honest, non-defensive way to address it?
-4. What would make the hiring manager want to meet this person after reading paragraph one?
+BEFORE WRITING — think silently (do not output any of this):
+- What is ONE thing about this candidate that would make a hiring manager pause and read more carefully?
+- What specific number, system, or outcome from their resume is most impressive for THIS role?
+- If this candidate were sitting across from the hiring manager, what would they say in the first 30 seconds?
 
 ${signalIntelligence}
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 
-HARD RULES:
-- NEVER use "positioned to," "I am positioned," "positions me to," or any variation of "position" as a verb describing the candidate.
-- NEVER start any paragraph with "Your organization requires," "Your organization needs," "Your team needs," or any sentence that echoes back JD requirements.
-- NEVER use "I am writing to apply," "I am excited," "I am thrilled," "eager to contribute," or any generic application phrases.
-- NEVER use filler transitions: "Furthermore," "Additionally," "Moreover," "In addition."
-- NEVER pad with vague soft skills: "strong communicator," "team player," "detail-oriented" unless backed by specific evidence in the same sentence.
-- NEVER fabricate experience or inflate claims beyond what the resume states.
-- NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
-- Maximum 230 words total. Exactly 4 paragraphs. First person as the candidate.
-- Each paragraph must be separated by exactly one blank line.
-- ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
+STRUCTURE — exactly 5 paragraphs separated by blank lines:
 
-VOICE AND RHYTHM — THIS IS THE MOST IMPORTANT SECTION:
-- Write like a sharp candidate who knows their worth — not like a system explaining why they qualify.
-- INVISIBLE TRANSFER LOGIC: Never write a sentence whose job is to explain why skill X is relevant to role Y. Instead, describe the candidate's work using the language and framing of the target role so the fit is felt, not argued. The reader should think "this person already does this work" — without being told so explicitly.
-- ZERO SCAFFOLDING PHRASES: Do not use sentences structured as "[experience] demonstrates / supports / translates to / prepares me for [role requirement]." If you catch yourself connecting A to B with a bridge verb, delete the bridge and rewrite A so it already sounds like B.
-- VARY SENTENCE OPENINGS: No more than 1 sentence per paragraph may start with "I." Lead with outcomes, environments, scale, or the work itself. Examples: "Managing 40-70 concurrent escalations daily built…" / "That volume required…" / "Revenue grew 18% after…"
-- MIX SENTENCE LENGTH: Alternate short (8-12 words) and medium (15-22 words). Never stack 3 sentences of similar length or structure.
-- HUMAN CADENCE: Include natural rhythmic variation — an occasional fragment for emphasis, a dash to pivot mid-thought, a sentence that breathes. The writing should feel like someone who drafts well, not like output that was optimized. Read each paragraph aloud mentally: if every sentence has the same beat, rewrite.
-- CANDIDATE-SPECIFIC DETAIL: Every middle-paragraph sentence must reference a specific system, volume, process, outcome, or environment from THIS candidate's resume. If a sentence could appear in any operations professional's cover letter unchanged, it is too generic — rewrite with the candidate's actual specifics.
-- NO NOUN PHRASE REPETITION: If you use "operational discipline" once, do not use it again. Same for "customer flow," "cross-functional coordination," "stakeholder management," or any operational noun phrase. Find a different, natural way to express the concept each time.
-- CONFIDENCE WITHOUT HEDGING: No "I believe," "I feel," "perhaps," "likely," "potentially." State facts and intent directly.
-- PERSUASIVE INEVITABILITY: The letter should make the reader feel this candidate has already been doing adjacent work at the required level — not that they could theoretically do it with the right opportunity. Frame the gap as a narrow surface difference, not a fundamental qualification question.
+Paragraph 1 — THE HOOK (2 sentences):
+Open with who this person is and what they do — stated in a way that immediately sounds relevant to ${roleTitle}. Not "I am writing to apply." Not a duty restatement. The reader should think "tell me more" after sentence one. Sentence two adds one specific proof point — a number, a scale, a system — that earns credibility instantly.
 
-STRUCTURE:
+Paragraph 2 — THE CASE (2-3 sentences):
+The strongest evidence from their actual background. Specific systems, volumes, outcomes, environments. Each sentence should feature DIFFERENT evidence. These sentences should sound like they could only come from THIS person's career — not any operations professional. Start sentences with the work, not with "I."
 
-Paragraph 1 — OPENING (2-3 sentences):
-Establish professional identity and create immediate interest. The reader should understand WHO this person is, WHAT they do at scale, and WHY this role is a natural next step — all within the first two sentences. Do not restate duties. Frame the candidate's identity so the role feels like an obvious fit, not a stretch. A third sentence is permitted only if it adds a specific metric or achievement.
+Paragraph 3 — THE CROSSWALK (2 sentences):
+Connect their background to what the role actually needs. But do it NATURALLY — describe their work using the role's language so the fit is self-evident. Do NOT write "this translates to" or "this mirrors" or "this demonstrates." If you find yourself explaining WHY something is relevant, you've failed. Just describe the work in a way that makes relevance obvious.
 
-Paragraph 2 — STRONGEST EVIDENCE (2-3 sentences):
-Present the most relevant operational proof using THIS candidate's specific numbers, systems, and outcomes. Each sentence should feature different evidence. Start sentences with the work itself, not with "I." These sentences should sound like they could only have been written by this particular candidate — not any operations professional.
+Paragraph 4 — THE GAP (2 sentences):
+Name what's missing honestly — half a sentence, no more. Then immediately pivot to what they DO bring that matters more. This should sound like a professional who has already thought this through and isn't worried about it. Confident, not defensive. Not inflated.
 
-Paragraph 3 — GAP BRIDGE (2 sentences):
-Name the gap honestly in half a sentence, then pivot immediately to the strongest transferable evidence. Compress the acknowledgment — spend more words on readiness than on what's missing. The pivot should feel like a professional who has already thought this through, not a candidate defending themselves.
-
-Paragraph 4 — CLOSE (2 sentences):
-First sentence: name one specific, concrete contribution the candidate will make. Second sentence: end with conviction. The reader should finish wanting to schedule an interview. No "I look forward to." No pleasantries. No generic closer.
+Paragraph 5 — THE CLOSE (1-2 sentences):
+One concrete thing they will do or bring. End with conviction. The reader should want to schedule an interview. No "I look forward to discussing." No pleasantries. Just a clear, forward statement.
 
 ${toneInstruction}
 
-WRITING QUALITY:
-- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of," "this experience transfers," "these skills translate," "which prepared me," "which equipped me," "this demonstrates," "this supports," "this translates," "this prepared me," "operational discipline" (use only once if at all), "cross-functional coordination" (use only once if at all).
-- NO REPEAT CONCEPTS: If a skill or idea appears in one paragraph, it cannot appear in any other paragraph.
-- WORD CHOICE: Use the candidate's own vocabulary from the resume wherever possible.
-- CONCRETENESS: Replace every abstract claim with the specific thing. "I managed compliance" → "I managed FDA audit responses across 3 product lines."
-- Every claim must be traceable to actual resume content. Zero fabrication.
-- FINAL CHECK: Read the letter as a hiring manager who reads 50 cover letters a week. Does this one sound like a real person with real conviction, or like polished AI output? If any sentence feels system-generated, rewrite it until it sounds like a specific human wrote it about their specific career.
+RULES:
+- 250 words maximum. First person as the candidate.
+- Zero fabrication. Every claim traceable to the resume.
+- Do not invent employers, systems, metrics, titles, or supervisory scope.
+- BANNED PHRASES: "positioned to," "I am writing to apply," "excited to," "thrilled to," "passionate about," "dedicated to," "committed to," "eager to contribute," "I believe that," "strong foundation in," "proven ability to," "extensive experience in," "well-versed in," "deep understanding of," "Furthermore," "Additionally," "Moreover," "In addition," "this translates to," "this mirrors," "this demonstrates," "this supports," "which prepared me," "which equipped me," "aligns with."
+- Max 1 sentence starting with "I" per paragraph. Vary openings: lead with outcomes, scale, environments, the work itself.
+- No repeated operational noun phrases across the letter.
+- FINAL TEST: Read each paragraph. Does it sound like a real person wrote it about their real career? Or does it sound like a system generated it? If any sentence sounds generated, rewrite it.
 
-Return a JSON object with: "letter" (the full cover letter body text — exactly 4 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
+Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no labels)
 Return ONLY valid JSON, no markdown.`;
-        const raw = await callAI(prompt, 3000);
+        const raw = await callAI(prompt, 3000, toneTemp);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
         break;
