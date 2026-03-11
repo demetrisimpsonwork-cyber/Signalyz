@@ -197,6 +197,36 @@ Return ONLY valid JSON, no markdown.`;
         const roleTitle = inferredRole || "this role";
         const tone = sanitize(body.tone || "confident");
 
+        // Extract signal intelligence from alignment result
+        const signalModel = alignmentResult.signal_model || {};
+        const execSummary = signalModel.executive_insight_summary || alignmentResult.executive_insight_summary || {};
+        const transferable = signalModel.transferable_signal_detection || alignmentResult.transferable_signal_detection || {};
+        const interviewGap = signalModel.interview_gap_diagnosis || alignmentResult.interview_gap_diagnosis || {};
+        const riskProjection = signalModel.risk_projection || {};
+        const signalAlignment = signalModel.signal_alignment_analysis || alignmentResult.signal_alignment_analysis || [];
+        const resumeProfile = signalModel.resume_signal_profile || alignmentResult.resume_signal_profile || {};
+        const jdSignals = signalModel.jd_signal_extraction || alignmentResult.jd_signal_extraction || {};
+        const strengths = signalModel.strengths || alignmentResult.strengths || [];
+        const gaps = signalModel.gaps || alignmentResult.gaps || [];
+
+        // Build signal intelligence block for the prompt
+        const signalIntelligence = `
+SIGNAL INTELLIGENCE (use to shape the letter — do NOT dump these diagnostics into the text):
+- Primary Strength: ${execSummary.primary_strength || "N/A"}
+- Top Gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
+- Strategic Repositioning Opportunity: ${execSummary.strategic_repositioning_opportunity || "N/A"}
+- What Hiring Managers See: ${(interviewGap.what_hiring_managers_see || []).join("; ") || "N/A"}
+- Transferable Signal: ${transferable.detected_capability || "N/A"} — ${transferable.why_it_transfers || ""}
+- Elevation Opportunity: ${transferable.elevation_opportunity || "N/A"}
+- Key Strengths: ${(Array.isArray(strengths) ? strengths.slice(0, 4) : []).join("; ") || "N/A"}
+- Risk Areas: ${(riskProjection.stages || []).filter((s: any) => s.status !== "PASS").map((s: any) => `${s.stage}: ${s.explanation}`).join("; ") || "None identified"}
+- JD Priority Summary: ${jdSignals.priority_summary || "N/A"}
+- JD Role Identity Signals: ${(jdSignals.role_identity_signals || []).slice(0, 5).join(", ") || "N/A"}
+- Alignment Weak Spots: ${(Array.isArray(signalAlignment) ? signalAlignment.filter((a: any) => a.alignment_level === "Weak" || a.alignment_level === "Missing").map((a: any) => `${a.category}: ${a.perception_gap}`).slice(0, 3) : []).join("; ") || "None"}
+- Resume Signal Strengths: ${Object.entries(resumeProfile).filter(([_, v]: any) => v?.strength === "Strong").map(([k]: any) => k.replace(/_/g, " ")).join(", ") || "N/A"}
+- Missing Keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}
+- Score Rationale: ${(alignmentResult.score_rationale || []).join("; ") || "N/A"}`;
+
         const toneInstruction = tone === "strategic"
           ? `TONE — STRATEGIC:
 - Most analytical and intelligent mode. Frame the letter through systems-thinking language: "designed," "scaled," "operationalized," "built the process that."
@@ -226,21 +256,21 @@ Return ONLY valid JSON, no markdown.`;
 - Close with a direct statement of intent that feels natural, not formulaic.
 - NEVER use "positioned to," "I am positioned," or "positions me to."`;
 
-        const prompt = `You are writing a cover letter for a real person. Before writing, perform this internal reasoning (do not include it in the output):
+        const prompt = `You are writing a cover letter for a real person applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. 
+
+Before writing, perform this internal reasoning (do not include it in the output):
 
 INTERNAL REASONING (silent — do not output):
-1. PRIMARY SIGNAL ANGLE: What is the single strongest reason this candidate should plausibly succeed in ${roleTitle}? Identify the most compelling transferable signal from their resume.
-2. SUPPORTING EVIDENCE: Which 2-3 specific experiences from the resume best demonstrate that signal? Look for concrete responsibilities, decisions, or measurable outcomes.
-3. PRIMARY GAP: What is the most obvious mismatch between this candidate's background and the job description? Name it honestly.
-4. STRATEGIC BRIDGE: How does the candidate's real experience still map to the role despite that gap? What adjacent capability or transferable pattern makes the gap less significant than it appears?
+1. PRIMARY SIGNAL ANGLE: Using the signal intelligence below, what is the single strongest reason this candidate should plausibly succeed in ${roleTitle}? Use the primary strength and transferable signal data to identify this.
+2. SUPPORTING EVIDENCE: Which 2-3 specific experiences from the resume demonstrate that angle? Look for concrete responsibilities, decisions, or measurable outcomes. Cross-reference with JD priority signals.
+3. PRIMARY GAP: What is the most significant mismatch? Use the top gap and what hiring managers see to identify the real friction point.
+4. STRATEGIC BRIDGE: How does the candidate's real experience map to the role despite that gap? Use the repositioning opportunity and elevation opportunity to construct this bridge.
+5. EMPLOYER LENS: What does this employer actually weight most based on the JD signals? Shape the letter around THEIR priorities, not just the candidate's strengths.
 
-Now write the letter using that reasoning.
+${signalIntelligence}
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
-Top signal gaps: ${alignmentResult.top_missing_signal || "N/A"}
-Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
-Score rationale: ${(alignmentResult.score_rationale || []).join("; ")}
 
 HARD RULES:
 - NEVER use "positioned to," "I am positioned," "positions me to," or any variation of "position" as a verb describing the candidate.
@@ -249,34 +279,42 @@ HARD RULES:
 - NEVER use filler transitions: "Furthermore," "Additionally," "Moreover," "In addition."
 - NEVER pad with vague soft skills: "strong communicator," "team player," "detail-oriented" unless backed by specific evidence in the same sentence.
 - NEVER fabricate experience or inflate claims beyond what the resume states.
-- Maximum 280 words total. Exactly 4 paragraphs. First person as the candidate.
+- NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
+- NEVER use robotic parallel sentence structures across paragraphs. Vary rhythm deliberately.
+- Maximum 320 words total. Exactly 5 paragraphs. First person as the candidate.
+- Each paragraph must be separated by exactly one blank line.
 
 STRUCTURE:
 
-Paragraph 1 — OPENING SIGNAL (2-3 sentences)
-Lead with the primary signal angle from your reasoning. Open with a declarative statement of professional identity that names the strongest transferable signal for this specific role. The reader should immediately understand what this candidate brings and why it matters for THIS role. No generic openers.
+Paragraph 1 — OPENING HOOK (2-3 sentences)
+Lead with the primary signal angle — the strongest transferable capability for THIS specific role. Open with a declarative statement of professional identity grounded in what the candidate actually does. The reader should immediately understand what this person brings and why it is relevant to their specific operational needs. Use the JD priority signals to shape what you lead with. No generic openers. No "I am writing to..." No "With X years of experience..."
 
-Paragraph 2 — EVIDENCE OF FIT (3-4 sentences)
-Use your supporting evidence. Describe specific experience that directly aligns with the role's requirements. Reference concrete responsibilities, decisions, or outcomes from the resume. Each sentence should deepen the case, not repeat it. Show the candidate operating at the level this role demands.
+Paragraph 2 — OPERATIONAL FIT (3-4 sentences)
+Connect the candidate's actual working background to the role's real operating demands. Reference specific responsibilities, systems, scale, or decisions from the resume. Show the candidate operating at the level this role requires. Each sentence should deepen the case, not repeat it. Use the alignment analysis and resume signal profile to identify which evidence is strongest.
 
-Paragraph 3 — HONEST GAP ACKNOWLEDGMENT + BRIDGE (2-3 sentences)
-Name the primary gap directly in the first sentence (e.g., "My background is in X, not Y."). Then immediately reframe: explain specifically what experience transfers and why it is relevant. Use a concrete example. Do not minimize the gap or pretend it doesn't exist — reframe it as a different kind of qualification.
+Paragraph 3 — TRANSFERABLE SIGNAL + ALIGNMENT (2-3 sentences)
+Surface the strongest transferable signals — capabilities that map to the role even if originally framed differently. Use the transferable signal detection and elevation opportunity to show how adjacent experience is directly relevant. Be specific about what transfers and why.
 
-Paragraph 4 — CLOSING INTENT (1-2 sentences)
-State what the candidate will do in this role based on their specific operational strengths. Reference a specific capability. One direct sentence of intent — no "Thank you for your consideration," no "I look forward to hearing from you."
+Paragraph 4 — HONEST GAP REFRAME (2-3 sentences)
+Name the primary gap directly in the first sentence. Do not minimize it or pretend it does not exist. Then immediately reframe: explain what specific experience transfers and why the gap is less significant than it appears. Use the strategic repositioning opportunity. One concrete example. The tone should be honest and grounded, not defensive.
+
+Paragraph 5 — CLOSING INTENT (1-2 sentences)
+State what the candidate will do in this role based on specific operational strengths. Reference a concrete capability. One direct sentence of intent — no "Thank you for your consideration," no "I look forward to hearing from you." Make it specific to the role.
 
 ${toneInstruction}
 
 WRITING QUALITY:
-- The letter must read as if a thoughtful human wrote it after deeply analyzing both the resume and job description.
-- Natural paragraph rhythm — vary sentence length and structure.
-- No robotic repetition of sentence patterns.
+- The letter must read as if a thoughtful human wrote it after deeply studying both the resume and the specific job.
+- Use the candidate's own terminology and language patterns from the resume where possible.
+- Natural paragraph rhythm — vary sentence length and structure deliberately.
+- No robotic repetition of sentence patterns across paragraphs.
 - Every claim must be traceable to actual resume content.
-- The overall effect should be: intelligent, grounded, credible, signal-aware.
+- The overall effect should be: intelligent, grounded, credible, role-specific.
+- It should feel like this person talking about their own work, not a generator summarizing a resume.
 
-Return a JSON object with: "letter" (the full cover letter body text only — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
+Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
-        const raw = await callAI(prompt, 2500);
+        const raw = await callAI(prompt, 3000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
         break;
