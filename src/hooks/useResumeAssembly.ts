@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
+import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
 
 export interface CalibratedResumeData {
   header: {
@@ -40,6 +41,13 @@ interface UseResumeAssemblyReturn {
   loading: boolean;
   error: string | null;
   step: number;
+  confidence: ConfidenceResult | null;
+  /** The raw (pre-confirmation) resume when confidence is low */
+  pendingResume: CalibratedResumeData | null;
+  /** Accept user-corrected data and finalize assembly */
+  confirmResume: (corrected: CalibratedResumeData) => void;
+  /** Skip confirmation and use the raw data as-is */
+  skipConfirmation: () => void;
   assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
 }
 
@@ -51,14 +59,40 @@ const STEPS = [
 
 export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(null);
+  const [pendingResume, setPendingResume] = useState<CalibratedResumeData | null>(null);
+  const [confidence, setConfidence] = useState<ConfidenceResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+
+  const finalizeResume = useCallback((resume: CalibratedResumeData) => {
+    setAssembledResume(resume);
+    setPendingResume(null);
+    setStep(3);
+    try {
+      localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(resume));
+    } catch {}
+  }, []);
+
+  const confirmResume = useCallback((corrected: CalibratedResumeData) => {
+    // Re-evaluate confidence on corrected data (for logging), then finalize
+    const newConf = evaluateConfidence(corrected);
+    setConfidence(newConf);
+    finalizeResume(corrected);
+  }, [finalizeResume]);
+
+  const skipConfirmation = useCallback(() => {
+    if (pendingResume) {
+      finalizeResume(pendingResume);
+    }
+  }, [pendingResume, finalizeResume]);
 
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     setStep(0);
+    setPendingResume(null);
+    setConfidence(null);
 
     const stepTimers = [
       setTimeout(() => setStep(1), 1200),
@@ -108,7 +142,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
       const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
 
-      // ── Strict field validation: reject contaminated content, leave empty if uncertain ──
+      // ── Strict field validation helpers ──
 
       const isContactPattern = (v: string): boolean => {
         if (!v) return false;
@@ -137,7 +171,6 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
       const resumeKeywords = /\b(benefits|resources|operations|marketing|finance|technology|information|administration|management|services|solutions)\b/i;
 
-      // Name: reject placeholders, section headers, verbs, contact patterns
       const validateName = (name: string): string => {
         if (!name) return "";
         if (/^full\s+name$/i.test(name.trim())) return "";
@@ -149,14 +182,12 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return name;
       };
 
-      // Location: must look like "City, ST" — reject bullet fragments
       const validateLocation = (loc: string): string => {
         if (!loc) return "";
         if (startsWithActionVerb(loc)) return "";
         if (resumeKeywords.test(loc)) return "";
         if (isContactPattern(loc)) return "";
         if (isCamelCaseArtifact(loc)) return "";
-        // Basic "City, ST" shape check
         if (!/[A-Z][a-z]/.test(loc)) return "";
         return loc;
       };
@@ -173,46 +204,34 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         location: cleanLocation,
       };
 
-      // ── Build experience: reject entries where company/title is contact info ──
       const cleanExperience = (data.experience || []).filter((exp: any) => {
         const company = (exp.company || "").trim();
         const title = (exp.title || "").trim();
         const combined = `${company} ${title}`.trim();
-        // Reject if company or title is a phone number, email, or address
         if (isContactPattern(combined)) return false;
-        // Reject purely numeric "companies" (phone fragments)
         if (/^[\d()+\-.\s]+$/.test(company)) return false;
-        // Reject CamelCase artifacts as company names
         if (isCamelCaseArtifact(company)) return false;
         if (isCamelCaseArtifact(title)) return false;
         return true;
       });
 
-      // Also scrub individual bullets within experience entries
       for (const exp of cleanExperience) {
         if (Array.isArray(exp.bullets)) {
           exp.bullets = exp.bullets.filter((b: string) => {
             if (!b) return false;
-            // Remove bullets that are purely contact info
             if (isContactPattern(b) && b.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, "").replace(/[\d()+\-.\s]/g, "").trim().length < 5) return false;
             return true;
           });
         }
       }
 
-      // ── Build education: only degree/institution/year content ──
       const cleanEducation = (data.education || []).filter((edu: any) => {
         const inst = (edu.institution || "").trim();
         const deg = (edu.degree || "").trim();
-        // Must have at least institution or degree
         if (!inst && !deg) return false;
-        // Reject CamelCase artifacts
         if (isCamelCaseArtifact(inst) || isCamelCaseArtifact(deg)) return false;
-        // Reject professional titles as institution names
         if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST|COORDINATOR|ENGINEER|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT)/i.test(inst)) return false;
-        // Reject contact info in institution or degree fields
         if (isContactPattern(inst) || isContactPattern(deg)) return false;
-        // Reject action-verb-led text (experience bullets)
         if (startsWithActionVerb(inst) || startsWithActionVerb(deg)) return false;
         return true;
       });
@@ -229,18 +248,24 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         signal_keywords: data.signal_keywords || [],
       };
 
-      setAssembledResume(resume);
-      setStep(3);
+      // ── Confidence check ──
+      const conf = evaluateConfidence(resume);
+      setConfidence(conf);
 
-      try {
-        localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(resume));
-      } catch {}
+      if (conf.isLow) {
+        // Park the resume for user confirmation instead of rendering contaminated output
+        console.log("[useResumeAssembly] Low confidence (" + conf.score + "), issues:", conf.issues);
+        setPendingResume(resume);
+        setStep(3);
+      } else {
+        finalizeResume(resume);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to assemble resume. Please retry.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [finalizeResume]);
 
-  return { assembledResume, loading, error, step, assemble };
+  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble };
 }
