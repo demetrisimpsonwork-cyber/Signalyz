@@ -182,7 +182,7 @@ const Pricing = () => {
               Unlock Full Signal Intelligence — $19/month
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
-              Or unlock one full report — $9
+              Need just one report? Unlock it for $9
             </Button>
             <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
           </div>
