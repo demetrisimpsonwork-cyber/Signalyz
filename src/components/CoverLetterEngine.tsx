@@ -62,6 +62,80 @@ function formatDate(): string {
   return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
+const COVER_LETTER_SECTIONS = [
+  { min: 2, max: 3, target: 2 },
+  { min: 2, max: 3, target: 3 },
+  { min: 2, max: 3, target: 3 },
+  { min: 2, max: 2, target: 2 },
+  { min: 2, max: 2, target: 2 },
+] as const;
+
+function splitIntoSentences(text: string): string[] {
+  const matches = text.match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g) ?? [];
+  return matches
+    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function splitParagraphs(text: string): string[] {
+  return text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
+function segmentCoverLetterBody(text: string): string {
+  const normalized = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalized) return "";
+
+  const sentences = splitIntoSentences(normalized);
+  if (!sentences.length) return normalized;
+
+  const sections: string[][] = COVER_LETTER_SECTIONS.map(() => []);
+  let cursor = 0;
+
+  for (let i = 0; i < COVER_LETTER_SECTIONS.length; i++) {
+    const config = COVER_LETTER_SECTIONS[i];
+    const remaining = sentences.length - cursor;
+    const minForRest = COVER_LETTER_SECTIONS.slice(i + 1).reduce((sum, section) => sum + section.min, 0);
+    const maxForCurrent = Math.min(config.max, Math.max(remaining - minForRest, 0));
+    const minForCurrent = Math.min(config.min, maxForCurrent);
+
+    let take = Math.min(config.target, maxForCurrent);
+    if (take < minForCurrent) take = minForCurrent;
+
+    if (take > 0) {
+      sections[i] = sentences.slice(cursor, cursor + take);
+      cursor += take;
+    }
+  }
+
+  while (cursor < sentences.length) {
+    let allocated = false;
+
+    for (let i = 0; i < COVER_LETTER_SECTIONS.length && cursor < sentences.length; i++) {
+      const room = COVER_LETTER_SECTIONS[i].max - sections[i].length;
+      if (room > 0) {
+        sections[i].push(sentences[cursor]);
+        cursor += 1;
+        allocated = true;
+      }
+    }
+
+    if (!allocated) break;
+  }
+
+  return sections
+    .map((section) => section.join(" ").trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
@@ -118,7 +192,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
-      setLetter(antiAIFilter(data.letter || ""));
+      const filteredLetter = antiAIFilter(data.letter || "");
+      const segmentedLetter = segmentCoverLetterBody(filteredLetter);
+      setLetter(segmentedLetter || filteredLetter);
       setHasGenerated(true);
       setStep(4);
     } catch (e: any) {
@@ -163,7 +239,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
     parts.push(salutation);
     parts.push("");
-    const paragraphs = activeLetter.split("\n\n").filter(Boolean);
+    const paragraphs = splitParagraphs(activeLetter);
     paragraphs.forEach((p, i) => {
       parts.push(p);
       if (i < paragraphs.length - 1) parts.push("");
@@ -396,7 +472,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
               {/* Body — structured paragraphs */}
               <div style={{ marginBottom: "20px" }}>
-                {activeLetter.split("\n\n").filter(Boolean).map((p, i) => (
+                {splitParagraphs(activeLetter).map((p, i) => (
                   <p key={i} style={{
                     fontSize: "11.5px",
                     lineHeight: "1.7",
