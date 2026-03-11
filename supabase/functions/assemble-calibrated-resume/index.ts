@@ -315,6 +315,34 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
   return roles;
 }
 
+// ─── Education line validators ───
+
+const EDU_KEYWORDS_RX = /\b(university|college|institute|school|academy|bachelor|master|associate|doctor|phd|mba|bs|ba|ms|ma|bba|bsc|msc|diploma|certificate|ged|high\s+school|degree)\b/i;
+
+const EDU_REJECT_VERBS = new Set([
+  "managed","led","developed","created","built","improved","directed",
+  "established","implemented","executed","organized","analyzed","designed",
+  "maintained","delivered","coordinated","supported","reduced","increased",
+  "streamlined","automated","facilitated","negotiated","spearheaded",
+  "launched","oversaw","supervised","trained","partnered","resolved",
+  "provided","reported","documented","monitored","tracked","planned",
+  "produced","optimized","communicate","communicated","oversee",
+]);
+
+function isEduLineValid(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length > 120) return false;
+  // Reject lines that start with action verbs (experience bullets)
+  const firstWord = trimmed.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+  if (EDU_REJECT_VERBS.has(firstWord)) return false;
+  // Reject contact patterns
+  if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(trimmed)) return false;
+  if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(trimmed)) return false;
+  // Reject section header words that aren't education
+  if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?|PROFESSIONAL)\s*$/i.test(trimmed)) return false;
+  return true;
+}
+
 function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
   const entries: Array<{ institution: string; degree: string; year: string }> = [];
   let currentEntry: { institution: string; degree: string; year: string } | null = null;
@@ -322,6 +350,8 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
+    // Gate: reject contaminated lines
+    if (!isEduLineValid(trimmed)) continue;
 
     const yearMatch = trimmed.match(/\b(19|20)\d{2}\b/);
 
@@ -336,10 +366,12 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
     } else if (currentEntry && !currentEntry.institution) {
       currentEntry.institution = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
       if (!currentEntry.year && yearMatch) currentEntry.year = yearMatch[0];
-    } else {
+    } else if (EDU_KEYWORDS_RX.test(trimmed) || yearMatch) {
+      // Only start a new entry if the line has education indicators
       if (currentEntry) entries.push(currentEntry);
       currentEntry = { institution: trimmed, degree: "", year: yearMatch ? yearMatch[0] : "" };
     }
+    // Otherwise skip the line — don't create entries from arbitrary text
   }
   if (currentEntry) entries.push(currentEntry);
   return entries;
@@ -384,9 +416,18 @@ function extractHeaderFromResume(text: string): any {
     if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
     if (!header.linkedin) { const m = line.match(linkedinRx); if (m) header.linkedin = m[0]; }
     if (!header.location && locationRx.test(line)) header.location = line;
-    // Name: first line that's short, not an email/phone, not a section header
-    if (i === 0 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
-      header.name = line;
+    // Name: first line that's short, not an email/phone, not a section header, not a placeholder
+    if (i === 0 && !header.name && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
+      // Reject known placeholders and non-name patterns
+      if (/^full\s+name$/i.test(line.trim())) continue;
+      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(line.trim())) continue;
+      // Reject lines that are all digits/symbols
+      if (/^[\d()+\-.\s]+$/.test(line.trim())) continue;
+      // Must contain at least one letter and look like a name (2-4 capitalized words)
+      if (/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,3}$/.test(line.trim()) || /^[A-Z][a-z]+\s+[A-Z]\.?\s+[A-Z][a-z]+$/.test(line.trim())) {
+        header.name = line.trim();
+      }
+      // If it doesn't match name pattern, leave blank rather than inserting garbage
     }
   }
 
@@ -910,24 +951,63 @@ function cleanBullet(bullet: string): string {
 }
 
 function normalizeResult(assembled: any) {
+  const contactRx = /[\w.+-]+@[\w.-]+\.\w{2,}|(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/;
+
   const experience = Array.isArray(assembled.experience)
-    ? assembled.experience.map((e: any, idx: number) => {
-        let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
-        // Cap bullets: 4 for first/current role, 3 for older roles
-        const maxBullets = idx === 0 ? 4 : 3;
-        if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
-        return {
-          company: e.company || "",
-          title: e.title || "",
-          dates: e.dates || "",
-          bullets,
-        };
-      })
+    ? assembled.experience
+        .filter((e: any) => {
+          // Reject experience entries where company/title is contact info
+          const combined = `${e.company || ""} ${e.title || ""}`.trim();
+          if (contactRx.test(combined) && combined.replace(contactRx, "").trim().length < 5) return false;
+          if (/^[\d()+\-.\s]+$/.test((e.company || "").trim())) return false;
+          return true;
+        })
+        .map((e: any, idx: number) => {
+          let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          const maxBullets = idx === 0 ? 4 : 3;
+          if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
+          return {
+            company: e.company || "",
+            title: e.title || "",
+            dates: e.dates || "",
+            bullets,
+          };
+        })
+    : [];
+
+  // Clean name: reject placeholders
+  let cleanName = assembled.header?.name || "";
+  if (/^full\s+name$/i.test(cleanName.trim())) cleanName = "";
+  if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(cleanName.trim())) cleanName = "";
+
+  // Clean education: reject contaminated entries
+  const education = Array.isArray(assembled.education)
+    ? assembled.education
+        .map((e: any) => ({
+          institution: e.institution || "",
+          degree: e.degree || "",
+          year: e.year || "",
+        }))
+        .filter((e: any) => {
+          const inst = e.institution.trim();
+          const deg = e.degree.trim();
+          if (!inst && !deg) return false;
+          // Reject entries where institution/degree is a section header
+          if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(inst)) return false;
+          if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(deg)) return false;
+          // Reject contact info in education
+          if (contactRx.test(inst) || contactRx.test(deg)) return false;
+          // Reject action-verb-led entries (experience bullets)
+          const firstWordInst = inst.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+          const firstWordDeg = deg.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+          if (EDU_REJECT_VERBS.has(firstWordInst) || EDU_REJECT_VERBS.has(firstWordDeg)) return false;
+          return true;
+        })
     : [];
 
   return {
     header: {
-      name: assembled.header?.name || "",
+      name: cleanName,
       title: assembled.header?.title || "",
       email: assembled.header?.email || "",
       phone: assembled.header?.phone || "",
@@ -946,13 +1026,7 @@ function normalizeResult(assembled: any) {
       : [],
     skills: Array.isArray(assembled.skills) ? assembled.skills : [],
     certifications: Array.isArray(assembled.certifications) ? assembled.certifications : [],
-    education: Array.isArray(assembled.education)
-      ? assembled.education.map((e: any) => ({
-          institution: e.institution || "",
-          degree: e.degree || "",
-          year: e.year || "",
-        }))
-      : [],
+    education,
     signal_keywords: Array.isArray(assembled.signal_keywords) ? assembled.signal_keywords : [],
   };
 }
