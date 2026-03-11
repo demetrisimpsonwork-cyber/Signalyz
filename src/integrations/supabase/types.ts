@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      one_time_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          used: boolean
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          used?: boolean
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          used?: boolean
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       optimizations: {
         Row: {
           alt_a: string
