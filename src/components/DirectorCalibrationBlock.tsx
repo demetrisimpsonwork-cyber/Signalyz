@@ -496,18 +496,18 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
       {signal_classifier && (
         <BlockShell label="Signal Classifier — Seniority Scoring">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between gap-3">
-            <div>
+           <div className="px-4 py-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Inferred Level</p>
-              <p className="text-xs font-semibold text-foreground">{signal_classifier.target_level_inferred}</p>
+              <p className="text-xs font-semibold text-foreground break-words">{signal_classifier.target_level_inferred}</p>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Overall Alignment</p>
-              <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-2 sm:justify-end flex-wrap">
                 {signal_classifier.total_score != null && (
                   <span className="text-xs font-bold tabular-nums text-foreground">{signal_classifier.total_score}/175</span>
                 )}
-                <p className="text-xs text-muted-foreground">{signal_classifier.overall_seniority_alignment}</p>
+                <p className="text-xs text-muted-foreground break-words">{signal_classifier.overall_seniority_alignment}</p>
               </div>
             </div>
           </div>
