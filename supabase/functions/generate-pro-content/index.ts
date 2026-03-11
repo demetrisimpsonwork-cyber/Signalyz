@@ -280,38 +280,44 @@ HARD RULES:
 - NEVER pad with vague soft skills: "strong communicator," "team player," "detail-oriented" unless backed by specific evidence in the same sentence.
 - NEVER fabricate experience or inflate claims beyond what the resume states.
 - NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
-- NEVER use robotic parallel sentence structures across paragraphs. Vary rhythm deliberately.
-- Maximum 280 words total. Exactly 5 paragraphs. First person as the candidate.
+- NEVER repeat a transferable-fit explanation across multiple sentences. State it ONCE. If you find yourself writing "X transfers to Y. This translates to Z. This demonstrates…" — delete the second and third sentences.
+- Maximum 230 words total. Exactly 5 paragraphs. First person as the candidate.
 - Each paragraph must be separated by exactly one blank line.
+- ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
 
 STRUCTURE:
 
-Paragraph 1 — OPENING HOOK (2–3 sentences MAXIMUM)
-One declarative statement of professional identity grounded in what the candidate actually does, shaped by the JD's top priority. Then one sentence connecting that identity to this specific role's operating need. No setup. No context-setting. Drop the reader into the strongest signal immediately.
+Paragraph 1 — OPENING HOOK (2 sentences. Never 3.)
+One declarative statement of professional identity grounded in what the candidate actually does. One sentence connecting that identity to this specific role. Drop the reader into the strongest signal immediately. No setup.
 
-Paragraph 2 — OPERATIONAL FIT (3–4 sentences MAXIMUM)
-Show the candidate doing the work this role requires. Reference specific systems, decisions, scale, or outcomes from the resume — not summaries of them. Each sentence must add new evidence, not rephrase the prior one. Vary what starts each sentence: lead with outcomes, timeframes, scope, or objects acted upon — not "I" repeatedly.
+Paragraph 2 — OPERATIONAL FIT (3 sentences. Never 4.)
+Show the candidate doing the work this role requires. Each sentence must present different evidence — a different system, decision, scale, or outcome. Never rephrase. Never summarize what was just said. Start each sentence differently: lead with outcomes, timeframes, scope, or objects — never start two consecutive sentences with "I" or "My."
 
-Paragraph 3 — TRANSFERABLE SIGNAL (2–3 sentences MAXIMUM)
-Name one specific capability that maps to the role even if the candidate's background frames it differently. State what transfers and why in concrete terms. Do not overexplain — one clear bridge is stronger than three hedged ones.
+Paragraph 3 — TRANSFERABLE SIGNAL (2 sentences. Never 3.)
+Name one capability that maps to the role. State what transfers and why in ONE sentence. The second sentence provides one concrete example. Done. No overexplaining. No "this demonstrates" or "this translates to." Just state the fact.
 
-Paragraph 4 — GAP REFRAME (2 sentences MAXIMUM)
-Name the gap in the first sentence. Reframe it in the second with one concrete piece of evidence. No defensiveness. No minimizing. No third sentence.
+Paragraph 4 — GAP REFRAME (2 sentences. Never 3.)
+Name the gap. Reframe it with one piece of evidence. No defensiveness. No hedging. No softening qualifiers.
 
-Paragraph 5 — CLOSING (1–2 sentences MAXIMUM)
-State one specific thing the candidate will do in this role. End. No pleasantries. No "I look forward to." No "Thank you."
+Paragraph 5 — CLOSING (2 sentences. Never 3.)
+State one specific thing the candidate will do in this role. End with a single direct sentence. No "I look forward to." No "Thank you." No pleasantries.
 
 ${toneInstruction}
 
 WRITING QUALITY — CRITICAL:
-- SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I" or "My." After two, the next sentence MUST begin with an object, outcome, timeframe, team reference, or dependent clause. Example: instead of "I managed..." try "A team of 12 reported to me" or "Over two years, the program grew..."
-- NATURAL VOICE: Write as if the candidate is explaining their work to a respected peer over coffee — not presenting to a panel. Favor plain, specific language over polished abstractions.
-- BANNED ABSTRACTIONS: Never use "built expertise in," "directly translates to," "demonstrates the systems thinking," "essential for," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in."
+- SENTENCE RHYTHM: No more than 2 consecutive sentences across the ENTIRE letter may begin with "I," "My," or "This." After two, the next MUST begin with an object, outcome, timeframe, team reference, or dependent clause.
+- NO EXPLANATION STACKING: Never follow a claim with a sentence that re-explains the same claim using different words. One statement per idea. Move on.
+- NATURAL VOICE: Write as if explaining work to a respected peer over coffee. Favor plain, specific language over polished abstractions.
+- BANNED PHRASES: Never use "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with."
 - CONCRETENESS: Replace every abstract claim with the specific thing. Not "managed complex stakeholder environments" but "reported to CFO and two VPs weekly on pipeline status."
-- SENTENCE LENGTH: Vary deliberately. Follow a longer sentence with a short one. Two short sentences, then one with a clause. Never three sentences of the same length in a row.
+- SENTENCE LENGTH: Vary deliberately. Short sentence after a long one. Never three sentences of similar length in a row.
 - WORD CHOICE: Use the candidate's own vocabulary from the resume. If they say "ran" not "oversaw," keep "ran." Mirror their register.
 - Every claim must be traceable to actual resume content. Zero fabrication.
-- The letter should feel like a specific person wrote it about their specific work for a specific role.
+
+TONE STRUCTURE EFFECTS:
+- If CONFIDENT: medium-length sentences, natural rhythm, warm authority.
+- If STRATEGIC: allow slightly more connective reasoning between sentences, but still 3-sentence max per paragraph.
+- If DIRECT: target 2 sentences per paragraph where possible. Shortest version. Declarative only. Cut every subordinate clause you can.
 
 Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
