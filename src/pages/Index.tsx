@@ -988,6 +988,8 @@ const Index = () => {
             onRunAlignment={() => setMode("alignment")}
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
+            inputSource={inputSource}
+            onResumeTextReplaced={(text) => { setBullet(text); setInputSource("paste"); }}
           />
         )}
 
