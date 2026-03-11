@@ -647,12 +647,12 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                   {target._contextLabel && (
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/60">{target._contextLabel}</p>
                   )}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Original Bullet</p>
-                      <p className="text-xs text-foreground leading-relaxed">{target.bullet_reference}</p>
+                      <p className="text-xs text-foreground leading-relaxed break-words">{target.bullet_reference}</p>
                     </div>
-                    <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type as UpgradeType]}`}>
+                    <span className={`shrink-0 self-start text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type as UpgradeType]}`}>
                       {UPGRADE_TYPE_LABELS[target.upgrade_type as UpgradeType]}
                     </span>
                   </div>

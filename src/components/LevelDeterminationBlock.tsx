@@ -333,14 +333,14 @@ const LevelDeterminationBlock = ({
                     {primaryDeficiency.status}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="min-w-0">
                     <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Observed Pattern</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.pattern}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed break-words">{primaryDeficiency.pattern}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Panel Risk</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.panelRisk}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed break-words">{primaryDeficiency.panelRisk}</p>
                   </div>
                 </div>
               </div>
