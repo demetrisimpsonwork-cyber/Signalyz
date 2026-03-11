@@ -9,8 +9,10 @@ import { reconstructPdfText } from "@/lib/pdfColumnParser";
 // Use CDN worker to avoid build issues with pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
+export type ResumeInputSource = "paste" | "pdf" | "docx";
+
 interface ResumeUploadProps {
-  onTextExtracted: (text: string) => void;
+  onTextExtracted: (text: string, source?: ResumeInputSource) => void;
   onClear?: () => void;
 }
 
