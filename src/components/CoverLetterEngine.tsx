@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, RefreshCw, Download } from "lucide-react";
+import { Copy, Check, RefreshCw, Download, Pencil, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
@@ -27,7 +27,8 @@ const TONES: { value: Tone; label: string }[] = [
 
 const STEPS = [
   "Extracting role hiring signals…",
-  "Calibrating your narrative…",
+  "Mapping transferable capabilities…",
+  "Calibrating narrative structure…",
   "Assembling cover letter…",
 ];
 
@@ -64,6 +65,8 @@ function formatDate(): string {
 const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
+  const [editedLetter, setEditedLetter] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tone, setTone] = useState<Tone>("confident");
@@ -76,16 +79,22 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Manager,";
 
+  // The active letter content (edited or original)
+  const activeLetter = editedLetter || letter;
+
   const generate = async () => {
     if (!isPro) { onUpgrade(); return; }
     setLoading(true);
     setError(null);
     setLetter("");
+    setEditedLetter("");
+    setIsEditing(false);
     setStep(0);
 
     const stepTimers = [
-      setTimeout(() => setStep(1), 1200),
-      setTimeout(() => setStep(2), 2800),
+      setTimeout(() => setStep(1), 1000),
+      setTimeout(() => setStep(2), 2200),
+      setTimeout(() => setStep(3), 3800),
     ];
 
     try {
@@ -111,7 +120,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (!data?.letter) throw new Error("No letter content returned.");
       setLetter(antiAIFilter(data.letter || ""));
       setHasGenerated(true);
-      setStep(3);
+      setStep(4);
     } catch (e: any) {
       stepTimers.forEach(clearTimeout);
       const msg = e?.message || "Cover letter generation failed.";
@@ -139,7 +148,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   }, []);
 
   const fullLetterText = useMemo(() => {
-    if (!letter) return "";
+    if (!activeLetter) return "";
     const parts: string[] = [];
     if (contact.name) parts.push(contact.name);
     const contactLine = [contact.email, contact.phone].filter(Boolean).join(" | ");
@@ -154,8 +163,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
     parts.push(salutation);
     parts.push("");
-    // Preserve paragraph breaks
-    const paragraphs = letter.split("\n\n").filter(Boolean);
+    const paragraphs = activeLetter.split("\n\n").filter(Boolean);
     paragraphs.forEach((p, i) => {
       parts.push(p);
       if (i < paragraphs.length - 1) parts.push("");
@@ -164,7 +172,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("Sincerely,");
     if (contact.name) parts.push(contact.name);
     return parts.join("\n");
-  }, [letter, contact, hiringManager, companyName, salutation]);
+  }, [activeLetter, contact, hiringManager, companyName, salutation]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullLetterText);
@@ -178,8 +186,6 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     const paragraphs = lines.map((line, i) => {
       const isName = i === 0 && contact.name && line === contact.name;
       const isClosingName = i === lines.length - 1 && contact.name && line === contact.name;
-      const isSalutation = line === salutation;
-      const isSincerely = line === "Sincerely,";
 
       return new Paragraph({
         spacing: { after: line === "" ? 200 : 80 },
@@ -197,7 +203,19 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     const doc = new Document({ sections: [{ children: paragraphs }] });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "Cover_Letter.docx");
-    toast.success("Copied to clipboard");
+    toast.success("Downloaded Cover Letter");
+  };
+
+  const handleToggleEdit = () => {
+    if (!isEditing) {
+      // Enter edit mode — seed edited letter from current
+      setEditedLetter(activeLetter);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleEditChange = (value: string) => {
+    setEditedLetter(value);
   };
 
   return (
@@ -205,7 +223,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       {/* Tone selector */}
       <div className="flex items-center gap-2">
         <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           {TONES.map((t) => (
             <button
               key={t.value}
@@ -254,14 +272,23 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             <RefreshCw className="h-4 w-4" /> Retry
           </Button>
         </div>
-      ) : letter ? (
+      ) : activeLetter ? (
         <>
-          {/* Toolbar — matches Resume module pattern */}
+          {/* Toolbar */}
           <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5 flex-wrap">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs whitespace-nowrap">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 Regenerate
+              </Button>
+              <Button
+                variant={isEditing ? "default" : "outline"}
+                size="sm"
+                onClick={handleToggleEdit}
+                className="gap-1.5 text-xs whitespace-nowrap"
+              >
+                {isEditing ? <Eye className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
+                {isEditing ? "Preview" : "Edit"}
               </Button>
             </div>
             <div className="flex items-center gap-2 flex-col w-full md:w-auto md:flex-row">
@@ -277,66 +304,120 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             </div>
           </div>
 
-          {/* Letter card — styled to match ResumeCanvas */}
-          <div
-            className="mx-auto bg-white rounded-sm relative"
-            style={{
-              maxWidth: "720px",
-              boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
-              fontFamily: "'Georgia', 'Times New Roman', serif",
-              color: "#1A1A2E",
-              padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
-            }}
-          >
-            {/* Candidate Header */}
-            <div style={{ marginBottom: "20px" }}>
-              {contact.name && (
-                <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px" }}>{contact.name}</p>
-              )}
-              {(contact.email || contact.phone) && (
-                <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0" }}>
-                  {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
-                </p>
-              )}
-            </div>
-
-            {/* Date */}
-            <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px" }}>{formatDate()}</p>
-
-            {/* Recipient */}
-            {(hiringManager || companyName) && (
-              <div style={{ marginBottom: "16px" }}>
-                {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{hiringManager}</p>}
-                {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{companyName}</p>}
+          {/* Letter card */}
+          {isEditing ? (
+            <div
+              className="mx-auto bg-white rounded-sm relative"
+              style={{
+                maxWidth: "720px",
+                boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
+                padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
+              }}
+            >
+              {/* Header (read-only in edit mode) */}
+              <div style={{ marginBottom: "20px" }}>
+                {contact.name && (
+                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
+                )}
+                {(contact.email || contact.phone) && (
+                  <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0", fontFamily: "'Georgia', 'Times New Roman', serif" }}>
+                    {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
+                  </p>
+                )}
               </div>
-            )}
+              <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
+              {(hiringManager || companyName) && (
+                <div style={{ marginBottom: "16px" }}>
+                  {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{hiringManager}</p>}
+                  {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{companyName}</p>}
+                </div>
+              )}
+              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
 
-            {/* Salutation */}
-            <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px" }}>{salutation}</p>
-
-            {/* Body */}
-            <div style={{ marginBottom: "20px" }}>
-              {letter.split("\n\n").filter(Boolean).map((p, i) => (
-                <p key={i} style={{
+              {/* Editable body */}
+              <textarea
+                value={editedLetter}
+                onChange={(e) => handleEditChange(e.target.value)}
+                className="w-full border border-border/50 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                style={{
+                  fontFamily: "'Georgia', 'Times New Roman', serif",
                   fontSize: "11.5px",
                   lineHeight: "1.7",
                   color: "#1A1A2E",
-                  marginBottom: "14px",
-                  fontWeight: 400,
-                }}>
-                  {p}
-                </p>
-              ))}
-            </div>
+                  padding: "12px",
+                  minHeight: "280px",
+                }}
+              />
 
-            {/* Closing */}
-            <div>
-              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px" }}>Sincerely,</p>
-              {contact.name && (
-                <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E" }}>{contact.name}</p>
-              )}
+              {/* Closing (read-only) */}
+              <div style={{ marginTop: "20px" }}>
+                <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>Sincerely,</p>
+                {contact.name && (
+                  <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="mx-auto bg-white rounded-sm relative"
+              style={{
+                maxWidth: "720px",
+                boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
+                fontFamily: "'Georgia', 'Times New Roman', serif",
+                color: "#1A1A2E",
+                padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
+              }}
+            >
+              {/* Candidate Header */}
+              <div style={{ marginBottom: "20px" }}>
+                {contact.name && (
+                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px" }}>{contact.name}</p>
+                )}
+                {(contact.email || contact.phone) && (
+                  <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0" }}>
+                    {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
+                  </p>
+                )}
+              </div>
+
+              {/* Date */}
+              <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px" }}>{formatDate()}</p>
+
+              {/* Recipient */}
+              {(hiringManager || companyName) && (
+                <div style={{ marginBottom: "16px" }}>
+                  {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{hiringManager}</p>}
+                  {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{companyName}</p>}
+                </div>
+              )}
+
+              {/* Salutation */}
+              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px" }}>{salutation}</p>
+
+              {/* Body — structured paragraphs */}
+              <div style={{ marginBottom: "20px" }}>
+                {activeLetter.split("\n\n").filter(Boolean).map((p, i) => (
+                  <p key={i} style={{
+                    fontSize: "11.5px",
+                    lineHeight: "1.7",
+                    color: "#1A1A2E",
+                    marginBottom: "14px",
+                    fontWeight: 400,
+                  }}>
+                    {p}
+                  </p>
+                ))}
+              </div>
+
+              {/* Closing */}
+              <div>
+                <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px" }}>Sincerely,</p>
+                {contact.name && (
+                  <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E" }}>{contact.name}</p>
+                )}
+              </div>
+            </div>
+          )}
         </>
       ) : null}
     </div>
