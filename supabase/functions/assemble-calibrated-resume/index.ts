@@ -951,24 +951,63 @@ function cleanBullet(bullet: string): string {
 }
 
 function normalizeResult(assembled: any) {
+  const contactRx = /[\w.+-]+@[\w.-]+\.\w{2,}|(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/;
+
   const experience = Array.isArray(assembled.experience)
-    ? assembled.experience.map((e: any, idx: number) => {
-        let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
-        // Cap bullets: 4 for first/current role, 3 for older roles
-        const maxBullets = idx === 0 ? 4 : 3;
-        if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
-        return {
-          company: e.company || "",
-          title: e.title || "",
-          dates: e.dates || "",
-          bullets,
-        };
-      })
+    ? assembled.experience
+        .filter((e: any) => {
+          // Reject experience entries where company/title is contact info
+          const combined = `${e.company || ""} ${e.title || ""}`.trim();
+          if (contactRx.test(combined) && combined.replace(contactRx, "").trim().length < 5) return false;
+          if (/^[\d()+\-.\s]+$/.test((e.company || "").trim())) return false;
+          return true;
+        })
+        .map((e: any, idx: number) => {
+          let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          const maxBullets = idx === 0 ? 4 : 3;
+          if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
+          return {
+            company: e.company || "",
+            title: e.title || "",
+            dates: e.dates || "",
+            bullets,
+          };
+        })
+    : [];
+
+  // Clean name: reject placeholders
+  let cleanName = assembled.header?.name || "";
+  if (/^full\s+name$/i.test(cleanName.trim())) cleanName = "";
+  if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(cleanName.trim())) cleanName = "";
+
+  // Clean education: reject contaminated entries
+  const education = Array.isArray(assembled.education)
+    ? assembled.education
+        .map((e: any) => ({
+          institution: e.institution || "",
+          degree: e.degree || "",
+          year: e.year || "",
+        }))
+        .filter((e: any) => {
+          const inst = e.institution.trim();
+          const deg = e.degree.trim();
+          if (!inst && !deg) return false;
+          // Reject entries where institution/degree is a section header
+          if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(inst)) return false;
+          if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)\s*$/i.test(deg)) return false;
+          // Reject contact info in education
+          if (contactRx.test(inst) || contactRx.test(deg)) return false;
+          // Reject action-verb-led entries (experience bullets)
+          const firstWordInst = inst.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+          const firstWordDeg = deg.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+          if (EDU_REJECT_VERBS.has(firstWordInst) || EDU_REJECT_VERBS.has(firstWordDeg)) return false;
+          return true;
+        })
     : [];
 
   return {
     header: {
-      name: assembled.header?.name || "",
+      name: cleanName,
       title: assembled.header?.title || "",
       email: assembled.header?.email || "",
       phone: assembled.header?.phone || "",
@@ -987,13 +1026,7 @@ function normalizeResult(assembled: any) {
       : [],
     skills: Array.isArray(assembled.skills) ? assembled.skills : [],
     certifications: Array.isArray(assembled.certifications) ? assembled.certifications : [],
-    education: Array.isArray(assembled.education)
-      ? assembled.education.map((e: any) => ({
-          institution: e.institution || "",
-          degree: e.degree || "",
-          year: e.year || "",
-        }))
-      : [],
+    education,
     signal_keywords: Array.isArray(assembled.signal_keywords) ? assembled.signal_keywords : [],
   };
 }
