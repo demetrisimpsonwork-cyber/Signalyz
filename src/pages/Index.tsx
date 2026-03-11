@@ -275,8 +275,8 @@ function DirectorModeContent({
 
   // Full report UI — only mounts when result exists
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      <div className="space-y-4">
+    <div className="grid gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
+      <div className="space-y-4 min-w-0 overflow-hidden">
         <div>
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
           <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
@@ -314,7 +314,7 @@ function DirectorModeContent({
         </Button>
         <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
         {directorError && !directorLoading && (
           <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
@@ -916,7 +916,7 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool">
+      <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
 
         {/* Sub-navigation tabs */}
         {/* Sub-navigation tabs */}

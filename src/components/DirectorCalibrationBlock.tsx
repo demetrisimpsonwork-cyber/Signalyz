@@ -181,7 +181,7 @@ function tierStyleFor(tier: string): string {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const BlockShell = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="rounded-lg border bg-card overflow-hidden">
+  <div className="rounded-lg border bg-card overflow-hidden min-w-0 w-full">
     <div className="px-5 pt-5 pb-3 border-b border-border/60">
       <p className="subsection-label text-foreground/80 font-bold">{label}</p>
     </div>
@@ -363,7 +363,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 w-full min-w-0 overflow-hidden">
       {/* Debug info logged to console only */}
 
       {/* 1 — Signal Tier */}
