@@ -256,16 +256,15 @@ SIGNAL INTELLIGENCE (use to shape the letter — do NOT dump these diagnostics i
 - Close with a direct statement of intent that feels natural, not formulaic.
 - NEVER use "positioned to," "I am positioned," or "positions me to."`;
 
-        const prompt = `You are writing a cover letter for a real person applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. 
+        const prompt = `You are a professional cover letter writer. Your client is applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. Write a letter they would confidently submit — persuasive, human, and grounded in their actual experience.
 
-Before writing, perform this internal reasoning (do not include it in the output):
+Before writing, reason silently (do not include any of this in output):
 
 INTERNAL REASONING (silent — do not output):
-1. PRIMARY SIGNAL ANGLE: Using the signal intelligence below, what is the single strongest reason this candidate should plausibly succeed in ${roleTitle}? Use the primary strength and transferable signal data to identify this.
-2. SUPPORTING EVIDENCE: Which 2-3 specific experiences from the resume demonstrate that angle? Look for concrete responsibilities, decisions, or measurable outcomes. Cross-reference with JD priority signals.
-3. PRIMARY GAP: What is the most significant mismatch? Use the top gap and what hiring managers see to identify the real friction point.
-4. STRATEGIC BRIDGE: How does the candidate's real experience map to the role despite that gap? Use the repositioning opportunity and elevation opportunity to construct this bridge.
-5. EMPLOYER LENS: What does this employer actually weight most based on the JD signals? Shape the letter around THEIR priorities, not just the candidate's strengths.
+1. What is the single most compelling reason a hiring manager should consider this candidate for ${roleTitle}? Ground this in real experience, not transferability arguments.
+2. Which 2-3 specific achievements or responsibilities from the resume would matter most to THIS employer based on the JD?
+3. What is the biggest gap, and what is the honest, non-defensive way to address it?
+4. What would make the hiring manager want to meet this person after reading paragraph one?
 
 ${signalIntelligence}
 
@@ -280,50 +279,43 @@ HARD RULES:
 - NEVER pad with vague soft skills: "strong communicator," "team player," "detail-oriented" unless backed by specific evidence in the same sentence.
 - NEVER fabricate experience or inflate claims beyond what the resume states.
 - NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
-- NEVER repeat a transferable-fit explanation across multiple sentences. State it ONCE. If you find yourself writing "X transfers to Y. This translates to Z. This demonstrates…" — delete the second and third sentences.
-- Maximum 230 words total. Exactly 5 paragraphs (Opening Hook, Intent Bridge, Operational Fit, Transferable Signal + Gap Reframe, Closing). First person as the candidate.
+- Maximum 230 words total. Exactly 4 paragraphs. First person as the candidate.
 - Each paragraph must be separated by exactly one blank line.
 - ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
 
+VOICE AND RHYTHM — THIS IS THE MOST IMPORTANT SECTION:
+- Write like a confident professional talking to a peer, not like a system proving claims.
+- VARY SENTENCE OPENINGS: No more than 1 sentence per paragraph may start with "I." Use role context, outcomes, environments, or actions as sentence subjects instead. Examples: "Managing 40-70 concurrent escalations daily built…" / "That environment required…" / "Revenue grew 18% after…" / "The compliance framework I built…"
+- MIX SENTENCE LENGTH: Alternate between short punchy sentences (8-12 words) and medium sentences (15-22 words). Never stack 3 sentences of similar length.
+- NO EXPLANATORY SCAFFOLDING: Do not write sentences whose only purpose is to explain why experience X is relevant to role Y. Instead, STATE the experience in the context of the role so the relevance is self-evident.
+- PERSUADE, DON'T EXPLAIN: The letter should make the reader feel this candidate belongs in the role — not walk them through a logical proof of transferability.
+- CONFIDENCE WITHOUT HEDGING: No "I believe," "I feel," "perhaps," "likely," "potentially." State facts and intent directly.
+
 STRUCTURE:
 
-Paragraph 1 — OPENING HOOK (2 sentences. Never 3.)
-One declarative statement of professional identity grounded in what the candidate actually does. One sentence connecting that identity to this specific role. Drop the reader into the strongest signal immediately. No setup.
+Paragraph 1 — OPENING (2-3 sentences):
+Establish professional identity and create immediate interest. The reader should understand WHO this person is, WHAT they do at scale, and WHY this role is a natural next step — all within the first two sentences. Do not restate duties from the resume. Instead, frame the candidate's professional identity in a way that makes the role feel like a logical fit. If a third sentence appears, it must add a specific metric or achievement not covered in the first two.
 
-Paragraph 2 — INTENT BRIDGE (1 sentence only. Never 2.)
-One sentence connecting the candidate's operational background to the leadership or responsibilities of ${roleTitle}. This sentence explains WHY their specific experience prepares them for this role — not WHAT they did (that comes next). Keep it concise and role-aligned. No storytelling. No personal narrative. Example pattern: "This operational environment developed the prioritization and decision discipline required to coordinate customer experience teams and service workflows."
+Paragraph 2 — STRONGEST EVIDENCE (2-3 sentences):
+Present the most relevant operational proof. Show the candidate doing work that overlaps with or directly serves the needs of ${roleTitle}. Each sentence should feature different evidence — different systems, decisions, outcomes, or scale. Start sentences with the work itself, not with "I." Let the evidence speak.
 
-Paragraph 3 — OPERATIONAL FIT (2 sentences. Never 3.)
-Show the candidate doing the work this role requires. Each sentence presents different evidence — a different system, decision, scale, or outcome. Start each sentence differently. Direct phrasing only.
+Paragraph 3 — GAP BRIDGE (2 sentences):
+Acknowledge the gap honestly in one sentence, then immediately pivot to the strongest transferable evidence. No defensiveness. No over-explanation. The pivot should feel natural — like a professional who knows their strengths, not a candidate apologizing.
 
-Paragraph 4 — TRANSFERABLE SIGNAL + GAP REFRAME (2 sentences. Never 3.)
-First sentence: name one capability that maps to the role and state the concrete evidence. Second sentence: acknowledge the gap and reframe it with one piece of evidence. No defensiveness. No hedging.
-
-Paragraph 5 — CLOSING (2 sentences. Never 3.)
-State one specific thing the candidate will do in this role. End with a single direct sentence. No "I look forward to." No "Thank you." No pleasantries.
+Paragraph 4 — CLOSE (2 sentences):
+First sentence: state one specific, concrete thing the candidate will do or bring to this role. Second sentence: end with conviction and forward momentum. The reader should finish the letter wanting to schedule an interview. No "I look forward to." No "Thank you for your consideration." No pleasantries.
 
 ${toneInstruction}
 
-WRITING QUALITY — CRITICAL:
-- PARAGRAPH LENGTH: 2 sentences per paragraph default. The Intent Bridge paragraph is exactly 1 sentence. A third sentence elsewhere is permitted ONLY if it introduces a concrete metric not present in the first two.
-- DIRECT PHRASING: Prefer "I run X" over "I have experience running X." Prefer "Revenue grew 18%" over "I was responsible for driving revenue growth."
-- NO REPEAT CONCEPTS: If a skill or idea appears in one paragraph, it cannot appear in any other paragraph. One mention per letter.
-- TARGET SENTENCE LENGTH: 14–20 words per sentence. If a sentence exceeds 25 words, split it or cut it.
-- SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I," "My," or "This."
-- ZERO TRANSFER CHAINS: Forbidden patterns: "X requires the same skills as Y," "This demonstrates the capabilities needed for Z," "X translates directly to Y." State the fact. Stop.
-- NATURAL VOICE: Write like a professional explaining their work to a peer. Short, plain, specific.
-- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of."
-- CONCRETENESS: Replace every abstract claim with the specific thing.
-- WORD CHOICE: Use the candidate's own vocabulary from the resume.
-- REDUNDANCY CHECK: Scan the entire letter before finalizing. If any concept appears twice, keep only the first mention.
+WRITING QUALITY:
+- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of," "this experience transfers," "these skills translate," "which prepared me," "which equipped me."
+- NO REPEAT CONCEPTS: If a skill or idea appears in one paragraph, it cannot appear in any other paragraph.
+- WORD CHOICE: Use the candidate's own vocabulary from the resume wherever possible.
+- CONCRETENESS: Replace every abstract claim with the specific thing. "I managed compliance" → "I managed FDA audit responses across 3 product lines."
 - Every claim must be traceable to actual resume content. Zero fabrication.
+- FINAL CHECK: Read the letter as a hiring manager. Does it sound like a real person wrote it, or like a system generated it? If the latter, rewrite until it sounds human.
 
-TONE STRUCTURE EFFECTS:
-- If CONFIDENT: 2 sentences per paragraph default. Intent Bridge = 1 sentence. Warm authority.
-- If STRATEGIC: 2–3 sentences allowed in Operational Fit only. Intent Bridge = 1 sentence. Connective reasoning, not restatement.
-- If DIRECT: 2 sentences per paragraph. Intent Bridge = 1 sentence. No exceptions. Declarative only.
-
-Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
+Return a JSON object with: "letter" (the full cover letter body text — exactly 4 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
         const raw = await callAI(prompt, 3000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
