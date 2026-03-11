@@ -390,14 +390,14 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                   {dim.classification}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Strength</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{dim.strength_signal}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed break-words">{dim.strength_signal}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Risk</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{dim.risk_signal}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed break-words">{dim.risk_signal}</p>
                 </div>
               </div>
             </div>
