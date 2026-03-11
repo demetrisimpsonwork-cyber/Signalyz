@@ -361,7 +361,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const { isPro, isFree, hasOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
+  const { isPro, isFree, hasOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
@@ -372,7 +372,7 @@ const Index = () => {
     incrementTrialRun,
     TRIAL_LIMIT,
   } = useReverseTrial();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro;
+  const effectiveIsPro = isPro || isAdmin || isTrialPro || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
