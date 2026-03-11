@@ -307,13 +307,19 @@ ${toneInstruction}
 WRITING QUALITY — CRITICAL:
 - TARGET SENTENCE LENGTH: 14–20 words per sentence. If a sentence exceeds 25 words, split it or cut it.
 - SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I," "My," or "This." Vary openings: lead with outcomes, objects, timeframes, or teams.
-- ONE IDEA PER SENTENCE: State a fact. Move on. Never follow a claim with a restatement, extension, or "which means" clause that repeats the same point.
-- NO TRANSFER CHAINS: Never write "X requires the same capabilities as Y" or "X translates directly to Y" or "X demonstrates the approach needed for Y." Just name what you did and what it produced. The reader infers the transfer.
+- ONE EXPLANATION PER CONCEPT: If you state a skill transfer or operational connection, you get ONE sentence. No follow-up sentence that restates, extends, or re-explains the same idea. If you catch yourself writing a second sentence about the same concept, delete it.
+- ZERO TRANSFER CHAINS: These patterns are absolutely forbidden:
+  * "X requires the same skills as Y"
+  * "This demonstrates the same capabilities needed for Z"
+  * "X translates directly to Y"
+  * "X demonstrates the approach needed for Y"
+  * "The skills required for X are the same as Y"
+  Just state what you did. One sentence. The reader connects it to the role.
 - NATURAL VOICE: Write like a professional explaining their work to a peer. Short, plain, specific. No polished abstractions.
-- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "the analytical approach needed to," "the systems thinking required for."
+- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "the analytical approach needed to," "the systems thinking required for," "the same capabilities needed for," "the skills required for," "mirrors the demands of," "parallels the requirements of."
 - CONCRETENESS: Replace every abstract claim with the specific thing. Not "managed complex stakeholder environments" but "reported to CFO and two VPs weekly on pipeline status."
 - WORD CHOICE: Use the candidate's own vocabulary from the resume. If they say "ran" not "oversaw," keep "ran."
-- REDUNDANCY CHECK: Before finalizing, scan the letter. If any skill, transfer, or capability is mentioned twice, delete the second mention.
+- REDUNDANCY CHECK: Before finalizing, scan every paragraph. If any skill, capability, or signal appears in more than one sentence across the entire letter, keep only the first mention and delete the rest.
 - Every claim must be traceable to actual resume content. Zero fabrication.
 
 TONE STRUCTURE EFFECTS:
