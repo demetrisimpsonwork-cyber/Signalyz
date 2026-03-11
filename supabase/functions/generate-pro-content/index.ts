@@ -227,61 +227,54 @@ SIGNAL INTELLIGENCE (use to shape the letter — do NOT dump these diagnostics i
 - Missing Keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}
 - Score Rationale: ${(alignmentResult.score_rationale || []).join("; ") || "N/A"}`;
 
-        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.3 : 0.8;
+        const toneTemp = tone === "strategic" ? 0.6 : tone === "direct" ? 0.4 : 0.85;
 
-        const toneInstruction = tone === "strategic"
-          ? `TONE — STRATEGIC:
-Write like a management consultant making a business case. Frame everything through systems, scale, and commercial impact. Use compound sentences that layer evidence logically. Semicolons and em dashes connect related ideas. The reader should feel they're reading someone who thinks in architectures and outcomes — someone who sees the whole board. Vocabulary: "designed," "operationalized," "scaled," "restructured." Closing should connect the candidate's operational systems to what the organization needs to build next. This tone should feel noticeably more cerebral, analytical, and commercially framed than the other modes.`
+        const toneBlock = tone === "strategic"
+          ? `TONE: STRATEGIC — Think management consultant. Layer evidence into compound sentences. Use semicolons and dashes to connect ideas. Vocabulary skews analytical: "operationalized," "designed," "restructured," "scaled." Every sentence implies commercial awareness.
+
+EXAMPLE of Strategic tone (do NOT copy — match the style):
+"Over four years managing regulated complaint pipelines across three product verticals, the pattern became clear: resolution speed is a retention lever, not just a compliance metric. Designing the triage framework that cut median response time from 72 to 31 hours meant rebuilding intake logic, retraining two vendor teams, and proving to leadership that faster close rates drove a measurable lift in renewal volume."`
           : tone === "direct"
-          ? `TONE — DIRECT:
-Write like someone who respects the reader's time. Every sentence is declarative, subject-verb-object. No subordinate clauses unless essential. No warming-up phrases. Paragraphs are tight — 2 sentences preferred. More white space between ideas. Sentence length: 8-15 words typical. The letter should feel like a confident professional who says what they mean and stops. Vocabulary: plain, operational, concrete. "I run." "I built." "I delivered." Closing is one sentence. Period. This tone should feel noticeably shorter, sharper, and more plainspoken than the other modes.`
-          : `TONE — CONFIDENT:
-Write like a candidate who knows they belong in this conversation. Warm authority — professional credibility with personal weight behind it. The reader should feel the candidate's presence, not just their resume. Mix medium and short sentences for natural rhythm. Allow a touch of personality — a well-placed dash, a sentence that shows self-awareness, a moment of directness that breaks the professional veneer just enough to feel real. No hedging. No "I believe" or "I feel." State things as facts with the warmth of someone who earned the right to. This tone should feel noticeably more personable and assertive than the other modes.`;
+          ? `TONE: DIRECT — Short sentences. Plain words. Subject-verb-object. Say it and stop. Paragraphs are 2 sentences max when possible. No subordinate clauses unless essential. No warm-up phrases.
 
-        const prompt = `You are ghostwriting a cover letter for a real person applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. They need to send this today.
+EXAMPLE of Direct tone (do NOT copy — match the style):
+"I run a 40-person escalation queue across regulated and unregulated products. Last year my team closed 11,400 cases with a 94% SLA hit rate. The job was triage, prioritization, and knowing when to pull a case before it became a complaint."`
+          : `TONE: CONFIDENT — Warm authority. You know your worth and you're comfortable saying so. Mix sentence lengths — a short punch after a longer setup. Allow personality: a dash mid-thought, a moment of self-awareness. No hedging, no "I believe" — just earned confidence with warmth behind it.
 
-Your job is NOT to explain why their experience transfers. Your job is to write a letter so grounded in their actual work that the hiring manager thinks: "This person already does what we need."
+EXAMPLE of Confident tone (do NOT copy — match the style):
+"Regulated environments taught me something most operations professionals learn the hard way — speed without accuracy is just noise. Managing 40-70 concurrent escalations daily, I built the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to be escalated before they cost the company a client."`;
 
-BEFORE WRITING — think silently (do not output any of this):
-- What is ONE thing about this candidate that would make a hiring manager pause and read more carefully?
-- What specific number, system, or outcome from their resume is most impressive for THIS role?
-- If this candidate were sitting across from the hiring manager, what would they say in the first 30 seconds?
+        const prompt = `Ghostwrite a cover letter. The candidate is applying to ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. They are sending this today.
+
+DO NOT explain why their experience is relevant. Instead, DESCRIBE their work using the language of ${roleTitle} so the reader naturally sees the fit.
 
 ${signalIntelligence}
 
 Resume: ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 
-STRUCTURE — exactly 5 paragraphs separated by blank lines:
+${toneBlock}
 
-Paragraph 1 — THE HOOK (2 sentences):
-Open with who this person is and what they do — stated in a way that immediately sounds relevant to ${roleTitle}. Not "I am writing to apply." Not a duty restatement. The reader should think "tell me more" after sentence one. Sentence two adds one specific proof point — a number, a scale, a system — that earns credibility instantly.
+Write exactly 5 paragraphs, separated by blank lines:
 
-Paragraph 2 — THE CASE (2-3 sentences):
-The strongest evidence from their actual background. Specific systems, volumes, outcomes, environments. Each sentence should feature DIFFERENT evidence. These sentences should sound like they could only come from THIS person's career — not any operations professional. Start sentences with the work, not with "I."
+P1 — HOOK (2 sentences): Who they are + one striking proof point. The reader should want to keep reading. Not "I am writing to apply." Open with something specific.
 
-Paragraph 3 — THE CROSSWALK (2 sentences):
-Connect their background to what the role actually needs. But do it NATURALLY — describe their work using the role's language so the fit is self-evident. Do NOT write "this translates to" or "this mirrors" or "this demonstrates." If you find yourself explaining WHY something is relevant, you've failed. Just describe the work in a way that makes relevance obvious.
+P2 — PROOF (2-3 sentences): Their strongest real evidence — numbers, systems, outcomes from THEIR resume. Each sentence = different evidence. Start sentences with the work, not "I."
 
-Paragraph 4 — THE GAP (2 sentences):
-Name what's missing honestly — half a sentence, no more. Then immediately pivot to what they DO bring that matters more. This should sound like a professional who has already thought this through and isn't worried about it. Confident, not defensive. Not inflated.
+P3 — FIT (2 sentences): Show how their work connects to what this role needs. Do this by describing their work in the role's language — never by explaining the connection. If you write "translates to" or "mirrors" or "demonstrates," delete it and rewrite.
 
-Paragraph 5 — THE CLOSE (1-2 sentences):
-One concrete thing they will do or bring. End with conviction. The reader should want to schedule an interview. No "I look forward to discussing." No pleasantries. Just a clear, forward statement.
+P4 — GAP (2 sentences): Half a sentence acknowledging what's missing, then pivot hard to what they bring that matters more. Sound like someone who's already thought this through.
 
-${toneInstruction}
+P5 — CLOSE (1-2 sentences): One specific thing they'll contribute. End with conviction. No pleasantries.
 
-RULES:
-- 250 words maximum. First person as the candidate.
-- Zero fabrication. Every claim traceable to the resume.
-- Do not invent employers, systems, metrics, titles, or supervisory scope.
-- BANNED PHRASES: "positioned to," "I am writing to apply," "excited to," "thrilled to," "passionate about," "dedicated to," "committed to," "eager to contribute," "I believe that," "strong foundation in," "proven ability to," "extensive experience in," "well-versed in," "deep understanding of," "Furthermore," "Additionally," "Moreover," "In addition," "this translates to," "this mirrors," "this demonstrates," "this supports," "which prepared me," "which equipped me," "aligns with."
-- Max 1 sentence starting with "I" per paragraph. Vary openings: lead with outcomes, scale, environments, the work itself.
-- No repeated operational noun phrases across the letter.
-- FINAL TEST: Read each paragraph. Does it sound like a real person wrote it about their real career? Or does it sound like a system generated it? If any sentence sounds generated, rewrite it.
+CONSTRAINTS:
+- 250 words max. First person.
+- Zero fabrication. No invented employers, metrics, systems, titles, or supervisory scope.
+- Max 1 "I" sentence start per paragraph.
+- Never use: "positioned to," "passionate about," "eager to," "I believe," "strong foundation," "proven ability," "this translates," "this mirrors," "this demonstrates," "Furthermore," "Additionally," "Moreover."
+- No noun phrase used twice in the letter.
 
-Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no labels)
-Return ONLY valid JSON, no markdown.`;
+Return ONLY a JSON object: {"letter": "..."} — body text only, no header/date/salutation/sign-off/labels.`;
         const raw = await callAI(prompt, 3000, toneTemp);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
