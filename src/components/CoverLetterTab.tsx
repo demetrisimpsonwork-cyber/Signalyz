@@ -76,13 +76,24 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
         <Lock className="h-8 w-8 text-muted-foreground" />
         <h3 className="text-lg font-bold text-foreground">Your Signal-Calibrated Cover Letter is ready</h3>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-          {user ? "Upgrade to Pro to generate, customize, and export your signal-calibrated cover letter." : "Sign up to access cover letter generation — 3 free analyses included."}
+          {user ? "Upgrade to generate, customize, and export your signal-calibrated cover letter." : "Sign up to access cover letter generation — 3 free analyses included."}
         </p>
         {user ? (
-          <Button onClick={onUpgrade} size="lg" className="gap-2">
-            <Lock className="h-4 w-4" />
-            Unlock Cover Letter
-          </Button>
+          <div className="flex flex-col gap-2 w-full max-w-xs">
+            <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
+              <Lock className="h-4 w-4" />
+              Go Pro — $19/month
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 w-full"
+              onClick={() => {
+                import("@/utils/stripe").then(m => m.initiateCheckout("one_time"));
+              }}
+            >
+              Unlock Full Report — $9
+            </Button>
+          </div>
         ) : (
           <Button size="lg" className="gap-2" asChild>
             <a href="/auth">Get Started Free</a>
