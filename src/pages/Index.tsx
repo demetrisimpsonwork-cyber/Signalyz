@@ -314,7 +314,7 @@ function DirectorModeContent({
         </Button>
         <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
         {directorError && !directorLoading && (
           <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">

@@ -363,7 +363,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 w-full min-w-0 overflow-hidden">
       {/* Debug info logged to console only */}
 
       {/* 1 — Signal Tier */}
