@@ -281,7 +281,7 @@ HARD RULES:
 - NEVER fabricate experience or inflate claims beyond what the resume states.
 - NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
 - NEVER repeat a transferable-fit explanation across multiple sentences. State it ONCE. If you find yourself writing "X transfers to Y. This translates to Z. This demonstrates…" — delete the second and third sentences.
-- Maximum 230 words total. Exactly 5 paragraphs. First person as the candidate.
+- Maximum 230 words total. Exactly 5 paragraphs (Opening Hook, Intent Bridge, Operational Fit, Transferable Signal + Gap Reframe, Closing). First person as the candidate.
 - Each paragraph must be separated by exactly one blank line.
 - ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
 
