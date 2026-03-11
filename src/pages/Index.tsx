@@ -338,6 +338,7 @@ function DirectorModeContent({
 const Index = () => {
   const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated" | "coverletter">("alignment");
   const [bullet, setBullet] = useState("");
+  const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
