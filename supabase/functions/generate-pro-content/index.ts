@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
-async function callAI(prompt: string, maxTokens = 4000): Promise<string> {
+async function callAI(prompt: string, maxTokens = 4000, temperature = 0): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
