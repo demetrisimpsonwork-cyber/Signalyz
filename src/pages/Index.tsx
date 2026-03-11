@@ -361,7 +361,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const { isPro, isFree, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
+  const { isPro, isFree, hasOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
@@ -372,11 +372,11 @@ const Index = () => {
     incrementTrialRun,
     TRIAL_LIMIT,
   } = useReverseTrial();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro;
+  const effectiveIsPro = isPro || isAdmin || isTrialPro || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Post-upgrade success toast
+  // Post-upgrade / post-purchase success toast
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
       toast("Welcome to Pro. All features are now unlocked.", {
@@ -385,6 +385,16 @@ const Index = () => {
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
       });
       searchParams.delete("upgrade");
+      setSearchParams(searchParams, { replace: true });
+      refreshSub();
+    }
+    if (searchParams.get("purchase") === "success") {
+      toast("Full Report unlocked. Run your analysis to access all features.", {
+        icon: "✦",
+        duration: 5000,
+        style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
+      });
+      searchParams.delete("purchase");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
     }
@@ -661,6 +671,10 @@ const Index = () => {
       } catch {}
       increment();
       if (isTrialPro) incrementTrialRun();
+      // Consume one-time credit on successful alignment if applicable
+      if (hasOneTimeCredit && !isPro && !isAdmin) {
+        try { await consumeOneTimeCredit(); } catch {}
+      }
       if (user) {
         try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
