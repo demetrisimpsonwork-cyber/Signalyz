@@ -18,8 +18,8 @@ const Pricing = () => {
   }, []);
 
   return (
-    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20" style={{ background: 'linear-gradient(180deg, hsl(210 40% 98%) 0%, hsl(214 32% 95%) 100%)' }}>
-      <div className="mb-14 text-center space-y-6" style={{ background: 'linear-gradient(180deg, rgba(20,184,166,0.14) 0%, rgba(20,184,166,0.08) 25%, rgba(248,250,252,1) 70%)' }}>
+    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20" style={{ background: 'radial-gradient(1200px circle at 50% -10%, rgba(20,184,166,0.18) 0%, rgba(20,184,166,0.08) 30%, rgba(20,184,166,0.04) 50%, transparent 70%)' }}>
+      <div className="mb-14 text-center space-y-6">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <div className="space-y-3 max-w-lg mx-auto">
           <p className="text-base font-medium text-foreground leading-relaxed">Know exactly why you're not getting interviews.</p>
