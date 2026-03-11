@@ -192,7 +192,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
-      setLetter(antiAIFilter(data.letter || ""));
+      const filteredLetter = antiAIFilter(data.letter || "");
+      const segmentedLetter = segmentCoverLetterBody(filteredLetter);
+      setLetter(segmentedLetter || filteredLetter);
       setHasGenerated(true);
       setStep(4);
     } catch (e: any) {
