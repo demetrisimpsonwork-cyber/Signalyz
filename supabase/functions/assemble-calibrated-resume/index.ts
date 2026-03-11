@@ -315,6 +315,34 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
   return roles;
 }
 
+// ─── Education line validators ───
+
+const EDU_KEYWORDS_RX = /\b(university|college|institute|school|academy|bachelor|master|associate|doctor|phd|mba|bs|ba|ms|ma|bba|bsc|msc|diploma|certificate|ged|high\s+school|degree)\b/i;
+
+const EDU_REJECT_VERBS = new Set([
+  "managed","led","developed","created","built","improved","directed",
+  "established","implemented","executed","organized","analyzed","designed",
+  "maintained","delivered","coordinated","supported","reduced","increased",
+  "streamlined","automated","facilitated","negotiated","spearheaded",
+  "launched","oversaw","supervised","trained","partnered","resolved",
+  "provided","reported","documented","monitored","tracked","planned",
+  "produced","optimized","communicate","communicated","oversee",
+]);
+
+function isEduLineValid(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length > 120) return false;
+  // Reject lines that start with action verbs (experience bullets)
+  const firstWord = trimmed.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+  if (EDU_REJECT_VERBS.has(firstWord)) return false;
+  // Reject contact patterns
+  if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(trimmed)) return false;
+  if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(trimmed)) return false;
+  // Reject section header words that aren't education
+  if (/^(EXPERIENCE|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?|PROFESSIONAL)\s*$/i.test(trimmed)) return false;
+  return true;
+}
+
 function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
   const entries: Array<{ institution: string; degree: string; year: string }> = [];
   let currentEntry: { institution: string; degree: string; year: string } | null = null;
@@ -322,6 +350,8 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
+    // Gate: reject contaminated lines
+    if (!isEduLineValid(trimmed)) continue;
 
     const yearMatch = trimmed.match(/\b(19|20)\d{2}\b/);
 
@@ -336,10 +366,12 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
     } else if (currentEntry && !currentEntry.institution) {
       currentEntry.institution = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
       if (!currentEntry.year && yearMatch) currentEntry.year = yearMatch[0];
-    } else {
+    } else if (EDU_KEYWORDS_RX.test(trimmed) || yearMatch) {
+      // Only start a new entry if the line has education indicators
       if (currentEntry) entries.push(currentEntry);
       currentEntry = { institution: trimmed, degree: "", year: yearMatch ? yearMatch[0] : "" };
     }
+    // Otherwise skip the line — don't create entries from arbitrary text
   }
   if (currentEntry) entries.push(currentEntry);
   return entries;
