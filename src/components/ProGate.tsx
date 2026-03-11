@@ -10,17 +10,19 @@ interface ProGateProps {
   featureName: string;
   featureDescription: string;
   children: React.ReactNode;
+  /** When true, shows a subtle Pro upsell below the content */
+  showOneTimeUpsell?: boolean;
 }
 
 export function ProGate({
   featureName,
   featureDescription,
   children,
+  showOneTimeUpsell = false,
 }: ProGateProps) {
-  const { isPro, hasOneTimeCredit, loading, consumeOneTimeCredit } = useSubscription();
+  const { isPro, hasOneTimeCredit, loading } = useSubscription();
   const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [creditConsuming, setCreditConsuming] = useState(false);
 
   if (loading) {
     return (
@@ -30,65 +32,26 @@ export function ProGate({
     );
   }
 
-  if (isPro) {
-    return <>{children}</>;
-  }
-
-  // If user has a one-time credit, let them use it
-  if (hasOneTimeCredit) {
-    const handleUseCredit = async () => {
-      setCreditConsuming(true);
-      try {
-        await consumeOneTimeCredit();
-      } finally {
-        setCreditConsuming(false);
-      }
-    };
-
+  // Pro users or users with an unused one-time credit get full access
+  if (isPro || hasOneTimeCredit) {
     return (
-      <div className="relative">
-        <div className="pointer-events-none select-none blur-sm opacity-40">
-          <div className="space-y-4 py-8">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <div className="h-4 w-4 rounded-full bg-muted shrink-0 mt-0.5" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-3 bg-muted rounded w-full" />
-                  <div className="h-3 bg-muted rounded w-3/4" />
-                </div>
-              </div>
-            ))}
+      <>
+        {children}
+        {/* Subtle upsell for one-time purchasers (not Pro subscribers) */}
+        {!isPro && hasOneTimeCredit && showOneTimeUpsell && (
+          <div className="mt-6 rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              Applying to more than one role?{" "}
+              <button
+                onClick={() => initiateCheckout("subscription")}
+                className="text-primary hover:underline font-medium"
+              >
+                Go Pro for unlimited full analyses — $19/mo
+              </button>
+            </p>
           </div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center space-y-5 max-w-sm px-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <span className="text-2xl text-primary">✦</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-foreground tracking-tight">
-                You have a Full Report credit
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Use your purchased credit to unlock the complete {featureName} for this session.
-              </p>
-            </div>
-            <Button
-              onClick={handleUseCredit}
-              disabled={creditConsuming}
-              className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-              size="lg"
-            >
-              {creditConsuming ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <span style={{ color: "inherit" }}>✦</span>
-              )}
-              Use Credit &amp; Unlock Full Report
-            </Button>
-          </div>
-        </div>
-      </div>
+        )}
+      </>
     );
   }
 
