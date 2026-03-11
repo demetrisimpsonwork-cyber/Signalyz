@@ -1031,12 +1031,14 @@ const Index = () => {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
-                    onTextExtracted={(text) => {
+                    onTextExtracted={(text, source) => {
                       setBullet(text);
+                      if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                     onClear={() => {
                       setBullet("");
+                      setInputSource("paste");
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                   />
