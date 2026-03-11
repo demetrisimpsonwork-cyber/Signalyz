@@ -472,7 +472,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
               {/* Body — structured paragraphs */}
               <div style={{ marginBottom: "20px" }}>
-                {activeLetter.split("\n\n").filter(Boolean).map((p, i) => (
+                {splitParagraphs(activeLetter).map((p, i) => (
                   <p key={i} style={{
                     fontSize: "11.5px",
                     lineHeight: "1.7",
