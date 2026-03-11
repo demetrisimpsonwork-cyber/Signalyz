@@ -63,7 +63,6 @@ function formatDate(): string {
 }
 
 const COVER_LETTER_SECTIONS = [
-  { min: 2, max: 3, target: 2 },
   { min: 2, max: 3, target: 3 },
   { min: 2, max: 3, target: 3 },
   { min: 2, max: 2, target: 2 },
