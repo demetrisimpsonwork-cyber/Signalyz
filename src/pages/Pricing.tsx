@@ -18,7 +18,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20">
+    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20" style={{ background: 'linear-gradient(180deg, hsl(210 40% 98%) 0%, hsl(214 32% 95%) 100%)' }}>
       <div className="mb-14 text-center space-y-6">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <div className="space-y-3 max-w-lg mx-auto">
