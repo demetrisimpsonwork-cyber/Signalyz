@@ -115,8 +115,8 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
     <div className="rounded-lg border bg-card p-5 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-foreground mt-2">Identity Strength Index™</h3>
             {!isPro && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
@@ -129,8 +129,8 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
           </p>
         </div>
         {/* Total score — large animated */}
-        <div className={`shrink-0 rounded-md border px-4 py-3 text-center ${bg}`}>
-          <p className={`font-bold tabular-nums leading-none ${color}`} style={{ fontSize: "48px" }}>{animatedTotal}</p>
+        <div className={`shrink-0 rounded-md border px-3 sm:px-4 py-2 sm:py-3 text-center ${bg}`}>
+          <p className={`font-bold tabular-nums leading-none ${color}`} style={{ fontSize: "clamp(32px, 8vw, 48px)" }}>{animatedTotal}</p>
           <p className="text-[9px] font-semibold tracking-widest mt-1 text-muted-foreground uppercase">/100</p>
           <p className={`text-[9px] font-bold tracking-widest mt-1 uppercase ${color}`}>{label}</p>
         </div>

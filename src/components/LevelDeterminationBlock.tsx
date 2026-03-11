@@ -210,9 +210,9 @@ const BlockShell = ({ label, children }: { label: string; children: React.ReactN
 );
 
 const Row = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
-  <div className="flex items-start justify-between gap-4 px-5 py-3">
-    <p className="text-xs text-muted-foreground shrink-0 w-44">{label}</p>
-    <p className={`text-xs text-right leading-relaxed text-foreground ${mono ? "font-medium" : ""}`}>{value}</p>
+  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 px-5 py-3">
+    <p className="text-xs text-muted-foreground shrink-0 sm:w-44">{label}</p>
+    <p className={`text-xs sm:text-right leading-relaxed text-foreground break-words min-w-0 ${mono ? "font-medium" : ""}`}>{value}</p>
   </div>
 );
 
@@ -333,14 +333,14 @@ const LevelDeterminationBlock = ({
                     {primaryDeficiency.status}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="min-w-0">
                     <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Observed Pattern</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.pattern}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed break-words">{primaryDeficiency.pattern}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">Panel Risk</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{primaryDeficiency.panelRisk}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed break-words">{primaryDeficiency.panelRisk}</p>
                   </div>
                 </div>
               </div>

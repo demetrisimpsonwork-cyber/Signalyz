@@ -598,18 +598,18 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
       </div>
 
       {/* Summary scores */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Score</p>
-          <p className={`text-2xl font-bold tabular-nums ${scoreColor(userScore, medianScore)}`}>{userScore}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Score</p>
+          <p className={`text-xl sm:text-2xl font-bold tabular-nums ${scoreColor(userScore, medianScore)}`}>{userScore}</p>
         </div>
-        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Median Candidate</p>
-          <p className="text-2xl font-bold tabular-nums text-muted-foreground">{medianScore}</p>
+        <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Median</p>
+          <p className="text-xl sm:text-2xl font-bold tabular-nums text-muted-foreground">{medianScore}</p>
         </div>
-        <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Top Candidate</p>
-          <p className="text-2xl font-bold tabular-nums text-muted-foreground/70">{topThreshold}</p>
+        <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Top</p>
+          <p className="text-xl sm:text-2xl font-bold tabular-nums text-muted-foreground/70">{topThreshold}</p>
         </div>
       </div>
 
