@@ -236,15 +236,16 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return true;
       });
 
+      // Omit sections that have no clean entries rather than inserting malformed data
       const resume: CalibratedResumeData = {
         header: mergedHeader,
         summary: data.summary || "",
-        core_competencies: data.core_competencies || [],
-        experience: cleanExperience,
-        independent_projects: data.independent_projects || [],
-        skills: data.skills || [],
-        certifications: data.certifications || [],
-        education: cleanEducation,
+        core_competencies: Array.isArray(data.core_competencies) && data.core_competencies.length > 0 ? data.core_competencies : [],
+        experience: cleanExperience.length > 0 ? cleanExperience : [],
+        independent_projects: Array.isArray(data.independent_projects) && data.independent_projects.length > 0 ? data.independent_projects : [],
+        skills: Array.isArray(data.skills) && data.skills.length > 0 ? data.skills : [],
+        certifications: Array.isArray(data.certifications) && data.certifications.length > 0 ? data.certifications : [],
+        education: cleanEducation.length > 0 ? cleanEducation : [],
         signal_keywords: data.signal_keywords || [],
       };
 
