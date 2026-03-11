@@ -284,36 +284,40 @@ HARD RULES:
 - ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
 
 VOICE AND RHYTHM — THIS IS THE MOST IMPORTANT SECTION:
-- Write like a confident professional talking to a peer, not like a system proving claims.
-- VARY SENTENCE OPENINGS: No more than 1 sentence per paragraph may start with "I." Use role context, outcomes, environments, or actions as sentence subjects instead. Examples: "Managing 40-70 concurrent escalations daily built…" / "That environment required…" / "Revenue grew 18% after…" / "The compliance framework I built…"
-- MIX SENTENCE LENGTH: Alternate between short punchy sentences (8-12 words) and medium sentences (15-22 words). Never stack 3 sentences of similar length.
-- NO EXPLANATORY SCAFFOLDING: Do not write sentences whose only purpose is to explain why experience X is relevant to role Y. Instead, STATE the experience in the context of the role so the relevance is self-evident.
-- PERSUADE, DON'T EXPLAIN: The letter should make the reader feel this candidate belongs in the role — not walk them through a logical proof of transferability.
+- Write like a sharp candidate who knows their worth — not like a system explaining why they qualify.
+- INVISIBLE TRANSFER LOGIC: Never write a sentence whose job is to explain why skill X is relevant to role Y. Instead, describe the candidate's work using the language and framing of the target role so the fit is felt, not argued. The reader should think "this person already does this work" — without being told so explicitly.
+- ZERO SCAFFOLDING PHRASES: Do not use sentences structured as "[experience] demonstrates / supports / translates to / prepares me for [role requirement]." If you catch yourself connecting A to B with a bridge verb, delete the bridge and rewrite A so it already sounds like B.
+- VARY SENTENCE OPENINGS: No more than 1 sentence per paragraph may start with "I." Lead with outcomes, environments, scale, or the work itself. Examples: "Managing 40-70 concurrent escalations daily built…" / "That volume required…" / "Revenue grew 18% after…"
+- MIX SENTENCE LENGTH: Alternate short (8-12 words) and medium (15-22 words). Never stack 3 sentences of similar length or structure.
+- HUMAN CADENCE: Include natural rhythmic variation — an occasional fragment for emphasis, a dash to pivot mid-thought, a sentence that breathes. The writing should feel like someone who drafts well, not like output that was optimized. Read each paragraph aloud mentally: if every sentence has the same beat, rewrite.
+- CANDIDATE-SPECIFIC DETAIL: Every middle-paragraph sentence must reference a specific system, volume, process, outcome, or environment from THIS candidate's resume. If a sentence could appear in any operations professional's cover letter unchanged, it is too generic — rewrite with the candidate's actual specifics.
+- NO NOUN PHRASE REPETITION: If you use "operational discipline" once, do not use it again. Same for "customer flow," "cross-functional coordination," "stakeholder management," or any operational noun phrase. Find a different, natural way to express the concept each time.
 - CONFIDENCE WITHOUT HEDGING: No "I believe," "I feel," "perhaps," "likely," "potentially." State facts and intent directly.
+- PERSUASIVE INEVITABILITY: The letter should make the reader feel this candidate has already been doing adjacent work at the required level — not that they could theoretically do it with the right opportunity. Frame the gap as a narrow surface difference, not a fundamental qualification question.
 
 STRUCTURE:
 
 Paragraph 1 — OPENING (2-3 sentences):
-Establish professional identity and create immediate interest. The reader should understand WHO this person is, WHAT they do at scale, and WHY this role is a natural next step — all within the first two sentences. Do not restate duties from the resume. Instead, frame the candidate's professional identity in a way that makes the role feel like a logical fit. If a third sentence appears, it must add a specific metric or achievement not covered in the first two.
+Establish professional identity and create immediate interest. The reader should understand WHO this person is, WHAT they do at scale, and WHY this role is a natural next step — all within the first two sentences. Do not restate duties. Frame the candidate's identity so the role feels like an obvious fit, not a stretch. A third sentence is permitted only if it adds a specific metric or achievement.
 
 Paragraph 2 — STRONGEST EVIDENCE (2-3 sentences):
-Present the most relevant operational proof. Show the candidate doing work that overlaps with or directly serves the needs of ${roleTitle}. Each sentence should feature different evidence — different systems, decisions, outcomes, or scale. Start sentences with the work itself, not with "I." Let the evidence speak.
+Present the most relevant operational proof using THIS candidate's specific numbers, systems, and outcomes. Each sentence should feature different evidence. Start sentences with the work itself, not with "I." These sentences should sound like they could only have been written by this particular candidate — not any operations professional.
 
 Paragraph 3 — GAP BRIDGE (2 sentences):
-Acknowledge the gap honestly in one sentence, then immediately pivot to the strongest transferable evidence. No defensiveness. No over-explanation. The pivot should feel natural — like a professional who knows their strengths, not a candidate apologizing.
+Name the gap honestly in half a sentence, then pivot immediately to the strongest transferable evidence. Compress the acknowledgment — spend more words on readiness than on what's missing. The pivot should feel like a professional who has already thought this through, not a candidate defending themselves.
 
 Paragraph 4 — CLOSE (2 sentences):
-First sentence: state one specific, concrete thing the candidate will do or bring to this role. Second sentence: end with conviction and forward momentum. The reader should finish the letter wanting to schedule an interview. No "I look forward to." No "Thank you for your consideration." No pleasantries.
+First sentence: name one specific, concrete contribution the candidate will make. Second sentence: end with conviction. The reader should finish wanting to schedule an interview. No "I look forward to." No pleasantries. No generic closer.
 
 ${toneInstruction}
 
 WRITING QUALITY:
-- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of," "this experience transfers," "these skills translate," "which prepared me," "which equipped me."
+- BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of," "this experience transfers," "these skills translate," "which prepared me," "which equipped me," "this demonstrates," "this supports," "this translates," "this prepared me," "operational discipline" (use only once if at all), "cross-functional coordination" (use only once if at all).
 - NO REPEAT CONCEPTS: If a skill or idea appears in one paragraph, it cannot appear in any other paragraph.
 - WORD CHOICE: Use the candidate's own vocabulary from the resume wherever possible.
 - CONCRETENESS: Replace every abstract claim with the specific thing. "I managed compliance" → "I managed FDA audit responses across 3 product lines."
 - Every claim must be traceable to actual resume content. Zero fabrication.
-- FINAL CHECK: Read the letter as a hiring manager. Does it sound like a real person wrote it, or like a system generated it? If the latter, rewrite until it sounds human.
+- FINAL CHECK: Read the letter as a hiring manager who reads 50 cover letters a week. Does this one sound like a real person with real conviction, or like polished AI output? If any sentence feels system-generated, rewrite it until it sounds like a specific human wrote it about their specific career.
 
 Return a JSON object with: "letter" (the full cover letter body text — exactly 4 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
