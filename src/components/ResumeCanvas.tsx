@@ -53,9 +53,10 @@ const EditableField = ({
   const ref = useRef<HTMLDivElement>(null);
 
   if (!editMode) {
+    if (!value) return null; // Don't render empty fields in view mode — no placeholders
     return (
       <div className={className} style={style}>
-        {value || <span className="italic" style={{ color: "#9CA3AF" }}>{placeholder}</span>}
+        {value}
       </div>
     );
   }
