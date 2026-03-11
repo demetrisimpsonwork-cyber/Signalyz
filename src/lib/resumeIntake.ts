@@ -236,14 +236,18 @@ function classifyLine(line: string): SectionType | null {
   return null;
 }
 
+/**
+ * Infer section type for segments that lack an explicit header.
+ * IMPORTANT: Never returns "education" — education must be header-anchored.
+ */
 function scoreSectionType(lines: string[]): SectionType {
-  let expScore = 0, eduScore = 0, skillScore = 0, summaryScore = 0;
+  let expScore = 0, skillScore = 0, summaryScore = 0;
 
   for (const line of lines) {
     if (DATE_PATTERN.test(line)) expScore += 3;
     if (COMPANY_SUFFIXES.test(line)) expScore += 2;
     if (ROLE_TITLES.test(line)) expScore += 2;
-    if (EDUCATION_KEYWORDS.test(line)) eduScore += 3;
+    if (startsWithVerb(line)) expScore += 1;
     // Skills: comma-heavy short lines
     const commas = (line.match(/,/g) || []).length;
     if (commas >= 3 && line.length < 200) skillScore += 3;
@@ -253,7 +257,6 @@ function scoreSectionType(lines: string[]): SectionType {
 
   const scores: [SectionType, number][] = [
     ["experience", expScore],
-    ["education", eduScore],
     ["skills", skillScore],
     ["summary", summaryScore],
   ];
@@ -657,29 +660,30 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
         experience.push(...extractExperienceBlocks(seg.lines, true));
         break;
       case "education": {
-        // Strict education extraction: only allow lines that are clearly education content
+        // ONLY process education from header-anchored segments
+        if (seg.confidence < 0.9) break; // Skip non-header-detected education segments
+
         for (const line of seg.lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
-          // Reject: CamelCase header artifacts (e.g. "DIRECTOROFHUMANRESOURCES")
+          // Reject: CamelCase header artifacts
           if (/^[A-Z]{10,}$/.test(trimmed.replace(/\s+/g, ""))) continue;
-          // Reject: contact info of any kind
+          // Reject: contact info
           if (isContactInfoLine(trimmed)) continue;
           if (isPhoneOrEmail(trimmed)) continue;
-          // Reject: any line starting with an action verb (experience bullet)
+          // Reject: any line starting with an action verb (experience bullet leaked in)
           if (startsWithVerb(trimmed)) continue;
           // Reject: lines with job titles but no education keywords
           if (ROLE_TITLES.test(trimmed) && !EDUCATION_KEYWORDS.test(trimmed)) continue;
-          // Reject: long lines (>100 chars) without education keywords (likely experience bullets)
-          if (trimmed.length > 100 && !EDUCATION_KEYWORDS.test(trimmed)) continue;
-          // Accept: lines with education keywords, academic honors, or year references
-          const isEducationContent =
+          // Reject: lines >80 chars without education keywords (experience bullets)
+          if (trimmed.length > 80 && !EDUCATION_KEYWORDS.test(trimmed)) continue;
+          // Must contain at least one education indicator OR be a short supporting line
+          const hasEduKeyword =
             EDUCATION_KEYWORDS.test(trimmed) ||
-            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration)\b/i.test(trimmed) ||
-            (YEAR_ONLY.test(trimmed) && trimmed.length < 60);
-          // Accept short descriptive lines (<60 chars) that aren't clearly non-education
-          const isShortDescriptive = trimmed.length < 60 && !COMPANY_SUFFIXES.test(trimmed);
-          if (isEducationContent || isShortDescriptive) {
+            /\b(magna|summa|cum\s+laude|dean|honor|scholarship|thesis|minor|major|concentration|institute)\b/i.test(trimmed);
+          const isYearLine = YEAR_ONLY.test(trimmed) && trimmed.length < 50;
+          const isShortSupporting = trimmed.length < 50 && !COMPANY_SUFFIXES.test(trimmed) && !DATE_PATTERN.test(trimmed);
+          if (hasEduKeyword || isYearLine || isShortSupporting) {
             education.push(trimmed);
           }
         }
