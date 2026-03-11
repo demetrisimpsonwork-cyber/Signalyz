@@ -239,7 +239,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     }
     parts.push(salutation);
     parts.push("");
-    const paragraphs = activeLetter.split("\n\n").filter(Boolean);
+    const paragraphs = splitParagraphs(activeLetter);
     paragraphs.forEach((p, i) => {
       parts.push(p);
       if (i < paragraphs.length - 1) parts.push("");
