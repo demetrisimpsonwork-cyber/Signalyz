@@ -34,7 +34,6 @@ const UpgradeModal = ({
     onClose();
   };
 
-  // Unauthenticated users: simple sign-up prompt
   if (!isAuthenticated) {
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -128,18 +127,36 @@ const UpgradeModal = ({
 
           <Separator className="my-5" />
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-sm font-semibold text-foreground text-center leading-snug">The average job search takes 5 months. Most candidates never know why.</p>
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
                 onClose();
-                initiateCheckout();
+                initiateCheckout("subscription");
               }}
             >
               Unlock Full Signal Intelligence — $19/month
             </Button>
+
+            <div className="relative flex items-center justify-center">
+              <Separator className="flex-1" />
+              <span className="px-3 text-xs text-muted-foreground">or</span>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              onClick={() => {
+                onClose();
+                initiateCheckout("one_time");
+              }}
+            >
+              Unlock Full Report — $9 one-time
+            </Button>
+
             <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
           </div>
         </div>

@@ -1,45 +1,8 @@
-import { Check } from "lucide-react";
+import { Check, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
 import { useAuth } from "@/hooks/useAuth";
-
-const tiers = [
-  {
-    name: "Signal Preview",
-    price: "$0",
-    description: "Surface-level alignment diagnostics",
-    features: [
-      "3 signal alignments per day",
-      "Calibrated bullet (1 version)",
-      "Overall alignment score",
-      "Top signal gap identification",
-    ],
-    cta: "Get started",
-    highlighted: false,
-  },
-  {
-    name: "Full Signal Intelligence",
-    price: "$19",
-    period: "/mo",
-    description: "Full signal calibration engine",
-    features: [
-      "Unlimited alignments",
-      "Full Identity Strength Index™ (all 4 pillars)",
-      "Complete Signal Risk Projection (all 5 stages)",
-      "Multi-variant repositioned bullets",
-      "Build My Calibrated Resume (full DOCX export)",
-      "Executive Signal Audit access",
-      "Interview Intelligence™",
-      "ATS Signal Panel",
-      "Cover Letter Engine™",
-      "LinkedIn Signal calibration",
-      "Alignment history",
-    ],
-    cta: "Unlock Full Signal Intelligence",
-    highlighted: true,
-  },
-];
 
 const Pricing = () => {
   const { user } = useAuth();
@@ -55,7 +18,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <div className="container max-w-5xl py-20 px-4 pb-32 md:pb-20">
+    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20">
       <div className="mb-14 text-center space-y-6">
         <h1 className="text-3xl font-bold text-foreground">Precision. Not guesswork.</h1>
         <div className="space-y-3 max-w-lg mx-auto">
@@ -68,67 +31,138 @@ const Pricing = () => {
         </p>
       </div>
 
-      {/* Desktop: 2-col grid. Mobile: stacked cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {tiers.map((tier) => (
-          <div
-            key={tier.name}
-            className={`rounded-xl border p-6 sm:p-8 flex flex-col ${
-              tier.highlighted
-                ? "border-primary bg-[#0F1C2E] text-white shadow-lg"
-                : "bg-card"
-            }`}
-          >
-            <div>
-              <h3 className={`text-base font-semibold tracking-tight ${tier.highlighted ? "text-white" : "text-foreground"}`}>{tier.name}</h3>
-              <p className={`mt-1 text-sm ${tier.highlighted ? "text-white/60" : "text-muted-foreground"}`}>{tier.description}</p>
-            </div>
-
-            <div className="mt-4">
-              <span className={`text-4xl font-bold ${tier.highlighted ? "text-white" : "text-foreground"}`}>{tier.price}</span>
-              {tier.period && <span className={tier.highlighted ? "text-white/60" : "text-muted-foreground"}>{tier.period}</span>}
-            </div>
-
-            <ul className="mt-6 space-y-3 flex-1">
-              {tier.features.map((f) => (
-                <li key={f} className={`flex items-start gap-2 text-sm ${tier.highlighted ? "text-white/90" : "text-foreground"}`}>
-                  <Check className={`h-4 w-4 shrink-0 mt-0.5 ${tier.highlighted ? "text-primary" : "text-primary"}`} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            {tier.highlighted && isAuthenticated && (
-              <p className={`mt-6 text-sm font-semibold text-center leading-snug ${tier.highlighted ? "text-white" : "text-foreground"}`}>
-                The average job search takes 5 months. Most candidates never know why.
-              </p>
-            )}
-
-            {isAuthenticated ? (
-              <Button
-                className={`${tier.highlighted && "mt-3"} ${!tier.highlighted && "mt-8"} w-full`}
-                variant={tier.highlighted ? "default" : "outline"}
-                onClick={tier.highlighted ? () => initiateCheckout() : undefined}
-              >
-                {tier.cta}
-              </Button>
-            ) : (
-              <Button
-                className={`mt-8 w-full`}
-                variant={tier.highlighted ? "default" : "outline"}
-                asChild={tier.highlighted}
-              >
-                {tier.highlighted ? <a href="/auth">Get Started</a> : tier.cta}
-              </Button>
-            )}
-
-            {tier.highlighted && isAuthenticated && (
-              <p className={`mt-2 text-xs italic text-center ${tier.highlighted ? "text-white/50" : "text-muted-foreground"}`}>
-                Less than one rejected application costs you.
-              </p>
-            )}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Free tier */}
+        <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Signal Preview</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Surface-level alignment diagnostics</p>
           </div>
-        ))}
+          <div className="mt-4">
+            <span className="text-4xl font-bold text-foreground">$0</span>
+          </div>
+          <ul className="mt-6 space-y-3 flex-1">
+            {[
+              "3 signal alignments per day",
+              "Calibrated bullet (1 version)",
+              "Overall alignment score",
+              "Top signal gap identification",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-foreground">
+                <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                {f}
+              </li>
+            ))}
+          </ul>
+          {isAuthenticated ? (
+            <Button className="mt-8 w-full" variant="outline">Get started</Button>
+          ) : (
+            <Button className="mt-8 w-full" variant="outline">Get started</Button>
+          )}
+        </div>
+
+        {/* Pro $19/mo — highlighted as best value */}
+        <div className="rounded-xl border border-primary p-6 sm:p-8 flex flex-col bg-[#0F1C2E] text-white shadow-lg relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full tracking-wide uppercase">
+            Best Value
+          </div>
+          <div>
+            <h3 className="text-base font-semibold tracking-tight text-white">Full Signal Intelligence</h3>
+            <p className="mt-1 text-sm text-white/60">Full signal calibration engine</p>
+          </div>
+          <div className="mt-4">
+            <span className="text-4xl font-bold text-white">$19</span>
+            <span className="text-white/60">/mo</span>
+          </div>
+          <ul className="mt-6 space-y-3 flex-1">
+            {[
+              "Unlimited alignments",
+              "Full Identity Strength Index™ (all 4 pillars)",
+              "Complete Signal Risk Projection (all 5 stages)",
+              "Multi-variant repositioned bullets",
+              "Build My Calibrated Resume (full DOCX export)",
+              "Executive Signal Audit access",
+              "Interview Intelligence™",
+              "ATS Signal Panel",
+              "Cover Letter Engine™",
+              "LinkedIn Signal calibration",
+              "Alignment history",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-white/90">
+                <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                {f}
+              </li>
+            ))}
+          </ul>
+
+          {isAuthenticated && (
+            <p className="mt-6 text-sm font-semibold text-center leading-snug text-white">
+              The average job search takes 5 months. Most candidates never know why.
+            </p>
+          )}
+
+          {isAuthenticated ? (
+            <Button
+              className="mt-3 w-full"
+              variant="default"
+              onClick={() => initiateCheckout("subscription")}
+            >
+              Unlock Full Signal Intelligence
+            </Button>
+          ) : (
+            <Button className="mt-8 w-full" variant="default" asChild>
+              <a href="/auth">Get Started</a>
+            </Button>
+          )}
+
+          {isAuthenticated && (
+            <p className="mt-2 text-xs italic text-center text-white/50">
+              Less than one rejected application costs you.
+            </p>
+          )}
+        </div>
+
+        {/* One-time $9 */}
+        <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Single Report</h3>
+            <p className="mt-1 text-sm text-muted-foreground">One complete analysis session</p>
+          </div>
+          <div className="mt-4">
+            <span className="text-4xl font-bold text-foreground">$9</span>
+            <span className="text-muted-foreground text-sm ml-1">one-time</span>
+          </div>
+          <ul className="mt-6 space-y-3 flex-1">
+            {[
+              "1 full signal analysis",
+              "Complete Signal Diagnosis",
+              "Calibrated Resume output",
+              "Cover Letter generation",
+              "Full positioning report",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-foreground">
+                <Zap className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
+            Perfect for a single job application. Unlocks one full run — no recurring charges.
+          </p>
+          {isAuthenticated ? (
+            <Button
+              className="mt-4 w-full"
+              variant="outline"
+              onClick={() => initiateCheckout("one_time")}
+            >
+              Unlock Full Report — $9
+            </Button>
+          ) : (
+            <Button className="mt-4 w-full" variant="outline" asChild>
+              <a href="/auth">Get Started</a>
+            </Button>
+          )}
+        </div>
       </div>
 
       <p className="mt-12 text-center text-sm font-medium text-foreground">
@@ -144,8 +178,11 @@ const Pricing = () => {
         {isAuthenticated ? (
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
-            <Button className="w-full" size="lg" onClick={() => initiateCheckout()}>
+            <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
               Unlock Full Signal Intelligence — $19/month
+            </Button>
+            <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
+              Or unlock one full report — $9
             </Button>
             <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
           </div>

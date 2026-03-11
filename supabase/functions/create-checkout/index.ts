@@ -41,7 +41,8 @@ serve(async (req) => {
     const userId = user.id;
     const userEmail = user.email;
 
-    const { successUrl, cancelUrl } = await req.json();
+    const { successUrl, cancelUrl, mode } = await req.json();
+    const isOneTime = mode === "one_time";
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
@@ -53,7 +54,6 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Use service role to read/write profile
     const adminSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -68,7 +68,6 @@ serve(async (req) => {
 
     let customerId = profile?.stripe_customer_id;
 
-    // Validate existing customer still exists in current Stripe mode
     if (customerId) {
       try {
         await stripe.customers.retrieve(customerId);
@@ -91,14 +90,34 @@ serve(async (req) => {
         .eq("user_id", userId);
     }
 
-    // Get the price ID from env — validate it works, else auto-create
+    if (isOneTime) {
+      // One-time $9 purchase — use the fixed price ID
+      const oneTimePriceId = "price_1T9bVKIVDdqGTZ8BHvEvEBiv";
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{ price: oneTimePriceId, quantity: 1 }],
+        mode: "payment",
+        success_url: successUrl || "https://resumix.app/?purchase=success",
+        cancel_url: cancelUrl || "https://resumix.app/?purchase=cancelled",
+        metadata: { user_id: userId, purchase_type: "one_time_diagnostic" },
+      });
+
+      return new Response(
+        JSON.stringify({ url: checkoutSession.url }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Subscription flow (existing)
     let priceId: string | undefined = Deno.env.get("STRIPE_PINNACLE_PRICE_ID") || undefined;
 
     if (priceId) {
       try {
         await stripe.prices.retrieve(priceId);
       } catch {
-        console.log("Configured STRIPE_PINNACLE_PRICE_ID not found in current Stripe mode — will auto-create");
+        console.log("Configured STRIPE_PINNACLE_PRICE_ID not found — will auto-create");
         priceId = undefined;
       }
     }
