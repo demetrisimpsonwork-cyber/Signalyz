@@ -338,6 +338,7 @@ function DirectorModeContent({
 const Index = () => {
   const [mode, setMode] = useState<"alignment" | "linkedin" | "director" | "calibrated" | "coverletter">("alignment");
   const [bullet, setBullet] = useState("");
+  const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -987,6 +988,8 @@ const Index = () => {
             onRunAlignment={() => setMode("alignment")}
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
+            inputSource={inputSource}
+            onResumeTextReplaced={(text) => { setBullet(text); setInputSource("paste"); }}
           />
         )}
 
@@ -1030,19 +1033,21 @@ const Index = () => {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
-                    onTextExtracted={(text) => {
+                    onTextExtracted={(text, source) => {
                       setBullet(text);
+                      if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                     onClear={() => {
                       setBullet("");
+                      setInputSource("paste");
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                   />
                   <Textarea
                     placeholder="Paste a resume bullet, summary, or short experience section here..."
                     value={bullet}
-                    onChange={(e) => { setBullet(e.target.value); setErrors((p) => ({ ...p, bullet: undefined })); }}
+                    onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setErrors((p) => ({ ...p, bullet: undefined })); }}
                     rows={4}
                     className={`mt-2 ${errors.bullet ? "border-destructive" : ""}`}
                   />

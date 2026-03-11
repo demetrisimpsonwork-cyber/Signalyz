@@ -11,9 +11,11 @@ import ResumeCanvas from "@/components/ResumeCanvas";
 import ResumeToolbar from "@/components/ResumeToolbar";
 import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
 import ResumeStructureConfirm from "@/components/ResumeStructureConfirm";
+import PdfFallbackState from "@/components/PdfFallbackState";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import type { ResumeInputSource } from "@/components/ResumeUpload";
 
 interface CalibratedResumeTabProps {
   isPro: boolean;
@@ -25,6 +27,8 @@ interface CalibratedResumeTabProps {
   onRunAlignment?: () => void;
   onAssembled?: () => void;
   alignmentResult?: Record<string, unknown>;
+  inputSource?: ResumeInputSource;
+  onResumeTextReplaced?: (text: string) => void;
 }
 
 const CalibratedResumeTab = ({
@@ -37,6 +41,8 @@ const CalibratedResumeTab = ({
   onRunAlignment,
   onAssembled,
   alignmentResult,
+  inputSource = "paste",
+  onResumeTextReplaced,
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
@@ -45,6 +51,7 @@ const CalibratedResumeTab = ({
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
 
   const currentResume = editedResume || assembledResume;
+  const [showPdfFallback, setShowPdfFallback] = useState(false);
 
   useEffect(() => {
     if (assembledResume && onAssembled) onAssembled();
@@ -59,17 +66,26 @@ const CalibratedResumeTab = ({
     if (!isPro) onUpgrade();
   }, [isPro, onUpgrade]);
 
-  const handleAssemble = () => {
-    assemble(directorResult, originalResume, preExtractedContact, alignmentResult as Record<string, unknown>);
+  const handleAssemble = (overrideResume?: string) => {
+    const resumeText = overrideResume || originalResume;
+    const contact = overrideResume ? extractContactFromText(overrideResume) : preExtractedContact;
+    assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>);
   };
+
+  // When confidence is low AND input was PDF, show fallback instead of confirm step
+  useEffect(() => {
+    if (pendingResume && confidence?.isLow && inputSource === "pdf") {
+      setShowPdfFallback(true);
+    }
+  }, [pendingResume, confidence, inputSource]);
 
   const autoAssembledRef = useRef(false);
   useEffect(() => {
-    if (isPro && hasCurrentSessionAlignment && !currentResume && !pendingResume && !loading && !error && !autoAssembledRef.current) {
+    if (isPro && hasCurrentSessionAlignment && !currentResume && !pendingResume && !loading && !error && !autoAssembledRef.current && !showPdfFallback) {
       autoAssembledRef.current = true;
       handleAssemble();
     }
-  }, [isPro, hasCurrentSessionAlignment, currentResume, pendingResume, loading, error]);
+  }, [isPro, hasCurrentSessionAlignment, currentResume, pendingResume, loading, error, showPdfFallback]);
 
   const handleExportDocx = () => {
     if (!currentResume) return;
@@ -83,6 +99,20 @@ const CalibratedResumeTab = ({
       localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(currentResume));
     } catch {}
     exportCalibratedPdf("resume-canvas");
+  };
+
+  const handleCleanTextProvided = (text: string) => {
+    setShowPdfFallback(false);
+    autoAssembledRef.current = false;
+    onResumeTextReplaced?.(text);
+    // Re-assemble with the clean text
+    const contact = extractContactFromText(text);
+    assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>);
+  };
+
+  const handleContinueWithEditMode = () => {
+    setShowPdfFallback(false);
+    // Skip to the field confirmation step (already have pendingResume)
   };
 
   if (!isPro) {
@@ -109,6 +139,16 @@ const CalibratedResumeTab = ({
     );
   }
 
+  // PDF fallback: confidence is low, show guided options instead of contaminated output
+  if (showPdfFallback && pendingResume && confidence?.isLow) {
+    return (
+      <PdfFallbackState
+        onCleanTextProvided={handleCleanTextProvided}
+        onContinueWithEditMode={handleContinueWithEditMode}
+      />
+    );
+  }
+
   return (
     <div className="max-w-5xl md:max-w-tool mx-auto space-y-4">
       {!currentResume && !pendingResume && !loading && !error && (
@@ -123,7 +163,7 @@ const CalibratedResumeTab = ({
         <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
           <p className="text-sm text-white leading-relaxed">{error}</p>
           <Button
-            onClick={handleAssemble}
+            onClick={() => handleAssemble()}
             variant="outline"
             className="w-full gap-2 border-white/20 text-white hover:bg-white/10"
           >
@@ -133,8 +173,8 @@ const CalibratedResumeTab = ({
         </div>
       )}
 
-      {/* Low-confidence confirmation step */}
-      {pendingResume && !loading && !currentResume && confidence && (
+      {/* Low-confidence confirmation step (non-PDF, or after user chose "Review & Edit") */}
+      {pendingResume && !loading && !currentResume && confidence && !showPdfFallback && (
         <ResumeStructureConfirm
           resume={pendingResume}
           issues={confidence.issues}
@@ -148,7 +188,7 @@ const CalibratedResumeTab = ({
           <ResumeToolbar
             editMode={editMode}
             onToggleEdit={() => setEditMode(!editMode)}
-            onReassemble={handleAssemble}
+            onReassemble={() => handleAssemble()}
             onExportDocx={handleExportDocx}
             onExportPdf={handleExportPdf}
             loading={loading}

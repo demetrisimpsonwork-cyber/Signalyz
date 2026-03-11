@@ -9,8 +9,10 @@ import { reconstructPdfText } from "@/lib/pdfColumnParser";
 // Use CDN worker to avoid build issues with pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
+export type ResumeInputSource = "paste" | "pdf" | "docx";
+
 interface ResumeUploadProps {
-  onTextExtracted: (text: string) => void;
+  onTextExtracted: (text: string, source?: ResumeInputSource) => void;
   onClear?: () => void;
 }
 
@@ -71,7 +73,7 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
         throw new Error("Could not extract meaningful text from this file.");
       }
 
-      onTextExtracted(text);
+      onTextExtracted(text, ext === "docx" ? "docx" : "pdf");
       toast.success("Resume text extracted successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to extract text from file.");
