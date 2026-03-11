@@ -281,7 +281,7 @@ HARD RULES:
 - NEVER fabricate experience or inflate claims beyond what the resume states.
 - NEVER use "passionate about," "dedicated to," "committed to" — replace with concrete operational language.
 - NEVER repeat a transferable-fit explanation across multiple sentences. State it ONCE. If you find yourself writing "X transfers to Y. This translates to Z. This demonstrates…" — delete the second and third sentences.
-- Maximum 230 words total. Exactly 5 paragraphs. First person as the candidate.
+- Maximum 230 words total. Exactly 5 paragraphs (Opening Hook, Intent Bridge, Operational Fit, Transferable Signal + Gap Reframe, Closing). First person as the candidate.
 - Each paragraph must be separated by exactly one blank line.
 - ABSOLUTE PARAGRAPH LIMIT: No single paragraph may exceed 3 sentences. If you draft a 4th sentence in any paragraph, delete the weakest one.
 
@@ -290,14 +290,14 @@ STRUCTURE:
 Paragraph 1 — OPENING HOOK (2 sentences. Never 3.)
 One declarative statement of professional identity grounded in what the candidate actually does. One sentence connecting that identity to this specific role. Drop the reader into the strongest signal immediately. No setup.
 
-Paragraph 2 — OPERATIONAL FIT (3 sentences. Never 4.)
-Show the candidate doing the work this role requires. Each sentence must present different evidence — a different system, decision, scale, or outcome. Never rephrase. Never summarize what was just said. Start each sentence differently: lead with outcomes, timeframes, scope, or objects — never start two consecutive sentences with "I" or "My."
+Paragraph 2 — INTENT BRIDGE (1 sentence only. Never 2.)
+One sentence connecting the candidate's operational background to the leadership or responsibilities of ${roleTitle}. This sentence explains WHY their specific experience prepares them for this role — not WHAT they did (that comes next). Keep it concise and role-aligned. No storytelling. No personal narrative. Example pattern: "This operational environment developed the prioritization and decision discipline required to coordinate customer experience teams and service workflows."
 
-Paragraph 3 — TRANSFERABLE SIGNAL (2 sentences. Never 3.)
-Name one capability that maps to the role. State what transfers and why in ONE sentence. The second sentence provides one concrete example. Done. No overexplaining. No "this demonstrates" or "this translates to." Just state the fact.
+Paragraph 3 — OPERATIONAL FIT (2 sentences. Never 3.)
+Show the candidate doing the work this role requires. Each sentence presents different evidence — a different system, decision, scale, or outcome. Start each sentence differently. Direct phrasing only.
 
-Paragraph 4 — GAP REFRAME (2 sentences. Never 3.)
-Name the gap. Reframe it with one piece of evidence. No defensiveness. No hedging. No softening qualifiers.
+Paragraph 4 — TRANSFERABLE SIGNAL + GAP REFRAME (2 sentences. Never 3.)
+First sentence: name one capability that maps to the role and state the concrete evidence. Second sentence: acknowledge the gap and reframe it with one piece of evidence. No defensiveness. No hedging.
 
 Paragraph 5 — CLOSING (2 sentences. Never 3.)
 State one specific thing the candidate will do in this role. End with a single direct sentence. No "I look forward to." No "Thank you." No pleasantries.
@@ -305,28 +305,23 @@ State one specific thing the candidate will do in this role. End with a single d
 ${toneInstruction}
 
 WRITING QUALITY — CRITICAL:
-- PARAGRAPH LENGTH: Default to 2 sentences per paragraph. A third sentence is permitted ONLY if it introduces a concrete metric, number, or specific example not present in the first two sentences. If the third sentence restates or explains the same idea as sentence 1 or 2, delete it.
-- PATTERN TO ELIMINATE: Statement → explanation → restatement. Instead use: Statement → supporting detail. Two sentences. Stop.
+- PARAGRAPH LENGTH: 2 sentences per paragraph default. The Intent Bridge paragraph is exactly 1 sentence. A third sentence elsewhere is permitted ONLY if it introduces a concrete metric not present in the first two.
+- DIRECT PHRASING: Prefer "I run X" over "I have experience running X." Prefer "Revenue grew 18%" over "I was responsible for driving revenue growth."
+- NO REPEAT CONCEPTS: If a skill or idea appears in one paragraph, it cannot appear in any other paragraph. One mention per letter.
 - TARGET SENTENCE LENGTH: 14–20 words per sentence. If a sentence exceeds 25 words, split it or cut it.
-- SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I," "My," or "This." Vary openings: lead with outcomes, objects, timeframes, or teams.
-- ONE IDEA PER PARAGRAPH: Each paragraph gets one concept. Do not restate that concept using different words. If you wrote "led pricing strategy across 3 markets" do not follow with "this pricing work spanned multiple regions."
-- ZERO TRANSFER CHAINS: These patterns are absolutely forbidden:
-  * "X requires the same skills as Y"
-  * "This demonstrates the same capabilities needed for Z"
-  * "X translates directly to Y"
-  * "X demonstrates the approach needed for Y"
-  Just state what you did. One sentence. The reader connects it to the role.
+- SENTENCE RHYTHM: No more than 2 consecutive sentences may begin with "I," "My," or "This."
+- ZERO TRANSFER CHAINS: Forbidden patterns: "X requires the same skills as Y," "This demonstrates the capabilities needed for Z," "X translates directly to Y." State the fact. Stop.
 - NATURAL VOICE: Write like a professional explaining their work to a peer. Short, plain, specific.
 - BANNED PHRASES: "built expertise in," "directly translates to," "demonstrates the analytical approach," "demonstrates the systems thinking," "translates directly to," "supports the requirements of," "essential for," "showcases ability to," "brings a unique combination of," "deep understanding of," "well-versed in," "extensive experience in," "proven ability to," "strong foundation in," "key areas," "aligns with," "requires the same capabilities as," "mirrors the demands of," "parallels the requirements of."
-- CONCRETENESS: Replace every abstract claim with the specific thing. Not "managed complex stakeholder environments" but "reported to CFO and two VPs weekly on pipeline status."
+- CONCRETENESS: Replace every abstract claim with the specific thing.
 - WORD CHOICE: Use the candidate's own vocabulary from the resume.
-- REDUNDANCY CHECK: Before finalizing, scan the entire letter. If any skill or signal appears in more than one sentence, keep only the first mention.
+- REDUNDANCY CHECK: Scan the entire letter before finalizing. If any concept appears twice, keep only the first mention.
 - Every claim must be traceable to actual resume content. Zero fabrication.
 
 TONE STRUCTURE EFFECTS:
-- If CONFIDENT: 2 sentences per paragraph default. Third only with a metric. Warm authority.
-- If STRATEGIC: 2–3 sentences allowed. Third sentence must add connective reasoning, not restate.
-- If DIRECT: 2 sentences per paragraph. No exceptions. Declarative only.
+- If CONFIDENT: 2 sentences per paragraph default. Intent Bridge = 1 sentence. Warm authority.
+- If STRATEGIC: 2–3 sentences allowed in Operational Fit only. Intent Bridge = 1 sentence. Connective reasoning, not restatement.
+- If DIRECT: 2 sentences per paragraph. Intent Bridge = 1 sentence. No exceptions. Declarative only.
 
 Return a JSON object with: "letter" (the full cover letter body text — exactly 5 paragraphs separated by double newlines — no header, no date, no salutation, no sign-off, no strategy notes, no labels, no debug notes)
 Return ONLY valid JSON, no markdown.`;
