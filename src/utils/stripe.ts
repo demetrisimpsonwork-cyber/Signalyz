@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function initiateCheckout() {
+export async function initiateCheckout(mode: "subscription" | "one_time" = "subscription") {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -11,12 +11,17 @@ export async function initiateCheckout() {
     return;
   }
 
+  const isOneTime = mode === "one_time";
+  const successParam = isOneTime ? "purchase=success" : "upgrade=success";
+  const cancelParam = isOneTime ? "purchase=cancelled" : "upgrade=cancelled";
+
   try {
-    console.log("[Checkout] Invoking create-checkout edge function…");
+    console.log("[Checkout] Invoking create-checkout edge function… mode:", mode);
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
-        successUrl: `${window.location.origin}/?upgrade=success`,
-        cancelUrl: `${window.location.origin}/?upgrade=cancelled`,
+        mode: isOneTime ? "one_time" : "subscription",
+        successUrl: `${window.location.origin}/?${successParam}`,
+        cancelUrl: `${window.location.origin}/?${cancelParam}`,
       },
     });
 

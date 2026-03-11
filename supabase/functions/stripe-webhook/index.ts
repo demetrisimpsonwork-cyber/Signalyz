@@ -58,9 +58,37 @@ serve(async (req) => {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
+        const purchaseType = session.metadata?.purchase_type;
         const subscriptionId = session.subscription as string | null;
 
-        console.log("[Webhook] checkout.session.completed — user_id:", userId, "subscription:", subscriptionId, "customer:", session.customer);
+        console.log("[Webhook] checkout.session.completed — user_id:", userId, "subscription:", subscriptionId, "purchase_type:", purchaseType);
+
+        if (userId && purchaseType === "one_time_diagnostic") {
+          // One-time $9 purchase — insert credit into one_time_purchases
+          console.log("[Webhook] Processing one-time diagnostic purchase for user:", userId);
+          const { error: insertError } = await supabase
+            .from("one_time_purchases")
+            .insert({
+              user_id: userId,
+              stripe_session_id: session.id,
+              stripe_payment_intent: session.payment_intent as string,
+              used: false,
+            });
+
+          if (insertError) {
+            console.error("[Webhook] one_time_purchases insert FAILED:", insertError.message);
+          } else {
+            console.log("[Webhook] one_time_purchases credit inserted for user:", userId);
+          }
+
+          await supabase.from("subscription_events").insert({
+            user_id: userId,
+            event_type: "one_time_purchase",
+            stripe_event_id: event.id,
+            payload: session as any,
+          });
+          break;
+        }
 
         if (userId) {
           let periodEnd: string | null = null;
