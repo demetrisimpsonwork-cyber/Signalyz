@@ -290,14 +290,14 @@ STRUCTURE:
 Paragraph 1 — OPENING HOOK (2 sentences. Never 3.)
 One declarative statement of professional identity grounded in what the candidate actually does. One sentence connecting that identity to this specific role. Drop the reader into the strongest signal immediately. No setup.
 
-Paragraph 2 — OPERATIONAL FIT (3 sentences. Never 4.)
-Show the candidate doing the work this role requires. Each sentence must present different evidence — a different system, decision, scale, or outcome. Never rephrase. Never summarize what was just said. Start each sentence differently: lead with outcomes, timeframes, scope, or objects — never start two consecutive sentences with "I" or "My."
+Paragraph 2 — INTENT BRIDGE (1 sentence only. Never 2.)
+One sentence connecting the candidate's operational background to the leadership or responsibilities of ${roleTitle}. This sentence explains WHY their specific experience prepares them for this role — not WHAT they did (that comes next). Keep it concise and role-aligned. No storytelling. No personal narrative. Example pattern: "This operational environment developed the prioritization and decision discipline required to coordinate customer experience teams and service workflows."
 
-Paragraph 3 — TRANSFERABLE SIGNAL (2 sentences. Never 3.)
-Name one capability that maps to the role. State what transfers and why in ONE sentence. The second sentence provides one concrete example. Done. No overexplaining. No "this demonstrates" or "this translates to." Just state the fact.
+Paragraph 3 — OPERATIONAL FIT (2 sentences. Never 3.)
+Show the candidate doing the work this role requires. Each sentence presents different evidence — a different system, decision, scale, or outcome. Start each sentence differently. Direct phrasing only.
 
-Paragraph 4 — GAP REFRAME (2 sentences. Never 3.)
-Name the gap. Reframe it with one piece of evidence. No defensiveness. No hedging. No softening qualifiers.
+Paragraph 4 — TRANSFERABLE SIGNAL + GAP REFRAME (2 sentences. Never 3.)
+First sentence: name one capability that maps to the role and state the concrete evidence. Second sentence: acknowledge the gap and reframe it with one piece of evidence. No defensiveness. No hedging.
 
 Paragraph 5 — CLOSING (2 sentences. Never 3.)
 State one specific thing the candidate will do in this role. End with a single direct sentence. No "I look forward to." No "Thank you." No pleasantries.
