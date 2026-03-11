@@ -18,7 +18,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20" style={{ background: 'radial-gradient(1200px circle at 50% -10%, rgba(20,184,166,0.18) 0%, rgba(20,184,166,0.08) 30%, rgba(20,184,166,0.04) 50%, transparent 70%)' }}>
+    <div className="container max-w-6xl py-20 px-4 pb-32 md:pb-20" style={{ background: 'radial-gradient(1000px circle at 50% -15%, rgba(20,184,166,0.22) 0%, rgba(20,184,166,0.09) 20%, rgba(20,184,166,0.03) 40%, transparent 55%)' }}>
       <div className="mb-14 text-center space-y-4">
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Precision. Not guesswork.</h1>
         <div className="space-y-3 max-w-[600px] mx-auto">
