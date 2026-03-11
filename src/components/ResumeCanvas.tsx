@@ -233,7 +233,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           onUpdate={onUpdate}
           className="font-bold tracking-tight"
           style={{ fontSize: "24px", color: "#1A1A2E" }}
-          placeholder="Full Name"
+          placeholder="Your Name"
         />
         {(resume.header.title || editMode) && (
           <EditableField
