@@ -104,6 +104,49 @@ const YEAR_RX = /\b(19|20)\d{2}\b/;
 
 const BULLET_RX = /^[\s]*[-•▪►*]\s+/;
 const COMPANY_SUFFIXES = /\b(inc\.?|llc|corp\.?|ltd\.?|co\.?|company|group|partners|consulting|services|solutions|technologies|enterprises|international|associates)\b/i;
+const ROLE_TITLE_RX = /\b(specialist|manager|analyst|coordinator|engineer|developer|director|lead|supervisor|associate|consultant|administrator|architect|designer|officer|president|vice\s+president|vp|intern|assistant|head\s+of|representative|technician|executive|chief|senior|junior|principal)\b/i;
+const LOCATION_LINE_RX = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
+const EDU_KEYWORDS_TITLE = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree|school|institute|academy)\b/i;
+const SECTION_HEADER_TITLE_RX = /^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?|CORE\s+COMPETENCIES|PROFESSIONAL\s+SUMMARY|WORK\s+HISTORY|EMPLOYMENT)\s*$/i;
+
+const ACTION_VERB_SET_TITLE = new Set([
+  "managed","led","developed","created","built","improved","directed",
+  "established","implemented","executed","organized","analyzed","designed",
+  "maintained","delivered","coordinated","supported","reduced","increased",
+  "streamlined","automated","facilitated","negotiated","spearheaded",
+  "launched","oversaw","supervised","trained","partnered","resolved",
+  "provided","reported","documented","monitored","tracked","planned",
+  "produced","optimized","communicated","communicate",
+]);
+
+/** Returns true if the string looks contaminated (location, education, bullet, section header) */
+function isFieldContaminated(v: string): boolean {
+  if (!v) return false;
+  const t = v.trim();
+  if (LOCATION_LINE_RX.test(t)) return true;
+  if (EDU_KEYWORDS_TITLE.test(t)) return true;
+  if (SECTION_HEADER_TITLE_RX.test(t)) return true;
+  if (t.length > 100) return true; // too long to be a title or company
+  // Starts with action verb — it's a bullet fragment
+  const firstWord = t.split(/[\s,]/)[0]?.toLowerCase() || "";
+  if (ACTION_VERB_SET_TITLE.has(firstWord)) return true;
+  // Contact pattern
+  if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(t)) return true;
+  if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(t)) return true;
+  return false;
+}
+
+/** Sanitize a title field — blank it out if contaminated */
+function sanitizeTitle(v: string): string {
+  if (isFieldContaminated(v)) return "";
+  return v.trim();
+}
+
+/** Sanitize a company field — blank it out if contaminated */
+function sanitizeCompany(v: string): string {
+  if (isFieldContaminated(v)) return "";
+  return v.trim();
+}
 
 interface ParsedRole {
   title: string;
@@ -146,12 +189,20 @@ function parseRoleHeaderLine(line: string): { title: string; company: string; da
   if (remainder.includes("|")) {
     const parts = remainder.split("|").map(s => s.trim()).filter(Boolean);
     if (parts.length >= 2) {
-      // Heuristic: part with company suffix is company
+      // Heuristic: part with company suffix is company; part with role title keyword is title
       const compIdx = parts.findIndex(p => COMPANY_SUFFIXES.test(p));
-      if (compIdx >= 0) {
+      const titleIdx = parts.findIndex(p => ROLE_TITLE_RX.test(p));
+      if (compIdx >= 0 && titleIdx >= 0 && compIdx !== titleIdx) {
+        company = parts[compIdx];
+        title = parts[titleIdx];
+      } else if (compIdx >= 0) {
         company = parts[compIdx];
         title = parts.filter((_, i) => i !== compIdx).join(" | ");
+      } else if (titleIdx >= 0) {
+        title = parts[titleIdx];
+        company = parts.filter((_, i) => i !== titleIdx).join(" | ");
       } else {
+        // Default: first part = company, rest = title (common resume format)
         company = parts[0];
         title = parts.slice(1).join(" | ");
       }
@@ -163,10 +214,33 @@ function parseRoleHeaderLine(line: string): { title: string; company: string; da
       title = parts[0]; company = parts[1];
     } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
       company = parts[0]; title = parts[1] || "";
+    } else if (ROLE_TITLE_RX.test(parts[0]) && !ROLE_TITLE_RX.test(parts[1] || "")) {
+      title = parts[0]; company = parts[1] || "";
+    } else if (ROLE_TITLE_RX.test(parts[1] || "") && !ROLE_TITLE_RX.test(parts[0])) {
+      company = parts[0]; title = parts[1] || "";
     } else {
       title = parts[0]; company = parts[1] || "";
     }
+  } else if (remainder.includes(",")) {
+    // Try comma-separated: "Company Name, Job Title"
+    const parts = remainder.split(",").map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      if (ROLE_TITLE_RX.test(parts[parts.length - 1])) {
+        title = parts[parts.length - 1];
+        company = parts.slice(0, -1).join(", ");
+      } else if (ROLE_TITLE_RX.test(parts[0])) {
+        title = parts[0];
+        company = parts.slice(1).join(", ");
+      } else if (COMPANY_SUFFIXES.test(parts[0])) {
+        company = parts[0];
+        title = parts.slice(1).join(", ");
+      }
+    }
   }
+
+  // Sanitize: if title looks like location/education/bullet, blank it
+  title = sanitizeTitle(title);
+  company = sanitizeCompany(company);
 
   return { title, company, dates };
 }
@@ -195,6 +269,9 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
           currentRole.company = parts[1];
         }
       }
+      // Final sanitization pass on title and company fields
+      currentRole.title = sanitizeTitle(currentRole.title);
+      currentRole.company = sanitizeCompany(currentRole.company);
       roles.push(currentRole);
     }
   };
@@ -232,7 +309,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       // Look ahead: next line might be company name if not detected
       if (!parsed.company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine) && !isFieldContaminated(nextLine)) {
           currentRole.company = nextLine;
           i++;
         }
@@ -256,8 +333,15 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
 
       if (titleCompany.includes("|")) {
         const parts = titleCompany.split("|").map(s => s.trim());
-        title = parts[0];
-        company = parts.slice(1).join(" | ");
+        const compIdx = parts.findIndex(p => COMPANY_SUFFIXES.test(p));
+        const titleIdx = parts.findIndex(p => ROLE_TITLE_RX.test(p));
+        if (compIdx >= 0 && titleIdx >= 0 && compIdx !== titleIdx) {
+          company = parts[compIdx]; title = parts[titleIdx];
+        } else if (compIdx >= 0) {
+          company = parts[compIdx]; title = parts.filter((_, i) => i !== compIdx).join(" | ");
+        } else {
+          title = parts[0]; company = parts.slice(1).join(" | ");
+        }
       } else if (titleCompany.includes("—") || titleCompany.includes("–")) {
         const sep = titleCompany.includes("—") ? "—" : "–";
         const parts = titleCompany.split(sep).map(s => s.trim());
@@ -265,16 +349,22 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
           title = parts[0]; company = parts[1];
         } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
           company = parts[0]; title = parts[1] || "";
+        } else if (ROLE_TITLE_RX.test(parts[0]) && !ROLE_TITLE_RX.test(parts[1] || "")) {
+          title = parts[0]; company = parts[1] || "";
         } else {
           title = parts[0]; company = parts[1] || "";
         }
       }
 
+      // Sanitize
+      title = sanitizeTitle(title);
+      company = sanitizeCompany(company);
+
       currentRole = { title, company, dates, bullets: [] };
 
       if (!company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine) && !isFieldContaminated(nextLine)) {
           if (COMPANY_SUFFIXES.test(nextLine) || nextLine.length < 50) {
             currentRole.company = nextLine;
             i++;
@@ -291,8 +381,8 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
         const nextLine = lines[i + 1].trim();
         const dateMatch = nextLine.match(DATE_RX);
         const dates = dateMatch ? dateMatch[0] : "";
-        const titlePart = nextLine.replace(DATE_RX, "").trim().replace(/[|—–,·]\s*$/, "").trim();
-        currentRole = { title: titlePart || line, company: titlePart ? line : "", dates, bullets: [] };
+        const titlePart = sanitizeTitle(nextLine.replace(DATE_RX, "").trim().replace(/[|—–,·]\s*$/, "").trim());
+        currentRole = { title: titlePart || "", company: line, dates, bullets: [] };
         i++;
         continue;
       }
@@ -305,7 +395,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
     }
 
     // Short text that might be a company name for current role
-    if (currentRole && !currentRole.company && isShortLine && line.length < 60) {
+    if (currentRole && !currentRole.company && isShortLine && line.length < 60 && !isFieldContaminated(line)) {
       currentRole.company = line;
       continue;
     }
