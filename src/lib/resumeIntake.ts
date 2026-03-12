@@ -111,6 +111,24 @@ function isPhoneOrEmail(text: string): boolean {
 }
 const LINKEDIN_MARKER = /dates?\s+employed|company\s+name/i;
 
+/**
+ * Detect lines that are education, location, or section-header debris —
+ * these should never appear as experience responsibilities.
+ */
+function isEducationOrLocationDebris(line: string): boolean {
+  const t = line.trim();
+  if (!t) return false;
+  // Education keywords anywhere in line
+  if (EDUCATION_KEYWORDS.test(t)) return true;
+  // Location-only: "City · ST" or "City, ST" patterns (short lines)
+  if (/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[·,]\s*[A-Z]{2}\b/.test(t) && t.length < 120) return true;
+  // Pure location line
+  if (LOCATION_PATTERN.test(t)) return true;
+  // Section header debris (all caps short line)
+  if (/^[A-Z\s&]{4,}$/.test(t) && t.length < 40) return true;
+  return false;
+}
+
 // ─── Person Name Detection ───────────────────────────────────────────────────
 
 const SECTION_HEADER_RX_NAME = /^(professional\s+summary|summary|profile|objective|experience|education|skills|certifications?|core\s+competencies)/i;
