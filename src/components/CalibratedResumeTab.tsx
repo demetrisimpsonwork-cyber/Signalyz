@@ -189,8 +189,12 @@ const CalibratedResumeTab = ({
         />
       )}
 
+
       {currentResume && !loading && (
         <>
+          {/* Name prompt when extraction failed */}
+          {!currentResume.header.name && <NamePrompt onSubmit={(name) => updateField("header.name", name)} />}
+
           <ResumeToolbar
             editMode={editMode}
             onToggleEdit={() => setEditMode(!editMode)}
