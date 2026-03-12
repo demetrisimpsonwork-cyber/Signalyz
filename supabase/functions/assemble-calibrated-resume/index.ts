@@ -309,7 +309,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       // Look ahead: next line might be company name if not detected
       if (!parsed.company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine) && !isFieldContaminated(nextLine)) {
           currentRole.company = nextLine;
           i++;
         }
