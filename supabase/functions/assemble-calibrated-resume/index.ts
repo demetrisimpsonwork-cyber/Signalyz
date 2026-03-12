@@ -439,6 +439,29 @@ function isEduLineValid(line: string): boolean {
   return true;
 }
 
+/** Validate that a string is a plausible institution name, not body text */
+function isValidInstitution(v: string): boolean {
+  if (!v || v.length > 100) return false;
+  // Must not contain financial figures
+  if (/\$[\d,.]+/.test(v)) return false;
+  // Must not be a sentence fragment (too many words with lowercase)
+  if (v.split(/\s+/).length > 8) return false;
+  // Must not start with action verbs
+  const firstWord = v.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+  if (EDU_REJECT_VERBS.has(firstWord)) return false;
+  // Must not be a pure date string like "2015 – 2019"
+  if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(v.trim())) return false;
+  if (/^\d{4}$/.test(v.trim())) return false;
+  // Must not be a contact pattern
+  if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(v)) return false;
+  if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(v)) return false;
+  // Should ideally contain an education keyword OR be short and proper-cased
+  if (EDU_KEYWORDS_RX.test(v)) return true;
+  // Accept short proper-cased names (likely school names)
+  if (v.length < 60 && /^[A-Z]/.test(v)) return true;
+  return false;
+}
+
 function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
   const entries: Array<{ institution: string; degree: string; year: string }> = [];
   let currentEntry: { institution: string; degree: string; year: string } | null = null;
@@ -460,14 +483,26 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
         year: yearMatch ? yearMatch[0] : "",
       };
     } else if (currentEntry && !currentEntry.institution) {
-      currentEntry.institution = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      // Validate before accepting as institution
+      const candidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      if (isValidInstitution(candidate)) {
+        currentEntry.institution = candidate;
+      }
       if (!currentEntry.year && yearMatch) currentEntry.year = yearMatch[0];
-    } else if (EDU_KEYWORDS_RX.test(trimmed) || yearMatch) {
-      // Only start a new entry if the line has education indicators
+    } else if (EDU_KEYWORDS_RX.test(trimmed)) {
+      // Only start a new entry if line has education indicators (not just a year)
       if (currentEntry) entries.push(currentEntry);
-      currentEntry = { institution: trimmed, degree: "", year: yearMatch ? yearMatch[0] : "" };
+      const instCandidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      currentEntry = {
+        institution: isValidInstitution(instCandidate) ? instCandidate : "",
+        degree: "",
+        year: yearMatch ? yearMatch[0] : "",
+      };
+    } else if (yearMatch && EDU_KEYWORDS_RX.test(trimmed)) {
+      if (currentEntry) entries.push(currentEntry);
+      currentEntry = { institution: "", degree: "", year: yearMatch[0] };
     }
-    // Otherwise skip the line — don't create entries from arbitrary text
+    // Otherwise skip — don't create entries from arbitrary text
   }
   if (currentEntry) entries.push(currentEntry);
   return entries;
