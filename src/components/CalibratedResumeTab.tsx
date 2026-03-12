@@ -251,4 +251,32 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   );
 }
 
+function NamePrompt({ onSubmit }: { onSubmit: (name: string) => void }) {
+  const [value, setValue] = useState("");
+  return (
+    <div className="rounded-lg border border-dashed bg-card p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5 sm:mt-0" />
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium text-foreground">Enter your full name</p>
+        <p className="text-xs text-muted-foreground">We couldn't extract your name automatically. Please type it below.</p>
+      </div>
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="e.g. Demetri Simpson"
+          className="h-9 text-sm w-full sm:w-52"
+        />
+        <Button
+          size="sm"
+          disabled={value.trim().length < 2}
+          onClick={() => onSubmit(value.trim())}
+        >
+          Save
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default CalibratedResumeTab;
