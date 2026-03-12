@@ -516,8 +516,9 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
     // If line has a degree keyword, start new entry
     if (/\b(bachelor|master|associate|doctor|phd|mba|bs|ba|ms|ma|bba|bsc|msc|diploma|certificate|ged|high\s+school)\b/i.test(trimmed)) {
       if (currentEntry) entries.push(currentEntry);
+      const degreeCandidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").replace(/[|—–,·]\s*$/, "").trim();
       currentEntry = {
-        degree: trimmed.replace(/\b(19|20)\d{2}\b/g, "").replace(/[|—–,·]\s*$/, "").trim(),
+        degree: isValidDegree(degreeCandidate) ? degreeCandidate : "",
         institution: "",
         year: yearMatch ? yearMatch[0] : "",
       };
