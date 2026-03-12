@@ -31,7 +31,7 @@ import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
 import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
-import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check } from "lucide-react";
+import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
@@ -1058,13 +1058,25 @@ const Index = () => {
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                   />
-                  <Textarea
-                    placeholder="Paste a resume bullet, summary, or short experience section here..."
-                    value={bullet}
-                    onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setErrors((p) => ({ ...p, bullet: undefined })); }}
-                    rows={4}
-                    className={`mt-2 ${errors.bullet ? "border-destructive" : ""}`}
-                  />
+                  <div className="relative mt-2">
+                    <Textarea
+                      placeholder="Paste a resume bullet, summary, or short experience section here..."
+                      value={bullet}
+                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      rows={4}
+                      className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
+                    />
+                    {bullet && (
+                      <button
+                        type="button"
+                        onClick={() => { setBullet(""); setInputSource("paste"); setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
+                        className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        title="Clear resume input"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                   {bullet.trim().length > 20 && (
                     <div className="mt-1.5">
                       <ResumePasteQuality quality={getPasteQuality(parseResumeIntake(bullet))} />
