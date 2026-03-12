@@ -95,10 +95,7 @@ const CalibratedResumeTab = ({
 
   const handleExportPdf = () => {
     if (!currentResume) return;
-    try {
-      localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(currentResume));
-    } catch {}
-    exportCalibratedPdf("resume-canvas");
+    exportCalibratedPdf(currentResume);
   };
 
   const handleCleanTextProvided = (text: string) => {
