@@ -364,7 +364,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
 
       if (!company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine)) {
+        if (nextLine && !DATE_RX.test(nextLine) && !BULLET_RX.test(nextLine) && nextLine.length < 60 && !isJobEntryHeader(nextLine) && !isFieldContaminated(nextLine)) {
           if (COMPANY_SUFFIXES.test(nextLine) || nextLine.length < 50) {
             currentRole.company = nextLine;
             i++;
@@ -381,8 +381,8 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
         const nextLine = lines[i + 1].trim();
         const dateMatch = nextLine.match(DATE_RX);
         const dates = dateMatch ? dateMatch[0] : "";
-        const titlePart = nextLine.replace(DATE_RX, "").trim().replace(/[|—–,·]\s*$/, "").trim();
-        currentRole = { title: titlePart || line, company: titlePart ? line : "", dates, bullets: [] };
+        const titlePart = sanitizeTitle(nextLine.replace(DATE_RX, "").trim().replace(/[|—–,·]\s*$/, "").trim());
+        currentRole = { title: titlePart || "", company: line, dates, bullets: [] };
         i++;
         continue;
       }
@@ -395,7 +395,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
     }
 
     // Short text that might be a company name for current role
-    if (currentRole && !currentRole.company && isShortLine && line.length < 60) {
+    if (currentRole && !currentRole.company && isShortLine && line.length < 60 && !isFieldContaminated(line)) {
       currentRole.company = line;
       continue;
     }
