@@ -126,13 +126,19 @@ function isFieldContaminated(v: string): boolean {
   if (LOCATION_LINE_RX.test(t)) return true;
   if (EDU_KEYWORDS_TITLE.test(t)) return true;
   if (SECTION_HEADER_TITLE_RX.test(t)) return true;
-  if (t.length > 100) return true; // too long to be a title or company
+  if (t.length > 80) return true; // too long to be a title or company
   // Starts with action verb — it's a bullet fragment
   const firstWord = t.split(/[\s,]/)[0]?.toLowerCase() || "";
   if (ACTION_VERB_SET_TITLE.has(firstWord)) return true;
   // Contact pattern
   if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(t)) return true;
   if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(t)) return true;
+  // Bullet-prefix patterns from PDF copy-paste: "o Provide...", "• Managed..."
+  if (/^o\s+[A-Z]/.test(t)) return true;
+  // Sentence-like content (contains multiple clauses/commas and reads like a bullet)
+  if (t.split(/\s+/).length > 10) return true;
+  // Financial figures contamination
+  if (/\$[\d,.]+/.test(t)) return true;
   return false;
 }
 
@@ -388,6 +394,33 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       }
     }
 
+    // Detect standalone company name line (no dates, short, proper-cased, no bullet)
+    // followed by a title line or date line
+    if (!currentRole && isShortLine && !isBullet && !hasDate && line.length > 2 && line.length < 60) {
+      // Check if next line has a date or role title keyword
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        const nextHasDate = DATE_RX.test(nextLine) || YEAR_RX.test(nextLine);
+        const nextHasTitle = ROLE_TITLE_RX.test(nextLine);
+        if ((nextHasDate || nextHasTitle) && !isFieldContaminated(line)) {
+          commitRole();
+          company = line;
+          // Parse next line for title+dates
+          if (nextHasDate) {
+            const dateMatch = nextLine.match(DATE_RX);
+            const dates = dateMatch ? dateMatch[0] : (nextLine.match(YEAR_RX)?.[0] || "");
+            const titlePart = sanitizeTitle(nextLine.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim());
+            currentRole = { title: titlePart, company: line, dates, bullets: [] };
+            i++;
+          } else {
+            currentRole = { title: sanitizeTitle(nextLine), company: line, dates: "", bullets: [] };
+            i++;
+          }
+          continue;
+        }
+      }
+    }
+
     // Plain text within a role — treat as bullet if long enough
     if (currentRole && line.length > 20) {
       pendingText.push(line);
@@ -433,6 +466,29 @@ function isEduLineValid(line: string): boolean {
   return true;
 }
 
+/** Validate that a string is a plausible institution name, not body text */
+function isValidInstitution(v: string): boolean {
+  if (!v || v.length > 100) return false;
+  // Must not contain financial figures
+  if (/\$[\d,.]+/.test(v)) return false;
+  // Must not be a sentence fragment (too many words with lowercase)
+  if (v.split(/\s+/).length > 8) return false;
+  // Must not start with action verbs
+  const firstWord = v.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+  if (EDU_REJECT_VERBS.has(firstWord)) return false;
+  // Must not be a pure date string like "2015 – 2019"
+  if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(v.trim())) return false;
+  if (/^\d{4}$/.test(v.trim())) return false;
+  // Must not be a contact pattern
+  if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(v)) return false;
+  if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(v)) return false;
+  // Should ideally contain an education keyword OR be short and proper-cased
+  if (EDU_KEYWORDS_RX.test(v)) return true;
+  // Accept short proper-cased names (likely school names)
+  if (v.length < 60 && /^[A-Z]/.test(v)) return true;
+  return false;
+}
+
 function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
   const entries: Array<{ institution: string; degree: string; year: string }> = [];
   let currentEntry: { institution: string; degree: string; year: string } | null = null;
@@ -454,14 +510,26 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
         year: yearMatch ? yearMatch[0] : "",
       };
     } else if (currentEntry && !currentEntry.institution) {
-      currentEntry.institution = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      // Validate before accepting as institution
+      const candidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      if (isValidInstitution(candidate)) {
+        currentEntry.institution = candidate;
+      }
       if (!currentEntry.year && yearMatch) currentEntry.year = yearMatch[0];
-    } else if (EDU_KEYWORDS_RX.test(trimmed) || yearMatch) {
-      // Only start a new entry if the line has education indicators
+    } else if (EDU_KEYWORDS_RX.test(trimmed)) {
+      // Only start a new entry if line has education indicators (not just a year)
       if (currentEntry) entries.push(currentEntry);
-      currentEntry = { institution: trimmed, degree: "", year: yearMatch ? yearMatch[0] : "" };
+      const instCandidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").trim();
+      currentEntry = {
+        institution: isValidInstitution(instCandidate) ? instCandidate : "",
+        degree: "",
+        year: yearMatch ? yearMatch[0] : "",
+      };
+    } else if (yearMatch && EDU_KEYWORDS_RX.test(trimmed)) {
+      if (currentEntry) entries.push(currentEntry);
+      currentEntry = { institution: "", degree: "", year: yearMatch[0] };
     }
-    // Otherwise skip the line — don't create entries from arbitrary text
+    // Otherwise skip — don't create entries from arbitrary text
   }
   if (currentEntry) entries.push(currentEntry);
   return entries;
@@ -500,24 +568,47 @@ function extractHeaderFromResume(text: string): any {
   const locationRx = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
   const linkedinRx = /linkedin\.com\/in\/[\w-]+/i;
 
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+  const scanLimit = Math.min(lines.length, 12);
+
+  for (let i = 0; i < scanLimit; i++) {
     const line = lines[i];
-    if (!header.email) { const m = line.match(emailRx); if (m) header.email = m[0]; }
-    if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
-    if (!header.linkedin) { const m = line.match(linkedinRx); if (m) header.linkedin = m[0]; }
+
+    // Stop at section headers
+    if (detectSectionHeader(line)) break;
+
+    // Email — scan all header lines
+    if (!header.email) {
+      const m = line.match(emailRx);
+      if (m) header.email = m[0];
+    }
+    // Phone — scan all header lines, also match embedded in longer lines
+    if (!header.phone) {
+      const m = line.match(phoneRx);
+      if (m) header.phone = m[0];
+    }
+    if (!header.linkedin) {
+      const m = line.match(linkedinRx);
+      if (m) header.linkedin = m[0];
+    }
     if (!header.location && locationRx.test(line)) header.location = line;
-    // Name: first line that's short, not an email/phone, not a section header, not a placeholder
-    if (i === 0 && !header.name && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
-      // Reject known placeholders and non-name patterns
-      if (/^full\s+name$/i.test(line.trim())) continue;
-      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(line.trim())) continue;
-      // Reject lines that are all digits/symbols
-      if (/^[\d()+\-.\s]+$/.test(line.trim())) continue;
-      // Must contain at least one letter and look like a name (2-4 capitalized words)
-      if (/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,3}$/.test(line.trim()) || /^[A-Z][a-z]+\s+[A-Z]\.?\s+[A-Z][a-z]+$/.test(line.trim())) {
-        header.name = line.trim();
+
+    // Name: scan first 3 lines for name-like patterns
+    if (!header.name && i <= 2 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line)) {
+      const t = line.trim();
+      // Reject known placeholders
+      if (/^full\s+name$/i.test(t)) continue;
+      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(t)) continue;
+      if (/^[\d()+\-.\s]+$/.test(t)) continue;
+      if (linkedinRx.test(t)) continue;
+      // Accept: "First Last", "First M. Last", "First Middle Last", "FIRST LAST"
+      if (/^[A-Z][a-zA-Z'-]+(\s+[A-Z]\.?\s+)?(\s+[A-Z][a-zA-Z'-]+){0,2}$/.test(t)) {
+        header.name = t;
       }
-      // If it doesn't match name pattern, leave blank rather than inserting garbage
+      // Also accept ALL CAPS names: "JOHN SMITH"
+      else if (/^[A-Z]{2,}(\s+[A-Z]{2,}){0,2}$/.test(t) && t.length < 30) {
+        // Convert to title case
+        header.name = t.replace(/\b(\w)(\w*)/g, (_: string, first: string, rest: string) => first.toUpperCase() + rest.toLowerCase());
+      }
     }
   }
 
@@ -526,6 +617,15 @@ function extractHeaderFromResume(text: string): any {
     for (let i = 0; i < Math.min(lines.length, 8); i++) {
       const m = lines[i].match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2})/);
       if (m) { header.location = m[1]; break; }
+    }
+  }
+
+  // If email/phone not found in clean lines, try multi-field lines (e.g. "name@email.com | (555) 123-4567 | City, ST")
+  if (!header.email || !header.phone) {
+    for (let i = 0; i < Math.min(lines.length, 8); i++) {
+      const line = lines[i];
+      if (!header.email) { const m = line.match(emailRx); if (m) header.email = m[0]; }
+      if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
     }
   }
 
