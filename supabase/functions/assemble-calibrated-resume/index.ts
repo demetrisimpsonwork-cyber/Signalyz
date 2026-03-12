@@ -126,13 +126,19 @@ function isFieldContaminated(v: string): boolean {
   if (LOCATION_LINE_RX.test(t)) return true;
   if (EDU_KEYWORDS_TITLE.test(t)) return true;
   if (SECTION_HEADER_TITLE_RX.test(t)) return true;
-  if (t.length > 100) return true; // too long to be a title or company
+  if (t.length > 80) return true; // too long to be a title or company
   // Starts with action verb — it's a bullet fragment
   const firstWord = t.split(/[\s,]/)[0]?.toLowerCase() || "";
   if (ACTION_VERB_SET_TITLE.has(firstWord)) return true;
   // Contact pattern
   if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(t)) return true;
   if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(t)) return true;
+  // Bullet-prefix patterns from PDF copy-paste: "o Provide...", "• Managed..."
+  if (/^o\s+[A-Z]/.test(t)) return true;
+  // Sentence-like content (contains multiple clauses/commas and reads like a bullet)
+  if (t.split(/\s+/).length > 10) return true;
+  // Financial figures contamination
+  if (/\$[\d,.]+/.test(t)) return true;
   return false;
 }
 
