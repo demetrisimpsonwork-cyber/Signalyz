@@ -218,12 +218,13 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         if (v.length > 80) return true;
         if (startsWithActionVerb(v)) return true;
         if (isContactPattern(v)) return true;
-        // PDF bullet prefix: "o Provide...", "o Manage..."
         if (/^o\s+[A-Z]/.test(v.trim())) return true;
-        // Too many words — it's a sentence/bullet, not a title
         if (v.trim().split(/\s+/).length > 10) return true;
-        // Financial figures
         if (/\$[\d,.]+/.test(v)) return true;
+        // Lowercase-starting fragments (e.g., "beverage from")
+        if (/^[a-z]/.test(v.trim())) return true;
+        // Ends with preposition — sentence fragment
+        if (/\b(from|for|and|with|the|of|to|in|on|at|by)\s*$/i.test(v.trim()) && v.trim().split(/\s+/).length <= 4) return true;
         return false;
       };
 
