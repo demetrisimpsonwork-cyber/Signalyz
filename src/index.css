@@ -157,10 +157,20 @@
   }
 }
 
-/* Hide Lovable/Vite developer error overlays from end users */
+/* Hide ALL developer error overlays from end users */
 vite-error-overlay,
 [data-lovable-error],
 [class*="lovable-error"],
-#lovable-error-overlay {
+#lovable-error-overlay,
+[class*="error-overlay"],
+[id*="error-overlay"],
+[data-error-overlay] {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
