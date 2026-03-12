@@ -414,7 +414,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
             const dateMatch = nextLine.match(DATE_RX);
             const dates = dateMatch ? dateMatch[0] : (nextLine.match(YEAR_RX)?.[0] || "");
             const titlePart = sanitizeTitle(nextLine.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim());
-            currentRole = { title: titlePart, company: line, dates, bullets: [] };
+            currentRole = { title: titlePart, company: companyName, dates, bullets: [] };
             i++;
           } else {
             currentRole = { title: sanitizeTitle(nextLine), company: line, dates: "", bullets: [] };
