@@ -8,24 +8,40 @@ const corsHeaders = {
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
-async function callAI(prompt: string, maxTokens = 4000, temperature = 0): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: maxTokens,
-      temperature: temperature,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-  if (!res.ok) throw new Error(`AI API error: ${res.status}`);
-  const data = await res.json();
-  return data.content?.[0]?.text ?? "";
+async function callAI(prompt: string, maxTokens = 4000, temperature = 0, retries = 1): Promise<string> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: maxTokens,
+          temperature: attempt > 0 ? Math.min(temperature, 0.5) : temperature,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        console.error(`AI API error attempt ${attempt}: ${res.status} ${errText}`);
+        if (attempt < retries) continue;
+        throw new Error(`AI API error: ${res.status}`);
+      }
+      const data = await res.json();
+      return data.content?.[0]?.text ?? "";
+    } catch (e) {
+      if (attempt < retries) {
+        console.warn(`Retry ${attempt + 1} after error: ${e}`);
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error("AI call failed after retries");
 }
 
 function sanitize(input: string): string {
