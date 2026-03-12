@@ -152,7 +152,13 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return false;
       };
 
-      const isCamelCaseArtifact = (v: string): boolean => /^[A-Z]{10,}$/.test(v.replace(/\s+/g, ""));
+      // Only flag single-word all-caps strings as artifacts — multi-word ALL CAPS names are valid
+      const isCamelCaseArtifact = (v: string): boolean => {
+        const trimmed = v.trim();
+        // If it contains spaces, it's multi-word (like "DEMETRI SIMPSON") — not an artifact
+        if (/\s/.test(trimmed)) return false;
+        return /^[A-Z]{10,}$/.test(trimmed);
+      };
 
       const actionVerbs = new Set([
         "communicate","communicated","managed","led","developed","created","built",
