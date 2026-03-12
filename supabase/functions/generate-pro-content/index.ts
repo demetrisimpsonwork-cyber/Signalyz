@@ -197,120 +197,85 @@ Return ONLY valid JSON, no markdown.`;
         const roleTitle = inferredRole || "this role";
         const tone = sanitize(body.tone || "confident");
 
-        // Extract signal intelligence from alignment result
         const signalModel = alignmentResult.signal_model || {};
         const execSummary = signalModel.executive_insight_summary || alignmentResult.executive_insight_summary || {};
         const transferable = signalModel.transferable_signal_detection || alignmentResult.transferable_signal_detection || {};
         const interviewGap = signalModel.interview_gap_diagnosis || alignmentResult.interview_gap_diagnosis || {};
-        const riskProjection = signalModel.risk_projection || {};
-        const signalAlignment = signalModel.signal_alignment_analysis || alignmentResult.signal_alignment_analysis || [];
-        const resumeProfile = signalModel.resume_signal_profile || alignmentResult.resume_signal_profile || {};
-        const jdSignals = signalModel.jd_signal_extraction || alignmentResult.jd_signal_extraction || {};
-        const strengths = signalModel.strengths || alignmentResult.strengths || [];
         const gaps = signalModel.gaps || alignmentResult.gaps || [];
 
-        // Build signal intelligence block for the prompt
-        const signalIntelligence = `
-SIGNAL INTELLIGENCE (use to shape the letter — do NOT dump these diagnostics into the text):
-- Primary Strength: ${execSummary.primary_strength || "N/A"}
-- Top Gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
-- Strategic Repositioning Opportunity: ${execSummary.strategic_repositioning_opportunity || "N/A"}
-- What Hiring Managers See: ${(interviewGap.what_hiring_managers_see || []).join("; ") || "N/A"}
-- Transferable Signal: ${transferable.detected_capability || "N/A"} — ${transferable.why_it_transfers || ""}
-- Elevation Opportunity: ${transferable.elevation_opportunity || "N/A"}
-- Key Strengths: ${(Array.isArray(strengths) ? strengths.slice(0, 4) : []).join("; ") || "N/A"}
-- Risk Areas: ${(riskProjection.stages || []).filter((s: any) => s.status !== "PASS").map((s: any) => `${s.stage}: ${s.explanation}`).join("; ") || "None identified"}
-- JD Priority Summary: ${jdSignals.priority_summary || "N/A"}
-- JD Role Identity Signals: ${(jdSignals.role_identity_signals || []).slice(0, 5).join(", ") || "N/A"}
-- Alignment Weak Spots: ${(Array.isArray(signalAlignment) ? signalAlignment.filter((a: any) => a.alignment_level === "Weak" || a.alignment_level === "Missing").map((a: any) => `${a.category}: ${a.perception_gap}`).slice(0, 3) : []).join("; ") || "None"}
-- Resume Signal Strengths: ${Object.entries(resumeProfile).filter(([_, v]: any) => v?.strength === "Strong").map(([k]: any) => k.replace(/_/g, " ")).join(", ") || "N/A"}
-- Missing Keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}
-- Score Rationale: ${(alignmentResult.score_rationale || []).join("; ") || "N/A"}`;
+        const signalContext = `
+BACKGROUND (shape your thinking — NEVER dump into the text):
+- Your strongest signal: ${execSummary.primary_strength || "N/A"}
+- Biggest gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
+- What hiring managers will wonder: ${(interviewGap.what_hiring_managers_see || []).join("; ") || "N/A"}
+- What transfers: ${transferable.detected_capability || "N/A"}
+- Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}`;
 
-        const toneTemp = tone === "strategic" ? 0.6 : tone === "direct" ? 0.4 : 0.85;
+        const toneTemp = tone === "strategic" ? 0.55 : tone === "direct" ? 0.35 : 0.9;
 
-        const toneBlock = tone === "strategic"
-          ? `TONE: STRATEGIC — Think management consultant. Layer evidence into compound sentences. Use semicolons and dashes to connect ideas. Vocabulary skews analytical: "operationalized," "designed," "restructured," "scaled." Every sentence implies commercial awareness.
+        const toneInstruction = tone === "strategic"
+          ? `VOICE: You are a senior professional writing to a peer. Measured. Commercially aware. You think in systems and outcomes. Compound sentences with semicolons. Words like "operationalized," "redesigned," "scaled." You imply more than you state. Your confidence is quiet — it comes from knowing you've done the math.
 
-EXAMPLE of Strategic tone (do NOT copy — match the style):
-"Over four years managing regulated complaint pipelines across three product verticals, the pattern became clear: resolution speed is a retention lever, not just a compliance metric. Designing the triage framework that cut median response time from 72 to 31 hours meant rebuilding intake logic, retraining two vendor teams, and proving to leadership that faster close rates drove a measurable lift in renewal volume."`
+EXAMPLE (match the energy, not the words):
+"Over four years running regulated complaint pipelines across three verticals, the throughline became clear: resolution speed is a retention lever, not a compliance checkbox. Redesigning the triage framework meant rebuilding intake logic and retraining two vendor teams — but median response time dropped from 72 to 31 hours, and renewal volume moved with it."`
           : tone === "direct"
-          ? `TONE: DIRECT — Short sentences. Plain words. Subject-verb-object. Say it and stop. Paragraphs are 2 sentences max when possible. No subordinate clauses unless essential. No warm-up phrases.
+          ? `VOICE: Say it plain. Short sentences. No warm-up. Subject-verb-object. You say what you did, what happened, and stop. Two sentences per paragraph when possible. No subordinate clauses unless load-bearing. Every word earns its seat.
 
-EXAMPLE of Direct tone (do NOT copy — match the style):
-"I run a 40-person escalation queue across regulated and unregulated products. Last year my team closed 11,400 cases with a 94% SLA hit rate. The job was triage, prioritization, and knowing when to pull a case before it became a complaint."`
-          : `TONE: CONFIDENT — Warm authority. You know your worth and you're comfortable saying so. Mix sentence lengths — a short punch after a longer setup. Allow personality: a dash mid-thought, a moment of self-awareness. No hedging, no "I believe" — just earned confidence with warmth behind it.
+EXAMPLE (match the energy, not the words):
+"I run a 40-person escalation queue. Last year we closed 11,400 cases at 94% SLA. The job is triage, prioritization, and knowing when to pull a case before it costs a client."`
+          : `VOICE: You're a person who's good at what you do and comfortable saying so. Warm but direct. You mix a short punch after a longer setup. You allow a dash mid-thought, a moment of candor. You don't hedge. You don't say "I believe" — you just say it. You sound like someone a hiring manager would want to grab coffee with.
 
-EXAMPLE of Confident tone (do NOT copy — match the style):
-"Regulated environments taught me something most operations professionals learn the hard way — speed without accuracy is just noise. Managing 40-70 concurrent escalations daily, I built the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to be escalated before they cost the company a client."`;
+EXAMPLE (match the energy, not the words):
+"Regulated environments teach you one thing fast — speed without accuracy is noise. Running 40-70 concurrent escalations a day, you build the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to go up before they cost you a client."`;
 
-        const prompt = `You are writing YOUR OWN cover letter. You are a real professional applying for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. Not an AI. Not a career coach. Not a narrator. A person who has done specific work and wants this specific job.
+        const prompt = `You are ${roleTitle === "this role" ? "a professional" : `a professional applying for ${roleTitle}`}${companyName !== "the company" ? ` at ${companyName}` : ""}. You are writing your own cover letter by hand. You have 250 words to make someone want to interview you.
 
-THE SINGLE TEST: Every sentence must sound like something a smart person would say in a 3-minute conversation with the hiring manager. If it sounds like analysis, diagnosis, narration, or compatibility explanation — delete it and write what the person would actually say.
+You are NOT narrating your resume. You are NOT explaining how your background connects. You are making a case: hire me, here's why, here's what I've done, here's what I'll do.
 
-${signalIntelligence}
+${signalContext}
 
-Resume (YOUR real work history — the ONLY source of facts): ${experience.slice(0, 3000)}
-Target JD: ${jd.slice(0, 2000)}
+Your actual work history (the ONLY source of facts — invent nothing): ${experience.slice(0, 3000)}
+The job: ${jd.slice(0, 2000)}
 
-${toneBlock}
+${toneInstruction}
 
-WRITING METHOD — argue, don't explain:
-- WRONG: "My experience managing escalations translates directly to this role's requirements."
-- RIGHT: "I've run a 40-person escalation queue for three years. The role needs exactly that."
-- WRONG: "This required me to develop strong cross-functional skills."
-- RIGHT: "I worked daily with legal, product, and ops — that's where I learned to move things without authority."
-- WRONG: "I am writing to express my interest in this position."
-- RIGHT: Just start talking about your work. The interest is obvious.
+THE VOICE TEST — read every sentence aloud. Does it sound like:
+(A) Something you'd say to the hiring manager over coffee? → Keep it.
+(B) Something a system generated to explain your fit? → Cut it. Rewrite as (A).
 
-SENTENCE CONSTRUCTION:
-- Vary your openings. Lead with the work, the outcome, the context, the number — not "I."
-- Maximum 1 sentence per paragraph may begin with "I."
-- Short sentences after long ones. A 5-word sentence after a 20-word sentence hits harder.
-- No compound sentences strung together with "and" three times. Break them up.
+CONTRASTIVE PAIRS — internalize the difference:
+BAD: "My experience managing cross-functional teams aligns well with the collaborative nature of this role."
+GOOD: "I've spent three years keeping legal, ops, and product moving toward the same deadline. It rarely went smoothly — but things shipped."
 
-STRUCTURE — exactly 5 paragraphs separated by blank lines:
+BAD: "This background has equipped me with the skills necessary to excel in this position."
+GOOD: "That's the job, from what I can tell. I've been doing some version of it for four years."
 
-P1 — THE HOOK (2 sentences):
-Open with your professional identity grounded in ONE vivid, specific detail from your resume — a number, a system name, a scope. The reader should immediately picture what you do. Second sentence connects that identity to why this specific role caught your attention. No generic enthusiasm.
+BAD: "I am confident that my track record of success positions me to make an immediate impact."
+GOOD: "If you need someone who's already made the mistakes and built the fix, that's the conversation I want to have."
 
-P2 — OPERATIONAL PROOF (2-3 sentences):
-Your hardest-hitting evidence. Volumes, builds, outcomes, scale. Each sentence advances a DIFFERENT proof point. Do not repeat P1's detail. Do not narrate — just state what you did and what happened. This paragraph answers: "Can this person do the work?"
+STRUCTURE — 5 paragraphs, separated by blank lines:
 
-P3 — PEOPLE & JUDGMENT PROOF (2 sentences):
-DIFFERENT evidence from P2. Show how you work with humans — clients, teams, leadership, vendors. Specific: who you worked with, what the stakes were, what judgment call you made. This paragraph answers: "Can this person work with us?"
+P1 (2 sentences): Open mid-action. Drop the reader into your work — a number, a system, a scope, a reality of your day. Then connect it to this role in one sentence. No "I am writing to apply." Start like you're already talking.
 
-P4 — THE GAP, OWNED (2 sentences):
-Name what you haven't done — in half a sentence, no more. Then immediately show why you're ready. Sound like someone who's already thought about this gap and has a plan. Not defensive. Not apologetic. Not fabricated. Just honest and forward-moving.
+P2 (2-3 sentences): Your hardest evidence. Different from P1. Volumes, outcomes, things you built or fixed. Each sentence is a new proof point. No narration — just the work and what happened.
 
-P5 — THE CLOSE (1-2 sentences):
-Name ONE specific thing you'll bring or do. End with momentum — what happens if they call you. No "thank you for your consideration." No "I look forward to discussing." Just a clean, confident final statement that makes them want to pick up the phone.
+P3 (2 sentences): People proof. Who you worked with, what the stakes were, what call you made. Show judgment and human skill. Different evidence from P2.
 
-ABSOLUTE BANS — if ANY of these appear, the letter fails:
-- Phrases: "positioned to," "passionate about," "eager to," "I believe that," "strong foundation," "proven ability," "results-driven," "dynamic environment," "thrilled to," "excited to apply," "I am writing to express," "Furthermore," "Additionally," "Moreover," "In conclusion," "fast-paced," "go-getter," "leveraging"
-- Engine patterns (these make it sound like a machine wrote it):
-  * "this translates to" / "which translates to"
-  * "this mirrors" / "which mirrors"  
-  * "this taught me" / "which taught me"
-  * "this required" / "which required me to"
-  * "this demonstrates" / "which demonstrates"
-  * "this supports" / "which supports"
-  * "this directly applies" / "which directly applies"
-  * "this aligns with" / "which aligns with"
-  * "this prepared me" / "which prepared me"
-  * "this experience" as a sentence subject
-  * "directly relevant" / "directly applicable"
-  * "transferable" (never use this word)
-  MAXIMUM ZERO of these constructions. Write around them every time.
-- Structural bans: No operational phrase repeated twice. No two paragraphs opening the same way. No three sentences in a row with the same structure.
+P4 (2 sentences): The gap — half a sentence to name it, then show why it doesn't stop you. Sound like you've already thought about this. Not defensive. Not apologetic. Forward.
 
-HARD RULES:
-- 250 words max. First person throughout.
-- ZERO fabrication. If it's not in the resume, you cannot write it. No invented metrics, titles, team sizes, or systems.
-- Every paragraph must sound different from the others — different rhythm, different sentence lengths, different energy.
-- The letter must read like candidacy, not compatibility analysis.
+P5 (1-2 sentences): Land it. Name one specific thing you'll bring. End with momentum. Make them want to call. No "thank you for considering." No "I look forward to." Just a clean finish.
 
-Return ONLY a JSON object: {"letter": "..."} — body paragraphs only, no header/date/salutation/sign-off/paragraph labels.`;
+RULES:
+- 250 words max. First person.
+- Max 1 sentence per paragraph starts with "I." Vary openings: lead with the work, the number, the context.
+- No two paragraphs open the same way. No three sentences with the same rhythm.
+- Short sentence after a long one. Break up compound "and...and...and" sentences.
+- ZERO fabrication. Resume facts only.
+- BANNED: "positioned to," "passionate about," "eager to," "I believe," "proven ability," "results-driven," "dynamic environment," "thrilled," "excited to apply," "strong foundation," "Furthermore," "Additionally," "Moreover," "In conclusion," "fast-paced," "go-getter," "leveraging," "I am writing to express," "track record," "well-positioned," "skill set," "I am confident that"
+- BANNED patterns: "translates to," "mirrors," "taught me," "required me to," "demonstrates," "aligns with," "prepared me," "directly relevant," "directly applicable," "transferable," "equipped me," "positions me"
+- None of those. Zero. Write around them every time.
+
+Return ONLY: {"letter": "..."} — body paragraphs only. No header, date, salutation, or sign-off.`;
         const raw = await callAI(prompt, 3000, toneTemp);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
