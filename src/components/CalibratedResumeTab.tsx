@@ -73,9 +73,17 @@ const CalibratedResumeTab = ({
   };
 
   // When confidence is low AND input was PDF, show fallback instead of confirm step
+  // DOCX with successfully extracted experience should auto-confirm, never trigger fallback
   useEffect(() => {
-    if (pendingResume && confidence?.isLow && inputSource === "pdf") {
-      setShowPdfFallback(true);
+    if (pendingResume && confidence?.isLow) {
+      if (inputSource === "docx" && pendingResume.experience.length > 0) {
+        // DOCX parsed successfully — skip confirmation entirely
+        skipConfirmation();
+        return;
+      }
+      if (inputSource === "pdf") {
+        setShowPdfFallback(true);
+      }
     }
   }, [pendingResume, confidence, inputSource]);
 
