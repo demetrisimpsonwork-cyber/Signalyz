@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import mammoth from "mammoth";
 import { validateFileUpload } from "@/lib/sanitize";
 import * as pdfjsLib from "pdfjs-dist";
-import { reconstructPdfText } from "@/lib/pdfColumnParser";
+import { reconstructPdfStructured } from "@/lib/pdfColumnParser";
 
 // Use CDN worker to avoid build issues with pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -39,7 +39,12 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
       pageData.push({ content, viewport });
     }
 
-    const text = reconstructPdfText(pageData);
+    const structured = reconstructPdfStructured(pageData);
+    
+    // Debug logging for layout detection
+    console.log(`[PDF Parser] Layout: ${structured.layoutType}, Confidence: ${structured.confidence.toFixed(2)}, Sections: ${structured.sections.map(s => s.type).join(", ")}`);
+
+    const text = structured.rawText;
     if (!text || text.length < 10) {
       throw new Error("Could not extract meaningful text from this PDF. Try pasting your resume text directly.");
     }
