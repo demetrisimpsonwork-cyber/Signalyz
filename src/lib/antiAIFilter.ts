@@ -127,6 +127,25 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bAdditionally,?\\b/gi, ""],
   [/\\bMoreover,?\\b/gi, ""],
 
+  // Transfer/equivalency framing — the core problem
+  [/\\bThis role requires\\b/gi, ""],
+  [/\\bthis role requires\\b/gi, ""],
+  [/\\bThis position represents\\b/gi, ""],
+  [/\\bthis position represents\\b/gi, ""],
+  [/\\bthe same skills\\b/gi, "similar work"],
+  [/\\boperate consistently across\\b/gi, "work across"],
+  [/\\bdirectly supports\\b/gi, "supports"],
+  [/\\bThis directly supports\\b/gi, ""],
+  [/\\bnatural next step\\b/gi, "next move"],
+  [/\\bwhat this role needs\\b/gi, ""],
+  [/\\bthis prepared me for\\b/gi, ""],
+  [/\\bThis prepared me for\\b/gi, ""],
+  [/\\bbecame critical operational challenges I solved\\b/gi, ""],
+  [/\\bthe same principles apply\\b/gi, ""],
+  [/\\bhowever,? the same\\b/gi, ""],
+  [/\\bthis directly applies\\b/gi, ""],
+  [/\\bcomprehensive\\b/gi, "full"],
+
   // Over-polished candidacy narration patterns
   [/\\bhas equipped me\\b/gi, "meant I"],
   [/\\bequipped me with\\b/gi, "gave me"],
