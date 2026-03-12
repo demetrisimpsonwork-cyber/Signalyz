@@ -1121,7 +1121,7 @@ const Index = () => {
                       </button>
                     )}
                   </div>
-                  {bullet.trim().length > 20 && (
+                  {bullet.trim().length > 20 && !errors.bullet && (
                     <div className="mt-1.5">
                       <ResumePasteQuality quality={getPasteQuality(parseResumeIntake(bullet))} />
                     </div>
