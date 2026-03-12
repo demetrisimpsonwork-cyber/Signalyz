@@ -214,6 +214,84 @@ function cleanupWhitespace(text: string): string {
     .trim();
 }
 
+// ─── Reduce repeated sentence-starting "I" ─────────────────────────────────
+
+function reduceRepeatedI(text: string): string {
+  const paragraphs = text.split(/\n\n+/);
+  return paragraphs.map(para => {
+    // Split into sentences (simple split on ". " or start of line)
+    const sentences = para.split(/(?<=\.)\s+/);
+    if (sentences.length < 3) return para;
+
+    let consecutive = 0;
+    const result: string[] = [];
+
+    for (let i = 0; i < sentences.length; i++) {
+      const startsWithI = /^I\s/.test(sentences[i].trim());
+      if (startsWithI) {
+        consecutive++;
+      } else {
+        consecutive = 0;
+      }
+
+      // On the 3rd+ consecutive "I" sentence, reframe by removing leading "I"
+      if (consecutive >= 3 && startsWithI) {
+        const s = sentences[i].trim();
+        // Try to restructure: "I led the team..." → "Led the team..."
+        // or "I managed..." → "Managed..."
+        const reframed = s.replace(/^I\s+/, "");
+        result.push(reframed.charAt(0).toUpperCase() + reframed.slice(1));
+        consecutive = 0; // reset after reframe
+      } else {
+        result.push(sentences[i]);
+      }
+    }
+
+    return result.join(" ");
+  }).join("\n\n");
+}
+
+// ─── Break uniform parallel bullet structure ────────────────────────────────
+
+/**
+ * Detects when consecutive bullets all start with the same verb pattern
+ * and varies the structure of middle bullets to break robotic rhythm.
+ */
+export function breakParallelBullets(bullets: string[]): string[] {
+  if (bullets.length < 3) return bullets;
+
+  // Extract leading verbs
+  const getLeadVerb = (b: string) => {
+    const match = b.trim().match(/^([A-Z][a-z]+)\b/);
+    return match ? match[1] : null;
+  };
+
+  const result = [...bullets];
+  let streak = 1;
+
+  for (let i = 1; i < result.length; i++) {
+    const prev = getLeadVerb(result[i - 1]);
+    const curr = getLeadVerb(result[i]);
+
+    if (prev && curr && prev === curr) {
+      streak++;
+    } else {
+      streak = 1;
+    }
+
+    // On 3rd+ identical verb start, prepend context to break pattern
+    if (streak >= 3) {
+      const bullet = result[i].trim();
+      // Remove the repeated verb and restructure
+      const withoutVerb = bullet.replace(/^[A-Z][a-z]+\s+/, "");
+      result[i] = "Also " + withoutVerb.charAt(0).toLowerCase() + withoutVerb.slice(1);
+      streak = 0;
+    }
+  }
+
+  return result;
+}
+
 // ─── Main filter ────────────────────────────────────────────────────────────
 
 export function antiAIFilter(text: string): string {
@@ -229,15 +307,19 @@ export function antiAIFilter(text: string): string {
   // Step 2: Reduce excessive em dashes
   result = reduceEmDashes(result);
 
-  // Step 3: Clean up whitespace and capitalization
+  // Step 3: Reduce repeated "I" sentence starts
+  result = reduceRepeatedI(result);
+
+  // Step 4: Clean up whitespace and capitalization
   result = cleanupWhitespace(result);
 
   return result;
 }
 
 /**
- * Filter an array of bullet strings
+ * Filter an array of bullet strings — includes parallel structure breaking
  */
 export function filterBullets(bullets: string[]): string[] {
-  return bullets.map(b => antiAIFilter(b));
+  const filtered = bullets.map(b => antiAIFilter(b));
+  return breakParallelBullets(filtered);
 }
