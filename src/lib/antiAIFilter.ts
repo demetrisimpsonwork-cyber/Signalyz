@@ -28,6 +28,10 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bfacilitated\\b/g, "ran"],
   [/\\bSynergized\\b/g, "Combined"],
   [/\\bsynergized\\b/g, "combined"],
+  [/\\bUtilized\\b/g, "Used"],
+  [/\\butilized\\b/g, "used"],
+  [/\\bsynergy\\b/gi, "coordination"],
+  [/\\bsynergies\\b/gi, "efficiencies"],
 
   // Passive/weak ownership
   [/\\bWas responsible for\\b/gi, "Owned"],
