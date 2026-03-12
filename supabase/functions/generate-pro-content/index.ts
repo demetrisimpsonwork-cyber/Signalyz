@@ -215,51 +215,49 @@ Return ONLY valid JSON, no markdown.`;
 
         const signalModel = alignmentResult.signal_model || {};
         const execSummary = signalModel.executive_insight_summary || alignmentResult.executive_insight_summary || {};
-        const transferable = signalModel.transferable_signal_detection || alignmentResult.transferable_signal_detection || {};
-        const interviewGap = signalModel.interview_gap_diagnosis || alignmentResult.interview_gap_diagnosis || {};
         const gaps = signalModel.gaps || alignmentResult.gaps || [];
 
-        const signalContext = `CONTEXT (shape thinking, never dump into text):
-Strength: ${execSummary.primary_strength || "N/A"}
-Gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
-Transfers: ${transferable.detected_capability || "N/A"}`;
+        const gap = gaps[0] || alignmentResult.top_missing_signal || "N/A";
+        const strength = execSummary.primary_strength || "N/A";
 
-        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.3 : 0.75;
+        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.25 : 0.72;
 
-        const toneVoice = tone === "strategic"
-          ? "Measured, commercially aware, executive-clean. Compound sentences. Imply more than you state. Quiet confidence."
+        const toneDirective = tone === "strategic"
+          ? "Write like a senior executive briefing a board member. Polished compound sentences. Commercially precise. Never casual. Imply capability rather than stating it."
           : tone === "direct"
-          ? "Plain. Short sentences. Subject-verb-object. Say what you did, what happened, stop."
-          : "Warm but direct. Mix a short punch after a longer setup. Candid. No hedging. Conversational confidence.";
+          ? "Write like a field operator. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Cut every word that doesn't prove something."
+          : "Write like a confident peer talking to the hiring manager over coffee. Warm, direct, human. Mix sentence lengths. One short punch after a longer thought. No hedging.";
 
-        const prompt = `You are ghostwriting a cover letter as ${roleTitle} candidate${companyName !== "the company" ? ` applying to ${companyName}` : ""}. First person.
+        const prompt = `Write a cover letter. You ARE the candidate. First person. You are applying for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}.
 
-${signalContext}
+Your biggest strength: ${strength}
+Your biggest gap: ${gap}
 
-Resume (ONLY facts source — invent NOTHING): ${experience.slice(0, 2500)}
+Resume (your ONLY source of facts — invent NOTHING): ${experience.slice(0, 2500)}
 Job description: ${jd.slice(0, 1500)}
 
-VOICE: ${toneVoice}
+VOICE: ${toneDirective}
 
-Write exactly 5 paragraphs separated by blank lines. ~250 words total.
+MINDSET: You are making a hiring case. You are not explaining your background. You are not analyzing fit. You are telling a hiring manager why they should pick you. Every sentence must either prove you can do the job or make them want to meet you.
 
-P1: Lead with your most concrete, relevant credential for THIS role. A number, a scope, a system you ran. Then say why you're applying. No philosophy, no observations about the industry — just: here's what I do, here's why this role.
+5 paragraphs, ~250 words total.
 
-P2: Your hardest operational proof. Specific volumes, outcomes, problems solved. Start at least one sentence with the result or the work, not "I". Show the hiring manager you've done hard, relevant work.
+P1 — THE CLAIM: Open with your single strongest credential for this specific role. A number, a system, a scope. Then one sentence connecting it to why this role. No philosophy. No "I am writing to." Start mid-work.
 
-P3: People and judgment proof. Who you worked with, what you decided, what required navigating complexity. Different evidence from P2.
+P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you fixed. At least one sentence should start with the result, not "I." Prove you do hard work.
 
-P4: Name what you haven't done (the gap) in one clause, then immediately pivot to what makes you ready anyway. No apology. No defensiveness. Just honesty and forward motion.
+P3 — JUDGMENT PROOF: Who you worked across, what you navigated, decisions you made. Different evidence from P2. Show you handle people and complexity.
 
-P5: End with what you'll do in this role, not what you hope for. Make the reader want the interview. No "thank you for considering," no "I look forward to."
+P4 — THE GAP: Name what you haven't done yet in one short clause. Then immediately say what you've done that makes you ready to figure it out. No "however the same principles apply." No apology.
 
-HARD RULES:
+P5 — THE CLOSE: Say what you'll do in week one or month one. Be specific. Make them want the meeting. No "thank you for considering." No "I look forward to." End on action.
+
+RULES:
 - Max 1 sentence per paragraph starts with "I"
-- Do NOT open P1 with a general observation, philosophy, or "Customer experience lives in..." or "The fundamentals are..." — open with YOU doing WORK
-- No "I am writing to apply/express" or "I am excited/eager"
-- No explaining WHY your experience transfers — just USE IT as proof
+- Never explain WHY experience transfers. Just use it as proof.
+- Never describe what the role requires — the hiring manager knows
 - ZERO fabrication
-- BANNED phrases: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "mirrors," "taught me," "demonstrates," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "customer experience lives," "I learned that," "this represents," "what matters is," "it's not about X it's about Y," "natural evolution," "this environment developed"
+- BANNED: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "this role requires," "this position represents," "the same skills," "operate consistently," "directly supports," "natural next step," "what this role needs," "I learned that," "this environment developed," "customer experience lives," "this represents," "it's not about," "what matters is," "natural evolution," "became critical," "comprehensive"
 
 Return ONLY valid JSON: {"letter": "the full letter body"}`;
 
