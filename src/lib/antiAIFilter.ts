@@ -112,6 +112,21 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bthank you for your consideration\\b/gi, ""],
   [/\\bI look forward to\\b/gi, ""],
 
+  // Philosophy / essay openers
+  [/\\bCustomer experience lives\\b/gi, ""],
+  [/\\bThe fundamentals are\\b/gi, ""],
+  [/\\bThis represents the next step\\b/gi, ""],
+  [/\\bThis represents the natural evolution\\b/gi, ""],
+  [/\\bWhat matters is\\b/gi, ""],
+  [/\\bI learned that\\b/gi, ""],
+  [/\\bThis environment developed\\b/gi, ""],
+  [/\\bIt's not about\\b/gi, ""],
+  [/\\bthe natural evolution\\b/gi, "a step"],
+  [/\\bthe next step\\b/gi, "a step"],
+  [/\\bFurthermore,?\\b/gi, ""],
+  [/\\bAdditionally,?\\b/gi, ""],
+  [/\\bMoreover,?\\b/gi, ""],
+
   // Over-polished candidacy narration patterns
   [/\\bhas equipped me\\b/gi, "meant I"],
   [/\\bequipped me with\\b/gi, "gave me"],
