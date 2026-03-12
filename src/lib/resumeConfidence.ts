@@ -36,7 +36,7 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
   if (!h.name || h.name.length < 2) {
     issues.push("name_missing");
     deductions += 30;
-  } else if (/^full\s+name$/i.test(h.name.trim())) {
+  } else if (/^(full\s+name|name|your\s+name)$/i.test(h.name.trim())) {
     issues.push("name_placeholder");
     deductions += 30;
   }
