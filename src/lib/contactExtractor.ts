@@ -140,7 +140,11 @@ export function extractContactFromText(text: string): ExtractedContactInfo {
         .trim();
       // If the entire line was a title, skip it
       if (nameLine.length < 2) continue;
-      result.name = nameLine;
+      // Convert ALL-CAPS names to Title Case
+      const isAllCaps = nameLine === nameLine.toUpperCase() && /[A-Z]/.test(nameLine);
+      result.name = isAllCaps
+        ? nameLine.replace(/\b([A-Z]{2,})\b/g, (w) => w.charAt(0) + w.slice(1).toLowerCase())
+        : nameLine;
     }
   }
 

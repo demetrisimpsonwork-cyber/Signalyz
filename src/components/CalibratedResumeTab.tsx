@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Sparkles, Lock, RefreshCw, AlertTriangle, User } from "lucide-react";
 import { toast } from "sonner";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { useResumeAssembly } from "@/hooks/useResumeAssembly";
@@ -188,8 +189,12 @@ const CalibratedResumeTab = ({
         />
       )}
 
+
       {currentResume && !loading && (
         <>
+          {/* Name prompt when extraction failed */}
+          {!currentResume.header.name && <NamePrompt onSubmit={(name) => updateField("header.name", name)} />}
+
           <ResumeToolbar
             editMode={editMode}
             onToggleEdit={() => setEditMode(!editMode)}
@@ -241,6 +246,34 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
             <a href="/auth">Get Started Free</a>
           </Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+function NamePrompt({ onSubmit }: { onSubmit: (name: string) => void }) {
+  const [value, setValue] = useState("");
+  return (
+    <div className="rounded-lg border border-dashed bg-card p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5 sm:mt-0" />
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium text-foreground">Enter your full name</p>
+        <p className="text-xs text-muted-foreground">We couldn't extract your name automatically. Please type it below.</p>
+      </div>
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="e.g. Demetri Simpson"
+          className="h-9 text-sm w-full sm:w-52"
+        />
+        <Button
+          size="sm"
+          disabled={value.trim().length < 2}
+          onClick={() => onSubmit(value.trim())}
+        >
+          Save
+        </Button>
       </div>
     </div>
   );
