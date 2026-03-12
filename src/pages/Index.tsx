@@ -1164,7 +1164,7 @@ const Index = () => {
                       )}
                     </div>
                   ) : (
-                    <Button onClick={handleOptimize} disabled={loading || subLoading} className={`gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97] ${errors.bullet ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    <Button onClick={handleOptimize} disabled={loading || subLoading} className={`gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97] ${errors.bullet ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : subLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                       {subLoading ? "Initializing…" : "Run Alignment"}
                     </Button>
