@@ -394,6 +394,33 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
       }
     }
 
+    // Detect standalone company name line (no dates, short, proper-cased, no bullet)
+    // followed by a title line or date line
+    if (!currentRole && isShortLine && !isBullet && !hasDate && line.length > 2 && line.length < 60) {
+      // Check if next line has a date or role title keyword
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        const nextHasDate = DATE_RX.test(nextLine) || YEAR_RX.test(nextLine);
+        const nextHasTitle = ROLE_TITLE_RX.test(nextLine);
+        if ((nextHasDate || nextHasTitle) && !isFieldContaminated(line)) {
+          commitRole();
+          company = line;
+          // Parse next line for title+dates
+          if (nextHasDate) {
+            const dateMatch = nextLine.match(DATE_RX);
+            const dates = dateMatch ? dateMatch[0] : (nextLine.match(YEAR_RX)?.[0] || "");
+            const titlePart = sanitizeTitle(nextLine.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim());
+            currentRole = { title: titlePart, company: line, dates, bullets: [] };
+            i++;
+          } else {
+            currentRole = { title: sanitizeTitle(nextLine), company: line, dates: "", bullets: [] };
+            i++;
+          }
+          continue;
+        }
+      }
+    }
+
     // Plain text within a role — treat as bullet if long enough
     if (currentRole && line.length > 20) {
       pendingText.push(line);
