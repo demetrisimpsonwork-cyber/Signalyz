@@ -223,10 +223,13 @@ Return ONLY valid JSON, no markdown.`;
         const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.25 : 0.72;
 
         const toneDirective = tone === "strategic"
-          ? "Write like a senior executive briefing a board member. Polished compound sentences. Commercially precise. Never casual. Imply capability rather than stating it."
+          ? `Write like a senior executive briefing a board member. Commercially precise. Never casual. Imply capability rather than stating it.
+STRUCTURAL CONSTRAINT: Every paragraph must open with a business outcome, market context, or organizational impact — never with "I." Sentences average 18-25 words. Use semicolons and subordinate clauses. No contractions. No exclamation marks. The letter should read like a business case, not a personal pitch. Total length: 260-280 words.`
           : tone === "direct"
-          ? "Write like a field operator. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Cut every word that doesn't prove something."
-          : "Write like a confident peer talking to the hiring manager over coffee. Warm, direct, human. Mix sentence lengths. One short punch after a longer thought. No hedging.";
+          ? `Write like a field operator. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Cut every word that doesn't prove something.
+STRUCTURAL CONSTRAINT: No paragraph exceeds 3 lines. Sentences average 8-14 words. No compound sentences joined by "and" — split them. No semicolons. Use periods. The letter should feel like it was written by someone who bills by the hour. Total length: 200-220 words.`
+          : `Write like a confident peer talking to the hiring manager over coffee. Warm, direct, human. Mix sentence lengths — one short punch after a longer thought. No hedging. Show momentum and energy.
+STRUCTURAL CONSTRAINT: At least one paragraph must contain a sentence under 6 words. Use one rhetorical question or direct address to the reader. Contractions are allowed. The letter should feel like a real person wrote it in one sitting because they wanted the job. Total length: 240-260 words.`;
 
         const prompt = `Write a cover letter. You ARE the candidate. First person. You are applying for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}.
 
@@ -238,9 +241,9 @@ Job description: ${jd.slice(0, 1500)}
 
 VOICE: ${toneDirective}
 
-MINDSET: You are making a hiring case. You are not explaining your background. You are not analyzing fit. You are telling a hiring manager why they should pick you. Every sentence must either prove you can do the job or make them want to meet you.
+MINDSET: You are making a hiring case. You are not explaining your background. You are not analyzing fit. You are telling a hiring manager why they should pick you. Every sentence must either prove you can do the job or make them want to meet you. ASSERT capability. Do not explain how past experience "transfers" or "applies" — just use it as proof.
 
-5 paragraphs, ~250 words total.
+5 paragraphs.
 
 P1 — THE CLAIM: Open with your single strongest credential for this specific role. A number, a system, a scope. Then one sentence connecting it to why this role. No philosophy. No "I am writing to." Start mid-work.
 
@@ -248,16 +251,17 @@ P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problem
 
 P3 — JUDGMENT PROOF: Who you worked across, what you navigated, decisions you made. Different evidence from P2. Show you handle people and complexity.
 
-P4 — THE GAP: Name what you haven't done yet in one short clause. Then immediately say what you've done that makes you ready to figure it out. No "however the same principles apply." No apology.
+P4 — THE GAP: Name what you haven't done yet in one short clause. Then immediately say what you've done that makes you ready to figure it out. No apology. No "however the same principles apply."
 
-P5 — THE CLOSE: Say what you'll do in week one or month one. Be specific. Make them want the meeting. No "thank you for considering." No "I look forward to." End on action.
+P5 — THE CLOSE: Make the reader want to schedule the meeting. State what you bring to the conversation — not what you'll do in week one or month one. No onboarding plans. No "my first priority will be." No "I will focus on." End with forward motion that pulls the reader toward a next step, not an employee memo. One sentence maximum that makes them pick up the phone.
 
 RULES:
 - Max 1 sentence per paragraph starts with "I"
-- Never explain WHY experience transfers. Just use it as proof.
+- Never explain WHY experience transfers or applies — just use it as direct proof
 - Never describe what the role requires — the hiring manager knows
 - ZERO fabrication
-- BANNED: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "this role requires," "this position represents," "the same skills," "operate consistently," "directly supports," "natural next step," "what this role needs," "I learned that," "this environment developed," "customer experience lives," "this represents," "it's not about," "what matters is," "natural evolution," "became critical," "comprehensive"
+- Do not use "this," "these," or "that" to bridge between past experience and the target role. No "this experience," "these skills," "that background." Just state what you did and what you'll do.
+- BANNED: "track record," "track record of," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "this role requires," "this position represents," "the same skills," "operate consistently," "directly supports," "natural next step," "what this role needs," "I learned that," "this environment developed," "customer experience lives," "this represents," "it's not about," "what matters is," "natural evolution," "became critical," "comprehensive," "my first month," "my first week," "I will focus on," "my priority will be," "I plan to," "I intend to"
 
 Return ONLY valid JSON: {"letter": "the full letter body"}`;
 
