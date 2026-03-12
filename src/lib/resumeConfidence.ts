@@ -67,7 +67,7 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
       deductions += 15;
       break;
     }
-    if (CAMELCASE_ARTIFACT_RX.test(inst.replace(/\s/g, ""))) {
+    if (!/\s/.test(inst.trim()) && CAMELCASE_ARTIFACT_RX.test(inst.trim())) {
       issues.push("education_has_artifact");
       deductions += 15;
       break;

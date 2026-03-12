@@ -177,15 +177,23 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
       const resumeKeywords = /\b(benefits|resources|operations|marketing|finance|technology|information|administration|management|services|solutions)\b/i;
 
+      /** Convert ALL-CAPS name to Title Case */
+      const toTitleCase = (s: string): string =>
+        s.replace(/\b([A-Z]{2,})\b/g, (w) => w.charAt(0) + w.slice(1).toLowerCase());
+
       const validateName = (name: string): string => {
         if (!name) return "";
-        if (/^full\s+name$/i.test(name.trim())) return "";
-        if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(name.trim())) return "";
-        if (name.length > 60) return "";
-        if (isCamelCaseArtifact(name)) return "";
-        if (isContactPattern(name)) return "";
-        if (startsWithActionVerb(name)) return "";
-        return name;
+        const t = name.trim();
+        // Reject common placeholders
+        if (/^(full\s+name|name|your\s+name|first\s+(and\s+)?last\s+name)$/i.test(t)) return "";
+        if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(t)) return "";
+        if (t.length > 60) return "";
+        if (isCamelCaseArtifact(t)) return "";
+        if (isContactPattern(t)) return "";
+        if (startsWithActionVerb(t)) return "";
+        // Convert ALL-CAPS to Title Case for display
+        const isAllCaps = t === t.toUpperCase() && /[A-Z]/.test(t);
+        return isAllCaps ? toTitleCase(t) : t;
       };
 
       const validateLocation = (loc: string): string => {
