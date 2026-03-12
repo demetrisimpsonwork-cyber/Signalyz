@@ -173,5 +173,28 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   );
 };
 
+/**
+ * Validates and cleans a parsed bullet string. Returns null if the text
+ * looks like a garbled PDF fragment (too short, no verb, skills-list debris,
+ * mid-sentence fragment, or education content bleeding in).
+ */
+function cleanBulletText(raw: string): string | null {
+  const t = raw.trim();
+  // Too short to be a real bullet
+  if (t.length < 25) return null;
+  // Looks like a skills list (comma-heavy, no verb structure)
+  const commaRatio = (t.match(/,/g) || []).length / t.split(/\s+/).length;
+  if (commaRatio > 0.3) return null;
+  // Starts mid-sentence (lowercase first word, no bullet char)
+  if (/^[a-z]/.test(t) && !/^(e\.g\.|i\.e\.)/.test(t)) return null;
+  // Contains degree/education markers mixed in
+  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List)\b/i.test(t) && t.length < 80) return null;
+  // Multiple pipes/slashes suggest a header or skills row
+  if ((t.match(/[|\/]/g) || []).length >= 3) return null;
+  // Mostly uppercase (section header debris)
+  const upperRatio = (t.match(/[A-Z]/g) || []).length / t.length;
+  if (upperRatio > 0.6 && t.length < 60) return null;
+  return t;
+}
 
 export default CalibratedBulletsSection;
