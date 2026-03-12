@@ -417,7 +417,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
             currentRole = { title: titlePart, company: companyName, dates, bullets: [] };
             i++;
           } else {
-            currentRole = { title: sanitizeTitle(nextLine), company: line, dates: "", bullets: [] };
+            currentRole = { title: sanitizeTitle(nextLine), company: companyName, dates: "", bullets: [] };
             i++;
           }
           continue;
