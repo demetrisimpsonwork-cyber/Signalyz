@@ -244,49 +244,71 @@ EXAMPLE of Direct tone (do NOT copy — match the style):
 EXAMPLE of Confident tone (do NOT copy — match the style):
 "Regulated environments taught me something most operations professionals learn the hard way — speed without accuracy is just noise. Managing 40-70 concurrent escalations daily, I built the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to be escalated before they cost the company a client."`;
 
-        const prompt = `You are a sharp, experienced candidate writing your own cover letter for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. You are not an AI assistant. You are not an analyst. You are a professional who has done real work and wants this job.
+        const prompt = `You are writing YOUR OWN cover letter. You are a real professional applying for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. Not an AI. Not a career coach. Not a narrator. A person who has done specific work and wants this specific job.
 
-Your job: make the reader think "we should interview this person." Not "this person explained their transferable skills well."
+THE SINGLE TEST: Every sentence must sound like something a smart person would say in a 3-minute conversation with the hiring manager. If it sounds like analysis, diagnosis, narration, or compatibility explanation — delete it and write what the person would actually say.
 
 ${signalIntelligence}
 
-Resume (YOUR actual experience — everything you write must come from here): ${experience.slice(0, 3000)}
+Resume (YOUR real work history — the ONLY source of facts): ${experience.slice(0, 3000)}
 Target JD: ${jd.slice(0, 2000)}
 
 ${toneBlock}
 
-VOICE RULES:
-- Write as "I" — you are the candidate, speaking to a hiring manager.
-- Sound like a real person who has done real work and knows what this role requires.
-- DO NOT explain why your experience is relevant. Just describe your work so the relevance is obvious.
-- DO NOT act as a translator between resume and JD. Act as a candidate making a case.
-- If you catch yourself writing "this taught me," "this required," "this mirrors," "this translates," "this supports," "this demonstrates," "which prepared me," or "this directly applies" — STOP and rewrite that sentence as a direct claim about what you did or what you'll do.
+WRITING METHOD — argue, don't explain:
+- WRONG: "My experience managing escalations translates directly to this role's requirements."
+- RIGHT: "I've run a 40-person escalation queue for three years. The role needs exactly that."
+- WRONG: "This required me to develop strong cross-functional skills."
+- RIGHT: "I worked daily with legal, product, and ops — that's where I learned to move things without authority."
+- WRONG: "I am writing to express my interest in this position."
+- RIGHT: Just start talking about your work. The interest is obvious.
+
+SENTENCE CONSTRUCTION:
+- Vary your openings. Lead with the work, the outcome, the context, the number — not "I."
+- Maximum 1 sentence per paragraph may begin with "I."
+- Short sentences after long ones. A 5-word sentence after a 20-word sentence hits harder.
+- No compound sentences strung together with "and" three times. Break them up.
 
 STRUCTURE — exactly 5 paragraphs separated by blank lines:
 
-P1 — THE CLAIM (2 sentences):
-State who you are in this field and why you're pursuing this specific role. Ground it in one concrete detail from your actual work — a number, a system, a scope. The reader should feel "this person knows this world." Not "this person is enthusiastic."
+P1 — THE HOOK (2 sentences):
+Open with your professional identity grounded in ONE vivid, specific detail from your resume — a number, a system name, a scope. The reader should immediately picture what you do. Second sentence connects that identity to why this specific role caught your attention. No generic enthusiasm.
 
 P2 — OPERATIONAL PROOF (2-3 sentences):
-Your strongest evidence of doing work that matters for this role. Lead with outcomes and specifics — volumes handled, processes built, problems solved. Each sentence should advance a DIFFERENT point. This paragraph answers: "what have you actually done?"
+Your hardest-hitting evidence. Volumes, builds, outcomes, scale. Each sentence advances a DIFFERENT proof point. Do not repeat P1's detail. Do not narrate — just state what you did and what happened. This paragraph answers: "Can this person do the work?"
 
-P3 — PEOPLE & STAKEHOLDER PROOF (2 sentences):
-Show how you've worked with people — customers, teams, partners, leadership. This is DIFFERENT from P2. P2 = what you built/ran. P3 = how you worked with humans. Use specific examples: who you served, what you managed interpersonally, what judgment calls you made with people involved.
+P3 — PEOPLE & JUDGMENT PROOF (2 sentences):
+DIFFERENT evidence from P2. Show how you work with humans — clients, teams, leadership, vendors. Specific: who you worked with, what the stakes were, what judgment call you made. This paragraph answers: "Can this person work with us?"
 
-P4 — THE GAP, HANDLED (2 sentences):
-Acknowledge what you haven't done yet — briefly, honestly, in half a sentence. Then immediately show why you're ready anyway. Sound like someone who's already thought about this and isn't worried. Not defensive. Not inflated. Just clear-eyed.
+P4 — THE GAP, OWNED (2 sentences):
+Name what you haven't done — in half a sentence, no more. Then immediately show why you're ready. Sound like someone who's already thought about this gap and has a plan. Not defensive. Not apologetic. Not fabricated. Just honest and forward-moving.
 
-P5 — CLOSE (1-2 sentences):
-Name one specific thing you'll do or bring. End with forward motion. No "thank you for your consideration." No "I look forward to." Just a clean statement of what happens next if they're smart enough to call you.
+P5 — THE CLOSE (1-2 sentences):
+Name ONE specific thing you'll bring or do. End with momentum — what happens if they call you. No "thank you for your consideration." No "I look forward to discussing." Just a clean, confident final statement that makes them want to pick up the phone.
 
-HARD CONSTRAINTS:
+ABSOLUTE BANS — if ANY of these appear, the letter fails:
+- Phrases: "positioned to," "passionate about," "eager to," "I believe that," "strong foundation," "proven ability," "results-driven," "dynamic environment," "thrilled to," "excited to apply," "I am writing to express," "Furthermore," "Additionally," "Moreover," "In conclusion," "fast-paced," "go-getter," "leveraging"
+- Engine patterns (these make it sound like a machine wrote it):
+  * "this translates to" / "which translates to"
+  * "this mirrors" / "which mirrors"  
+  * "this taught me" / "which taught me"
+  * "this required" / "which required me to"
+  * "this demonstrates" / "which demonstrates"
+  * "this supports" / "which supports"
+  * "this directly applies" / "which directly applies"
+  * "this aligns with" / "which aligns with"
+  * "this prepared me" / "which prepared me"
+  * "this experience" as a sentence subject
+  * "directly relevant" / "directly applicable"
+  * "transferable" (never use this word)
+  MAXIMUM ZERO of these constructions. Write around them every time.
+- Structural bans: No operational phrase repeated twice. No two paragraphs opening the same way. No three sentences in a row with the same structure.
+
+HARD RULES:
 - 250 words max. First person throughout.
-- ZERO fabrication. Nothing invented — no fake employers, metrics, systems, titles, team sizes, or supervisory roles.
-- Max 1 sentence per paragraph may start with "I." Vary openings: lead with the work, the outcome, the context.
-- BANNED PHRASES (if you write any of these, the letter fails): "positioned to," "passionate about," "eager to," "I believe that," "strong foundation," "proven ability," "results-driven," "dynamic environment," "thrilled to," "excited to apply," "I am writing to express," "Furthermore," "Additionally," "Moreover," "In conclusion."
-- BANNED PATTERNS: "this [verb]s" constructions that explain relevance (e.g., "this taught me," "this mirrors," "this translates to," "this required me to," "this supports," "this demonstrates"). Maximum ONE such construction in the entire letter, only if truly unavoidable.
-- No operational noun phrase repeated twice in the letter (e.g., don't say "operational discipline" twice).
-- Every claim must trace to something in the resume. If it's not in the resume, don't write it.
+- ZERO fabrication. If it's not in the resume, you cannot write it. No invented metrics, titles, team sizes, or systems.
+- Every paragraph must sound different from the others — different rhythm, different sentence lengths, different energy.
+- The letter must read like candidacy, not compatibility analysis.
 
 Return ONLY a JSON object: {"letter": "..."} — body paragraphs only, no header/date/salutation/sign-off/paragraph labels.`;
         const raw = await callAI(prompt, 3000, toneTemp);
