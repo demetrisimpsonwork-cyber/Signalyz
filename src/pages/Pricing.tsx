@@ -1,4 +1,4 @@
-import { Check, Zap } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
@@ -141,7 +141,7 @@ const Pricing = () => {
               "Full positioning report",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                <Zap className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                 {f}
               </li>
             ))}
