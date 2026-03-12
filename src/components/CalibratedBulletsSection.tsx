@@ -45,11 +45,12 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
     const bullets: Array<{ role: string; company: string; bullet: string }> = [];
     for (const role of parsedRoles) {
       for (const resp of role.responsibilities.slice(0, 4)) {
-        if (resp.length >= 20) {
+        const cleaned = cleanBulletText(resp);
+        if (cleaned) {
           bullets.push({
             role: role.role_title || "Role",
             company: role.company || "",
-            bullet: resp,
+            bullet: cleaned,
           });
         }
       }
