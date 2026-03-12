@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Lock, RefreshCw, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Sparkles, Lock, RefreshCw, AlertTriangle, User } from "lucide-react";
 import { toast } from "sonner";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { useResumeAssembly } from "@/hooks/useResumeAssembly";
