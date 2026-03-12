@@ -269,6 +269,9 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
           currentRole.company = parts[1];
         }
       }
+      // Final sanitization pass on title and company fields
+      currentRole.title = sanitizeTitle(currentRole.title);
+      currentRole.company = sanitizeCompany(currentRole.company);
       roles.push(currentRole);
     }
   };
