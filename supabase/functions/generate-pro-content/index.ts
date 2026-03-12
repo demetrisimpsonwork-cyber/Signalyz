@@ -219,81 +219,51 @@ Return ONLY valid JSON, no markdown.`;
         const interviewGap = signalModel.interview_gap_diagnosis || alignmentResult.interview_gap_diagnosis || {};
         const gaps = signalModel.gaps || alignmentResult.gaps || [];
 
-        const signalContext = `
-BACKGROUND (shape your thinking — NEVER dump into the text):
-- Your strongest signal: ${execSummary.primary_strength || "N/A"}
-- Biggest gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
-- What hiring managers will wonder: ${(interviewGap.what_hiring_managers_see || []).join("; ") || "N/A"}
-- What transfers: ${transferable.detected_capability || "N/A"}
-- Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ") || "N/A"}`;
+        const signalContext = `CONTEXT (shape thinking, never dump into text):
+Strength: ${execSummary.primary_strength || "N/A"}
+Gap: ${gaps[0] || alignmentResult.top_missing_signal || "N/A"}
+Transfers: ${transferable.detected_capability || "N/A"}`;
 
-        const toneTemp = tone === "strategic" ? 0.55 : tone === "direct" ? 0.35 : 0.9;
+        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.3 : 0.75;
 
-        const toneInstruction = tone === "strategic"
-          ? `VOICE: You are a senior professional writing to a peer. Measured. Commercially aware. You think in systems and outcomes. Compound sentences with semicolons. Words like "operationalized," "redesigned," "scaled." You imply more than you state. Your confidence is quiet — it comes from knowing you've done the math.
-
-EXAMPLE (match the energy, not the words):
-"Over four years running regulated complaint pipelines across three verticals, the throughline became clear: resolution speed is a retention lever, not a compliance checkbox. Redesigning the triage framework meant rebuilding intake logic and retraining two vendor teams — but median response time dropped from 72 to 31 hours, and renewal volume moved with it."`
+        const toneVoice = tone === "strategic"
+          ? "Measured, commercially aware, executive-clean. Compound sentences. Imply more than you state. Quiet confidence."
           : tone === "direct"
-          ? `VOICE: Say it plain. Short sentences. No warm-up. Subject-verb-object. You say what you did, what happened, and stop. Two sentences per paragraph when possible. No subordinate clauses unless load-bearing. Every word earns its seat.
+          ? "Plain. Short sentences. Subject-verb-object. Say what you did, what happened, stop."
+          : "Warm but direct. Mix a short punch after a longer setup. Candid. No hedging. Conversational confidence.";
 
-EXAMPLE (match the energy, not the words):
-"I run a 40-person escalation queue. Last year we closed 11,400 cases at 94% SLA. The job is triage, prioritization, and knowing when to pull a case before it costs a client."`
-          : `VOICE: You're a person who's good at what you do and comfortable saying so. Warm but direct. You mix a short punch after a longer setup. You allow a dash mid-thought, a moment of candor. You don't hedge. You don't say "I believe" — you just say it. You sound like someone a hiring manager would want to grab coffee with.
-
-EXAMPLE (match the energy, not the words):
-"Regulated environments teach you one thing fast — speed without accuracy is noise. Running 40-70 concurrent escalations a day, you build the kind of judgment that only comes from volume: which cases need a call, which need a process fix, and which need to go up before they cost you a client."`;
-
-        const prompt = `You are ${roleTitle === "this role" ? "a professional" : `a professional applying for ${roleTitle}`}${companyName !== "the company" ? ` at ${companyName}` : ""}. You are writing your own cover letter by hand. You have 250 words to make someone want to interview you.
-
-You are NOT narrating your resume. You are NOT explaining how your background connects. You are making a case: hire me, here's why, here's what I've done, here's what I'll do.
+        const prompt = `Write a 250-word cover letter for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. First person. You are the candidate making a hiring case — not explaining fit.
 
 ${signalContext}
 
-Your actual work history (the ONLY source of facts — invent nothing): ${experience.slice(0, 3000)}
-The job: ${jd.slice(0, 2000)}
+Resume (only source of facts — invent nothing): ${experience.slice(0, 2500)}
+Job: ${jd.slice(0, 1500)}
 
-${toneInstruction}
+VOICE: ${toneVoice}
 
-THE VOICE TEST — read every sentence aloud. Does it sound like:
-(A) Something you'd say to the hiring manager over coffee? → Keep it.
-(B) Something a system generated to explain your fit? → Cut it. Rewrite as (A).
-
-CONTRASTIVE PAIRS — internalize the difference:
-BAD: "My experience managing cross-functional teams aligns well with the collaborative nature of this role."
-GOOD: "I've spent three years keeping legal, ops, and product moving toward the same deadline. It rarely went smoothly — but things shipped."
-
-BAD: "This background has equipped me with the skills necessary to excel in this position."
-GOOD: "That's the job, from what I can tell. I've been doing some version of it for four years."
-
-BAD: "I am confident that my track record of success positions me to make an immediate impact."
-GOOD: "If you need someone who's already made the mistakes and built the fix, that's the conversation I want to have."
-
-STRUCTURE — 5 paragraphs, separated by blank lines:
-
-P1 (2 sentences): Open mid-action. Drop the reader into your work — a number, a system, a scope, a reality of your day. Then connect it to this role in one sentence. No "I am writing to apply." Start like you're already talking.
-
-P2 (2-3 sentences): Your hardest evidence. Different from P1. Volumes, outcomes, things you built or fixed. Each sentence is a new proof point. No narration — just the work and what happened.
-
-P3 (2 sentences): People proof. Who you worked with, what the stakes were, what call you made. Show judgment and human skill. Different evidence from P2.
-
-P4 (2 sentences): The gap — half a sentence to name it, then show why it doesn't stop you. Sound like you've already thought about this. Not defensive. Not apologetic. Forward.
-
-P5 (1-2 sentences): Land it. Name one specific thing you'll bring. End with momentum. Make them want to call. No "thank you for considering." No "I look forward to." Just a clean finish.
+5 paragraphs separated by blank lines:
+P1 (2 sentences): Open mid-action with a number, scope, or work reality. Connect to this role.
+P2 (2-3 sentences): Hardest operational evidence. Volumes, outcomes, things built or fixed.
+P3 (2 sentences): People/judgment proof. Stakeholders, decisions, human complexity.
+P4 (2 sentences): Name the gap briefly, then show why it doesn't stop you. Forward, not defensive.
+P5 (1-2 sentences): One specific thing you'll bring. End with momentum. No "thank you for considering."
 
 RULES:
-- 250 words max. First person.
-- Max 1 sentence per paragraph starts with "I." Vary openings: lead with the work, the number, the context.
-- No two paragraphs open the same way. No three sentences with the same rhythm.
-- Short sentence after a long one. Break up compound "and...and...and" sentences.
-- ZERO fabrication. Resume facts only.
-- BANNED: "positioned to," "passionate about," "eager to," "I believe," "proven ability," "results-driven," "dynamic environment," "thrilled," "excited to apply," "strong foundation," "Furthermore," "Additionally," "Moreover," "In conclusion," "fast-paced," "go-getter," "leveraging," "I am writing to express," "track record," "well-positioned," "skill set," "I am confident that"
-- BANNED patterns: "translates to," "mirrors," "taught me," "required me to," "demonstrates," "aligns with," "prepared me," "directly relevant," "directly applicable," "transferable," "equipped me," "positions me"
-- None of those. Zero. Write around them every time.
+- Max 1 sentence per paragraph starts with "I"
+- No "I am writing to apply" or "I am excited"
+- ZERO fabrication
+- BANNED: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "thrilled," "strong foundation," "translates to," "mirrors," "taught me," "demonstrates," "aligns with," "prepared me," "transferable," "equipped me," "leveraging," "track record," "well-positioned," "skill set," "I am confident that," "Furthermore," "Additionally," "Moreover"
 
-Return ONLY: {"letter": "..."} — body paragraphs only. No header, date, salutation, or sign-off.`;
-        const raw = await callAI(prompt, 3000, toneTemp);
-        const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+Return ONLY valid JSON: {"letter": "the letter body paragraphs"}`;
+
+        const raw = await callAI(prompt, 2000, toneTemp, 1);
+        let cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+        // Resilient JSON extraction
+        const jsonStart = cleaned.indexOf("{");
+        const jsonEnd = cleaned.lastIndexOf("}");
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+        }
         result = JSON.parse(cleaned);
         break;
       }
