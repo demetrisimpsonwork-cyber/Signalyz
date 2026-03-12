@@ -185,41 +185,58 @@ const FALLBACK_BULLET = "Source bullet from uploaded resume";
  */
 function cleanBulletText(raw: string): string {
   const t = raw.trim();
+  const words = t.split(/\s+/);
 
   // --- Hard reject → fallback ---
-  if (t.length < 25) return FALLBACK_BULLET;
+  if (t.length < 30 || words.length < 5) return FALLBACK_BULLET;
+
+  // Must start with an uppercase letter or a digit (action verb or metric opener)
+  // Rejects mid-sentence fragments like "and ongoing communication..."
+  if (!/^[A-Z0-9]/.test(t)) return FALLBACK_BULLET;
+
+  // First word must look like a verb/noun opener, not a conjunction or preposition
+  const firstWordLower = words[0]?.toLowerCase().replace(/[^a-z]/g, "");
+  const BAD_OPENERS = new Set([
+    "and","or","but","nor","yet","so","for","with","from","into","through",
+    "about","above","below","between","during","after","before","since","until",
+    "the","a","an","to","of","in","on","at","by","as","is","was","were","are",
+    "it","its","this","that","these","those","which","who","whom","whose",
+  ]);
+  if (BAD_OPENERS.has(firstWordLower)) return FALLBACK_BULLET;
+
+  // Education markers — reject regardless of length
+  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List|Coursework|University|College|School|Degree|B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|M\.?B\.?A\.?|Ph\.?D)\b/i.test(t)) return FALLBACK_BULLET;
+
+  // Location patterns: "City · ST" or "City, ST" or state abbreviations in short text
+  if (/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[·,]\s*[A-Z]{2}\b/.test(t) && t.length < 120) return FALLBACK_BULLET;
 
   // Skills-list debris: high comma density
-  const words = t.split(/\s+/);
   const commas = (t.match(/,/g) || []).length;
-  if (commas >= 4 && commas / words.length > 0.25) return FALLBACK_BULLET;
+  if (commas >= 3 && commas / words.length > 0.2) return FALLBACK_BULLET;
 
-  // Starts mid-sentence (lowercase opener, not a known abbreviation)
-  if (/^[a-z]/.test(t) && !/^(e\.g\.|i\.e\.|de |the |a )/.test(t)) return FALLBACK_BULLET;
-
-  // Education markers mixed in (short lines)
-  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List|Coursework)\b/i.test(t) && t.length < 100) return FALLBACK_BULLET;
-
-  // Multiple pipes / slashes → header or skills row
-  if ((t.match(/[|\/]/g) || []).length >= 3) return FALLBACK_BULLET;
+  // Multiple pipes / slashes / middots → header or skills row
+  if ((t.match(/[|\/·]/g) || []).length >= 2) return FALLBACK_BULLET;
 
   // Mostly uppercase (section header debris)
   const upperChars = (t.match(/[A-Z]/g) || []).length;
-  if (upperChars / t.length > 0.55 && t.length < 70) return FALLBACK_BULLET;
+  if (upperChars / t.length > 0.45 && t.length < 80) return FALLBACK_BULLET;
 
-  // Contact contamination — contains email or phone patterns as primary content
-  if (/\S+@\S+\.\S+/.test(t) && t.length < 80) return FALLBACK_BULLET;
-  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(t) && t.length < 60) return FALLBACK_BULLET;
+  // Contact contamination — email, phone, URL anywhere
+  if (/\S+@\S+\.\S+/.test(t)) return FALLBACK_BULLET;
+  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(t)) return FALLBACK_BULLET;
+  if (/https?:\/\//.test(t)) return FALLBACK_BULLET;
+  if (/linkedin|github\.com/i.test(t)) return FALLBACK_BULLET;
 
-  // URL-heavy line (LinkedIn, portfolio, etc.)
-  if (/https?:\/\//.test(t) && t.length < 100) return FALLBACK_BULLET;
-
-  // No verb-like structure at all — likely a label or title fragment
-  if (words.length < 4) return FALLBACK_BULLET;
-
-  // Looks like a concatenated skills blob (many capitalized tech terms, few verbs)
+  // Looks like a concatenated skills blob
   const capsWords = words.filter(w => /^[A-Z][a-zA-Z]*$/.test(w) && w.length > 1).length;
-  if (capsWords / words.length > 0.6 && words.length > 4) return FALLBACK_BULLET;
+  if (capsWords / words.length > 0.5 && words.length > 4) return FALLBACK_BULLET;
+
+  // Date-heavy line (role header leaked in)
+  const dateMatches = t.match(/\b(19|20)\d{2}\b/g);
+  if (dateMatches && dateMatches.length >= 2 && t.length < 100) return FALLBACK_BULLET;
+
+  // Certification / award / membership line
+  if (/\b(Certified|Certificate|Certification|License|Licensed|Award|Honor|Member|Membership)\b/i.test(t) && t.length < 100) return FALLBACK_BULLET;
 
   return t;
 }
