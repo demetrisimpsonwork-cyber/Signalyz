@@ -333,8 +333,15 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
 
       if (titleCompany.includes("|")) {
         const parts = titleCompany.split("|").map(s => s.trim());
-        title = parts[0];
-        company = parts.slice(1).join(" | ");
+        const compIdx = parts.findIndex(p => COMPANY_SUFFIXES.test(p));
+        const titleIdx = parts.findIndex(p => ROLE_TITLE_RX.test(p));
+        if (compIdx >= 0 && titleIdx >= 0 && compIdx !== titleIdx) {
+          company = parts[compIdx]; title = parts[titleIdx];
+        } else if (compIdx >= 0) {
+          company = parts[compIdx]; title = parts.filter((_, i) => i !== compIdx).join(" | ");
+        } else {
+          title = parts[0]; company = parts.slice(1).join(" | ");
+        }
       } else if (titleCompany.includes("—") || titleCompany.includes("–")) {
         const sep = titleCompany.includes("—") ? "—" : "–";
         const parts = titleCompany.split(sep).map(s => s.trim());
@@ -342,10 +349,16 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
           title = parts[0]; company = parts[1];
         } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
           company = parts[0]; title = parts[1] || "";
+        } else if (ROLE_TITLE_RX.test(parts[0]) && !ROLE_TITLE_RX.test(parts[1] || "")) {
+          title = parts[0]; company = parts[1] || "";
         } else {
           title = parts[0]; company = parts[1] || "";
         }
       }
+
+      // Sanitize
+      title = sanitizeTitle(title);
+      company = sanitizeCompany(company);
 
       currentRole = { title, company, dates, bullets: [] };
 
