@@ -241,19 +241,39 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return false;
       };
 
-      /** Validate institution field — reject financial figures, sentence fragments, date-only strings */
+      /** Validate institution field — reject financial figures, sentence fragments, date-only strings, location-only */
       const isInstitutionContaminated = (v: string): boolean => {
         if (!v) return false;
-        if (/\$[\d,.]+/.test(v)) return true;
-        if (v.split(/\s+/).length > 8) return true;
-        if (startsWithActionVerb(v)) return true;
-        if (isContactPattern(v)) return true;
-        if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(v.trim())) return true;
-        if (/^\d{4}$/.test(v.trim())) return true;
-        if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST|COORDINATOR|ENGINEER|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT)/i.test(v.trim())) return true;
-        if (isCamelCaseArtifact(v)) return true;
-        // Reject lines that look like bullet content
-        if (/^o\s+[A-Z]/.test(v.trim())) return true;
+        const t = v.trim();
+        if (/\$[\d,.]+/.test(t)) return true;
+        if (t.split(/\s+/).length > 8) return true;
+        if (startsWithActionVerb(t)) return true;
+        if (isContactPattern(t)) return true;
+        if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(t)) return true;
+        if (/^\d{4}$/.test(t)) return true;
+        if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST|COORDINATOR|ENGINEER|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT)/i.test(t)) return true;
+        if (isCamelCaseArtifact(t)) return true;
+        if (/^o\s+[A-Z]/.test(t)) return true;
+        // Location-only: "City, ST" or "City, State" with no school name
+        if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/.test(t)) return true;
+        // Must contain an education keyword OR be clearly a proper noun institution name
+        const eduKw = /\b(university|college|institute|school|academy|seminary|polytechnic|conservatory)\b/i;
+        if (!eduKw.test(t) && t.length < 5) return true;
+        return false;
+      };
+
+      /** Validate degree field — must look like an actual academic degree */
+      const DEGREE_KEYWORDS = /\b(bachelor|master|associate|doctor|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|b\.?b\.?a|b\.?sc|m\.?sc|diploma|certificate|ged|high\s+school|juris\s+doctor|j\.?d\.?|ll\.?m|ll\.?b|d\.?min|ed\.?d|a\.?a\.?s?|a\.?s\.?)\b/i;
+      const isDegreeContaminated = (v: string): boolean => {
+        if (!v) return false;
+        const t = v.trim();
+        // Must contain a degree keyword — if not, it's likely a misclassified fragment
+        if (!DEGREE_KEYWORDS.test(t)) return true;
+        if (/\$[\d,.]+/.test(t)) return true;
+        if (startsWithActionVerb(t)) return true;
+        if (t.split(/\s+/).length > 12) return true;
+        if (/^o\s+[A-Z]/.test(t)) return true;
+        if (isContactPattern(t)) return true;
         return false;
       };
 
