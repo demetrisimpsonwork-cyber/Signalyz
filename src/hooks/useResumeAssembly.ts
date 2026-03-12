@@ -212,18 +212,18 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
       const isTitleContaminated = (v: string): boolean => {
         if (!v) return false;
-        // Location-only strings
         if (locationRx.test(v.trim())) return true;
-        // Education fragments
         if (educationKeywords.test(v)) return true;
-        // Section headers
         if (sectionHeaders.test(v.trim())) return true;
-        // Bullet-length text (real titles are short)
         if (v.length > 80) return true;
-        // Starts with action verb (it's a bullet, not a title)
         if (startsWithActionVerb(v)) return true;
-        // Contact info leaked into title
         if (isContactPattern(v)) return true;
+        // PDF bullet prefix: "o Provide...", "o Manage..."
+        if (/^o\s+[A-Z]/.test(v.trim())) return true;
+        // Too many words — it's a sentence/bullet, not a title
+        if (v.trim().split(/\s+/).length > 10) return true;
+        // Financial figures
+        if (/\$[\d,.]+/.test(v)) return true;
         return false;
       };
 
@@ -235,6 +235,25 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         if (v.length > 80) return true;
         if (startsWithActionVerb(v)) return true;
         if (isContactPattern(v)) return true;
+        if (/^o\s+[A-Z]/.test(v.trim())) return true;
+        if (v.trim().split(/\s+/).length > 10) return true;
+        if (/\$[\d,.]+/.test(v)) return true;
+        return false;
+      };
+
+      /** Validate institution field — reject financial figures, sentence fragments, date-only strings */
+      const isInstitutionContaminated = (v: string): boolean => {
+        if (!v) return false;
+        if (/\$[\d,.]+/.test(v)) return true;
+        if (v.split(/\s+/).length > 8) return true;
+        if (startsWithActionVerb(v)) return true;
+        if (isContactPattern(v)) return true;
+        if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(v.trim())) return true;
+        if (/^\d{4}$/.test(v.trim())) return true;
+        if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST|COORDINATOR|ENGINEER|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT)/i.test(v.trim())) return true;
+        if (isCamelCaseArtifact(v)) return true;
+        // Reject lines that look like bullet content
+        if (/^o\s+[A-Z]/.test(v.trim())) return true;
         return false;
       };
 
@@ -250,11 +269,9 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       });
 
       for (const exp of cleanExperience) {
-        // Sanitize title field — blank out contaminated values
         if (isTitleContaminated(exp.title)) {
           exp.title = "";
         }
-        // Sanitize company field
         if (isCompanyContaminated(exp.company)) {
           exp.company = "";
         }
@@ -273,11 +290,17 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         const deg = (edu.degree || "").trim();
         if (!inst && !deg) return false;
         if (isCamelCaseArtifact(inst) || isCamelCaseArtifact(deg)) return false;
-        if (/^(DIRECTOR|MANAGER|SPECIALIST|ANALYST|COORDINATOR|ENGINEER|SUPERVISOR|CONSULTANT|OFFICER|PRESIDENT)/i.test(inst)) return false;
         if (isContactPattern(inst) || isContactPattern(deg)) return false;
         if (startsWithActionVerb(inst) || startsWithActionVerb(deg)) return false;
         return true;
       });
+
+      // Sanitize institution fields in surviving education entries
+      for (const edu of cleanEducation) {
+        if (isInstitutionContaminated(edu.institution)) {
+          edu.institution = "";
+        }
+      }
 
       // Omit sections that have no clean entries rather than inserting malformed data
       const resume: CalibratedResumeData = {
