@@ -232,29 +232,36 @@ Transfers: ${transferable.detected_capability || "N/A"}`;
           ? "Plain. Short sentences. Subject-verb-object. Say what you did, what happened, stop."
           : "Warm but direct. Mix a short punch after a longer setup. Candid. No hedging. Conversational confidence.";
 
-        const prompt = `Write a 250-word cover letter for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}. First person. You are the candidate making a hiring case — not explaining fit.
+        const prompt = `You are ghostwriting a cover letter as ${roleTitle} candidate${companyName !== "the company" ? ` applying to ${companyName}` : ""}. First person.
 
 ${signalContext}
 
-Resume (only source of facts — invent nothing): ${experience.slice(0, 2500)}
-Job: ${jd.slice(0, 1500)}
+Resume (ONLY facts source — invent NOTHING): ${experience.slice(0, 2500)}
+Job description: ${jd.slice(0, 1500)}
 
 VOICE: ${toneVoice}
 
-5 paragraphs separated by blank lines:
-P1 (2 sentences): Open mid-action with a number, scope, or work reality. Connect to this role.
-P2 (2-3 sentences): Hardest operational evidence. Volumes, outcomes, things built or fixed.
-P3 (2 sentences): People/judgment proof. Stakeholders, decisions, human complexity.
-P4 (2 sentences): Name the gap briefly, then show why it doesn't stop you. Forward, not defensive.
-P5 (1-2 sentences): One specific thing you'll bring. End with momentum. No "thank you for considering."
+Write exactly 5 paragraphs separated by blank lines. ~250 words total.
 
-RULES:
+P1: Lead with your most concrete, relevant credential for THIS role. A number, a scope, a system you ran. Then say why you're applying. No philosophy, no observations about the industry — just: here's what I do, here's why this role.
+
+P2: Your hardest operational proof. Specific volumes, outcomes, problems solved. Start at least one sentence with the result or the work, not "I". Show the hiring manager you've done hard, relevant work.
+
+P3: People and judgment proof. Who you worked with, what you decided, what required navigating complexity. Different evidence from P2.
+
+P4: Name what you haven't done (the gap) in one clause, then immediately pivot to what makes you ready anyway. No apology. No defensiveness. Just honesty and forward motion.
+
+P5: End with what you'll do in this role, not what you hope for. Make the reader want the interview. No "thank you for considering," no "I look forward to."
+
+HARD RULES:
 - Max 1 sentence per paragraph starts with "I"
-- No "I am writing to apply" or "I am excited"
+- Do NOT open P1 with a general observation, philosophy, or "Customer experience lives in..." or "The fundamentals are..." — open with YOU doing WORK
+- No "I am writing to apply/express" or "I am excited/eager"
+- No explaining WHY your experience transfers — just USE IT as proof
 - ZERO fabrication
-- BANNED: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "thrilled," "strong foundation," "translates to," "mirrors," "taught me," "demonstrates," "aligns with," "prepared me," "transferable," "equipped me," "leveraging," "track record," "well-positioned," "skill set," "I am confident that," "Furthermore," "Additionally," "Moreover"
+- BANNED phrases: "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "mirrors," "taught me," "demonstrates," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "customer experience lives," "I learned that," "this represents," "what matters is," "it's not about X it's about Y," "natural evolution," "this environment developed"
 
-Return ONLY valid JSON: {"letter": "the letter body paragraphs"}`;
+Return ONLY valid JSON: {"letter": "the full letter body"}`;
 
         const raw = await callAI(prompt, 2000, toneTemp, 1);
         let cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
