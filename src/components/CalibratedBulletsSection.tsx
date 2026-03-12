@@ -173,27 +173,50 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
   );
 };
 
+const FALLBACK_BULLET = "Source bullet from uploaded resume";
+
 /**
- * Validates and cleans a parsed bullet string. Returns null if the text
- * looks like a garbled PDF fragment (too short, no verb, skills-list debris,
- * mid-sentence fragment, or education content bleeding in).
+ * Validates a parsed bullet string. Returns cleaned text or the standard
+ * fallback if the text looks like a garbled PDF fragment.
  */
-function cleanBulletText(raw: string): string | null {
+function cleanBulletText(raw: string): string {
   const t = raw.trim();
-  // Too short to be a real bullet
-  if (t.length < 25) return null;
-  // Looks like a skills list (comma-heavy, no verb structure)
-  const commaRatio = (t.match(/,/g) || []).length / t.split(/\s+/).length;
-  if (commaRatio > 0.3) return null;
-  // Starts mid-sentence (lowercase first word, no bullet char)
-  if (/^[a-z]/.test(t) && !/^(e\.g\.|i\.e\.)/.test(t)) return null;
-  // Contains degree/education markers mixed in
-  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List)\b/i.test(t) && t.length < 80) return null;
-  // Multiple pipes/slashes suggest a header or skills row
-  if ((t.match(/[|\/]/g) || []).length >= 3) return null;
+
+  // --- Hard reject → fallback ---
+  if (t.length < 25) return FALLBACK_BULLET;
+
+  // Skills-list debris: high comma density
+  const words = t.split(/\s+/);
+  const commas = (t.match(/,/g) || []).length;
+  if (commas >= 4 && commas / words.length > 0.25) return FALLBACK_BULLET;
+
+  // Starts mid-sentence (lowercase opener, not a known abbreviation)
+  if (/^[a-z]/.test(t) && !/^(e\.g\.|i\.e\.|de |the |a )/.test(t)) return FALLBACK_BULLET;
+
+  // Education markers mixed in (short lines)
+  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List|Coursework)\b/i.test(t) && t.length < 100) return FALLBACK_BULLET;
+
+  // Multiple pipes / slashes → header or skills row
+  if ((t.match(/[|\/]/g) || []).length >= 3) return FALLBACK_BULLET;
+
   // Mostly uppercase (section header debris)
-  const upperRatio = (t.match(/[A-Z]/g) || []).length / t.length;
-  if (upperRatio > 0.6 && t.length < 60) return null;
+  const upperChars = (t.match(/[A-Z]/g) || []).length;
+  if (upperChars / t.length > 0.55 && t.length < 70) return FALLBACK_BULLET;
+
+  // Contact contamination — contains email or phone patterns as primary content
+  if (/\S+@\S+\.\S+/.test(t) && t.length < 80) return FALLBACK_BULLET;
+  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(t) && t.length < 60) return FALLBACK_BULLET;
+
+  // URL-heavy line (LinkedIn, portfolio, etc.)
+  if (/https?:\/\//.test(t) && t.length < 100) return FALLBACK_BULLET;
+
+  // No verb-like structure at all — likely a label or title fragment
+  if (words.length < 4) return FALLBACK_BULLET;
+
+  // Looks like a concatenated skills blob (many capitalized tech terms, few verbs)
+  const capsWords = words.filter(w => /^[A-Z][a-zA-Z]*$/.test(w) && w.length > 1).length;
+  if (capsWords / words.length > 0.6 && words.length > 4) return FALLBACK_BULLET;
+
   return t;
 }
 
