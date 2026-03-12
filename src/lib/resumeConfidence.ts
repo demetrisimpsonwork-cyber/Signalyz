@@ -49,8 +49,8 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
       deductions += 20;
       break;
     }
-    if (CAMELCASE_ARTIFACT_RX.test(exp.company.replace(/\s/g, "")) ||
-        CAMELCASE_ARTIFACT_RX.test(exp.title.replace(/\s/g, ""))) {
+    if ((!/\s/.test(exp.company.trim()) && CAMELCASE_ARTIFACT_RX.test(exp.company.trim())) ||
+        (!/\s/.test(exp.title.trim()) && CAMELCASE_ARTIFACT_RX.test(exp.title.trim()))) {
       issues.push("artifact_in_experience");
       deductions += 15;
       break;
