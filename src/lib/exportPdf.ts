@@ -4,16 +4,9 @@ import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
 /**
  * Export the calibrated resume as a clean, formatted PDF document
- * built directly from structured data (not html2canvas).
+ * built directly from structured data (mirrors DOCX layout).
  */
-export async function exportCalibratedPdf(canvasElementId: string = "resume-canvas") {
-  // Try to get resume data from localStorage (set during assembly)
-  let resume: CalibratedResumeData | null = null;
-  try {
-    const stored = localStorage.getItem("resumix_calibrated_resume_data");
-    if (stored) resume = JSON.parse(stored);
-  } catch {}
-
+export async function exportCalibratedPdf(resume: CalibratedResumeData) {
   if (!resume) {
     toast.error("No resume data found. Please assemble your resume first.");
     return;
@@ -87,7 +80,13 @@ export async function exportCalibratedPdf(canvasElementId: string = "resume-canv
     };
 
     // ─── Wrapped text helper ───
-    const drawWrappedText = (text: string, fontSize: number, fontStyle: string = "normal", indent: number = 0, color: number[] = [26, 26, 46]) => {
+    const drawWrappedText = (
+      text: string,
+      fontSize: number,
+      fontStyle: string = "normal",
+      indent: number = 0,
+      color: number[] = [26, 26, 46]
+    ) => {
       pdf.setFont("times", fontStyle);
       pdf.setFontSize(fontSize);
       pdf.setTextColor(color[0], color[1], color[2]);
@@ -113,7 +112,7 @@ export async function exportCalibratedPdf(canvasElementId: string = "resume-canv
     ].filter((v, i, a) => a.indexOf(v) === i);
     if (competencies.length) {
       drawSectionHeader("Core Competencies");
-      drawWrappedText(competencies.join(",  "), 9.5);
+      drawWrappedText(competencies.join("  •  "), 9.5);
       y += 3;
     }
 
@@ -170,7 +169,7 @@ export async function exportCalibratedPdf(canvasElementId: string = "resume-canv
         pdf.setFont("times", "bold");
         pdf.setFontSize(10.5);
         pdf.setTextColor(26, 26, 46);
-        let projLine = proj.name;
+        const projLine = proj.name;
         pdf.text(projLine, marginLeft, y);
         if (proj.description) {
           const nameWidth = pdf.getTextWidth(projLine);
@@ -208,9 +207,18 @@ export async function exportCalibratedPdf(canvasElementId: string = "resume-canv
     }
 
     // ─── Certifications ───
-    if (resume.certifications?.length) {
+    const cleanedCertifications = (resume.certifications || []).map((cert) => {
+      return cert
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/https?:\/\/\S+/gi, "")
+        .replace(/www\.\S+/gi, "")
+        .replace(/<a[^>]*>(.*?)<\/a>/gi, "$1")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    });
+    if (cleanedCertifications.length) {
       drawSectionHeader("Certifications");
-      for (const cert of resume.certifications) {
+      for (const cert of cleanedCertifications) {
         checkPageBreak(5);
         pdf.setFont("times", "normal");
         pdf.setFontSize(9.5);
@@ -231,9 +239,6 @@ export async function exportCalibratedPdf(canvasElementId: string = "resume-canv
       drawSectionHeader("Education");
       for (const edu of resume.education) {
         checkPageBreak(5);
-        pdf.setFont("times", "normal");
-        pdf.setFontSize(9.5);
-        pdf.setTextColor(26, 26, 46);
         const eduText = [edu.degree, edu.institution, edu.year].filter(Boolean).join(" — ");
         drawWrappedText(eduText, 9.5);
         y += 1;
