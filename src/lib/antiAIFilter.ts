@@ -111,6 +111,32 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bThank you for your consideration\\b/gi, ""],
   [/\\bthank you for your consideration\\b/gi, ""],
   [/\\bI look forward to\\b/gi, ""],
+
+  // Over-polished candidacy narration patterns
+  [/\\bhas equipped me\\b/gi, "meant I"],
+  [/\\bequipped me with\\b/gi, "gave me"],
+  [/\\bwell-positioned\\b/gi, "ready"],
+  [/\\bpositions me to\\b/gi, "means I can"],
+  [/\\bI am positioned\\b/gi, "I'm ready"],
+  [/\\bpositioned to\\b/gi, "ready to"],
+  [/\\bI am confident that\\b/gi, ""],
+  [/\\bI'm confident that\\b/gi, ""],
+  [/\\btrack record of\\b/gi, "history of"],
+  [/\\bskill set\\b/gi, "skills"],
+  [/\\bskillset\\b/gi, "skills"],
+  [/\\bmake an immediate impact\\b/gi, "contribute quickly"],
+  [/\\bhit the ground running\\b/gi, "start quickly"],
+  [/\\buniquely qualified\\b/gi, "qualified"],
+  [/\\buniquely positioned\\b/gi, "ready"],
+  [/\\bmy background in\\b/gi, "my work in"],
+  [/\\bextensive experience\\b/gi, "experience"],
+  [/\\bdemonstrated expertise\\b/gi, "experience"],
+  [/\\bcomprehensive understanding\\b/gi, "understanding"],
+  [/\\bdeep understanding\\b/gi, "understanding"],
+  [/\\brobust understanding\\b/gi, "understanding"],
+  [/\\bseamlessly\\b/gi, "smoothly"],
+  [/\\bholistic approach\\b/gi, "approach"],
+  [/\\bholistic\\b/gi, "full"],
 ];
 
 // ─── Em dash cleanup ────────────────────────────────────────────────────────
