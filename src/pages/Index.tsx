@@ -489,6 +489,40 @@ const Index = () => {
     return false;
   };
 
+  const looksLikeResume = (text: string): boolean => {
+    const t = text.toLowerCase();
+    let signals = 0;
+    // Date patterns (2019, 01/2020, Jan 2021, 2020–2022, etc.)
+    if (/\b(19|20)\d{2}\b/.test(text)) signals++;
+    // Action verbs common in resumes
+    if (/\b(managed|led|developed|created|built|improved|directed|implemented|designed|delivered|coordinated|analyzed|organized|supported|oversaw|spearheaded|launched|trained|maintained|executed|reduced|increased|streamlined|automated|facilitated|negotiated)\b/i.test(text)) signals++;
+    // Job-title-like words
+    if (/\b(manager|director|engineer|analyst|coordinator|specialist|associate|lead|intern|consultant|developer|designer|administrator|supervisor|assistant|executive|officer|representative)\b/i.test(t)) signals++;
+    // Contact patterns (email or phone)
+    if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(text) || /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(text)) signals++;
+    // Company/education indicators
+    if (/\b(inc\.|llc|ltd|corp|university|college|school|bachelor|master|mba|b\.?s\.?|m\.?s\.?|ph\.?d)\b/i.test(text)) signals++;
+    // Bullet-like patterns (• or -)
+    if (/^[\s]*[•\-–—]\s/m.test(text)) signals++;
+    return signals >= 2;
+  };
+
+  const looksLikeJobDescription = (text: string): boolean => {
+    const t = text.toLowerCase();
+    let signals = 0;
+    // Requirement/qualification language
+    if (/\b(requirements?|qualifications?|responsibilities|experience required|must have|preferred|required|nice to have|what you.?ll do|about the role|we are looking for|you will|ideal candidate)\b/i.test(text)) signals++;
+    // Job-title-like words
+    if (/\b(manager|director|engineer|analyst|coordinator|specialist|lead|developer|designer|consultant|associate)\b/i.test(t)) signals++;
+    // Years of experience
+    if (/\d+\+?\s*years?\s*(of\s+)?experience/i.test(text)) signals++;
+    // Skills/tools
+    if (/\b(proficien|experienc|knowledge of|familiar with|ability to|strong|excellent|skills?|track record)\b/i.test(text)) signals++;
+    // Bullet-like patterns
+    if (/^[\s]*[•\-–—]\s/m.test(text)) signals++;
+    return signals >= 2;
+  };
+
   const validate = () => {
     const errs: typeof errors = {};
     if (!bullet.trim()) {
@@ -501,6 +535,11 @@ const Index = () => {
       setErrors(errs);
       return false;
     }
+    if (!looksLikeResume(bullet.trim())) {
+      errs.bullet = "This doesn't look like a resume. Paste your work experience or upload a file to get your signal read.";
+      setErrors(errs);
+      return false;
+    }
     if (!jd.trim()) {
       errs.jd = "Add the job description to continue";
       setErrors(errs);
@@ -508,6 +547,11 @@ const Index = () => {
     }
     if (jd.trim().length < 20) {
       errs.jd = "Job description must be at least 20 characters.";
+      setErrors(errs);
+      return false;
+    }
+    if (!looksLikeJobDescription(jd.trim())) {
+      errs.jd = "Paste a real job description to run your alignment.";
       setErrors(errs);
       return false;
     }
