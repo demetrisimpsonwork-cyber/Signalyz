@@ -204,6 +204,40 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         location: cleanLocation,
       };
 
+      // ── Title / Company field sanitizers ──
+
+      const locationRx = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
+      const educationKeywords = /\b(university|college|bachelor|master|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|ph\.?d|associate|diploma|gpa|degree|school|institute|academy)\b/i;
+      const sectionHeaders = /^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?|CORE\s+COMPETENCIES|PROFESSIONAL\s+SUMMARY|WORK\s+HISTORY)\s*$/i;
+
+      const isTitleContaminated = (v: string): boolean => {
+        if (!v) return false;
+        // Location-only strings
+        if (locationRx.test(v.trim())) return true;
+        // Education fragments
+        if (educationKeywords.test(v)) return true;
+        // Section headers
+        if (sectionHeaders.test(v.trim())) return true;
+        // Bullet-length text (real titles are short)
+        if (v.length > 80) return true;
+        // Starts with action verb (it's a bullet, not a title)
+        if (startsWithActionVerb(v)) return true;
+        // Contact info leaked into title
+        if (isContactPattern(v)) return true;
+        return false;
+      };
+
+      const isCompanyContaminated = (v: string): boolean => {
+        if (!v) return false;
+        if (locationRx.test(v.trim())) return true;
+        if (educationKeywords.test(v)) return true;
+        if (sectionHeaders.test(v.trim())) return true;
+        if (v.length > 80) return true;
+        if (startsWithActionVerb(v)) return true;
+        if (isContactPattern(v)) return true;
+        return false;
+      };
+
       const cleanExperience = (data.experience || []).filter((exp: any) => {
         const company = (exp.company || "").trim();
         const title = (exp.title || "").trim();
@@ -216,6 +250,15 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       });
 
       for (const exp of cleanExperience) {
+        // Sanitize title field — blank out contaminated values
+        if (isTitleContaminated(exp.title)) {
+          exp.title = "";
+        }
+        // Sanitize company field
+        if (isCompanyContaminated(exp.company)) {
+          exp.company = "";
+        }
+
         if (Array.isArray(exp.bullets)) {
           exp.bullets = exp.bullets.filter((b: string) => {
             if (!b) return false;

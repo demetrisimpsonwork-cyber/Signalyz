@@ -203,7 +203,7 @@ export default function ResumeStructureConfirm({
                 label="Degree"
                 value={edu.degree}
                 onChange={(v) => updateEdu(idx, "degree", v)}
-                placeholder="B.S. Computer Science"
+                placeholder=""
                 small
               />
               <FieldInput
