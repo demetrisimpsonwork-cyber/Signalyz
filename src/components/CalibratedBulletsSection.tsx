@@ -187,14 +187,13 @@ function cleanBulletText(raw: string): string {
   const t = raw.trim();
   const words = t.split(/\s+/);
 
-  // --- Hard reject → fallback ---
+  // ── HARD REJECT: structural minimums ──
   if (t.length < 30 || words.length < 5) return FALLBACK_BULLET;
 
-  // Must start with an uppercase letter or a digit (action verb or metric opener)
-  // Rejects mid-sentence fragments like "and ongoing communication..."
+  // Must start with an uppercase letter or a digit
   if (!/^[A-Z0-9]/.test(t)) return FALLBACK_BULLET;
 
-  // First word must look like a verb/noun opener, not a conjunction or preposition
+  // First word must not be a conjunction/preposition/article (mid-sentence fragment)
   const firstWordLower = words[0]?.toLowerCase().replace(/[^a-z]/g, "");
   const BAD_OPENERS = new Set([
     "and","or","but","nor","yet","so","for","with","from","into","through",
@@ -204,11 +203,23 @@ function cleanBulletText(raw: string): string {
   ]);
   if (BAD_OPENERS.has(firstWordLower)) return FALLBACK_BULLET;
 
-  // Education markers — reject regardless of length
-  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List|Coursework|University|College|School|Degree|B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|M\.?B\.?A\.?|Ph\.?D)\b/i.test(t)) return FALLBACK_BULLET;
+  // ── HARD REJECT: non-experience content (education, location, contact, certs) ──
 
-  // Location patterns: "City · ST" or "City, ST" or state abbreviations in short text
-  if (/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[·,]\s*[A-Z]{2}\b/.test(t) && t.length < 120) return FALLBACK_BULLET;
+  // Education markers — reject regardless of length
+  if (/\b(Bachelor|Master|Associate|Diploma|GPA|Dean.s List|Coursework|University|College|School|Degree|B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|M\.?B\.?A\.?|Ph\.?D|High\s+School|Magna|Summa|Cum\s+Laude)\b/i.test(t)) return FALLBACK_BULLET;
+
+  // Location patterns: "City · ST" or "City, ST" — ANY occurrence, not just short lines
+  if (/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[·]\s*[A-Z]{2}\b/.test(t)) return FALLBACK_BULLET;
+  if (/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2}\b/.test(t) && t.length < 150) return FALLBACK_BULLET;
+
+  // Contact contamination
+  if (/\S+@\S+\.\S+/.test(t)) return FALLBACK_BULLET;
+  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(t)) return FALLBACK_BULLET;
+  if (/https?:\/\//.test(t)) return FALLBACK_BULLET;
+  if (/linkedin|github\.com/i.test(t)) return FALLBACK_BULLET;
+
+  // Certification / award / membership line
+  if (/\b(Certified|Certificate|Certification|License|Licensed|Award|Honor|Member|Membership)\b/i.test(t) && t.length < 100) return FALLBACK_BULLET;
 
   // Skills-list debris: high comma density
   const commas = (t.match(/,/g) || []).length;
@@ -221,13 +232,7 @@ function cleanBulletText(raw: string): string {
   const upperChars = (t.match(/[A-Z]/g) || []).length;
   if (upperChars / t.length > 0.45 && t.length < 80) return FALLBACK_BULLET;
 
-  // Contact contamination — email, phone, URL anywhere
-  if (/\S+@\S+\.\S+/.test(t)) return FALLBACK_BULLET;
-  if (/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(t)) return FALLBACK_BULLET;
-  if (/https?:\/\//.test(t)) return FALLBACK_BULLET;
-  if (/linkedin|github\.com/i.test(t)) return FALLBACK_BULLET;
-
-  // Looks like a concatenated skills blob
+  // Concatenated skills blob
   const capsWords = words.filter(w => /^[A-Z][a-zA-Z]*$/.test(w) && w.length > 1).length;
   if (capsWords / words.length > 0.5 && words.length > 4) return FALLBACK_BULLET;
 
@@ -235,8 +240,16 @@ function cleanBulletText(raw: string): string {
   const dateMatches = t.match(/\b(19|20)\d{2}\b/g);
   if (dateMatches && dateMatches.length >= 2 && t.length < 100) return FALLBACK_BULLET;
 
-  // Certification / award / membership line
-  if (/\b(Certified|Certificate|Certification|License|Licensed|Award|Honor|Member|Membership)\b/i.test(t) && t.length < 100) return FALLBACK_BULLET;
+  // ── POSITIVE ALLOW GATE: must look like experience content ──
+  // At least one of these signals must be present:
+  const hasActionVerb = /^(Led|Managed|Owned|Built|Created|Developed|Designed|Implemented|Improved|Executed|Coordinated|Supported|Resolved|Reduced|Increased|Streamlined|Analyzed|Communicated|Partnered|Trained|Automated|Documented|Delivered|Oversaw|Directed|Established|Facilitated|Negotiated|Optimized|Spearheaded|Launched|Maintained|Monitored|Organized|Planned|Produced|Provided|Reported|Supervised|Tracked|Prepared|Reviewed|Conducted|Assisted|Processed|Collaborated|Evaluated|Administered|Ensured|Handled|Performed|Served|Contributed|Identified|Initiated|Advised|Drafted|Researched|Assessed|Compiled|Generated|Presented|Utilized|Achieved|Exceeded|Drove|Transformed|Championed|Cultivated|Pioneered|Revamped|Orchestrated|Formulated|Devised|Instituted|Restructured|Consolidated|Integrated|Mobilized|Mentored|Fostered|Elevated|Amplified|Accelerated|Mitigated|Navigated|Diagnosed|Reconciled|Audited|Verified|Inspected|Calibrated|Configured|Deployed|Architected|Engineered|Programmed|Coded|Tested|Debugged|Migrated|Refactored|Authored|Published|Marketed|Promoted|Distributed|Negotiating|Managing|Leading|Building|Supporting|Developing)\b/i.test(t);
+  const hasMetricOpener = /^\d/.test(t); // starts with a number (metric-led bullet)
+  const hasResultsLanguage = /\b(resulting in|which led to|saving|achieving|improving|reducing|increasing|generating|delivering|contributing|enabling|driving|growing|cutting|boosting|lowering|raising|expanding)\b/i.test(t);
+  const hasCompleteStructure = t.length >= 60 && /[.!]$/.test(t); // complete sentence
+
+  if (!hasActionVerb && !hasMetricOpener && !hasResultsLanguage && !hasCompleteStructure) {
+    return FALLBACK_BULLET;
+  }
 
   return t;
 }
