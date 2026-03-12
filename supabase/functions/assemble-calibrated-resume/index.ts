@@ -408,7 +408,7 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
         const nextHasTitle = ROLE_TITLE_RX.test(nextLine);
         if ((nextHasDate || nextHasTitle) && !isFieldContaminated(line)) {
           commitRole();
-          company = line;
+          const companyName = line;
           // Parse next line for title+dates
           if (nextHasDate) {
             const dateMatch = nextLine.match(DATE_RX);
