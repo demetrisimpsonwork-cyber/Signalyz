@@ -315,10 +315,13 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         return true;
       });
 
-      // Sanitize institution fields in surviving education entries
+      // Sanitize institution and degree fields in surviving education entries
       for (const edu of cleanEducation) {
         if (isInstitutionContaminated(edu.institution)) {
           edu.institution = "";
+        }
+        if (isDegreeContaminated(edu.degree)) {
+          edu.degree = "";
         }
       }
 
