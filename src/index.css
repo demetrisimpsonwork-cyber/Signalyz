@@ -156,3 +156,11 @@
     @apply mt-6 mb-2;
   }
 }
+
+/* Hide Lovable/Vite developer error overlays from end users */
+vite-error-overlay,
+[data-lovable-error],
+[class*="lovable-error"],
+#lovable-error-overlay {
+  display: none !important;
+}
