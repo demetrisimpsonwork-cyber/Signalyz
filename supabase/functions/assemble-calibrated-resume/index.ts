@@ -139,6 +139,10 @@ function isFieldContaminated(v: string): boolean {
   if (t.split(/\s+/).length > 10) return true;
   // Financial figures contamination
   if (/\$[\d,.]+/.test(t)) return true;
+  // Lowercase-starting fragments that aren't proper titles/companies (e.g., "beverage from")
+  if (/^[a-z]/.test(t)) return true;
+  // Ends with a preposition/conjunction — likely a sentence fragment
+  if (/\b(from|for|and|with|the|of|to|in|on|at|by)\s*$/i.test(t) && t.split(/\s+/).length <= 4) return true;
   return false;
 }
 
@@ -469,24 +473,36 @@ function isEduLineValid(line: string): boolean {
 /** Validate that a string is a plausible institution name, not body text */
 function isValidInstitution(v: string): boolean {
   if (!v || v.length > 100) return false;
-  // Must not contain financial figures
   if (/\$[\d,.]+/.test(v)) return false;
-  // Must not be a sentence fragment (too many words with lowercase)
   if (v.split(/\s+/).length > 8) return false;
-  // Must not start with action verbs
   const firstWord = v.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
   if (EDU_REJECT_VERBS.has(firstWord)) return false;
-  // Must not be a pure date string like "2015 – 2019"
   if (/^\d{4}\s*[-–—to]+\s*\d{4}$/.test(v.trim())) return false;
   if (/^\d{4}$/.test(v.trim())) return false;
-  // Must not be a contact pattern
   if (/[\w.+-]+@[\w.-]+\.\w{2,}/.test(v)) return false;
   if (/(?:\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}|\d{3}[-.\s]\d{3}[-.\s]\d{4})/.test(v)) return false;
-  // Should ideally contain an education keyword OR be short and proper-cased
+  // Reject location-only strings: "City, ST" with no school name
+  if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/.test(v.trim())) return false;
+  // Reject bullet prefix patterns
+  if (/^o\s+[A-Z]/.test(v.trim())) return false;
   if (EDU_KEYWORDS_RX.test(v)) return true;
-  // Accept short proper-cased names (likely school names)
   if (v.length < 60 && /^[A-Z]/.test(v)) return true;
   return false;
+}
+
+/** Validate that a string is a plausible academic degree */
+const DEGREE_KEYWORDS_RX = /\b(bachelor|master|associate|doctor|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|b\.?b\.?a|b\.?sc|m\.?sc|diploma|certificate|ged|high\s+school|juris\s+doctor|j\.?d\.?|ll\.?m|ll\.?b|d\.?min|ed\.?d|a\.?a\.?s?|a\.?s\.?)\b/i;
+
+function isValidDegree(v: string): boolean {
+  if (!v) return false;
+  const t = v.trim();
+  if (!DEGREE_KEYWORDS_RX.test(t)) return false;
+  if (/\$[\d,.]+/.test(t)) return false;
+  const firstWord = t.split(/[\s,]/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+  if (EDU_REJECT_VERBS.has(firstWord)) return false;
+  if (t.split(/\s+/).length > 12) return false;
+  if (/^o\s+[A-Z]/.test(t)) return false;
+  return true;
 }
 
 function parseEducationBlock(lines: string[]): Array<{ institution: string; degree: string; year: string }> {
@@ -504,8 +520,9 @@ function parseEducationBlock(lines: string[]): Array<{ institution: string; degr
     // If line has a degree keyword, start new entry
     if (/\b(bachelor|master|associate|doctor|phd|mba|bs|ba|ms|ma|bba|bsc|msc|diploma|certificate|ged|high\s+school)\b/i.test(trimmed)) {
       if (currentEntry) entries.push(currentEntry);
+      const degreeCandidate = trimmed.replace(/\b(19|20)\d{2}\b/g, "").replace(/[|—–,·]\s*$/, "").trim();
       currentEntry = {
-        degree: trimmed.replace(/\b(19|20)\d{2}\b/g, "").replace(/[|—–,·]\s*$/, "").trim(),
+        degree: isValidDegree(degreeCandidate) ? degreeCandidate : "",
         institution: "",
         year: yearMatch ? yearMatch[0] : "",
       };
