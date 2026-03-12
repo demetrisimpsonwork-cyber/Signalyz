@@ -506,24 +506,47 @@ function extractHeaderFromResume(text: string): any {
   const locationRx = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}(?:\s+\d{5})?$/;
   const linkedinRx = /linkedin\.com\/in\/[\w-]+/i;
 
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+  const scanLimit = Math.min(lines.length, 12);
+
+  for (let i = 0; i < scanLimit; i++) {
     const line = lines[i];
-    if (!header.email) { const m = line.match(emailRx); if (m) header.email = m[0]; }
-    if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
-    if (!header.linkedin) { const m = line.match(linkedinRx); if (m) header.linkedin = m[0]; }
+
+    // Stop at section headers
+    if (detectSectionHeader(line)) break;
+
+    // Email — scan all header lines
+    if (!header.email) {
+      const m = line.match(emailRx);
+      if (m) header.email = m[0];
+    }
+    // Phone — scan all header lines, also match embedded in longer lines
+    if (!header.phone) {
+      const m = line.match(phoneRx);
+      if (m) header.phone = m[0];
+    }
+    if (!header.linkedin) {
+      const m = line.match(linkedinRx);
+      if (m) header.linkedin = m[0];
+    }
     if (!header.location && locationRx.test(line)) header.location = line;
-    // Name: first line that's short, not an email/phone, not a section header, not a placeholder
-    if (i === 0 && !header.name && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line) && !detectSectionHeader(line)) {
-      // Reject known placeholders and non-name patterns
-      if (/^full\s+name$/i.test(line.trim())) continue;
-      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(line.trim())) continue;
-      // Reject lines that are all digits/symbols
-      if (/^[\d()+\-.\s]+$/.test(line.trim())) continue;
-      // Must contain at least one letter and look like a name (2-4 capitalized words)
-      if (/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,3}$/.test(line.trim()) || /^[A-Z][a-z]+\s+[A-Z]\.?\s+[A-Z][a-z]+$/.test(line.trim())) {
-        header.name = line.trim();
+
+    // Name: scan first 3 lines for name-like patterns
+    if (!header.name && i <= 2 && line.length < 50 && !emailRx.test(line) && !phoneRx.test(line)) {
+      const t = line.trim();
+      // Reject known placeholders
+      if (/^full\s+name$/i.test(t)) continue;
+      if (/^(EXPERIENCE|EDUCATION|SKILLS|SUMMARY|PROFILE|CONTACT|CERTIFICATIONS?)/i.test(t)) continue;
+      if (/^[\d()+\-.\s]+$/.test(t)) continue;
+      if (linkedinRx.test(t)) continue;
+      // Accept: "First Last", "First M. Last", "First Middle Last", "FIRST LAST"
+      if (/^[A-Z][a-zA-Z'-]+(\s+[A-Z]\.?\s+)?(\s+[A-Z][a-zA-Z'-]+){0,2}$/.test(t)) {
+        header.name = t;
       }
-      // If it doesn't match name pattern, leave blank rather than inserting garbage
+      // Also accept ALL CAPS names: "JOHN SMITH"
+      else if (/^[A-Z]{2,}(\s+[A-Z]{2,}){0,2}$/.test(t) && t.length < 30) {
+        // Convert to title case
+        header.name = t.replace(/\b(\w)(\w*)/g, (_: string, first: string, rest: string) => first.toUpperCase() + rest.toLowerCase());
+      }
     }
   }
 
@@ -532,6 +555,15 @@ function extractHeaderFromResume(text: string): any {
     for (let i = 0; i < Math.min(lines.length, 8); i++) {
       const m = lines[i].match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2})/);
       if (m) { header.location = m[1]; break; }
+    }
+  }
+
+  // If email/phone not found in clean lines, try multi-field lines (e.g. "name@email.com | (555) 123-4567 | City, ST")
+  if (!header.email || !header.phone) {
+    for (let i = 0; i < Math.min(lines.length, 8); i++) {
+      const line = lines[i];
+      if (!header.email) { const m = line.match(emailRx); if (m) header.email = m[0]; }
+      if (!header.phone) { const m = line.match(phoneRx); if (m) header.phone = m[0]; }
     }
   }
 
