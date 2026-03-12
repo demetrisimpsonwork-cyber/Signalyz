@@ -101,10 +101,12 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
   }
 
   const score = Math.max(0, 100 - deductions);
+  // Always require confirmation if the name couldn't be extracted
+  const hasNameIssue = issues.includes("name_missing") || issues.includes("name_placeholder");
 
   return {
     score,
-    isLow: score < 70,
+    isLow: score < 70 || hasNameIssue,
     issues,
   };
 }
