@@ -139,6 +139,10 @@ function isFieldContaminated(v: string): boolean {
   if (t.split(/\s+/).length > 10) return true;
   // Financial figures contamination
   if (/\$[\d,.]+/.test(t)) return true;
+  // Lowercase-starting fragments that aren't proper titles/companies (e.g., "beverage from")
+  if (/^[a-z]/.test(t)) return true;
+  // Ends with a preposition/conjunction — likely a sentence fragment
+  if (/\b(from|for|and|with|the|of|to|in|on|at|by)\s*$/i.test(t) && t.split(/\s+/).length <= 4) return true;
   return false;
 }
 
