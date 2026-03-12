@@ -45,19 +45,23 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
     const bullets: Array<{ role: string; company: string; bullet: string }> = [];
     for (const role of parsedRoles) {
       for (const resp of role.responsibilities.slice(0, 4)) {
-        const cleaned = cleanBulletText(resp);
-        if (cleaned) {
+        if (resp.trim().length >= 10) {
           bullets.push({
             role: role.role_title || "Role",
             company: role.company || "",
-            bullet: cleaned,
+            bullet: cleanBulletText(resp),
           });
         }
       }
     }
-    // Return top 5 most substantive bullets
+    // Return top 5 most substantive bullets, preferring real text over fallbacks
     return bullets
-      .sort((a, b) => b.bullet.length - a.bullet.length)
+      .sort((a, b) => {
+        const aFallback = a.bullet === FALLBACK_BULLET ? 1 : 0;
+        const bFallback = b.bullet === FALLBACK_BULLET ? 1 : 0;
+        if (aFallback !== bFallback) return aFallback - bFallback;
+        return b.bullet.length - a.bullet.length;
+      })
       .slice(0, 5);
   }, [parsedRoles]);
 
