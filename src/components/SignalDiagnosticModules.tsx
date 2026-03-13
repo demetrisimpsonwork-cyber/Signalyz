@@ -9,6 +9,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 /* ─── Dimension display label map ─── */
 const DIMENSION_DISPLAY_LABELS: Record<string, string> = {
