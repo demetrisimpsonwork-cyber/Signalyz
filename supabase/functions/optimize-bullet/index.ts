@@ -402,8 +402,8 @@ function computeRecalibratedScore(input: {
   );
 
   const operationalScopeQuality = clamp01(
-    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 0.40) * 0.65) +
-      (qualityFromDensity(toolHits, resumeTokens.length, 0.30) * 0.35),
+    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 0.30) * 0.60) +
+      (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.40),
   );
 
   const accountabilityQuality = clamp01(
