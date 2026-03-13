@@ -1329,14 +1329,17 @@ const Index = () => {
                     <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
                         <h3 className="section-label mt-2">Signal Diagnosis</h3>
-                        <ScoreExplanation score={result.match_score} />
+                        <ScoreExplanation score={displayScore} />
                       </div>
                       <div className="flex items-baseline gap-3">
-                        <span className={`text-5xl font-bold tabular-nums ${
-                          result.match_score >= 70 ? "text-green-600 dark:text-green-400" :
-                          result.match_score >= 50 ? "text-orange-500" :
-                          "text-destructive"
-                        }`}>
+                        <span
+                          data-score-source="deterministic"
+                          className={`text-5xl font-bold tabular-nums ${
+                            displayScore >= 70 ? "text-green-600 dark:text-green-400" :
+                            displayScore >= 50 ? "text-orange-500" :
+                            "text-destructive"
+                          }`}
+                        >
                           {animatedScore}%
                         </span>
                         {result.alignment_confidence_level && (
