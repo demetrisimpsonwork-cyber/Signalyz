@@ -713,6 +713,10 @@ const Index = () => {
       }
 
       const res = data as OptimizationResult;
+      // Apply deterministic score override before storing
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text);
+      res.match_score = detScore.finalScore;
+      res.scoring_breakdown = detScore.breakdown;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
 
