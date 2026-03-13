@@ -365,7 +365,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
               <div key={pi}>
                 {/* Project name — bold */}
                 <span style={{ fontWeight: 700, fontSize: "12px", color: "#1A1A2E" }}>{proj.name}</span>
-                {/* Description — explicitly normal weight, separate element */}
+                {/* Description — force regular weight on the exact body text node */}
                 {(proj.description || editMode) && (
                   <>
                     <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}>{" — "}</span>
@@ -373,8 +373,8 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                       <span
                         contentEditable
                         suppressContentEditableWarning
-                        className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
-                        style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}
+                        className="font-normal outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
+                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "inherit", fontSize: "11px", color: "#6B7280" }}
                         onBlur={(e) => {
                           onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
                         }}
@@ -382,7 +382,13 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                         {proj.description}
                       </span>
                     ) : (
-                      <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}>{proj.description}</span>
+                      <span
+                        data-project-description="true"
+                        className="font-normal"
+                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "inherit", fontSize: "11px", color: "#6B7280" }}
+                      >
+                        {proj.description}
+                      </span>
                     )}
                   </>
                 )}
