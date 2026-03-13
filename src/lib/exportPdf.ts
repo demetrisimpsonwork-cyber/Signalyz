@@ -164,24 +164,30 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
     // ─── Independent Projects ───
     if (resume.independent_projects?.length) {
+      // Force page break before section if remaining space is tight
+      const remainingBeforeSection = pageHeight - bottomMargin - y;
+      if (remainingBeforeSection < 35) {
+        pdf.addPage();
+        y = 15;
+      }
+
       drawSectionHeader("Independent Projects");
 
       const projectTitleFontSize = 10.5;
       const projectBodyFontSize = 9.5;
-      const ptToMm = 0.352777778;
-      const projectTitleLineHeight = projectTitleFontSize * 1.2 * ptToMm;
-      const projectBodyLineHeight = projectBodyFontSize * 1.2 * ptToMm;
+      const projectLineHeight = 4.2; // fixed mm per line — reliable over ptToMm conversion
       const projectBlockSpacing = 2;
       const projectBulletIndent = 8;
+      const minBlockHeight = 28; // minimum mm per project block — prevents clipping
 
       for (const proj of resume.independent_projects) {
-        // Measure block height from wrapped text at the actual export font sizes.
         pdf.setFont("times", "bold");
         pdf.setFontSize(projectTitleFontSize);
         const projLine = proj.name;
         const nameWidth = pdf.getTextWidth(projLine);
 
-        let blockHeight = projectTitleLineHeight;
+        // Calculate actual block height using fixed line height
+        let blockHeight = projectLineHeight; // title line
 
         if (proj.description) {
           const descText = ` — ${proj.description}`;
@@ -189,18 +195,20 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
           pdf.setFontSize(projectBodyFontSize);
           const firstLineWidth = Math.max(12, contentWidth - nameWidth - 2);
           const descLines = pdf.splitTextToSize(descText, firstLineWidth);
-          blockHeight += Math.max(0, descLines.length - 1) * projectBodyLineHeight;
+          // All description lines (including continuation on full width)
+          blockHeight += Math.max(0, descLines.length - 1) * projectLineHeight;
         }
 
         for (const bullet of proj.bullets) {
           pdf.setFont("times", "normal");
           pdf.setFontSize(projectBodyFontSize);
           const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-          blockHeight += bulletLines.length * projectBodyLineHeight + 2;
+          blockHeight += bulletLines.length * projectLineHeight + 2;
         }
 
-        // If the whole block doesn't fit, move the entire block before rendering.
-        checkPageBreak(blockHeight + projectBlockSpacing);
+        // Enforce minimum block height and check page break
+        const effectiveHeight = Math.max(blockHeight, minBlockHeight);
+        checkPageBreak(effectiveHeight + projectBlockSpacing);
 
         // Render name (bold)
         pdf.setFont("times", "bold");

@@ -157,6 +157,12 @@
   }
 }
 
+/* Force Independent Projects description to normal weight — nuclear override */
+[data-project-description="true"],
+[data-project-description="true"] * {
+  font-weight: 400 !important;
+}
+
 /* Hide ALL developer error overlays from end users */
 vite-error-overlay,
 [data-lovable-error],
