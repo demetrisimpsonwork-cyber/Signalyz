@@ -363,7 +363,7 @@ function computeRecalibratedScore(input: {
   // Use the better of exact or stemmed coverage, with stemmed getting 0.8 weight
   const exactCoverage = jdKeywordHitsExact / Math.max(jdModel.keywords.length, 1);
   const stemmedCoverage = jdKeywordHitsStemmed / Math.max(jdModel.stemmedKeywords.length, 1);
-  const effectiveKeywordCoverage = Math.max(exactCoverage, stemmedCoverage * 0.85);
+  const effectiveKeywordCoverage = Math.max(exactCoverage, stemmedCoverage * 0.92);
 
   const jdPhraseHits = jdModel.phrases.reduce((sum, phrase) => {
     const escaped = phrase
