@@ -164,33 +164,62 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
     // ─── Independent Projects ───
     if (resume.independent_projects?.length) {
-      if (y > 230) {
-        pdf.addPage();
-        y = 20;
-      }
-
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(10);
-      pdf.setTextColor(55, 65, 81);
-      pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
-      y += 1.5;
-      pdf.setDrawColor(55, 65, 81);
-      pdf.setLineWidth(0.2);
-      pdf.line(marginLeft, y, pageWidth - marginRight, y);
-      y += 5;
-
       const projectTitleFontSize = 10.5;
       const projectBodyFontSize = 9.5;
       const projectLineHeight = 4.2;
       const projectBulletIndent = 8;
-      const sectionBottom = pageHeight - 20;
+      const sectionBottom = pageHeight - bottomMargin;
+
+      const estimateProjectHeight = (proj: (typeof resume.independent_projects)[number]) => {
+        let needed = projectLineHeight;
+        const hasDescription = Boolean(proj.description?.trim());
+
+        if (hasDescription) {
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          const renderedNameWidth = pdf.getTextWidth(proj.name);
+          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
+          const descLines = pdf.splitTextToSize(`— ${proj.description?.trim()}`, firstLineWidth);
+          needed += descLines.length * projectLineHeight;
+        }
+
+        for (const bullet of proj.bullets) {
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
+          needed += bulletLines.length * projectLineHeight + 2;
+        }
+
+        return needed + 2;
+      };
+
+      const drawIndependentProjectsHeader = () => {
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(55, 65, 81);
+        pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
+        y += 1.5;
+        pdf.setDrawColor(55, 65, 81);
+        pdf.setLineWidth(0.2);
+        pdf.line(marginLeft, y, pageWidth - marginRight, y);
+        y += 5;
+      };
+
+      const headerHeight = 6.5;
+      const firstProjectHeight = estimateProjectHeight(resume.independent_projects[0]);
+      if (y + headerHeight + firstProjectHeight > sectionBottom) {
+        pdf.addPage();
+        y = 20;
+      }
+      drawIndependentProjectsHeader();
 
       for (const proj of resume.independent_projects) {
-        const hasDescription = Boolean(proj.description?.trim());
-        if (y + projectLineHeight * (hasDescription ? 2 : 1) > sectionBottom) {
+        const projectHeight = estimateProjectHeight(proj);
+        if (y + projectHeight > sectionBottom) {
           pdf.addPage();
           y = 20;
+          drawIndependentProjectsHeader();
         }
+
+        const hasDescription = Boolean(proj.description?.trim());
 
         pdf.setFont("times", "bold");
         pdf.setFontSize(projectTitleFontSize);
@@ -207,22 +236,7 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
           const fullDescription = `— ${proj.description?.trim()}`;
           const descLines = pdf.splitTextToSize(fullDescription, firstLineWidth);
-
           for (let di = 0; di < descLines.length; di++) {
-            if (y + projectLineHeight > sectionBottom) {
-              pdf.addPage();
-              y = 20;
-              if (di === 0) {
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(projectTitleFontSize);
-                pdf.setTextColor(26, 26, 46);
-                pdf.text(proj.name, marginLeft, y);
-                pdf.setFont("times", "normal");
-                pdf.setFontSize(projectBodyFontSize);
-                pdf.setTextColor(107, 114, 128);
-              }
-            }
-
             const isFirstLine = di === 0;
             const lineX = isFirstLine ? marginLeft + renderedNameWidth + 2 : marginLeft + 2;
             const lineText = isFirstLine ? ` ${descLines[di]}` : descLines[di];
@@ -236,20 +250,14 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         for (const bullet of proj.bullets) {
           const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
 
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          pdf.setTextColor(26, 26, 46);
+
           for (let bi = 0; bi < bulletLines.length; bi++) {
-            if (y + projectLineHeight > sectionBottom) {
-              pdf.addPage();
-              y = 20;
-            }
-
-            pdf.setFont("times", "normal");
-            pdf.setFontSize(projectBodyFontSize);
-            pdf.setTextColor(26, 26, 46);
-
             if (bi === 0) {
               pdf.text("•", marginLeft + 2, y);
             }
-
             pdf.text(bulletLines[bi], marginLeft + 6, y);
             y += projectLineHeight;
           }
@@ -272,20 +280,54 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         .trim();
     });
     if (cleanedCertifications.length) {
-      drawSectionHeader("Certifications");
+      const sectionBottom = pageHeight - bottomMargin;
+      const certLineHeight = 4;
+      const certHeaderHeight = 6.5;
+
+      const estimateCertificationHeight = (cert: string) => {
+        const certLines = pdf.splitTextToSize(cert, contentWidth - 8);
+        return certLines.length * certLineHeight;
+      };
+
+      const drawCertificationsHeader = () => {
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(55, 65, 81);
+        pdf.text("CERTIFICATIONS", marginLeft, y);
+        y += 1.5;
+        pdf.setDrawColor(55, 65, 81);
+        pdf.setLineWidth(0.2);
+        pdf.line(marginLeft, y, pageWidth - marginRight, y);
+        y += 5;
+      };
+
+      const firstCertHeight = estimateCertificationHeight(cleanedCertifications[0]);
+      if (y + certHeaderHeight + firstCertHeight > sectionBottom) {
+        pdf.addPage();
+        y = 20;
+      }
+      drawCertificationsHeader();
+
       for (const cert of cleanedCertifications) {
-        checkPageBreak(5);
+        const certHeight = estimateCertificationHeight(cert);
+        if (y + certHeight > sectionBottom) {
+          pdf.addPage();
+          y = 20;
+          drawCertificationsHeader();
+        }
+
         pdf.setFont("times", "normal");
         pdf.setFontSize(9.5);
         pdf.setTextColor(26, 26, 46);
         pdf.text("•", marginLeft + 2, y);
+
         const certLines = pdf.splitTextToSize(cert, contentWidth - 8);
         for (let li = 0; li < certLines.length; li++) {
-          if (li > 0) checkPageBreak(4.5);
           pdf.text(certLines[li], marginLeft + 6, y);
-          y += 4;
+          y += certLineHeight;
         }
       }
+
       y += 2;
     }
 
