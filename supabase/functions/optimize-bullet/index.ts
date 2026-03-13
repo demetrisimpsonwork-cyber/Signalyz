@@ -870,6 +870,15 @@ USER_PLAN: ${userPlan}`;
       label: deterministicLabel,
     };
 
+    console.log(JSON.stringify({
+      event: "deterministic_score_override",
+      request_id: requestId,
+      ai_score_before_override: aiScoreBeforeOverride,
+      deterministic_score_applied: deterministicMatchScore,
+      deterministic_label_applied: deterministicLabel,
+      score_delta_from_ai: deterministicMatchScore - aiScoreBeforeOverride,
+    }));
+
     const existingDebug = (typeof titan.debug === "object" && titan.debug !== null)
       ? (titan.debug as Record<string, unknown>)
       : {};
@@ -1063,6 +1072,8 @@ USER_PLAN: ${userPlan}`;
       predicted_signal_lift: signalModel.predicted_signal_lift || null,
       // Unified SignalModel
       signal_model: signalModel,
+      // Diagnostics passthrough for client-side trace logging
+      debug: titan.debug || null,
     };
 
     // Save to database
