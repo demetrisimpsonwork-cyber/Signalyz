@@ -257,6 +257,16 @@ function tokenize(text: string): string[] {
   return text.toLowerCase().match(/[a-z0-9]+(?:[+#/&-][a-z0-9]+)*/g) || [];
 }
 
+/** Naive English stemmer — strips common suffixes for fuzzy JD keyword matching */
+function stem(word: string): string {
+  return word
+    .replace(/ies$/, "i")
+    .replace(/ied$/, "i")
+    .replace(/(ing|tion|ment|ness|ence|ance|ity|ous|ive|ful|less|able|ible|ated|ting|sion)$/, "")
+    .replace(/s$/, "")
+    .replace(/ed$/, "");
+}
+
 function countPhraseHits(text: string, phrases: string[]): number {
   return phrases.reduce((sum, phrase) => {
     const escaped = phrase
