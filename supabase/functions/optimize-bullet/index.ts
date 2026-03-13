@@ -801,6 +801,46 @@ USER_PLAN: ${userPlan}`;
       }
     }
 
+    const recalibrationDiagnostics = computeRecalibratedScore({
+      rawResume: trimmedBullet,
+      normalizedResume: normalizedBullet,
+      sanitizedResume: cleanBullet,
+      jd: cleanJd,
+    });
+
+    const deterministicMatchScore = recalibrationDiagnostics.aggregation.final_score;
+    const deterministicLabel = scoreLabelFromValue(deterministicMatchScore);
+    const aiScoreBeforeOverride = Number((titan.match_score as any)?.score ?? 0);
+
+    const existingMatchScore = (typeof titan.match_score === "object" && titan.match_score !== null)
+      ? (titan.match_score as Record<string, unknown>)
+      : {};
+    titan.match_score = {
+      ...existingMatchScore,
+      score: deterministicMatchScore,
+      label: deterministicLabel,
+    };
+
+    const existingDebug = (typeof titan.debug === "object" && titan.debug !== null)
+      ? (titan.debug as Record<string, unknown>)
+      : {};
+    titan.debug = {
+      ...existingDebug,
+      scoring_breakdown: recalibrationDiagnostics.breakdown,
+      recalibration_diagnostics: {
+        ...recalibrationDiagnostics,
+        ai_score_before_override: aiScoreBeforeOverride,
+        score_delta_from_ai: deterministicMatchScore - aiScoreBeforeOverride,
+      },
+    };
+
+    if (typeof titan.interview_gap_diagnosis === "object" && titan.interview_gap_diagnosis !== null) {
+      (titan.interview_gap_diagnosis as Record<string, unknown>).current_score = deterministicMatchScore;
+    }
+    if (typeof titan.predicted_signal_lift === "object" && titan.predicted_signal_lift !== null) {
+      (titan.predicted_signal_lift as Record<string, unknown>).current_score = deterministicMatchScore;
+    }
+
     // Map Titan contract to the shape the frontend expects
     const optimizedBullet = titan.optimized_bullets?.[0]?.text || "";
     const matchScore = titan.match_score?.score ?? 0;
