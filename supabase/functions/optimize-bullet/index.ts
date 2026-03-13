@@ -398,7 +398,7 @@ function computeRecalibratedScore(input: {
   );
 
   const stakeholderQuality = clamp01(
-    (qualityFromDensity(stakeholderHits, resumeTokens.length, 0.40) * 0.65) + (jdMirrorQuality * 0.35),
+    (qualityFromDensity(stakeholderHits, resumeTokens.length, 0.30) * 0.60) + (jdMirrorQuality * 0.40),
   );
 
   const operationalScopeQuality = clamp01(
