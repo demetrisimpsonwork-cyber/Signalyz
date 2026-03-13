@@ -33,6 +33,7 @@ import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
+import { computeDeterministicScore } from "@/lib/deterministicScore";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,7 +401,16 @@ const Index = () => {
     }
   }, []);
 
-  const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
+  // ─── Deterministic score override at render layer ───
+  const deterministicResult = useMemo(() => {
+    if (!result || !bullet.trim() || !jd.trim()) return null;
+    return computeDeterministicScore(bullet.trim(), jd.trim());
+  }, [result, bullet, jd]);
+
+  const displayScore = deterministicResult?.finalScore ?? result?.match_score ?? 0;
+  const displayBreakdown = deterministicResult?.breakdown ?? result?.scoring_breakdown;
+
+  const animatedScore = useCountUp(displayScore, 1200);
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
@@ -703,6 +713,10 @@ const Index = () => {
       }
 
       const res = data as OptimizationResult;
+      // Apply deterministic score override before storing
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text);
+      res.match_score = detScore.finalScore;
+      res.scoring_breakdown = detScore.breakdown;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
 
@@ -1319,14 +1333,17 @@ const Index = () => {
                     <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
                         <h3 className="section-label mt-2">Signal Diagnosis</h3>
-                        <ScoreExplanation score={result.match_score} />
+                        <ScoreExplanation score={displayScore} />
                       </div>
                       <div className="flex items-baseline gap-3">
-                        <span className={`text-5xl font-bold tabular-nums ${
-                          result.match_score >= 70 ? "text-green-600 dark:text-green-400" :
-                          result.match_score >= 50 ? "text-orange-500" :
-                          "text-destructive"
-                        }`}>
+                        <span
+                          data-score-source="deterministic"
+                          className={`text-5xl font-bold tabular-nums ${
+                            displayScore >= 70 ? "text-green-600 dark:text-green-400" :
+                            displayScore >= 50 ? "text-orange-500" :
+                            "text-destructive"
+                          }`}
+                        >
                           {animatedScore}%
                         </span>
                         {result.alignment_confidence_level && (
