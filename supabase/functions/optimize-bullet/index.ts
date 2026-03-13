@@ -1074,6 +1074,7 @@ USER_PLAN: ${userPlan}`;
       signal_model: signalModel,
       // Diagnostics passthrough for client-side trace logging
       debug: titan.debug || null,
+    };
 
     // Save to database
     await sb.from("optimizations").insert({
