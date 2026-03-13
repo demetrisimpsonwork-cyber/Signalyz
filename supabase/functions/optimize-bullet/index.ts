@@ -1072,7 +1072,8 @@ USER_PLAN: ${userPlan}`;
       predicted_signal_lift: signalModel.predicted_signal_lift || null,
       // Unified SignalModel
       signal_model: signalModel,
-    };
+      // Diagnostics passthrough for client-side trace logging
+      debug: titan.debug || null,
 
     // Save to database
     await sb.from("optimizations").insert({
