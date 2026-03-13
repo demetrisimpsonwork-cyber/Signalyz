@@ -166,12 +166,36 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
     if (resume.independent_projects?.length) {
       drawSectionHeader("Independent Projects");
       for (const proj of resume.independent_projects) {
-        checkPageBreak(10);
+        // Pre-calculate total height for this project block
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10.5);
+        const projLine = proj.name;
+        let blockHeight = 4.5; // name line
+        if (proj.description) {
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9.5);
+          const nameWidth = pdf.getTextWidth(projLine);
+          const descText = ` — ${proj.description}`;
+          const descLines = pdf.splitTextToSize(descText, contentWidth - nameWidth - 2);
+          // first desc line is on the name line; remaining lines add height
+          blockHeight += (descLines.length - 1) * 4;
+        }
+        for (const bullet of proj.bullets) {
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(9.5);
+          const bLines = pdf.splitTextToSize(bullet, contentWidth - 8);
+          blockHeight += bLines.length * 4 + 2; // lines + spacing
+        }
+        // If the whole block doesn't fit, move to next page
+        checkPageBreak(blockHeight + 4);
+
+        // Render name (bold)
         pdf.setFont("times", "bold");
         pdf.setFontSize(10.5);
         pdf.setTextColor(26, 26, 46);
-        const projLine = proj.name;
         pdf.text(projLine, marginLeft, y);
+
+        // Render description (normal weight)
         if (proj.description) {
           const nameWidth = pdf.getTextWidth(projLine);
           pdf.setFont("times", "normal");
@@ -190,6 +214,7 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
           y += 4.5;
         }
 
+        // Render bullets
         for (const bullet of proj.bullets) {
           checkPageBreak(6);
           pdf.setFont("times", "normal");
