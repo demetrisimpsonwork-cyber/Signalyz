@@ -401,7 +401,16 @@ const Index = () => {
     }
   }, []);
 
-  const animatedScore = useCountUp(result?.match_score ?? 0, 1200);
+  // ─── Deterministic score override at render layer ───
+  const deterministicResult = useMemo(() => {
+    if (!result || !bullet.trim() || !jd.trim()) return null;
+    return computeDeterministicScore(bullet.trim(), jd.trim());
+  }, [result, bullet, jd]);
+
+  const displayScore = deterministicResult?.finalScore ?? result?.match_score ?? 0;
+  const displayBreakdown = deterministicResult?.breakdown ?? result?.scoring_breakdown;
+
+  const animatedScore = useCountUp(displayScore, 1200);
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
