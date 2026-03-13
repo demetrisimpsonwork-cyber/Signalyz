@@ -703,14 +703,6 @@ const Index = () => {
       }
 
       const res = data as OptimizationResult;
-      console.info("[AlignmentScoreTrace] response_received", {
-        request_id: (data as any)?.request_id,
-        response_match_score: (data as any)?.match_score,
-        signal_model_match_score: (data as any)?.signal_model?.match_score?.score,
-        deterministic_override_score: (data as any)?.debug?.recalibration_diagnostics?.aggregation?.final_score,
-        ai_score_before_override: (data as any)?.debug?.recalibration_diagnostics?.ai_score_before_override,
-        score_delta_from_ai: (data as any)?.debug?.recalibration_diagnostics?.score_delta_from_ai,
-      });
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
 
