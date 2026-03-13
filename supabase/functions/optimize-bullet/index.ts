@@ -392,9 +392,9 @@ function computeRecalibratedScore(input: {
   // Ownership: lower targets, reduced passive penalty, stronger bonus for strong verbs
   const ownershipQuality = clamp01(
     (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 0.25) * 0.55) +
-      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 0.50) * 0.30) +
-      (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.40) * 0.15) -
-      (qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.12),
+      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 0.35) * 0.30) +
+      (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.15) -
+      (qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.10),
   );
 
   const stakeholderQuality = clamp01(
