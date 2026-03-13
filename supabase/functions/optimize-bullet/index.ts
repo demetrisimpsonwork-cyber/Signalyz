@@ -426,8 +426,8 @@ function computeRecalibratedScore(input: {
   const strongOwnershipDensity = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
   const passiveDensity = toDensityPer100Words(passiveHits, resumeTokens.length);
   const ownershipRatio = ownershipStrongHits / Math.max(ownershipStrongHits + passiveHits, 1);
-  // Bonus scales 0-0.12: full bonus when ownership ratio > 0.7 and strong density > 0.5
-  const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.4) * 0.12;
+  // Bonus scales 0-0.18: full bonus when ownership ratio > 0.7 and strong density > 0.4
+  const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.35) * 0.18;
 
   // ── Dimension scores with recalibrated weights ──
   const roleOutcomesAlignment = Math.floor(100 * clamp01(
