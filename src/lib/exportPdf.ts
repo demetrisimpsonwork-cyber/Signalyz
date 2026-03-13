@@ -168,101 +168,49 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       const projectBodyFontSize = 9.5;
       const projectLineHeight = 4.2;
       const projectBulletIndent = 8;
-      const sectionBottom = pageHeight - bottomMargin;
 
-      const estimateProjectHeight = (proj: (typeof resume.independent_projects)[number]) => {
-        let needed = projectLineHeight;
-        const hasDescription = Boolean(proj.description?.trim());
+      // Force a new page for this section and start from 20mm
+      pdf.addPage();
+      y = 20;
 
-        if (hasDescription) {
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          const renderedNameWidth = pdf.getTextWidth(proj.name);
-          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
-          const descLines = pdf.splitTextToSize(`— ${proj.description?.trim()}`, firstLineWidth);
-          needed += descLines.length * projectLineHeight;
-        }
-
-        for (const bullet of proj.bullets) {
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-          needed += bulletLines.length * projectLineHeight + 2;
-        }
-
-        return needed + 2;
-      };
-
-      const drawIndependentProjectsHeader = () => {
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(10);
-        pdf.setTextColor(55, 65, 81);
-        pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
-        y += 1.5;
-        pdf.setDrawColor(55, 65, 81);
-        pdf.setLineWidth(0.2);
-        pdf.line(marginLeft, y, pageWidth - marginRight, y);
-        y += 5;
-      };
-
-      const headerHeight = 6.5;
-      const firstProjectHeight = estimateProjectHeight(resume.independent_projects[0]);
-      if (y + headerHeight + firstProjectHeight > sectionBottom) {
-        pdf.addPage();
-        y = 20;
-      }
-      drawIndependentProjectsHeader();
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
+      y += 1.5;
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.2);
+      pdf.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 5;
 
       for (const proj of resume.independent_projects) {
-        const projectHeight = estimateProjectHeight(proj);
-        if (y + projectHeight > sectionBottom) {
-          pdf.addPage();
-          y = 20;
-          drawIndependentProjectsHeader();
-        }
-
         const hasDescription = Boolean(proj.description?.trim());
 
         pdf.setFont("times", "bold");
         pdf.setFontSize(projectTitleFontSize);
         pdf.setTextColor(26, 26, 46);
         pdf.text(proj.name, marginLeft, y);
+        y += projectLineHeight;
 
         if (hasDescription) {
-          const renderedNameWidth = pdf.getTextWidth(proj.name);
-          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
-
           pdf.setFont("times", "normal");
           pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(107, 114, 128);
-
-          const fullDescription = `— ${proj.description?.trim()}`;
-          const descLines = pdf.splitTextToSize(fullDescription, firstLineWidth);
-          for (let di = 0; di < descLines.length; di++) {
-            const isFirstLine = di === 0;
-            const lineX = isFirstLine ? marginLeft + renderedNameWidth + 2 : marginLeft + 2;
-            const lineText = isFirstLine ? ` ${descLines[di]}` : descLines[di];
-            pdf.text(lineText, lineX, y);
-            y += projectLineHeight;
-          }
-        } else {
-          y += projectLineHeight;
+          pdf.text(`— ${proj.description?.trim()}`, marginLeft + 2, y, {
+            maxWidth: contentWidth - 2,
+          });
+          y += projectLineHeight * 6;
         }
 
         for (const bullet of proj.bullets) {
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-
           pdf.setFont("times", "normal");
           pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(26, 26, 46);
-
-          for (let bi = 0; bi < bulletLines.length; bi++) {
-            if (bi === 0) {
-              pdf.text("•", marginLeft + 2, y);
-            }
-            pdf.text(bulletLines[bi], marginLeft + 6, y);
-            y += projectLineHeight;
-          }
-
-          y += 2;
+          pdf.text("•", marginLeft + 2, y);
+          pdf.text(bullet, marginLeft + 6, y, {
+            maxWidth: contentWidth - projectBulletIndent,
+          });
+          y += projectLineHeight * 3;
         }
 
         y += 2;
