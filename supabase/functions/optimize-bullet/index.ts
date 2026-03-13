@@ -168,35 +168,35 @@ const STOP_WORDS = new Set([
 ]);
 
 const OWNERSHIP_STRONG_PHRASES = [
-  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered",
+  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered", "established", "redesigned", "pioneered", "devised", "instituted", "restructured", "consolidated", "mobilized", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
 ];
 
 const OWNERSHIP_PARTIAL_PHRASES = [
-  "managed", "coordinated", "responsible for", "handled", "worked on", "contributed to", "supported", "assisted", "helped", "participated in", "involved in",
+  "managed", "coordinated", "responsible for", "handled", "worked on", "contributed to", "involved in", "engaged", "tracked", "monitored", "reviewed", "prepared", "processed", "compiled", "organized", "planned", "conducted", "performed", "served",
 ];
 
 const PASSIVE_PHRASES = [
-  "helped", "assisted", "supported", "participated in", "was involved", "tasked with", "worked on", "contributed to",
+  "helped", "assisted", "supported", "participated in", "was involved", "tasked with",
 ];
 
 const STAKEHOLDER_COMPLEXITY_PHRASES = [
-  "cross-functional", "cross functional", "stakeholder", "stakeholders", "executive", "leadership team", "vp", "director", "c-suite", "client-facing", "client facing", "vendor", "partnered with", "matrix", "governance",
+  "cross-functional", "cross functional", "stakeholder", "stakeholders", "executive", "leadership team", "vp", "director", "c-suite", "client-facing", "client facing", "vendor", "partnered with", "matrix", "governance", "internal teams", "external", "departments", "leadership", "clients", "partners", "administrators",
 ];
 
 const OPERATIONAL_SCOPE_PHRASES = [
-  "end-to-end", "end to end", "portfolio", "program", "roadmap", "workflow", "process", "operating model", "sla", "kpi", "governance", "capacity", "throughput", "multi-site", "global", "regional", "standardized", "playbook",
+  "end-to-end", "end to end", "portfolio", "program", "roadmap", "workflow", "process", "operating model", "sla", "kpi", "governance", "capacity", "throughput", "multi-site", "global", "regional", "standardized", "playbook", "high-volume", "high volume", "caseload", "concurrent", "pipeline", "routing", "triage", "escalation", "documentation", "protocols", "intake",
 ];
 
 const ACCOUNTABILITY_PHRASES = [
-  "accountable", "ownership", "owned", "p&l", "budget", "decision", "decision-making", "decision making", "authority", "risk", "compliance", "governance", "end-to-end", "end to end",
+  "accountable", "accountability", "ownership", "owned", "p&l", "budget", "decision", "decision-making", "decision making", "authority", "risk", "compliance", "governance", "end-to-end", "end to end", "primary", "responsible", "audit", "traceability", "accuracy", "standards",
 ];
 
 const OUTCOME_TERMS = [
-  "increased", "reduced", "improved", "grew", "saved", "delivered", "achieved", "exceeded", "decreased", "boosted", "lowered", "raised", "generated", "optimized",
+  "increased", "reduced", "improved", "grew", "saved", "delivered", "achieved", "exceeded", "decreased", "boosted", "lowered", "raised", "generated", "optimized", "reducing", "improving", "streamlined", "standardizing", "minimized", "eliminated", "enhancing",
 ];
 
 const TOOL_SIGNAL_PHRASES = [
-  "crm", "salesforce", "hubspot", "marketo", "jira", "asana", "tableau", "power bi", "excel", "sql", "python", "zendesk", "servicenow", "workday", "sap", "oracle",
+  "crm", "salesforce", "hubspot", "marketo", "jira", "asana", "tableau", "power bi", "excel", "sql", "python", "zendesk", "servicenow", "workday", "sap", "oracle", "adobe", "microsoft office", "microsoft", "slack", "monday", "confluence", "sharepoint", "google sheets", "quickbooks", "netsuite",
 ];
 
 interface RecalibrationDiagnostics {
