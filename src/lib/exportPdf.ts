@@ -165,70 +165,87 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
     // ─── Independent Projects ───
     if (resume.independent_projects?.length) {
       drawSectionHeader("Independent Projects");
+
+      const projectTitleFontSize = 10.5;
+      const projectBodyFontSize = 9.5;
+      const ptToMm = 0.352777778;
+      const projectTitleLineHeight = projectTitleFontSize * 1.2 * ptToMm;
+      const projectBodyLineHeight = projectBodyFontSize * 1.2 * ptToMm;
+      const projectBlockSpacing = 2;
+      const projectBulletIndent = 8;
+
       for (const proj of resume.independent_projects) {
-        // Pre-calculate total height for this project block
+        // Measure block height from wrapped text at the actual export font sizes.
         pdf.setFont("times", "bold");
-        pdf.setFontSize(10.5);
+        pdf.setFontSize(projectTitleFontSize);
         const projLine = proj.name;
-        let blockHeight = 4.5; // name line
+        const nameWidth = pdf.getTextWidth(projLine);
+
+        let blockHeight = projectTitleLineHeight;
+
         if (proj.description) {
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(9.5);
-          const nameWidth = pdf.getTextWidth(projLine);
           const descText = ` — ${proj.description}`;
-          const descLines = pdf.splitTextToSize(descText, contentWidth - nameWidth - 2);
-          // first desc line is on the name line; remaining lines add height
-          blockHeight += (descLines.length - 1) * 4;
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          const firstLineWidth = Math.max(12, contentWidth - nameWidth - 2);
+          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
+          blockHeight += Math.max(0, descLines.length - 1) * projectBodyLineHeight;
         }
+
         for (const bullet of proj.bullets) {
           pdf.setFont("times", "normal");
-          pdf.setFontSize(9.5);
-          const bLines = pdf.splitTextToSize(bullet, contentWidth - 8);
-          blockHeight += bLines.length * 4 + 2; // lines + spacing
+          pdf.setFontSize(projectBodyFontSize);
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
+          blockHeight += bulletLines.length * projectBodyLineHeight + 2;
         }
-        // If the whole block doesn't fit, move to next page
-        checkPageBreak(blockHeight + 4);
+
+        // If the whole block doesn't fit, move the entire block before rendering.
+        checkPageBreak(blockHeight + projectBlockSpacing);
 
         // Render name (bold)
         pdf.setFont("times", "bold");
-        pdf.setFontSize(10.5);
+        pdf.setFontSize(projectTitleFontSize);
         pdf.setTextColor(26, 26, 46);
         pdf.text(projLine, marginLeft, y);
 
         // Render description (normal weight)
         if (proj.description) {
-          const nameWidth = pdf.getTextWidth(projLine);
+          const renderedNameWidth = pdf.getTextWidth(projLine);
           pdf.setFont("times", "normal");
-          pdf.setFontSize(9.5);
+          pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(107, 114, 128);
           const descText = ` — ${proj.description}`;
-          const descLines = pdf.splitTextToSize(descText, contentWidth - nameWidth - 2);
-          pdf.text(descLines[0] || "", marginLeft + nameWidth, y);
-          y += 4.5;
+          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
+          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
+          pdf.text(descLines[0] || "", marginLeft + renderedNameWidth, y);
+          y += projectTitleLineHeight;
+
           for (let di = 1; di < descLines.length; di++) {
-            checkPageBreak(4.5);
+            checkPageBreak(projectBodyLineHeight + 0.6);
             pdf.text(descLines[di], marginLeft + 2, y);
-            y += 4;
+            y += projectBodyLineHeight;
           }
         } else {
-          y += 4.5;
+          y += projectTitleLineHeight;
         }
 
         // Render bullets
         for (const bullet of proj.bullets) {
-          checkPageBreak(6);
+          checkPageBreak(projectBodyLineHeight + 2);
           pdf.setFont("times", "normal");
-          pdf.setFontSize(9.5);
+          pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(26, 26, 46);
           pdf.text("•", marginLeft + 2, y);
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - 8);
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
           for (let li = 0; li < bulletLines.length; li++) {
-            if (li > 0) checkPageBreak(4.5);
+            if (li > 0) checkPageBreak(projectBodyLineHeight + 0.6);
             pdf.text(bulletLines[li], marginLeft + 6, y);
-            y += 4;
+            y += projectBodyLineHeight;
           }
+          y += 2;
         }
-        y += 2;
+
+        y += projectBlockSpacing;
       }
     }
 
