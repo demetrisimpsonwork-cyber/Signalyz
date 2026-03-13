@@ -352,7 +352,19 @@ function computeRecalibratedScore(input: {
   const resumeLower = sanitizedResume.toLowerCase();
 
   const jdModel = buildJdSignalVocabulary(jd);
-  const jdKeywordHits = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+
+  // Exact keyword matches
+  const jdKeywordHitsExact = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+
+  // Stemmed keyword matches (fuzzy — catches "managing" matching "management", etc.)
+  const resumeStemSet = new Set(resumeTokens.map(stem).filter(s => s.length >= 3));
+  const jdKeywordHitsStemmed = jdModel.stemmedKeywords.reduce((sum, stemmed) => sum + (resumeStemSet.has(stemmed) ? 1 : 0), 0);
+
+  // Use the better of exact or stemmed coverage, with stemmed getting 0.8 weight
+  const exactCoverage = jdKeywordHitsExact / Math.max(jdModel.keywords.length, 1);
+  const stemmedCoverage = jdKeywordHitsStemmed / Math.max(jdModel.stemmedKeywords.length, 1);
+  const effectiveKeywordCoverage = Math.max(exactCoverage, stemmedCoverage * 0.85);
+
   const jdPhraseHits = jdModel.phrases.reduce((sum, phrase) => {
     const escaped = phrase
       .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -371,63 +383,84 @@ function computeRecalibratedScore(input: {
   const toolHits = countPhraseHits(resumeLower, TOOL_SIGNAL_PHRASES);
   const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
 
-  const jdKeywordCoverage = jdKeywordHits / Math.max(jdModel.keywords.length, 1);
   const jdPhraseCoverage = jdPhraseHits / Math.max(jdModel.phrases.length, 1);
 
-  const jdMirrorQuality = clamp01((jdKeywordCoverage * 0.7) + (jdPhraseCoverage * 0.3));
-  const ownershipQuality = clamp01(
-    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 1.1) * 0.7) +
-      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 1.2) * 0.2) +
-      (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.1) -
-      (qualityFromDensity(passiveHits, resumeTokens.length, 0.9) * 0.45),
-  );
-  const stakeholderQuality = clamp01(
-    (qualityFromDensity(stakeholderHits, resumeTokens.length, 1.0) * 0.75) + (jdMirrorQuality * 0.25),
-  );
-  const operationalScopeQuality = clamp01(
-    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 1.0) * 0.75) +
-      (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.25),
-  );
-  const accountabilityQuality = clamp01(
-    (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.8) + (ownershipQuality * 0.2),
-  );
-  const measurableOutcomesQuality = clamp01(
-    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.9) * 0.75) +
-      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 1.2) * 0.25),
-  );
-  const toolWorkflowQuality = clamp01(
-    (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.55) + (jdMirrorQuality * 0.45),
-  );
-  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.9));
+  // ── RECALIBRATED quality computations ──
+  // Density targets lowered to match real resume profiles (~0.3-0.6 per 100 words)
+  const jdMirrorQuality = clamp01((effectiveKeywordCoverage * 0.65) + (jdPhraseCoverage * 0.35));
 
+  // Ownership: lower targets, reduced passive penalty, stronger bonus for strong verbs
+  const ownershipQuality = clamp01(
+    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 0.35) * 0.55) +
+      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 0.50) * 0.30) +
+      (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.40) * 0.15) -
+      (qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.12),
+  );
+
+  const stakeholderQuality = clamp01(
+    (qualityFromDensity(stakeholderHits, resumeTokens.length, 0.40) * 0.65) + (jdMirrorQuality * 0.35),
+  );
+
+  const operationalScopeQuality = clamp01(
+    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 0.40) * 0.65) +
+      (qualityFromDensity(toolHits, resumeTokens.length, 0.30) * 0.35),
+  );
+
+  const accountabilityQuality = clamp01(
+    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.40) * 0.70) + (ownershipQuality * 0.30),
+  );
+
+  const measurableOutcomesQuality = clamp01(
+    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.35) * 0.65) +
+      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 0.50) * 0.35),
+  );
+
+  const toolWorkflowQuality = clamp01(
+    (qualityFromDensity(toolHits, resumeTokens.length, 0.30) * 0.50) + (jdMirrorQuality * 0.50),
+  );
+
+  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.5);
+
+  // ── Signal Vocabulary Bonus ──
+  // Rewards calibrated language: high strong-ownership density + low passive density
+  const strongOwnershipDensity = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
+  const passiveDensity = toDensityPer100Words(passiveHits, resumeTokens.length);
+  const ownershipRatio = ownershipStrongHits / Math.max(ownershipStrongHits + passiveHits, 1);
+  // Bonus scales 0-0.12: full bonus when ownership ratio > 0.7 and strong density > 0.5
+  const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.4) * 0.12;
+
+  // ── Dimension scores with recalibrated weights ──
   const roleOutcomesAlignment = Math.floor(100 * clamp01(
-    (ownershipQuality * 0.30) +
-      (measurableOutcomesQuality * 0.30) +
-      (accountabilityQuality * 0.22) +
-      (jdMirrorQuality * 0.18) -
-      (passivePenalty * 0.12),
+    (ownershipQuality * 0.28) +
+      (measurableOutcomesQuality * 0.25) +
+      (accountabilityQuality * 0.20) +
+      (jdMirrorQuality * 0.22) +
+      vocabBonus -
+      (passivePenalty * 0.06),
   ));
 
   const toolsAndWorkflowAlignment = Math.floor(100 * clamp01(
-    (toolWorkflowQuality * 0.55) + (jdMirrorQuality * 0.45),
+    (toolWorkflowQuality * 0.50) + (jdMirrorQuality * 0.50),
   ));
 
   const domainAndContextAlignment = Math.floor(100 * clamp01(
-    (jdMirrorQuality * 0.72) + (operationalScopeQuality * 0.28),
+    (jdMirrorQuality * 0.65) + (operationalScopeQuality * 0.35),
   ));
 
   const contextAndScaleAlignment = Math.floor(100 * clamp01(
-    (operationalScopeQuality * 0.46) +
-      (measurableOutcomesQuality * 0.34) +
-      (accountabilityQuality * 0.20),
+    (operationalScopeQuality * 0.38) +
+      (measurableOutcomesQuality * 0.30) +
+      (accountabilityQuality * 0.18) +
+      (jdMirrorQuality * 0.14),
   ));
 
   const communicationAndLeadershipAlignment = Math.floor(100 * clamp01(
-    (stakeholderQuality * 0.30) +
-      (ownershipQuality * 0.28) +
-      (accountabilityQuality * 0.22) +
-      (jdMirrorQuality * 0.20) -
-      (passivePenalty * 0.18),
+    (stakeholderQuality * 0.28) +
+      (ownershipQuality * 0.25) +
+      (accountabilityQuality * 0.20) +
+      (jdMirrorQuality * 0.22) +
+      vocabBonus -
+      (passivePenalty * 0.08),
   ));
 
   const weightedSum =
