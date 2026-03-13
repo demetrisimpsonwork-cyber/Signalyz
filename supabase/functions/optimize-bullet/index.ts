@@ -163,6 +163,316 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "that", "this", "from", "your", "you", "our", "are", "was", "were", "have", "has", "had", "will", "can", "must", "should", "into", "onto", "through", "across", "over", "under", "about", "within", "between", "using", "use", "used", "their", "they", "them", "job", "role", "position", "candidate", "required", "preferred", "responsibilities", "requirements", "experience", "ability", "skills", "skill", "work", "working", "team", "teams", "customer", "customers", "service", "services", "business",
+]);
+
+const OWNERSHIP_STRONG_PHRASES = [
+  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered",
+];
+
+const OWNERSHIP_PARTIAL_PHRASES = [
+  "managed", "coordinated", "responsible for", "handled", "worked on", "contributed to", "supported", "assisted", "helped", "participated in", "involved in",
+];
+
+const PASSIVE_PHRASES = [
+  "helped", "assisted", "supported", "participated in", "was involved", "tasked with", "worked on", "contributed to",
+];
+
+const STAKEHOLDER_COMPLEXITY_PHRASES = [
+  "cross-functional", "cross functional", "stakeholder", "stakeholders", "executive", "leadership team", "vp", "director", "c-suite", "client-facing", "client facing", "vendor", "partnered with", "matrix", "governance",
+];
+
+const OPERATIONAL_SCOPE_PHRASES = [
+  "end-to-end", "end to end", "portfolio", "program", "roadmap", "workflow", "process", "operating model", "sla", "kpi", "governance", "capacity", "throughput", "multi-site", "global", "regional", "standardized", "playbook",
+];
+
+const ACCOUNTABILITY_PHRASES = [
+  "accountable", "ownership", "owned", "p&l", "budget", "decision", "decision-making", "decision making", "authority", "risk", "compliance", "governance", "end-to-end", "end to end",
+];
+
+const OUTCOME_TERMS = [
+  "increased", "reduced", "improved", "grew", "saved", "delivered", "achieved", "exceeded", "decreased", "boosted", "lowered", "raised", "generated", "optimized",
+];
+
+const TOOL_SIGNAL_PHRASES = [
+  "crm", "salesforce", "hubspot", "marketo", "jira", "asana", "tableau", "power bi", "excel", "sql", "python", "zendesk", "servicenow", "workday", "sap", "oracle",
+];
+
+interface RecalibrationDiagnostics {
+  preprocessing: {
+    raw_token_count: number;
+    normalized_token_count: number;
+    sanitized_token_count: number;
+    token_retention_ratio: number;
+  };
+  detection: {
+    jd_keyword_count: number;
+    jd_phrase_count: number;
+    jd_keyword_hits: number;
+    jd_phrase_hits: number;
+    ownership_strong_hits: number;
+    ownership_partial_hits: number;
+    passive_hits: number;
+    stakeholder_hits: number;
+    operational_scope_hits: number;
+    accountability_hits: number;
+    quantified_outcome_hits: number;
+    outcome_language_hits: number;
+    tool_hits: number;
+  };
+  weighting: {
+    jd_mirror_quality: number;
+    ownership_quality: number;
+    stakeholder_quality: number;
+    operational_scope_quality: number;
+    accountability_quality: number;
+    measurable_outcomes_quality: number;
+    tool_workflow_quality: number;
+    passive_penalty: number;
+  };
+  breakdown: {
+    role_outcomes_alignment: number;
+    tools_and_workflow_alignment: number;
+    domain_and_context_alignment: number;
+    context_and_scale_alignment: number;
+    communication_and_leadership_alignment: number;
+  };
+  aggregation: {
+    weighted_sum: number;
+    final_score: number;
+  };
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function roundTo(value: number, decimals = 3): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+function tokenize(text: string): string[] {
+  return text.toLowerCase().match(/[a-z0-9]+(?:[+#/&-][a-z0-9]+)*/g) || [];
+}
+
+function countPhraseHits(text: string, phrases: string[]): number {
+  return phrases.reduce((sum, phrase) => {
+    const escaped = phrase
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\s+/g, "\\s+");
+    const rx = new RegExp(`\\b${escaped}\\b`, "gi");
+    return sum + ((text.match(rx) || []).length);
+  }, 0);
+}
+
+function toDensityPer100Words(hits: number, tokenCount: number): number {
+  const units = Math.max(tokenCount / 100, 1);
+  return hits / units;
+}
+
+function qualityFromDensity(hits: number, tokenCount: number, targetDensity: number): number {
+  const density = toDensityPer100Words(hits, tokenCount);
+  return clamp01(density / targetDensity);
+}
+
+function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases: string[] } {
+  const jdTokens = tokenize(jdText).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
+  const tokenFreq = new Map<string, number>();
+  for (const token of jdTokens) {
+    tokenFreq.set(token, (tokenFreq.get(token) || 0) + 1);
+  }
+
+  const keywords = [...tokenFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 40)
+    .map(([token]) => token);
+
+  const phraseFreq = new Map<string, number>();
+  const sentences = jdText.toLowerCase().split(/[\n.;:!?]+/).map((s) => s.trim()).filter(Boolean);
+  for (const sentence of sentences) {
+    const words = tokenize(sentence).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
+    for (let i = 0; i < words.length - 1; i++) {
+      const bi = `${words[i]} ${words[i + 1]}`;
+      phraseFreq.set(bi, (phraseFreq.get(bi) || 0) + 1);
+      if (i < words.length - 2) {
+        const tri = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
+        phraseFreq.set(tri, (phraseFreq.get(tri) || 0) + 1);
+      }
+    }
+  }
+
+  const phrases = [...phraseFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 25)
+    .map(([phrase]) => phrase);
+
+  return { keywords, phrases };
+}
+
+function scoreLabelFromValue(score: number): "Weak" | "Moderate" | "Solid" | "Strong" {
+  if (score >= 80) return "Strong";
+  if (score >= 65) return "Solid";
+  if (score >= 50) return "Moderate";
+  return "Weak";
+}
+
+function computeRecalibratedScore(input: {
+  rawResume: string;
+  normalizedResume: string;
+  sanitizedResume: string;
+  jd: string;
+}): RecalibrationDiagnostics {
+  const { rawResume, normalizedResume, sanitizedResume, jd } = input;
+
+  const rawTokens = tokenize(rawResume);
+  const normalizedTokens = tokenize(normalizedResume);
+  const resumeTokens = tokenize(sanitizedResume);
+  const resumeTokenSet = new Set(resumeTokens);
+  const resumeLower = sanitizedResume.toLowerCase();
+
+  const jdModel = buildJdSignalVocabulary(jd);
+  const jdKeywordHits = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+  const jdPhraseHits = jdModel.phrases.reduce((sum, phrase) => {
+    const escaped = phrase
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\s+/g, "\\s+");
+    const rx = new RegExp(`\\b${escaped}\\b`, "i");
+    return sum + (rx.test(resumeLower) ? 1 : 0);
+  }, 0);
+
+  const ownershipStrongHits = countPhraseHits(resumeLower, OWNERSHIP_STRONG_PHRASES);
+  const ownershipPartialHits = countPhraseHits(resumeLower, OWNERSHIP_PARTIAL_PHRASES);
+  const passiveHits = countPhraseHits(resumeLower, PASSIVE_PHRASES);
+  const stakeholderHits = countPhraseHits(resumeLower, STAKEHOLDER_COMPLEXITY_PHRASES);
+  const operationalScopeHits = countPhraseHits(resumeLower, OPERATIONAL_SCOPE_PHRASES);
+  const accountabilityHits = countPhraseHits(resumeLower, ACCOUNTABILITY_PHRASES);
+  const outcomeLanguageHits = countPhraseHits(resumeLower, OUTCOME_TERMS);
+  const toolHits = countPhraseHits(resumeLower, TOOL_SIGNAL_PHRASES);
+  const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
+
+  const jdKeywordCoverage = jdKeywordHits / Math.max(jdModel.keywords.length, 1);
+  const jdPhraseCoverage = jdPhraseHits / Math.max(jdModel.phrases.length, 1);
+
+  const jdMirrorQuality = clamp01((jdKeywordCoverage * 0.7) + (jdPhraseCoverage * 0.3));
+  const ownershipQuality = clamp01(
+    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 1.1) * 0.7) +
+      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 1.2) * 0.2) +
+      (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.1) -
+      (qualityFromDensity(passiveHits, resumeTokens.length, 0.9) * 0.45),
+  );
+  const stakeholderQuality = clamp01(
+    (qualityFromDensity(stakeholderHits, resumeTokens.length, 1.0) * 0.75) + (jdMirrorQuality * 0.25),
+  );
+  const operationalScopeQuality = clamp01(
+    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 1.0) * 0.75) +
+      (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.25),
+  );
+  const accountabilityQuality = clamp01(
+    (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.8) + (ownershipQuality * 0.2),
+  );
+  const measurableOutcomesQuality = clamp01(
+    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.9) * 0.75) +
+      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 1.2) * 0.25),
+  );
+  const toolWorkflowQuality = clamp01(
+    (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.55) + (jdMirrorQuality * 0.45),
+  );
+  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.9));
+
+  const roleOutcomesAlignment = Math.floor(100 * clamp01(
+    (ownershipQuality * 0.30) +
+      (measurableOutcomesQuality * 0.30) +
+      (accountabilityQuality * 0.22) +
+      (jdMirrorQuality * 0.18) -
+      (passivePenalty * 0.12),
+  ));
+
+  const toolsAndWorkflowAlignment = Math.floor(100 * clamp01(
+    (toolWorkflowQuality * 0.55) + (jdMirrorQuality * 0.45),
+  ));
+
+  const domainAndContextAlignment = Math.floor(100 * clamp01(
+    (jdMirrorQuality * 0.72) + (operationalScopeQuality * 0.28),
+  ));
+
+  const contextAndScaleAlignment = Math.floor(100 * clamp01(
+    (operationalScopeQuality * 0.46) +
+      (measurableOutcomesQuality * 0.34) +
+      (accountabilityQuality * 0.20),
+  ));
+
+  const communicationAndLeadershipAlignment = Math.floor(100 * clamp01(
+    (stakeholderQuality * 0.30) +
+      (ownershipQuality * 0.28) +
+      (accountabilityQuality * 0.22) +
+      (jdMirrorQuality * 0.20) -
+      (passivePenalty * 0.18),
+  ));
+
+  const weightedSum =
+    (roleOutcomesAlignment * 0.30) +
+    (toolsAndWorkflowAlignment * 0.20) +
+    (domainAndContextAlignment * 0.20) +
+    (contextAndScaleAlignment * 0.15) +
+    (communicationAndLeadershipAlignment * 0.15);
+
+  const finalScore = Math.floor(weightedSum);
+
+  return {
+    preprocessing: {
+      raw_token_count: rawTokens.length,
+      normalized_token_count: normalizedTokens.length,
+      sanitized_token_count: resumeTokens.length,
+      token_retention_ratio: roundTo(resumeTokens.length / Math.max(rawTokens.length, 1)),
+    },
+    detection: {
+      jd_keyword_count: jdModel.keywords.length,
+      jd_phrase_count: jdModel.phrases.length,
+      jd_keyword_hits: jdKeywordHits,
+      jd_phrase_hits: jdPhraseHits,
+      ownership_strong_hits: ownershipStrongHits,
+      ownership_partial_hits: ownershipPartialHits,
+      passive_hits: passiveHits,
+      stakeholder_hits: stakeholderHits,
+      operational_scope_hits: operationalScopeHits,
+      accountability_hits: accountabilityHits,
+      quantified_outcome_hits: quantifiedOutcomeHits,
+      outcome_language_hits: outcomeLanguageHits,
+      tool_hits: toolHits,
+    },
+    weighting: {
+      jd_mirror_quality: roundTo(jdMirrorQuality),
+      ownership_quality: roundTo(ownershipQuality),
+      stakeholder_quality: roundTo(stakeholderQuality),
+      operational_scope_quality: roundTo(operationalScopeQuality),
+      accountability_quality: roundTo(accountabilityQuality),
+      measurable_outcomes_quality: roundTo(measurableOutcomesQuality),
+      tool_workflow_quality: roundTo(toolWorkflowQuality),
+      passive_penalty: roundTo(passivePenalty),
+    },
+    breakdown: {
+      role_outcomes_alignment: roleOutcomesAlignment,
+      tools_and_workflow_alignment: toolsAndWorkflowAlignment,
+      domain_and_context_alignment: domainAndContextAlignment,
+      context_and_scale_alignment: contextAndScaleAlignment,
+      communication_and_leadership_alignment: communicationAndLeadershipAlignment,
+    },
+    aggregation: {
+      weighted_sum: roundTo(weightedSum, 2),
+      final_score: finalScore,
+    },
+  };
+}
+
 // ─── In-memory result cache (SHA-256, 30min TTL, 50 entries) ──────────────────
 const resultCache = new Map<string, { data: Record<string, unknown>; ts: number }>();
 const CACHE_TTL_MS = 30 * 60 * 1000;
