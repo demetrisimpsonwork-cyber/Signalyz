@@ -288,7 +288,7 @@ function qualityFromDensity(hits: number, tokenCount: number, targetDensity: num
   return clamp01(density / targetDensity);
 }
 
-function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases: string[] } {
+function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases: string[]; stemmedKeywords: string[] } {
   const jdTokens = tokenize(jdText).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
   const tokenFreq = new Map<string, number>();
   for (const token of jdTokens) {
@@ -302,6 +302,8 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
     })
     .slice(0, 40)
     .map(([token]) => token);
+
+  const stemmedKeywords = [...new Set(keywords.map(stem))].filter(s => s.length >= 3);
 
   const phraseFreq = new Map<string, number>();
   const sentences = jdText.toLowerCase().split(/[\n.;:!?]+/).map((s) => s.trim()).filter(Boolean);
@@ -325,7 +327,7 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
     .slice(0, 25)
     .map(([phrase]) => phrase);
 
-  return { keywords, phrases };
+  return { keywords, phrases, stemmedKeywords };
 }
 
 function scoreLabelFromValue(score: number): "Weak" | "Moderate" | "Solid" | "Strong" {
