@@ -186,18 +186,10 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         const projLine = proj.name;
         const nameWidth = pdf.getTextWidth(projLine);
 
-        // Calculate actual block height using fixed line height
+        // Hardcoded 6 lines for description + title + bullets with generous spacing
+        const descLineCount = 6; // hardcoded per user instruction — no dynamic calc
         let blockHeight = projectLineHeight; // title line
-
-        if (proj.description) {
-          const descText = ` — ${proj.description}`;
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          const firstLineWidth = Math.max(12, contentWidth - nameWidth - 2);
-          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
-          // All description lines (including continuation on full width)
-          blockHeight += Math.max(0, descLines.length - 1) * projectLineHeight;
-        }
+        blockHeight += descLineCount * projectLineHeight; // description lines (fixed)
 
         for (const bullet of proj.bullets) {
           pdf.setFont("times", "normal");

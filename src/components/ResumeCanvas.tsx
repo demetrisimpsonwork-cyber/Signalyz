@@ -363,18 +363,17 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
               <div key={pi}>
-                {/* Project name — bold */}
-                <span style={{ fontWeight: 700, fontSize: "12px", color: "#1A1A2E" }}>{proj.name}</span>
-                {/* Description — force regular weight on the exact body text node */}
+                {/* Project name — bold, block-level to prevent style bleed */}
+                <div style={{ fontWeight: 700, fontSize: "12px", color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif", display: "inline" }}>{proj.name}</div>
+                {/* Description — completely isolated element, no className, no Tailwind */}
                 {(proj.description || editMode) && (
                   <>
-                    <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}>{" — "}</span>
+                    <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280", fontFamily: "Arial, Helvetica, sans-serif" }}>{" — "}</span>
                     {editMode ? (
                       <span
                         contentEditable
                         suppressContentEditableWarning
-                        className="font-normal outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
-                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "inherit", fontSize: "11px", color: "#6B7280" }}
+                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11px", color: "#6B7280", outline: "none" }}
                         onBlur={(e) => {
                           onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
                         }}
@@ -384,8 +383,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                     ) : (
                       <span
                         data-project-description="true"
-                        className="font-normal"
-                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "inherit", fontSize: "11px", color: "#6B7280" }}
+                        style={{ fontWeight: 400, fontStyle: "normal", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11px", color: "#6B7280" }}
                       >
                         {proj.description}
                       </span>
