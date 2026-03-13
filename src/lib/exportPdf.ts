@@ -22,8 +22,9 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
     const contentWidth = pageWidth - marginLeft - marginRight;
     let y = 18;
 
+    const bottomMargin = 20;
     const checkPageBreak = (needed: number) => {
-      if (y + needed > pageHeight - 15) {
+      if (y + needed > pageHeight - bottomMargin) {
         pdf.addPage();
         y = 15;
       }
