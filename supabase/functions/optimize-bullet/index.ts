@@ -168,35 +168,35 @@ const STOP_WORDS = new Set([
 ]);
 
 const OWNERSHIP_STRONG_PHRASES = [
-  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered",
+  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered", "established", "redesigned", "pioneered", "devised", "instituted", "restructured", "consolidated", "mobilized", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
 ];
 
 const OWNERSHIP_PARTIAL_PHRASES = [
-  "managed", "coordinated", "responsible for", "handled", "worked on", "contributed to", "supported", "assisted", "helped", "participated in", "involved in",
+  "managed", "coordinated", "responsible for", "handled", "worked on", "contributed to", "involved in", "engaged", "tracked", "monitored", "reviewed", "prepared", "processed", "compiled", "organized", "planned", "conducted", "performed", "served",
 ];
 
 const PASSIVE_PHRASES = [
-  "helped", "assisted", "supported", "participated in", "was involved", "tasked with", "worked on", "contributed to",
+  "helped", "assisted", "supported", "participated in", "was involved", "tasked with",
 ];
 
 const STAKEHOLDER_COMPLEXITY_PHRASES = [
-  "cross-functional", "cross functional", "stakeholder", "stakeholders", "executive", "leadership team", "vp", "director", "c-suite", "client-facing", "client facing", "vendor", "partnered with", "matrix", "governance",
+  "cross-functional", "cross functional", "stakeholder", "stakeholders", "executive", "leadership team", "vp", "director", "c-suite", "client-facing", "client facing", "vendor", "partnered with", "matrix", "governance", "internal teams", "external", "departments", "leadership", "clients", "partners", "administrators",
 ];
 
 const OPERATIONAL_SCOPE_PHRASES = [
-  "end-to-end", "end to end", "portfolio", "program", "roadmap", "workflow", "process", "operating model", "sla", "kpi", "governance", "capacity", "throughput", "multi-site", "global", "regional", "standardized", "playbook",
+  "end-to-end", "end to end", "portfolio", "program", "roadmap", "workflow", "process", "operating model", "sla", "kpi", "governance", "capacity", "throughput", "multi-site", "global", "regional", "standardized", "playbook", "high-volume", "high volume", "caseload", "concurrent", "pipeline", "routing", "triage", "escalation", "documentation", "protocols", "intake",
 ];
 
 const ACCOUNTABILITY_PHRASES = [
-  "accountable", "ownership", "owned", "p&l", "budget", "decision", "decision-making", "decision making", "authority", "risk", "compliance", "governance", "end-to-end", "end to end",
+  "accountable", "accountability", "ownership", "owned", "p&l", "budget", "decision", "decision-making", "decision making", "authority", "risk", "compliance", "governance", "end-to-end", "end to end", "primary", "responsible", "audit", "traceability", "accuracy", "standards",
 ];
 
 const OUTCOME_TERMS = [
-  "increased", "reduced", "improved", "grew", "saved", "delivered", "achieved", "exceeded", "decreased", "boosted", "lowered", "raised", "generated", "optimized",
+  "increased", "reduced", "improved", "grew", "saved", "delivered", "achieved", "exceeded", "decreased", "boosted", "lowered", "raised", "generated", "optimized", "reducing", "improving", "streamlined", "standardizing", "minimized", "eliminated", "enhancing",
 ];
 
 const TOOL_SIGNAL_PHRASES = [
-  "crm", "salesforce", "hubspot", "marketo", "jira", "asana", "tableau", "power bi", "excel", "sql", "python", "zendesk", "servicenow", "workday", "sap", "oracle",
+  "crm", "salesforce", "hubspot", "marketo", "jira", "asana", "tableau", "power bi", "excel", "sql", "python", "zendesk", "servicenow", "workday", "sap", "oracle", "adobe", "microsoft office", "microsoft", "slack", "monday", "confluence", "sharepoint", "google sheets", "quickbooks", "netsuite",
 ];
 
 interface RecalibrationDiagnostics {
@@ -257,6 +257,16 @@ function tokenize(text: string): string[] {
   return text.toLowerCase().match(/[a-z0-9]+(?:[+#/&-][a-z0-9]+)*/g) || [];
 }
 
+/** Naive English stemmer — strips common suffixes for fuzzy JD keyword matching */
+function stem(word: string): string {
+  return word
+    .replace(/ies$/, "i")
+    .replace(/ied$/, "i")
+    .replace(/(ing|tion|ment|ness|ence|ance|ity|ous|ive|ful|less|able|ible|ated|ting|sion)$/, "")
+    .replace(/s$/, "")
+    .replace(/ed$/, "");
+}
+
 function countPhraseHits(text: string, phrases: string[]): number {
   return phrases.reduce((sum, phrase) => {
     const escaped = phrase
@@ -278,7 +288,7 @@ function qualityFromDensity(hits: number, tokenCount: number, targetDensity: num
   return clamp01(density / targetDensity);
 }
 
-function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases: string[] } {
+function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases: string[]; stemmedKeywords: string[] } {
   const jdTokens = tokenize(jdText).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
   const tokenFreq = new Map<string, number>();
   for (const token of jdTokens) {
@@ -290,8 +300,10 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 40)
+    .slice(0, 15)
     .map(([token]) => token);
+
+  const stemmedKeywords = [...new Set(keywords.map(stem))].filter(s => s.length >= 3);
 
   const phraseFreq = new Map<string, number>();
   const sentences = jdText.toLowerCase().split(/[\n.;:!?]+/).map((s) => s.trim()).filter(Boolean);
@@ -312,10 +324,10 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 25)
+    .slice(0, 8)
     .map(([phrase]) => phrase);
 
-  return { keywords, phrases };
+  return { keywords, phrases, stemmedKeywords };
 }
 
 function scoreLabelFromValue(score: number): "Weak" | "Moderate" | "Solid" | "Strong" {
@@ -340,7 +352,19 @@ function computeRecalibratedScore(input: {
   const resumeLower = sanitizedResume.toLowerCase();
 
   const jdModel = buildJdSignalVocabulary(jd);
-  const jdKeywordHits = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+
+  // Exact keyword matches
+  const jdKeywordHitsExact = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+
+  // Stemmed keyword matches (fuzzy — catches "managing" matching "management", etc.)
+  const resumeStemSet = new Set(resumeTokens.map(stem).filter(s => s.length >= 3));
+  const jdKeywordHitsStemmed = jdModel.stemmedKeywords.reduce((sum, stemmed) => sum + (resumeStemSet.has(stemmed) ? 1 : 0), 0);
+
+  // Use the better of exact or stemmed coverage, with stemmed getting 0.8 weight
+  const exactCoverage = jdKeywordHitsExact / Math.max(jdModel.keywords.length, 1);
+  const stemmedCoverage = jdKeywordHitsStemmed / Math.max(jdModel.stemmedKeywords.length, 1);
+  const effectiveKeywordCoverage = Math.max(exactCoverage, stemmedCoverage * 0.92);
+
   const jdPhraseHits = jdModel.phrases.reduce((sum, phrase) => {
     const escaped = phrase
       .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -359,63 +383,84 @@ function computeRecalibratedScore(input: {
   const toolHits = countPhraseHits(resumeLower, TOOL_SIGNAL_PHRASES);
   const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
 
-  const jdKeywordCoverage = jdKeywordHits / Math.max(jdModel.keywords.length, 1);
   const jdPhraseCoverage = jdPhraseHits / Math.max(jdModel.phrases.length, 1);
 
-  const jdMirrorQuality = clamp01((jdKeywordCoverage * 0.7) + (jdPhraseCoverage * 0.3));
-  const ownershipQuality = clamp01(
-    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 1.1) * 0.7) +
-      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 1.2) * 0.2) +
-      (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.1) -
-      (qualityFromDensity(passiveHits, resumeTokens.length, 0.9) * 0.45),
-  );
-  const stakeholderQuality = clamp01(
-    (qualityFromDensity(stakeholderHits, resumeTokens.length, 1.0) * 0.75) + (jdMirrorQuality * 0.25),
-  );
-  const operationalScopeQuality = clamp01(
-    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 1.0) * 0.75) +
-      (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.25),
-  );
-  const accountabilityQuality = clamp01(
-    (qualityFromDensity(accountabilityHits, resumeTokens.length, 1.0) * 0.8) + (ownershipQuality * 0.2),
-  );
-  const measurableOutcomesQuality = clamp01(
-    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.9) * 0.75) +
-      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 1.2) * 0.25),
-  );
-  const toolWorkflowQuality = clamp01(
-    (qualityFromDensity(toolHits, resumeTokens.length, 0.9) * 0.55) + (jdMirrorQuality * 0.45),
-  );
-  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.9));
+  // ── RECALIBRATED quality computations ──
+  // Density targets lowered to match real resume profiles (~0.3-0.6 per 100 words)
+  const jdMirrorQuality = clamp01((effectiveKeywordCoverage * 0.65) + (jdPhraseCoverage * 0.35));
 
+  // Ownership: lower targets, reduced passive penalty, stronger bonus for strong verbs
+  const ownershipQuality = clamp01(
+    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 0.25) * 0.55) +
+      (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 0.35) * 0.30) +
+      (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.15) -
+      (qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.10),
+  );
+
+  const stakeholderQuality = clamp01(
+    (qualityFromDensity(stakeholderHits, resumeTokens.length, 0.30) * 0.60) + (jdMirrorQuality * 0.40),
+  );
+
+  const operationalScopeQuality = clamp01(
+    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 0.30) * 0.60) +
+      (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.40),
+  );
+
+  const accountabilityQuality = clamp01(
+    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.65) + (ownershipQuality * 0.35),
+  );
+
+  const measurableOutcomesQuality = clamp01(
+    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.25) * 0.60) +
+      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 0.35) * 0.40),
+  );
+
+  const toolWorkflowQuality = clamp01(
+    (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.45) + (jdMirrorQuality * 0.55),
+  );
+
+  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.5);
+
+  // ── Signal Vocabulary Bonus ──
+  // Rewards calibrated language: high strong-ownership density + low passive density
+  const strongOwnershipDensity = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
+  const passiveDensity = toDensityPer100Words(passiveHits, resumeTokens.length);
+  const ownershipRatio = ownershipStrongHits / Math.max(ownershipStrongHits + passiveHits, 1);
+  // Bonus scales 0-0.18: full bonus when ownership ratio > 0.7 and strong density > 0.4
+  const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.35) * 0.18;
+
+  // ── Dimension scores with recalibrated weights ──
   const roleOutcomesAlignment = Math.floor(100 * clamp01(
-    (ownershipQuality * 0.30) +
-      (measurableOutcomesQuality * 0.30) +
-      (accountabilityQuality * 0.22) +
-      (jdMirrorQuality * 0.18) -
-      (passivePenalty * 0.12),
+    (ownershipQuality * 0.28) +
+      (measurableOutcomesQuality * 0.25) +
+      (accountabilityQuality * 0.20) +
+      (jdMirrorQuality * 0.22) +
+      vocabBonus -
+      (passivePenalty * 0.06),
   ));
 
   const toolsAndWorkflowAlignment = Math.floor(100 * clamp01(
-    (toolWorkflowQuality * 0.55) + (jdMirrorQuality * 0.45),
+    (toolWorkflowQuality * 0.50) + (jdMirrorQuality * 0.50),
   ));
 
   const domainAndContextAlignment = Math.floor(100 * clamp01(
-    (jdMirrorQuality * 0.72) + (operationalScopeQuality * 0.28),
+    (jdMirrorQuality * 0.65) + (operationalScopeQuality * 0.35),
   ));
 
   const contextAndScaleAlignment = Math.floor(100 * clamp01(
-    (operationalScopeQuality * 0.46) +
-      (measurableOutcomesQuality * 0.34) +
-      (accountabilityQuality * 0.20),
+    (operationalScopeQuality * 0.38) +
+      (measurableOutcomesQuality * 0.30) +
+      (accountabilityQuality * 0.18) +
+      (jdMirrorQuality * 0.14),
   ));
 
   const communicationAndLeadershipAlignment = Math.floor(100 * clamp01(
-    (stakeholderQuality * 0.30) +
-      (ownershipQuality * 0.28) +
-      (accountabilityQuality * 0.22) +
-      (jdMirrorQuality * 0.20) -
-      (passivePenalty * 0.18),
+    (stakeholderQuality * 0.28) +
+      (ownershipQuality * 0.25) +
+      (accountabilityQuality * 0.20) +
+      (jdMirrorQuality * 0.22) +
+      vocabBonus -
+      (passivePenalty * 0.08),
   ));
 
   const weightedSum =
@@ -437,8 +482,10 @@ function computeRecalibratedScore(input: {
     detection: {
       jd_keyword_count: jdModel.keywords.length,
       jd_phrase_count: jdModel.phrases.length,
-      jd_keyword_hits: jdKeywordHits,
+      jd_keyword_hits: jdKeywordHitsExact,
+      jd_keyword_hits_stemmed: jdKeywordHitsStemmed,
       jd_phrase_hits: jdPhraseHits,
+      effective_keyword_coverage: roundTo(effectiveKeywordCoverage),
       ownership_strong_hits: ownershipStrongHits,
       ownership_partial_hits: ownershipPartialHits,
       passive_hits: passiveHits,
@@ -458,6 +505,8 @@ function computeRecalibratedScore(input: {
       measurable_outcomes_quality: roundTo(measurableOutcomesQuality),
       tool_workflow_quality: roundTo(toolWorkflowQuality),
       passive_penalty: roundTo(passivePenalty),
+      vocab_bonus: roundTo(vocabBonus),
+      ownership_ratio: roundTo(ownershipRatio),
     },
     breakdown: {
       role_outcomes_alignment: roleOutcomesAlignment,
