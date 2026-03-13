@@ -196,8 +196,8 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
           pdf.setFont("times", "normal");
           pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(107, 114, 128);
-          pdf.text(`— ${proj.description?.trim()}`, marginLeft + 2, y, {
-            maxWidth: contentWidth - 2,
+          pdf.text(`— ${proj.description?.trim()}`, marginLeft, y, {
+            maxWidth: contentWidth,
           });
           y += projectLineHeight * 6;
         }
