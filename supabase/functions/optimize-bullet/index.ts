@@ -300,7 +300,7 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 40)
+    .slice(0, 25)
     .map(([token]) => token);
 
   const stemmedKeywords = [...new Set(keywords.map(stem))].filter(s => s.length >= 3);
