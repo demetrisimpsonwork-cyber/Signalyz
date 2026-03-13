@@ -324,7 +324,7 @@ function buildJdSignalVocabulary(jdText: string): { keywords: string[]; phrases:
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 15)
+    .slice(0, 8)
     .map(([phrase]) => phrase);
 
   return { keywords, phrases, stemmedKeywords };
