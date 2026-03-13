@@ -162,93 +162,6 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       }
     }
 
-    // ─── Independent Projects ───
-    if (resume.independent_projects?.length) {
-      // Force page break before section if remaining space is tight
-      const remainingBeforeSection = pageHeight - bottomMargin - y;
-      if (remainingBeforeSection < 35) {
-        pdf.addPage();
-        y = 15;
-      }
-
-      drawSectionHeader("Independent Projects");
-
-      const projectTitleFontSize = 10.5;
-      const projectBodyFontSize = 9.5;
-      const projectLineHeight = 4.2; // fixed mm per line — reliable over ptToMm conversion
-      const projectBlockSpacing = 2;
-      const projectBulletIndent = 8;
-      const minBlockHeight = 28; // minimum mm per project block — prevents clipping
-
-      for (const proj of resume.independent_projects) {
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(projectTitleFontSize);
-        const projLine = proj.name;
-        const nameWidth = pdf.getTextWidth(projLine);
-
-        // Hardcoded 6 lines for description + title + bullets with generous spacing
-        const descLineCount = 6; // hardcoded per user instruction — no dynamic calc
-        let blockHeight = projectLineHeight; // title line
-        blockHeight += descLineCount * projectLineHeight; // description lines (fixed)
-
-        for (const bullet of proj.bullets) {
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-          blockHeight += bulletLines.length * projectLineHeight + 2;
-        }
-
-        // Enforce minimum block height and check page break
-        const effectiveHeight = Math.max(blockHeight, minBlockHeight);
-        checkPageBreak(effectiveHeight + projectBlockSpacing);
-
-        // Render name (bold)
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(projectTitleFontSize);
-        pdf.setTextColor(26, 26, 46);
-        pdf.text(projLine, marginLeft, y);
-
-        // Render description (normal weight)
-        if (proj.description) {
-          const renderedNameWidth = pdf.getTextWidth(projLine);
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          pdf.setTextColor(107, 114, 128);
-          const descText = ` — ${proj.description}`;
-          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
-          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
-          pdf.text(descLines[0] || "", marginLeft + renderedNameWidth, y);
-          y += projectLineHeight;
-
-          for (let di = 1; di < descLines.length; di++) {
-            checkPageBreak(projectLineHeight + 0.6);
-            pdf.text(descLines[di], marginLeft + 2, y);
-            y += projectLineHeight;
-          }
-        } else {
-          y += projectLineHeight;
-        }
-
-        // Render bullets
-        for (const bullet of proj.bullets) {
-          checkPageBreak(projectLineHeight + 2);
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          pdf.setTextColor(26, 26, 46);
-          pdf.text("•", marginLeft + 2, y);
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-          for (let li = 0; li < bulletLines.length; li++) {
-            if (li > 0) checkPageBreak(projectLineHeight + 0.6);
-            pdf.text(bulletLines[li], marginLeft + 6, y);
-            y += projectLineHeight;
-          }
-          y += 2;
-        }
-
-        y += projectBlockSpacing;
-      }
-    }
-
     // ─── Certifications ───
     const cleanedCertifications = (resume.certifications || []).map((cert) => {
       return cert
@@ -285,6 +198,70 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         const eduText = [edu.degree, edu.institution, edu.year].filter(Boolean).join(" — ");
         drawWrappedText(eduText, 9.5);
         y += 1;
+      }
+    }
+
+    // ─── Independent Projects ───
+    if (resume.independent_projects?.length) {
+      if (y > 230) {
+        pdf.addPage();
+        y = 20;
+      }
+
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
+      y += 1.5;
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.2);
+      pdf.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 5;
+
+      const projectTitleFontSize = 10.5;
+      const projectBodyFontSize = 9.5;
+      const projectLineHeight = 4.2;
+      const projectBulletIndent = 8;
+
+      for (const proj of resume.independent_projects) {
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(projectTitleFontSize);
+        pdf.setTextColor(26, 26, 46);
+        pdf.text(proj.name, marginLeft, y);
+
+        if (proj.description) {
+          const renderedNameWidth = pdf.getTextWidth(proj.name);
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          pdf.setTextColor(107, 114, 128);
+          const descText = ` — ${proj.description}`;
+          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
+          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
+          pdf.text(descLines[0] || "", marginLeft + renderedNameWidth, y);
+          y += projectLineHeight;
+
+          for (let di = 1; di < descLines.length; di++) {
+            pdf.text(descLines[di], marginLeft + 2, y);
+            y += projectLineHeight;
+          }
+        } else {
+          y += projectLineHeight;
+        }
+
+        for (const bullet of proj.bullets) {
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          pdf.setTextColor(26, 26, 46);
+          pdf.text("•", marginLeft + 2, y);
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
+          for (const line of bulletLines) {
+            pdf.text(line, marginLeft + 6, y);
+            y += projectLineHeight;
+          }
+          y += 2;
+        }
+
+        y += 2;
       }
     }
 
