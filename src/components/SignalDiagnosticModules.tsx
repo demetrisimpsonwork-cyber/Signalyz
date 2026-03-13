@@ -9,6 +9,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 /* ─── Dimension display label map ─── */
 const DIMENSION_DISPLAY_LABELS: Record<string, string> = {
@@ -374,24 +379,22 @@ function ScoreExplanation({ score }: { score: number }) {
     "Weak alignment signal";
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-            <Info className="h-3.5 w-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-xs p-3 space-y-2">
-          <p className="text-xs font-semibold">Score: {score}% — {tier}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            This score reflects how strongly your resume communicates alignment across four dimensions: role clarity, ownership framing, commercial impact, and domain expertise.
-          </p>
-          <p className="text-[10px] text-muted-foreground/70 italic">
-            Resumix never fabricates experience. It only recalibrates how your existing experience signals value.
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" aria-label="Score explanation">
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="max-w-xs p-3 space-y-2">
+        <p className="text-xs font-semibold">Score: {score}% — {tier}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Your signal score measures how clearly your experience communicates fit for this specific role — not how qualified you are. It reads ownership language, domain vocabulary, operational evidence, and stakeholder framing across six dimensions. The predicted score shows how much improvement is possible by repositioning your existing experience without fabricating anything new.
+        </p>
+        <p className="text-[10px] text-muted-foreground/70 italic">
+          Resumix never fabricates experience. It only recalibrates how your existing experience signals value.
+        </p>
+      </PopoverContent>
+    </Popover>
   );
 }
 
