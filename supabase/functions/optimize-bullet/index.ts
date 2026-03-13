@@ -411,8 +411,8 @@ function computeRecalibratedScore(input: {
   );
 
   const measurableOutcomesQuality = clamp01(
-    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.35) * 0.65) +
-      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 0.50) * 0.35),
+    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.25) * 0.60) +
+      (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 0.35) * 0.40),
   );
 
   const toolWorkflowQuality = clamp01(
