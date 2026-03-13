@@ -463,6 +463,14 @@ const Index = () => {
     }
   }, [result]);
 
+  useEffect(() => {
+    if (!result) return;
+    console.info("[AlignmentScoreTrace] render_match_score", {
+      rendered_match_score: result.match_score,
+      rendered_signal_model_match_score: (result as any)?.signal_model?.match_score?.score,
+    });
+  }, [result]);
+
   // Credential patterns that indicate a hard requirement the resume cannot satisfy via repositioning
   const CREDENTIAL_PATTERNS = [
     /\b(MD|M\.D\.)\b/, /\b(JD|J\.D\.)\b/, /\b(RN|BSN)\b/, /\bCPA\b/, /\bP\.?E\.?\b/,
