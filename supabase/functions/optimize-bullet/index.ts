@@ -407,7 +407,7 @@ function computeRecalibratedScore(input: {
   );
 
   const accountabilityQuality = clamp01(
-    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.40) * 0.70) + (ownershipQuality * 0.30),
+    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.65) + (ownershipQuality * 0.35),
   );
 
   const measurableOutcomesQuality = clamp01(
