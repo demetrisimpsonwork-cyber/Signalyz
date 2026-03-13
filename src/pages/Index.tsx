@@ -1580,7 +1580,7 @@ const Index = () => {
           <AccordionItem value="pricing">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Resumix cost?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. You can cancel anytime — no contracts, no commitments.
+              You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="data-privacy">
