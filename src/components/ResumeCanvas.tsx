@@ -362,37 +362,39 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
           <SectionHeader>Independent Projects</SectionHeader>
           <div className="space-y-3">
             {resume.independent_projects.map((proj, pi) => (
-              <div key={pi} style={{ fontWeight: 400 }}>
-                <p className="mb-1" style={{ fontSize: "11px", lineHeight: "1.55", fontWeight: 400, margin: 0, marginBottom: "4px" }}>
-                  <strong style={{ fontWeight: 700, fontSize: "12px" }}>{proj.name}</strong>
-                  {(proj.description || editMode) && (
-                    <span style={{ fontWeight: 400, color: "var(--muted-foreground, #6B7280)" }}>
-                      {" — "}
-                      {editMode ? (
-                        <span
-                          contentEditable
-                          suppressContentEditableWarning
-                          className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
-                          style={{ fontWeight: 400 }}
-                          onBlur={(e) => {
-                            onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
-                          }}
-                        >
-                          {proj.description}
-                        </span>
-                      ) : (
-                        <span style={{ fontWeight: 400 }}>{proj.description}</span>
-                      )}
-                    </span>
-                  )}
-                </p>
+              <div key={pi}>
+                {/* Project name — bold */}
+                <span style={{ fontWeight: 700, fontSize: "12px", color: "#1A1A2E" }}>{proj.name}</span>
+                {/* Description — explicitly normal weight, separate element */}
+                {(proj.description || editMode) && (
+                  <>
+                    <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}>{" — "}</span>
+                    {editMode ? (
+                      <span
+                        contentEditable
+                        suppressContentEditableWarning
+                        className="outline-none rounded px-0.5 cursor-text hover:bg-teal-50/40 focus:bg-teal-50/60 focus:ring-1 focus:ring-teal-300/50 transition-all duration-150"
+                        style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}
+                        onBlur={(e) => {
+                          onUpdate(`independent_projects.${pi}.description`, e.currentTarget.textContent || "");
+                        }}
+                      >
+                        {proj.description}
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: 400, fontSize: "11px", color: "#6B7280" }}>{proj.description}</span>
+                    )}
+                  </>
+                )}
                 {proj.bullets.length > 0 && (
-                  <BulletEditor
-                    bullets={proj.bullets}
-                    expIdx={1000 + pi}
-                    editMode={editMode}
-                    onUpdate={onUpdate}
-                  />
+                  <div style={{ marginTop: "4px" }}>
+                    <BulletEditor
+                      bullets={proj.bullets}
+                      expIdx={1000 + pi}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                    />
+                  </div>
                 )}
               </div>
             ))}
