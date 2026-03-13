@@ -416,7 +416,7 @@ function computeRecalibratedScore(input: {
   );
 
   const toolWorkflowQuality = clamp01(
-    (qualityFromDensity(toolHits, resumeTokens.length, 0.30) * 0.50) + (jdMirrorQuality * 0.50),
+    (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.45) + (jdMirrorQuality * 0.55),
   );
 
   const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.5);
