@@ -482,8 +482,10 @@ function computeRecalibratedScore(input: {
     detection: {
       jd_keyword_count: jdModel.keywords.length,
       jd_phrase_count: jdModel.phrases.length,
-      jd_keyword_hits: jdKeywordHits,
+      jd_keyword_hits: jdKeywordHitsExact,
+      jd_keyword_hits_stemmed: jdKeywordHitsStemmed,
       jd_phrase_hits: jdPhraseHits,
+      effective_keyword_coverage: roundTo(effectiveKeywordCoverage),
       ownership_strong_hits: ownershipStrongHits,
       ownership_partial_hits: ownershipPartialHits,
       passive_hits: passiveHits,
@@ -503,6 +505,8 @@ function computeRecalibratedScore(input: {
       measurable_outcomes_quality: roundTo(measurableOutcomesQuality),
       tool_workflow_quality: roundTo(toolWorkflowQuality),
       passive_penalty: roundTo(passivePenalty),
+      vocab_bonus: roundTo(vocabBonus),
+      ownership_ratio: roundTo(ownershipRatio),
     },
     breakdown: {
       role_outcomes_alignment: roleOutcomesAlignment,
