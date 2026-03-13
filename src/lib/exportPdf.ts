@@ -226,29 +226,29 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
           const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
           const descLines = pdf.splitTextToSize(descText, firstLineWidth);
           pdf.text(descLines[0] || "", marginLeft + renderedNameWidth, y);
-          y += projectTitleLineHeight;
+          y += projectLineHeight;
 
           for (let di = 1; di < descLines.length; di++) {
-            checkPageBreak(projectBodyLineHeight + 0.6);
+            checkPageBreak(projectLineHeight + 0.6);
             pdf.text(descLines[di], marginLeft + 2, y);
-            y += projectBodyLineHeight;
+            y += projectLineHeight;
           }
         } else {
-          y += projectTitleLineHeight;
+          y += projectLineHeight;
         }
 
         // Render bullets
         for (const bullet of proj.bullets) {
-          checkPageBreak(projectBodyLineHeight + 2);
+          checkPageBreak(projectLineHeight + 2);
           pdf.setFont("times", "normal");
           pdf.setFontSize(projectBodyFontSize);
           pdf.setTextColor(26, 26, 46);
           pdf.text("•", marginLeft + 2, y);
           const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
           for (let li = 0; li < bulletLines.length; li++) {
-            if (li > 0) checkPageBreak(projectBodyLineHeight + 0.6);
+            if (li > 0) checkPageBreak(projectLineHeight + 0.6);
             pdf.text(bulletLines[li], marginLeft + 6, y);
-            y += projectBodyLineHeight;
+            y += projectLineHeight;
           }
           y += 2;
         }
