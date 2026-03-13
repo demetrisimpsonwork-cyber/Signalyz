@@ -162,6 +162,105 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       }
     }
 
+    // ─── Independent Projects ───
+    if (resume.independent_projects?.length) {
+      if (y > 230) {
+        pdf.addPage();
+        y = 20;
+      }
+
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
+      y += 1.5;
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.2);
+      pdf.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 5;
+
+      const projectTitleFontSize = 10.5;
+      const projectBodyFontSize = 9.5;
+      const projectLineHeight = 4.2;
+      const projectBulletIndent = 8;
+      const sectionBottom = pageHeight - 20;
+
+      for (const proj of resume.independent_projects) {
+        const hasDescription = Boolean(proj.description?.trim());
+        if (y + projectLineHeight * (hasDescription ? 2 : 1) > sectionBottom) {
+          pdf.addPage();
+          y = 20;
+        }
+
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(projectTitleFontSize);
+        pdf.setTextColor(26, 26, 46);
+        pdf.text(proj.name, marginLeft, y);
+
+        if (hasDescription) {
+          const renderedNameWidth = pdf.getTextWidth(proj.name);
+          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
+
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(projectBodyFontSize);
+          pdf.setTextColor(107, 114, 128);
+
+          const fullDescription = `— ${proj.description?.trim()}`;
+          const descLines = pdf.splitTextToSize(fullDescription, firstLineWidth);
+
+          for (let di = 0; di < descLines.length; di++) {
+            if (y + projectLineHeight > sectionBottom) {
+              pdf.addPage();
+              y = 20;
+              if (di === 0) {
+                pdf.setFont("times", "bold");
+                pdf.setFontSize(projectTitleFontSize);
+                pdf.setTextColor(26, 26, 46);
+                pdf.text(proj.name, marginLeft, y);
+                pdf.setFont("times", "normal");
+                pdf.setFontSize(projectBodyFontSize);
+                pdf.setTextColor(107, 114, 128);
+              }
+            }
+
+            const isFirstLine = di === 0;
+            const lineX = isFirstLine ? marginLeft + renderedNameWidth + 2 : marginLeft + 2;
+            const lineText = isFirstLine ? ` ${descLines[di]}` : descLines[di];
+            pdf.text(lineText, lineX, y);
+            y += projectLineHeight;
+          }
+        } else {
+          y += projectLineHeight;
+        }
+
+        for (const bullet of proj.bullets) {
+          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
+
+          for (let bi = 0; bi < bulletLines.length; bi++) {
+            if (y + projectLineHeight > sectionBottom) {
+              pdf.addPage();
+              y = 20;
+            }
+
+            pdf.setFont("times", "normal");
+            pdf.setFontSize(projectBodyFontSize);
+            pdf.setTextColor(26, 26, 46);
+
+            if (bi === 0) {
+              pdf.text("•", marginLeft + 2, y);
+            }
+
+            pdf.text(bulletLines[bi], marginLeft + 6, y);
+            y += projectLineHeight;
+          }
+
+          y += 2;
+        }
+
+        y += 2;
+      }
+    }
+
     // ─── Certifications ───
     const cleanedCertifications = (resume.certifications || []).map((cert) => {
       return cert
@@ -198,70 +297,6 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         const eduText = [edu.degree, edu.institution, edu.year].filter(Boolean).join(" — ");
         drawWrappedText(eduText, 9.5);
         y += 1;
-      }
-    }
-
-    // ─── Independent Projects ───
-    if (resume.independent_projects?.length) {
-      if (y > 230) {
-        pdf.addPage();
-        y = 20;
-      }
-
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(10);
-      pdf.setTextColor(55, 65, 81);
-      pdf.text("INDEPENDENT PROJECTS", marginLeft, y);
-      y += 1.5;
-      pdf.setDrawColor(55, 65, 81);
-      pdf.setLineWidth(0.2);
-      pdf.line(marginLeft, y, pageWidth - marginRight, y);
-      y += 5;
-
-      const projectTitleFontSize = 10.5;
-      const projectBodyFontSize = 9.5;
-      const projectLineHeight = 4.2;
-      const projectBulletIndent = 8;
-
-      for (const proj of resume.independent_projects) {
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(projectTitleFontSize);
-        pdf.setTextColor(26, 26, 46);
-        pdf.text(proj.name, marginLeft, y);
-
-        if (proj.description) {
-          const renderedNameWidth = pdf.getTextWidth(proj.name);
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          pdf.setTextColor(107, 114, 128);
-          const descText = ` — ${proj.description}`;
-          const firstLineWidth = Math.max(12, contentWidth - renderedNameWidth - 2);
-          const descLines = pdf.splitTextToSize(descText, firstLineWidth);
-          pdf.text(descLines[0] || "", marginLeft + renderedNameWidth, y);
-          y += projectLineHeight;
-
-          for (let di = 1; di < descLines.length; di++) {
-            pdf.text(descLines[di], marginLeft + 2, y);
-            y += projectLineHeight;
-          }
-        } else {
-          y += projectLineHeight;
-        }
-
-        for (const bullet of proj.bullets) {
-          pdf.setFont("times", "normal");
-          pdf.setFontSize(projectBodyFontSize);
-          pdf.setTextColor(26, 26, 46);
-          pdf.text("•", marginLeft + 2, y);
-          const bulletLines = pdf.splitTextToSize(bullet, contentWidth - projectBulletIndent);
-          for (const line of bulletLines) {
-            pdf.text(line, marginLeft + 6, y);
-            y += projectLineHeight;
-          }
-          y += 2;
-        }
-
-        y += 2;
       }
     }
 
