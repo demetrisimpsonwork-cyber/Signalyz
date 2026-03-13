@@ -336,12 +336,21 @@ RULES: Never invent tools/metrics/certs. Only reframe existing experience. Retur
 DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
 Step 1: JD SIGNAL EXTRACTION — Scan the job description from top to bottom. Extract priority signals in the order they appear. For each signal, count how many times it is referenced (frequency) and where it appears (title, first paragraph = high emphasis; later paragraphs = lower). Rank by frequency × emphasis. This extraction must be identical every time for the same JD text.
 
-Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, search for exact keyword matches first, then semantic matches (synonyms, role-aligned vocabulary, repositioned framing that conveys the same capability). Record presence/absence as a boolean. A resume that uses role-native vocabulary (e.g. "stakeholder engagement" instead of "talked to clients") counts as a MATCH for that signal. This extraction must be identical every time for the same resume text. Do not vary which signals you surface based on phrasing flexibility.
+Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, classify the match into one of three quality tiers:
+  - FULL MATCH (weight 1.0): The resume uses the JD's exact terminology, role-native vocabulary, ownership verbs ("led", "drove", "owned", "architected", "spearheaded"), or quantified impact statements that directly mirror JD language. Example: JD says "stakeholder management" and resume says "stakeholder engagement across cross-functional teams" = FULL MATCH.
+  - PARTIAL MATCH (weight 0.5): The resume describes the same capability but uses generic, passive, or non-role-aligned language. Example: JD says "stakeholder management" and resume says "worked with different teams" = PARTIAL MATCH. Also applies when the resume uses "helped", "assisted", "supported", "participated in" instead of ownership language.
+  - NO MATCH (weight 0.0): The signal is absent from the resume entirely.
+This quality classification is CRITICAL. A calibrated resume that repositions "helped coordinate meetings" into "drove cross-functional alignment across 4 departments" upgrades that signal from PARTIAL to FULL — the same underlying experience produces a higher-quality match because the language maps more clearly to the JD's priority signals. This extraction must be identical every time for the same resume text.
 
 SIGNAL VOCABULARY SENSITIVITY (CRITICAL):
-When the resume uses language that directly mirrors JD terminology, role-aligned action verbs, ownership framing (e.g. "led", "drove", "owned" vs "helped", "assisted", "supported"), or quantified impact statements — these MUST be counted as stronger signal matches than generic or passive descriptions. Two resumes with identical experience but different vocabulary WILL produce different scores because signal strength is measured by how clearly the language maps to the JD's priority signals. Repositioned language that uses the JD's own terms is stronger signal than original language that describes the same work in generic terms.
+Two resumes describing identical experience but using different vocabulary MUST produce different scores. This is the core scoring mechanism:
+- Ownership verbs ("led", "drove", "owned", "built", "launched") score as FULL MATCH; passive verbs ("helped", "assisted", "supported", "was involved in") score as PARTIAL MATCH (0.5).
+- JD-mirrored terminology scores as FULL MATCH; generic descriptions of the same work score as PARTIAL MATCH (0.5).
+- Quantified impact ("reduced cycle time by 30%", "managed $2M budget") scores as FULL MATCH; unquantified ("improved efficiency", "managed budget") scores as PARTIAL MATCH (0.5).
+- Role-aligned framing ("P&L ownership", "go-to-market strategy") scores as FULL MATCH; general framing ("responsible for finances", "helped with launches") scores as PARTIAL MATCH (0.5).
+This means a repositioned/calibrated resume with stronger vocabulary WILL score meaningfully higher than the original version — not because the experience changed, but because the signal clarity improved.
 
-Step 3: SCORING — Using the extracted signals from Steps 1 and 2, compute match_score as a weighted sum. Count matches per dimension, apply the dimension weight, sum. The score is a mechanical computation from the extraction, not an impression. Stronger vocabulary matches (exact JD terms, ownership verbs, quantified outcomes) count as full matches. Weak or generic phrasing counts as partial matches (0.5 weight). Absent signals count as 0.
+Step 3: SCORING — Using the quality-classified signals from Steps 1 and 2, compute match_score as a QUALITY-WEIGHTED sum. For each dimension, sum the quality weights of all matched signals (FULL=1.0, PARTIAL=0.5, ABSENT=0), then divide by total possible signals in that dimension to get a dimension percentage. Apply dimension weights (Role Outcomes 30%, Tools 20%, Domain 20%, Context 15%, Communication 15%), sum to get final score 0-100. This is a mechanical computation from the quality-classified extraction — not an impression. The quality weighting is what makes repositioned language score higher than generic language for the same underlying experience.
 
 SCORING (5 dimensions, weights in parens):
 1) Role Outcomes (30%) 2) Tools & Workflow (20%) 3) Domain (20%) 4) Context & Scale (15%) 5) Communication & Leadership (15%)
@@ -426,24 +435,29 @@ You are a deterministic scorer. Given identical inputs you must always return id
 PRIMARY SCORE ISOLATION (CRITICAL):
 match_score.score is computed ONLY from the 5-dimension weighted sum (Role Outcomes 30%, Tools & Workflow 20%, Domain 20%, Context & Scale 15%, Communication & Leadership 15%). It is a measurement of CURRENT alignment. It has NOTHING to do with predicted scores, improvement deltas, capture rates, or calibration formulas. Do NOT apply the predicted score formula (sum × 0.60) to match_score.score. The predicted score formula applies ONLY to predicted_signal_lift.predicted_score and interview_gap_diagnosis.predicted_score — two separate fields that are post-processed server-side anyway. match_score.score must reflect the current state of the resume vs JD, not any projected improvement.
 
-SCORING METHOD — USE COUNTING, NOT IMPRESSION:
-For every numeric score, use explicit evidence counting:
-- Count the number of matching keywords, phrases, or evidence items present in the resume relative to the JD.
-- Map the count to the score range using fixed thresholds (e.g., 0 matches = 0, 1-2 = 5-10, 3-4 = 10-15, 5+ = 15-20, 7+ = 20-25 for /25 scales).
+SCORING METHOD — USE QUALITY-WEIGHTED COUNTING, NOT IMPRESSION:
+For every numeric score, use explicit QUALITY-WEIGHTED evidence counting:
+- For each JD priority signal, classify the resume's match as FULL (1.0), PARTIAL (0.5), or ABSENT (0).
+  - FULL (1.0): Exact JD terms, ownership verbs, quantified impact, role-native vocabulary.
+  - PARTIAL (0.5): Generic/passive language describing the same capability ("helped", "assisted", "supported", general descriptions without JD-specific framing).
+  - ABSENT (0): Signal not present in resume at all.
+- Sum the quality weights per dimension (not raw counts). A dimension with 4 FULL matches scores higher than one with 4 PARTIAL matches.
+- Map quality-weighted sums to score ranges: 0 weighted = 0, 0.5-1.5 = 5-10, 2.0-3.0 = 10-15, 3.5-5.0 = 15-20, 5.5+ = 20-25 for /25 scales.
 - Do NOT use subjective impression, "feels like", or holistic judgment for any numeric field.
 - Round down when between two values, never up.
+- CRITICAL: This means a resume using "drove cross-functional GTM strategy" scores HIGHER than one saying "helped with product launches" for the same JD signal — because the first is a FULL match (1.0) and the second is a PARTIAL match (0.5).
 
 This applies individually and explicitly to EACH of these numeric fields — score each one deterministically:
-- match_score.score: weighted sum of 5 dimensions, no rounding variance
-- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on presence/absence of evidence per pillar — count evidence items, not impressions
-- signal_map: ALL 6 dimensions (role_identity, ownership_framing, commercial_impact, domain_expertise, stakeholder_influence, operational_execution) — each scored by counting keyword matches between resume and JD, not impression
+- match_score.score: quality-weighted sum of 5 dimensions, no rounding variance
+- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on quality-weighted evidence per pillar
+- signal_map: ALL 6 dimensions — each scored by quality-weighted keyword matches between resume and JD
 - signal_shift_estimates: all before/after pairs on 0-100 percentage scale — independently assessed signal strength percentages, NOT derived from signal_map /25 scores
 - hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
 - career_signal_map: role scores for both primary and secondary
 - predicted_signal_lift: all dimension lifts and current/predicted scores — lifts must be derived from gap counts, not estimated
 - interview_gap_diagnosis: current_score and predicted_score
 
-For each numeric field: count evidence tokens, apply scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
+For each numeric field: classify match quality, apply quality weights, use scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
 
 STRATEGIC FIXES COUNT (CRITICAL):
 interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. The section heading is always "Three Strategic Fixes" so the list must always contain 3 items.
