@@ -31,7 +31,7 @@ const Terms = () => (
     </Section>
 
     <Section title="6. No Guarantee of Employment">
-      <p>Resumix provides guidance and optimization tools only. The platform does not guarantee job placement, interviews, or hiring outcomes. Employment decisions are made solely by employers.</p>
+      <p>Signalyz provides guidance and optimization tools only. The platform does not guarantee job placement, interviews, or hiring outcomes. Employment decisions are made solely by employers.</p>
     </Section>
 
     <Section title="7. Limitation of Liability">
