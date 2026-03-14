@@ -11,7 +11,7 @@ const RefundPolicy = () => (
     <p className="text-sm text-muted-foreground">Last updated: March 2026</p>
 
     <Section title="Overview">
-      <p>Resumix is a digital SaaS product. Access to premium features is delivered instantly upon subscription activation. By subscribing, you acknowledge the immediate delivery of digital services.</p>
+      <p>Signalyz is a digital SaaS product. Access to premium features is delivered instantly upon subscription activation. By subscribing, you acknowledge the immediate delivery of digital services.</p>
     </Section>
 
     <Section title="Subscription Billing">
