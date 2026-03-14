@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
-const TRIAL_STARTED_KEY = "resumix_trial_started";
-const TRIAL_RUNS_KEY = "resumix_trial_runs";
+const TRIAL_STARTED_KEY = "signalyz_trial_started";
+const TRIAL_RUNS_KEY = "signalyz_trial_runs";
 const TRIAL_LIMIT = 3;
 
 export const useReverseTrial = () => {

@@ -256,7 +256,7 @@ JOB DESCRIPTION: ${cleanJd}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Resumix engine error:", message);
+    console.error("Signalyz engine error:", message);
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("unavailable") ? "Our AI service is temporarily busy. Please try again in a moment." :

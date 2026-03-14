@@ -1,5 +1,5 @@
 /**
- * Resumix Resume Intake v2
+ * Signalyz Resume Intake v2
  * Format-agnostic ingestion & extraction — never fails due to formatting.
  */
 

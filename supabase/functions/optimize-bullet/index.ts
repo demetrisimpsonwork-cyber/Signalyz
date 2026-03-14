@@ -661,7 +661,7 @@ serve(async (req) => {
           status: "error",
           request_id: requestId,
           error_code: "RATE_LIMIT",
-          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
+          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
           status: 200,

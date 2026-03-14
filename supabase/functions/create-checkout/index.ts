@@ -140,8 +140,8 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      success_url: successUrl || "https://resumix.app/?upgrade=success",
-      cancel_url: cancelUrl || "https://resumix.app/?upgrade=cancelled",
+      success_url: successUrl || "https://signalyz.app/?upgrade=success",
+      cancel_url: cancelUrl || "https://signalyz.app/?upgrade=cancelled",
       metadata: { user_id: userId },
       subscription_data: {
         metadata: { user_id: userId },

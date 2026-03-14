@@ -1137,7 +1137,7 @@ serve(async (req) => {
     }
 
     if (cleanExperience.length < 100) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your resume or experience section so Resumix can analyze your signal.", details: { resume_len: cleanExperience.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your resume or experience section so Signalyz can analyze your signal.", details: { resume_len: cleanExperience.length } }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

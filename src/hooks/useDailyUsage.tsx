@@ -70,7 +70,7 @@ export function useDailyUsage(isPro: boolean) {
       // For guests, also update localStorage for UI display
       const today = new Date().toISOString().slice(0, 10);
       try {
-        localStorage.setItem("resumix_daily_usage", JSON.stringify({ date: today, count: next }));
+        localStorage.setItem("signalyz_daily_usage", JSON.stringify({ date: today, count: next }));
       } catch {}
       return next;
     });
