@@ -33,11 +33,15 @@ const WeakAlignmentNudge = ({ additionalContext, onContextChange, onRerun }: Wea
             rows={3}
             className="text-sm"
           />
-          {additionalContext.trim() && onRerun && (
+          {additionalContext.trim().length > 0 && onRerun && (
             <Button
+              type="button"
               size="sm"
               className="w-full gap-2"
-              onClick={onRerun}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRerun();
+              }}
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Re-run with context
