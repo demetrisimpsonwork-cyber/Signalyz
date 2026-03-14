@@ -9,7 +9,7 @@ const Footer = () => (
           Signal<span className="text-primary">yz</span>
         </p>
         <p className="text-sm text-muted-foreground">
-          Signal calibration for job seekers who already qualify — and need hiring systems to read them that way.
+          Career signal intelligence for professionals who already qualify.
         </p>
       </div>
 
