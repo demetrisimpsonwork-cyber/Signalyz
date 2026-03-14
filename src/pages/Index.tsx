@@ -150,7 +150,7 @@ interface OptimizationResult {
 }
 
 function getSessionToken(): string {
-  const key = "resumix_session_token";
+  const key = "signalyz_session_token";
   let token = localStorage.getItem(key);
   if (!token) {
     token = crypto.randomUUID();
