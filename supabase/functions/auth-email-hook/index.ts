@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "resumix-app"
+const SITE_NAME = "Signalyz"
 const SENDER_DOMAIN = "notify.signalyz.ai"
 const ROOT_DOMAIN = "signalyz.ai"
 const FROM_DOMAIN = "signalyz.ai" // Domain shown in From address (may be root or sender subdomain)
