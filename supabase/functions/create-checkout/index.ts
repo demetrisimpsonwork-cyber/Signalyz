@@ -123,8 +123,8 @@ serve(async (req) => {
     }
 
     if (!priceId) {
-      console.log("Auto-creating Resumix Pro product…");
-      const product = await stripe.products.create({ name: "Resumix Pro" });
+      console.log("Auto-creating Signalyz Pro product…");
+      const product = await stripe.products.create({ name: "Signalyz Pro" });
       const price = await stripe.prices.create({
         product: product.id,
         unit_amount: 1900,
