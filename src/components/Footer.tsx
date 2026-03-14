@@ -16,7 +16,7 @@ const Footer = () => (
       {/* Trust Statement */}
       <div className="max-w-md space-y-1">
         <p className="text-xs text-muted-foreground/80">
-          Zero fabrication. Resumix only works with the experience you provide.
+          Zero fabrication. Signalyz only works with the experience you provide.
         </p>
         <p className="text-xs text-muted-foreground/80">
           Your data is never used to train AI models.
