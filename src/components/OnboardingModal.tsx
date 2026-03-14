@@ -35,7 +35,7 @@ const OnboardingModal = () => {
   const steps = [
     {
       headline: "This isn't resume tailoring.",
-      body: "Resumix diagnoses how hiring managers actually read your signal — and repositions your experience to close the gap. Without making anything up.",
+      body: "Signalyz diagnoses how hiring managers actually read your signal — and repositions your experience to close the gap. Without making anything up.",
       visual: (
         <div className="space-y-3 mt-4">
           <div className="rounded-lg bg-[#2A2A2A] p-4">
