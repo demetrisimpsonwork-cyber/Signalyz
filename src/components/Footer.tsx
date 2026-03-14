@@ -37,7 +37,7 @@ const Footer = () => (
       </p>
 
       {/* Copyright */}
-      <p className="text-[11px] text-muted-foreground/60">© 2026 Resumix</p>
+      <p className="text-[11px] text-muted-foreground/60">© 2026 Signalyz</p>
     </div>
   </footer>
 );

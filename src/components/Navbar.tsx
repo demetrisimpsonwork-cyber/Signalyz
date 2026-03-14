@@ -24,7 +24,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
       <div className="container flex h-14 items-center justify-between">
         <Link to="/" className="text-xl font-bold tracking-tight text-foreground">
-          Resum<span className="text-primary">ix</span>
+          Signal<span className="text-primary">yz</span>
         </Link>
 
         {/* Desktop */}

@@ -44,7 +44,7 @@ const OnboardingModal = () => {
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-primary" /></div>
           <div className="rounded-lg border-l-4 border-l-primary bg-white/5 p-4">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">AFTER SIGNALYZ</p>
             <p className="text-xs text-white/90 mt-1">Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements.</p>
           </div>
         </div>
