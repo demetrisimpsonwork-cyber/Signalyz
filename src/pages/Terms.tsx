@@ -15,7 +15,7 @@ const Terms = () => (
     </Section>
 
     <Section title="2. Description of Service">
-      <p>Resumix provides AI-powered resume analysis, optimization, and role-alignment tools. The platform analyzes resumes and job descriptions to help users improve their job applications and better match target roles.</p>
+      <p>Signalyz provides AI-powered resume analysis, optimization, and role-alignment tools. The platform analyzes resumes and job descriptions to help users improve their job applications and better match target roles.</p>
     </Section>
 
     <Section title="3. User Responsibilities">
