@@ -815,7 +815,7 @@ const Position = () => {
 
       // 1) Try sessionStorage (same-session passthrough)
       try {
-        const raw = sessionStorage.getItem("resumix_alignment_score");
+        const raw = sessionStorage.getItem("signalyz_alignment_score");
         if (raw) {
           const stored = JSON.parse(raw);
           if (stored.jd_fingerprint === jdFingerprint && Date.now() - stored.ts < 30 * 60 * 1000) {
