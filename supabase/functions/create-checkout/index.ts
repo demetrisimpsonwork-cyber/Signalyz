@@ -99,8 +99,8 @@ serve(async (req) => {
         payment_method_types: ["card"],
         line_items: [{ price: oneTimePriceId, quantity: 1 }],
         mode: "payment",
-        success_url: successUrl || "https://resumix.app/?purchase=success",
-        cancel_url: cancelUrl || "https://resumix.app/?purchase=cancelled",
+        success_url: successUrl || "https://signalyz.app/?purchase=success",
+        cancel_url: cancelUrl || "https://signalyz.app/?purchase=cancelled",
         metadata: { user_id: userId, purchase_type: "one_time_diagnostic" },
       });
 
@@ -123,8 +123,8 @@ serve(async (req) => {
     }
 
     if (!priceId) {
-      console.log("Auto-creating Resumix Pro product…");
-      const product = await stripe.products.create({ name: "Resumix Pro" });
+      console.log("Auto-creating Signalyz Pro product…");
+      const product = await stripe.products.create({ name: "Signalyz Pro" });
       const price = await stripe.prices.create({
         product: product.id,
         unit_amount: 1900,
@@ -140,8 +140,8 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      success_url: successUrl || "https://resumix.app/?upgrade=success",
-      cancel_url: cancelUrl || "https://resumix.app/?upgrade=cancelled",
+      success_url: successUrl || "https://signalyz.app/?upgrade=success",
+      cancel_url: cancelUrl || "https://signalyz.app/?upgrade=cancelled",
       metadata: { user_id: userId },
       subscription_data: {
         metadata: { user_id: userId },

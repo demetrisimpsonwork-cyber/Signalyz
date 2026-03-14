@@ -6,17 +6,17 @@ const Footer = () => (
       {/* Brand */}
       <div className="space-y-2">
         <p className="text-base font-semibold tracking-tight text-foreground">
-          Resum<span className="text-primary">ix</span>
+          Signal<span className="text-primary">yz</span>
         </p>
         <p className="text-sm text-muted-foreground">
-          Signal calibration for job seekers who already qualify — and need hiring systems to read them that way.
+          Career signal intelligence for professionals who already qualify.
         </p>
       </div>
 
       {/* Trust Statement */}
       <div className="max-w-md space-y-1">
         <p className="text-xs text-muted-foreground/80">
-          Zero fabrication. Resumix only works with the experience you provide.
+          Zero fabrication. Signalyz only works with the experience you provide.
         </p>
         <p className="text-xs text-muted-foreground/80">
           Your data is never used to train AI models.
@@ -37,7 +37,7 @@ const Footer = () => (
       </p>
 
       {/* Copyright */}
-      <p className="text-[11px] text-muted-foreground/60">© 2026 Resumix</p>
+      <p className="text-[11px] text-muted-foreground/60">© 2026 Signalyz</p>
     </div>
   </footer>
 );

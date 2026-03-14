@@ -150,7 +150,7 @@ interface OptimizationResult {
 }
 
 function getSessionToken(): string {
-  const key = "resumix_session_token";
+  const key = "signalyz_session_token";
   let token = localStorage.getItem(key);
   if (!token) {
     token = crypto.randomUUID();
@@ -485,7 +485,7 @@ const Index = () => {
   ];
 
   const CREDENTIAL_BLOCK_MSG =
-    "This role requires credentials not found in your resume. Resumix works best when your experience already qualifies you — the signal just needs repositioning.";
+    "This role requires credentials not found in your resume. Signalyz works best when your experience already qualifies you — the signal just needs repositioning.";
 
   const checkCredentialMismatch = (resumeText: string, jdText: string): boolean => {
     const resumeUpper = resumeText.toUpperCase();
@@ -722,7 +722,7 @@ const Index = () => {
 
       try {
         const jdFingerprint = normJd.text.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
-        sessionStorage.setItem("resumix_alignment_score", JSON.stringify({
+        sessionStorage.setItem("signalyz_alignment_score", JSON.stringify({
           score: res.match_score,
           jd_fingerprint: jdFingerprint,
           ts: Date.now(),
@@ -815,7 +815,7 @@ const Index = () => {
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Resumix reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
+            Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
           <Button
             size="lg"
@@ -856,7 +856,7 @@ const Index = () => {
       <section className="py-12 container max-w-5xl md:max-w-content" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Signalyz doesn't invent. It repositions what you already have.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-xl bg-[#2A2A2A] p-6 space-y-3">
@@ -869,7 +869,7 @@ const Index = () => {
             <ArrowDown className="h-6 w-6 text-muted-foreground" />
           </div>
           <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY RESUMIX</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY SIGNALYZ</p>
             <p className="text-sm text-foreground leading-relaxed">
               Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements — translating compliance and procedural complexity into clear, actionable guidance for business owners and HR administrators.
             </p>
@@ -933,7 +933,7 @@ const Index = () => {
         <div className="container max-w-5xl md:max-w-tool text-center">
           <h2 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">This isn't resume tailoring.</h2>
           <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-2xl mx-auto">
-            Most tools reframe your bullets with synonyms. Resumix diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and recalibrates your positioning from the threshold up.
+            Most tools reframe your bullets with synonyms. Signalyz diagnoses where your signal breaks — at the recruiter filter, the hiring manager review, the panel interview — and recalibrates your positioning from the threshold up.
           </p>
         </div>
       </section>
@@ -957,7 +957,7 @@ const Index = () => {
 
       {/* How it works */}
       <section className="py-12 container max-w-5xl md:max-w-content">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Resumix Works</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Signalyz Works</h2>
         <div className="space-y-5">
           {[
             { step: "1. Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
@@ -1548,27 +1548,27 @@ const Index = () => {
         </h2>
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="who-is-it-for">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Resumix for?</AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Signalyz for?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Resumix is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
+              Signalyz is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="fabrication">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Resumix make things up?</AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Signalyz make things up?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Resumix never invents experience, metrics, or achievements. All insights are derived from the information you provide.
+              No. Signalyz never invents experience, metrics, or achievements. All insights are derived from the information you provide.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="chatgpt">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT generates text. Resumix models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Resumix diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
+              ChatGPT generates text. Signalyz models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Signalyz diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="ats">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Resumix calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
+              No. Signalyz calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="full-analysis">
@@ -1578,7 +1578,7 @@ const Index = () => {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="pricing">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Resumix cost?</AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Signalyz cost?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
               You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
             </AccordionContent>

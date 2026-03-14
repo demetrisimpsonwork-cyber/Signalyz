@@ -95,7 +95,7 @@ serve(async (req) => {
     if (!roles || !Array.isArray(roles) || roles.length === 0) {
       const totalLen = JSON.stringify(body).length;
       if (totalLen < 200) {
-        return err(requestId, "INVALID_INPUT", "Please paste your resume text so Resumix can calibrate your signal.", { roles_provided: 0 });
+        return err(requestId, "INVALID_INPUT", "Please paste your resume text so Signalyz can calibrate your signal.", { roles_provided: 0 });
       }
       // Best-effort: no roles parsed but there's text — let AI handle it
     }

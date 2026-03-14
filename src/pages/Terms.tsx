@@ -11,15 +11,15 @@ const Terms = () => (
     <p className="text-sm text-muted-foreground">Last updated: March 2026</p>
 
     <Section title="1. Acceptance of Terms">
-      <p>By creating an account or using Resumix, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
+      <p>By creating an account or using Signalyz, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
     </Section>
 
     <Section title="2. Description of Service">
-      <p>Resumix provides AI-powered resume analysis, optimization, and role-alignment tools. The platform analyzes resumes and job descriptions to help users improve their job applications and better match target roles.</p>
+      <p>Signalyz provides AI-powered resume analysis, optimization, and role-alignment tools. The platform analyzes resumes and job descriptions to help users improve their job applications and better match target roles.</p>
     </Section>
 
     <Section title="3. User Responsibilities">
-      <p>You agree to provide accurate information when using the platform. You may not misuse Resumix, attempt to reverse-engineer its systems, or use it for any unlawful purpose.</p>
+      <p>You agree to provide accurate information when using the platform. You may not misuse Signalyz, attempt to reverse-engineer its systems, or use it for any unlawful purpose.</p>
     </Section>
 
     <Section title="4. Subscription & Billing">
@@ -31,11 +31,11 @@ const Terms = () => (
     </Section>
 
     <Section title="6. No Guarantee of Employment">
-      <p>Resumix provides guidance and optimization tools only. The platform does not guarantee job placement, interviews, or hiring outcomes. Employment decisions are made solely by employers.</p>
+      <p>Signalyz provides guidance and optimization tools only. The platform does not guarantee job placement, interviews, or hiring outcomes. Employment decisions are made solely by employers.</p>
     </Section>
 
     <Section title="7. Limitation of Liability">
-      <p>Resumix is not liable for employment results, decisions made by employers, or any indirect damages arising from the use of the platform. The service is provided "as is" without warranties of any kind.</p>
+      <p>Signalyz is not liable for employment results, decisions made by employers, or any indirect damages arising from the use of the platform. The service is provided "as is" without warranties of any kind.</p>
     </Section>
 
     <Section title="8. Contact">

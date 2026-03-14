@@ -23,7 +23,7 @@ const Privacy = () => (
     </Section>
 
     <Section title="3. Payment Processing">
-      <p>All payments are securely handled by <strong>Stripe</strong>. Resumix does not store, process, or have access to your credit card information.</p>
+      <p>All payments are securely handled by <strong>Stripe</strong>. Signalyz does not store, process, or have access to your credit card information.</p>
     </Section>
 
     <Section title="4. Data Protection">

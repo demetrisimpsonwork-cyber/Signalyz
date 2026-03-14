@@ -391,7 +391,7 @@ function ScoreExplanation({ score }: { score: number }) {
           Your signal score measures how clearly your experience communicates fit for this specific role — not how qualified you are. It reads ownership language, domain vocabulary, operational evidence, and stakeholder framing across six dimensions. The predicted score shows how much improvement is possible by repositioning your existing experience without fabricating anything new.
         </p>
         <p className="text-[10px] text-muted-foreground/70 italic">
-          Resumix never fabricates experience. It only recalibrates how your existing experience signals value.
+          Signalyz never fabricates experience. It only recalibrates how your existing experience signals value.
         </p>
       </PopoverContent>
     </Popover>

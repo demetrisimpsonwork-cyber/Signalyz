@@ -606,12 +606,12 @@ serve(async (req) => {
     const cleanJd = sanitizeInput(normalizedJd);
 
     if (cleanBullet.length < MIN_RESUME_CHARS) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Signalyz can analyze your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (cleanJd.length < MIN_JD_CHARS) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Resumix can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Signalyz can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -661,7 +661,7 @@ serve(async (req) => {
           status: "error",
           request_id: requestId,
           error_code: "RATE_LIMIT",
-          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Resumix Pro for unlimited alignments.`,
+          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
           status: 200,

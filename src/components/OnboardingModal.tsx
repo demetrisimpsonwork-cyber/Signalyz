@@ -35,7 +35,7 @@ const OnboardingModal = () => {
   const steps = [
     {
       headline: "This isn't resume tailoring.",
-      body: "Resumix diagnoses how hiring managers actually read your signal — and repositions your experience to close the gap. Without making anything up.",
+      body: "Signalyz diagnoses how hiring managers actually read your signal — and repositions your experience to close the gap. Without making anything up.",
       visual: (
         <div className="space-y-3 mt-4">
           <div className="rounded-lg bg-[#2A2A2A] p-4">
@@ -44,7 +44,7 @@ const OnboardingModal = () => {
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-primary" /></div>
           <div className="rounded-lg border-l-4 border-l-primary bg-white/5 p-4">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">AFTER RESUMIX</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">AFTER SIGNALYZ</p>
             <p className="text-xs text-white/90 mt-1">Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements.</p>
           </div>
         </div>

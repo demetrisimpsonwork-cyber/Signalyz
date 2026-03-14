@@ -122,7 +122,7 @@ const UpgradeModal = ({
             <br />
             They evaluate risk and signal strength.
             <br />
-            <span className="text-foreground font-medium">Resumix shows you what they actually see.</span>
+            <span className="text-foreground font-medium">Signalyz shows you what they actually see.</span>
           </p>
 
           <Separator className="my-5" />

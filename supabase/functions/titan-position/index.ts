@@ -138,7 +138,7 @@ serve(async (req) => {
     cleanJd = limits.jd;
 
     if (cleanExp.length < 20) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: cleanExp.length, jd_len: cleanJd.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Signalyz can analyze your signal.", details: { resume_len: cleanExp.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -256,7 +256,7 @@ JOB DESCRIPTION: ${cleanJd}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Resumix engine error:", message);
+    console.error("Signalyz engine error:", message);
     const friendly =
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("unavailable") ? "Our AI service is temporarily busy. Please try again in a moment." :

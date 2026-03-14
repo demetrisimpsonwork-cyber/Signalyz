@@ -815,7 +815,7 @@ const Position = () => {
 
       // 1) Try sessionStorage (same-session passthrough)
       try {
-        const raw = sessionStorage.getItem("resumix_alignment_score");
+        const raw = sessionStorage.getItem("signalyz_alignment_score");
         if (raw) {
           const stored = JSON.parse(raw);
           if (stored.jd_fingerprint === jdFingerprint && Date.now() - stored.ts < 30 * 60 * 1000) {
@@ -906,7 +906,7 @@ const Position = () => {
   const handleDownload = () => {
     if (!result) return;
     const lines: string[] = [
-      "RESUMIX — STRATEGIC POSITIONING ENGINE (ROLE DNA)",
+      "SIGNALYZ — STRATEGIC POSITIONING ENGINE (ROLE DNA)",
       "===================================================",
       "",
       "1. ROLE DNA EXTRACTION",
@@ -994,7 +994,7 @@ const Position = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "resumix-positioning.txt";
+    a.download = "signalyz-positioning.txt";
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Download started", { duration: 1500 });

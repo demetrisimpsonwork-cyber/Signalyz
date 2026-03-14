@@ -70,7 +70,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setPendingResume(null);
     setStep(3);
     try {
-      localStorage.setItem("resumix_calibrated_resume_data", JSON.stringify(resume));
+      localStorage.setItem("signalyz_calibrated_resume_data", JSON.stringify(resume));
     } catch {}
   }, []);
 

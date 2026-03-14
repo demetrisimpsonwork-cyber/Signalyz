@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 const DAILY_FREE_LIMIT = 3;
 
 function getSessionToken(): string {
-  const key = "resumix_session_token";
+  const key = "signalyz_session_token";
   let token = localStorage.getItem(key);
   if (!token) {
     token = crypto.randomUUID();
@@ -40,7 +40,7 @@ export function useDailyUsage(isPro: boolean) {
       } else {
         // Guest: use session token — query via edge function or just rely on server enforcement
         // We can't query usage_tracking directly without auth (RLS), so use local fallback
-        const key = "resumix_daily_usage";
+        const key = "signalyz_daily_usage";
         try {
           const raw = localStorage.getItem(key);
           if (raw) {
@@ -70,7 +70,7 @@ export function useDailyUsage(isPro: boolean) {
       // For guests, also update localStorage for UI display
       const today = new Date().toISOString().slice(0, 10);
       try {
-        localStorage.setItem("resumix_daily_usage", JSON.stringify({ date: today, count: next }));
+        localStorage.setItem("signalyz_daily_usage", JSON.stringify({ date: today, count: next }));
       } catch {}
       return next;
     });

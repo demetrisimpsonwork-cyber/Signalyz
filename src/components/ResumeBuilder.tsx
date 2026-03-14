@@ -162,7 +162,7 @@ function parseExperience(text: string): ParsedResume {
     if (role.isIndependent) continue;
     const companyLower = (role.company || role.title || "").toLowerCase();
     if (!role.dateRange && (
-      companyLower.includes("resumix") || companyLower.includes("vela") ||
+      companyLower.includes("signalyz") || companyLower.includes("resumix") || companyLower.includes("vela") ||
       companyLower.includes("personal") || companyLower.includes("independent") ||
       companyLower.includes("self-") || companyLower.includes("founder") ||
       companyLower.includes("side project") || companyLower.includes("freelance")

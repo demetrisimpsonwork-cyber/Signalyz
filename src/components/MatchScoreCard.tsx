@@ -83,7 +83,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
               It does not judge your ability or invent qualifications. A lower score simply means the signal from your resume is not landing clearly yet with hiring systems and managers.
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Resumix analyzes where that signal breaks and shows how to reposition your real experience so it reads the way it was meant to be understood.
+              Signalyz analyzes where that signal breaks and shows how to reposition your real experience so it reads the way it was meant to be understood.
             </p>
             <div className="border-t pt-3">
               <p className="text-xs font-medium text-foreground mb-2">Score Breakdown</p>
