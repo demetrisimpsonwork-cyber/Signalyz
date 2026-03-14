@@ -957,7 +957,7 @@ const Index = () => {
 
       {/* How it works */}
       <section className="py-12 container max-w-5xl md:max-w-content">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Resumix Works</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">How Signalyz Works</h2>
         <div className="space-y-5">
           {[
             { step: "1. Detect Employer Priority Signals", desc: "Surface what the role actually weights — ownership scope, strategic depth, cross-functional complexity, and business impact thresholds." },
