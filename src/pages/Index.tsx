@@ -485,7 +485,7 @@ const Index = () => {
   ];
 
   const CREDENTIAL_BLOCK_MSG =
-    "This role requires credentials not found in your resume. Resumix works best when your experience already qualifies you — the signal just needs repositioning.";
+    "This role requires credentials not found in your resume. Signalyz works best when your experience already qualifies you — the signal just needs repositioning.";
 
   const checkCredentialMismatch = (resumeText: string, jdText: string): boolean => {
     const resumeUpper = resumeText.toUpperCase();
