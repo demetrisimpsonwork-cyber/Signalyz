@@ -856,7 +856,7 @@ const Index = () => {
       <section className="py-12 container max-w-5xl md:max-w-content" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Resumix doesn't invent. It repositions what you already have.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Signalyz doesn't invent. It repositions what you already have.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-xl bg-[#2A2A2A] p-6 space-y-3">
