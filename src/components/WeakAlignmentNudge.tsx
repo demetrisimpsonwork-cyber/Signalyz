@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface WeakAlignmentNudgeProps {
   additionalContext: string;
   onContextChange: (value: string) => void;
+  onRerun?: () => void;
 }
 
-const WeakAlignmentNudge = ({ additionalContext, onContextChange }: WeakAlignmentNudgeProps) => {
+const WeakAlignmentNudge = ({ additionalContext, onContextChange, onRerun }: WeakAlignmentNudgeProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -23,13 +25,25 @@ const WeakAlignmentNudge = ({ additionalContext, onContextChange }: WeakAlignmen
         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
       {expanded && (
-        <Textarea
-          placeholder="e.g. Used Jira for sprint planning, improved velocity by 20%, led 8-person team..."
-          value={additionalContext}
-          onChange={(e) => onContextChange(e.target.value)}
-          rows={3}
-          className="mt-2 text-sm"
-        />
+        <div className="space-y-2 mt-2">
+          <Textarea
+            placeholder="e.g. Used Jira for sprint planning, improved velocity by 20%, led 8-person team..."
+            value={additionalContext}
+            onChange={(e) => onContextChange(e.target.value)}
+            rows={3}
+            className="text-sm"
+          />
+          {additionalContext.trim() && onRerun && (
+            <Button
+              size="sm"
+              className="w-full gap-2"
+              onClick={onRerun}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Re-run with context
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
