@@ -790,10 +790,13 @@ const Index = () => {
     }
   };
 
+  const sampleLoadedRef = useRef(false);
   const fillSample = (roleIndex = selectedSampleRole) => {
     const role = SAMPLE_ROLES[roleIndex];
+    sampleLoadedRef.current = true;
     setBullet(role.bullet);
     setJd(role.jd);
+    setErrors({});
   };
 
   const role = SAMPLE_ROLES[selectedSampleRole];
