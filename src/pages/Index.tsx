@@ -869,7 +869,7 @@ const Index = () => {
             <ArrowDown className="h-6 w-6 text-muted-foreground" />
           </div>
           <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY RESUMIX</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY SIGNALYZ</p>
             <p className="text-sm text-foreground leading-relaxed">
               Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements — translating compliance and procedural complexity into clear, actionable guidance for business owners and HR administrators.
             </p>
