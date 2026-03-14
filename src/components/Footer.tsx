@@ -6,7 +6,7 @@ const Footer = () => (
       {/* Brand */}
       <div className="space-y-2">
         <p className="text-base font-semibold tracking-tight text-foreground">
-          Resum<span className="text-primary">ix</span>
+          Signal<span className="text-primary">yz</span>
         </p>
         <p className="text-sm text-muted-foreground">
           Signal calibration for job seekers who already qualify — and need hiring systems to read them that way.
