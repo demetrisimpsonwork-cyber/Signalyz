@@ -132,7 +132,7 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
         {elapsed >= 50
           ? "Almost there — finalizing your signal analysis."
           : elapsed >= 30
-          ? "Complex resumes take up to 60 seconds. Hang tight."
+          ? "Complex resumes may take up to 2 minutes. Hang tight."
           : elapsed >= 15
           ? "Deep analysis in progress — scoring across 5 dimensions."
           : "Full resume + job description analyses typically take 30–60 seconds."}

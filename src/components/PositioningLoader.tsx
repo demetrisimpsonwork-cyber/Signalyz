@@ -131,7 +131,7 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
         {elapsed >= 50
           ? "Almost there — finalizing your signal analysis."
           : elapsed >= 30
-          ? "Complex resumes take up to 60 seconds. Hang tight."
+          ? "Complex resumes may take up to 2 minutes. Hang tight."
           : elapsed >= 15
           ? "Deep analysis in progress — scoring across multiple dimensions."
           : "Full signal analysis typically takes ~60 seconds. Zero fabrication • Your data remains private."}
