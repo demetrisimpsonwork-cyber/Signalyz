@@ -1562,7 +1562,7 @@ const Index = () => {
           <AccordionItem value="chatgpt">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT generates text. Resumix models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Resumix diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
+              ChatGPT generates text. Signalyz models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Signalyz diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="ats">
