@@ -99,8 +99,8 @@ serve(async (req) => {
         payment_method_types: ["card"],
         line_items: [{ price: oneTimePriceId, quantity: 1 }],
         mode: "payment",
-        success_url: successUrl || "https://resumix.app/?purchase=success",
-        cancel_url: cancelUrl || "https://resumix.app/?purchase=cancelled",
+        success_url: successUrl || "https://signalyz.app/?purchase=success",
+        cancel_url: cancelUrl || "https://signalyz.app/?purchase=cancelled",
         metadata: { user_id: userId, purchase_type: "one_time_diagnostic" },
       });
 
