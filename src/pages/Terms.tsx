@@ -11,7 +11,7 @@ const Terms = () => (
     <p className="text-sm text-muted-foreground">Last updated: March 2026</p>
 
     <Section title="1. Acceptance of Terms">
-      <p>By creating an account or using Resumix, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
+      <p>By creating an account or using Signalyz, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
     </Section>
 
     <Section title="2. Description of Service">
