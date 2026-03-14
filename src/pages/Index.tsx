@@ -722,7 +722,7 @@ const Index = () => {
 
       try {
         const jdFingerprint = normJd.text.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
-        sessionStorage.setItem("resumix_alignment_score", JSON.stringify({
+        sessionStorage.setItem("signalyz_alignment_score", JSON.stringify({
           score: res.match_score,
           jd_fingerprint: jdFingerprint,
           ts: Date.now(),
