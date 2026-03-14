@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 const DAILY_FREE_LIMIT = 3;
 
 function getSessionToken(): string {
-  const key = "resumix_session_token";
+  const key = "signalyz_session_token";
   let token = localStorage.getItem(key);
   if (!token) {
     token = crypto.randomUUID();
