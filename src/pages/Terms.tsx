@@ -19,7 +19,7 @@ const Terms = () => (
     </Section>
 
     <Section title="3. User Responsibilities">
-      <p>You agree to provide accurate information when using the platform. You may not misuse Resumix, attempt to reverse-engineer its systems, or use it for any unlawful purpose.</p>
+      <p>You agree to provide accurate information when using the platform. You may not misuse Signalyz, attempt to reverse-engineer its systems, or use it for any unlawful purpose.</p>
     </Section>
 
     <Section title="4. Subscription & Billing">
