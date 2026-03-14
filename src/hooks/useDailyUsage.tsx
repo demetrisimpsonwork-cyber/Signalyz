@@ -40,7 +40,7 @@ export function useDailyUsage(isPro: boolean) {
       } else {
         // Guest: use session token — query via edge function or just rely on server enforcement
         // We can't query usage_tracking directly without auth (RLS), so use local fallback
-        const key = "resumix_daily_usage";
+        const key = "signalyz_daily_usage";
         try {
           const raw = localStorage.getItem(key);
           if (raw) {
