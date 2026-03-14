@@ -815,7 +815,7 @@ const Index = () => {
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Resumix reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
+            Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
           <Button
             size="lg"
