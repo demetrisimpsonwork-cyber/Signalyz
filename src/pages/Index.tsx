@@ -535,6 +535,11 @@ const Index = () => {
   };
 
   const validate = () => {
+    if (sampleLoadedRef.current) {
+      sampleLoadedRef.current = false;
+      setErrors({});
+      return true;
+    }
     const errs: typeof errors = {};
     if (!bullet.trim()) {
       errs.bullet = "Add your resume to continue";
@@ -790,10 +795,13 @@ const Index = () => {
     }
   };
 
+  const sampleLoadedRef = useRef(false);
   const fillSample = (roleIndex = selectedSampleRole) => {
     const role = SAMPLE_ROLES[roleIndex];
+    sampleLoadedRef.current = true;
     setBullet(role.bullet);
     setJd(role.jd);
+    setErrors({});
   };
 
   const role = SAMPLE_ROLES[selectedSampleRole];
