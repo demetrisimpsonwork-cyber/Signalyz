@@ -1536,6 +1536,7 @@ const Index = () => {
                       <WeakAlignmentNudge
                         additionalContext={additionalContext}
                         onContextChange={setAdditionalContext}
+                        onRerun={handleOptimize}
                       />
                     )}
 
