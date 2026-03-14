@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const Contact = () => (
   <main className="container max-w-2xl py-16 space-y-10">
     <section className="space-y-3">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Contact Resumix Support</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">Contact Signalyz Support</h1>
       <p className="text-muted-foreground leading-relaxed">
         Have a question about your subscription, billing, or a technical issue? We're here to help. Reach out and our team will get back to you as quickly as possible.
       </p>

@@ -994,7 +994,7 @@ const Position = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "resumix-positioning.txt";
+    a.download = "signalyz-positioning.txt";
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Download started", { duration: 1500 });

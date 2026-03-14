@@ -35,7 +35,7 @@ const Terms = () => (
     </Section>
 
     <Section title="7. Limitation of Liability">
-      <p>Resumix is not liable for employment results, decisions made by employers, or any indirect damages arising from the use of the platform. The service is provided "as is" without warranties of any kind.</p>
+      <p>Signalyz is not liable for employment results, decisions made by employers, or any indirect damages arising from the use of the platform. The service is provided "as is" without warranties of any kind.</p>
     </Section>
 
     <Section title="8. Contact">

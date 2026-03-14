@@ -23,7 +23,7 @@ const RefundPolicy = () => (
     </Section>
 
     <Section title="Refund Policy">
-      <p>Due to the digital and instant-access nature of Resumix, refunds are generally not issued once access has been granted. If you believe there are exceptional circumstances, please contact our support team and we will review your case.</p>
+      <p>Due to the digital and instant-access nature of Signalyz, refunds are generally not issued once access has been granted. If you believe there are exceptional circumstances, please contact our support team and we will review your case.</p>
     </Section>
 
     <Section title="Billing Questions">
