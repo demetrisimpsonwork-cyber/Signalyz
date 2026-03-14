@@ -1568,7 +1568,7 @@ const Index = () => {
           <AccordionItem value="ats">
             <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Resumix calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
+              No. Signalyz calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="full-analysis">
