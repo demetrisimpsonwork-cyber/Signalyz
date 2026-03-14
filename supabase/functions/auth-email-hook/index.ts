@@ -16,8 +16,10 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-lovable-signature, x-lovable-timestamp, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+const SIGNUP_SUBJECT = 'Confirm your Signalyz account.'
+
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your Signalyz account.',
+  signup: SIGNUP_SUBJECT,
   invite: "You've been invited to Signalyz",
   magiclink: 'Your Signalyz login link',
   recovery: 'Reset your Signalyz password',
@@ -36,10 +38,11 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "Signalyz"
-const SENDER_DOMAIN = "notify.signalyz.ai"
-const ROOT_DOMAIN = "signalyz.ai"
-const FROM_DOMAIN = "signalyz.ai" // Domain shown in From address (may be root or sender subdomain)
+const SITE_NAME = 'Signalyz'
+const FROM_NAME = 'Signalyz'
+const SENDER_DOMAIN = 'notify.signalyz.ai'
+const ROOT_DOMAIN = 'signalyz.ai'
+const FROM_DOMAIN = 'signalyz.ai' // Domain shown in From address (may be root or sender subdomain)
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -256,9 +259,9 @@ async function handleWebhook(req: Request): Promise<Response> {
       run_id,
       message_id: messageId,
       to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: `${FROM_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      subject: emailType === 'signup' ? SIGNUP_SUBJECT : (EMAIL_SUBJECTS[emailType] || 'Notification'),
       html,
       text,
       purpose: 'transactional',
