@@ -611,7 +611,7 @@ serve(async (req) => {
       });
     }
     if (cleanJd.length < MIN_JD_CHARS) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Resumix can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste the job description responsibilities and requirements so Signalyz can calibrate your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
