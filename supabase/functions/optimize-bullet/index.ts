@@ -606,7 +606,7 @@ serve(async (req) => {
     const cleanJd = sanitizeInput(normalizedJd);
 
     if (cleanBullet.length < MIN_RESUME_CHARS) {
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INPUT_TOO_SHORT", message: "Please paste more of your Experience section so Signalyz can analyze your signal.", details: { resume_len: cleanBullet.length, jd_len: cleanJd.length } }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
