@@ -535,6 +535,11 @@ const Index = () => {
   };
 
   const validate = () => {
+    if (sampleLoadedRef.current) {
+      sampleLoadedRef.current = false;
+      setErrors({});
+      return true;
+    }
     const errs: typeof errors = {};
     if (!bullet.trim()) {
       errs.bullet = "Add your resume to continue";
