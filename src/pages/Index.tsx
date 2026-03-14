@@ -1554,9 +1554,9 @@ const Index = () => {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="fabrication">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Resumix make things up?</AccordionTrigger>
+            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Signalyz make things up?</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Resumix never invents experience, metrics, or achievements. All insights are derived from the information you provide.
+              No. Signalyz never invents experience, metrics, or achievements. All insights are derived from the information you provide.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="chatgpt">
