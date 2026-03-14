@@ -1124,7 +1124,7 @@ serve(async (req) => {
     // ── Normal mode ──────────────────────────────────────────────────────────
     if (!experience?.trim()) {
       console.log(JSON.stringify({ event: "validation_error", request_id: requestId, reason: "empty_experience" }));
-      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Please paste more of your Experience section so Resumix can analyze your signal.", details: { resume_len: 0 } }), {
+      return new Response(JSON.stringify({ status: "error", request_id: requestId, error_code: "INVALID_INPUT", message: "Please paste more of your Experience section so Signalyz can analyze your signal.", details: { resume_len: 0 } }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
