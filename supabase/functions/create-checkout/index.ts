@@ -92,7 +92,7 @@ serve(async (req) => {
 
     if (isOneTime) {
       // One-time $9 purchase — use the fixed price ID
-      const oneTimePriceId = "price_1T9bVKIVDdqGTZ8BHvEvEBiv";
+      const oneTimePriceId = "price_1TAy60IDMeVzaL9pMv2FUbvl";
 
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customerId,
