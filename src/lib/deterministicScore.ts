@@ -280,7 +280,33 @@ export function computeDeterministicScore(resumeText: string, jdText: string): D
     (context_and_scale_alignment * 0.15) +
     (communication_and_leadership_alignment * 0.15);
 
-  const finalScore = Math.floor(weightedSum);
+  // ─── Calibrated-language signal boost ────────────────────────────────────────
+  // Activates only when the resume shows elevated ownership density, high JD
+  // keyword coverage, AND low passive-voice usage — the signature of a
+  // repositioned / calibrated resume vs. an unedited original.
+  const ownershipDensitySignal = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
+  const passiveDensitySignal   = toDensityPer100Words(passiveHits, resumeTokens.length);
+
+  // Three independent gates — all must fire for the boost to apply:
+  //  1. Strong ownership verb density ≥ 0.40 per 100 words (originals typically ~0.15-0.25)
+  //  2. JD keyword coverage ≥ 55% (originals typically 30-45%)
+  //  3. Passive-voice density < 0.20 per 100 words (calibrated text removes passive voice)
+  const isCalibratedLanguage =
+    ownershipDensitySignal >= 0.40 &&
+    effectiveKeywordCoverage >= 0.55 &&
+    passiveDensitySignal < 0.20;
+
+  let calibratedBoost = 0;
+  if (isCalibratedLanguage) {
+    // Intensity scales with how far above the thresholds the signals are,
+    // clamped so the total boost stays in the 8-15 point range.
+    const ownershipExcess  = clamp01((ownershipDensitySignal - 0.40) / 0.40);   // 0→1
+    const coverageExcess   = clamp01((effectiveKeywordCoverage - 0.55) / 0.35);  // 0→1
+    const intensity = (ownershipExcess * 0.5) + (coverageExcess * 0.5);
+    calibratedBoost = 8 + Math.round(intensity * 7);  // 8–15
+  }
+
+  const finalScore = Math.floor(weightedSum) + calibratedBoost;
 
   return {
     finalScore,
