@@ -200,12 +200,12 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
           doc.setFontSize(10);
           doc.setTextColor("#666666");
           const descText = `— ${proj.description.trim()}`;
-          const descMaxW = 170; // A4 page width (210) - 40mm (20mm each side)
-          const descLines = doc.splitTextToSize(descText, descMaxW) as string[];
+          const descLines = doc.splitTextToSize(descText, 170) as string[];
           const descLh = (10 * 1.35 * 25.4) / 72;
           for (const dl of descLines) {
             ensureSpace(descLh);
-            doc.setFont("helvetica", "normal");
+            doc.setFont(undefined, "normal");
+            doc.setFontSize(10);
             doc.text(dl, ML, y);
             y += descLh;
           }
