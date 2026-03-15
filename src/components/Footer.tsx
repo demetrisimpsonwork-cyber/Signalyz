@@ -33,7 +33,7 @@ const Footer = () => (
 
       {/* Support Contact */}
       <p className="text-[11px] text-muted-foreground/70">
-        Support: Demetri.Simpson.work@gmail.com
+        Support: support@signalyz.ai
       </p>
 
       {/* Copyright */}
