@@ -9,6 +9,7 @@ export interface SubscriptionState {
   isPro: boolean;
   isFree: boolean;
   hasOneTimeCredit: boolean;
+  hasConsumedOneTimeCredit: boolean;
   dailyRunCount: number;
   dailyRunsRemaining: number;
   loading: boolean;
