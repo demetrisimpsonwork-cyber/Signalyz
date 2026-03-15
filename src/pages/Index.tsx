@@ -341,6 +341,7 @@ const Index = () => {
   const [bullet, setBullet] = useState("");
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
+  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
