@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export async function initiateCheckout(mode: "subscription" | "one_time" = "subscription") {
   const {
@@ -27,6 +28,11 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
 
     if (error) {
       console.error("[Checkout] Edge function error:", error);
+      toast({
+        title: "Checkout unavailable",
+        description: "We couldn't start the checkout process. Please try again in a moment.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -36,8 +42,18 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
       window.location.href = data.url;
     } else {
       console.error("[Checkout] No URL returned from edge function", data);
+      toast({
+        title: "Checkout unavailable",
+        description: "We couldn't start the checkout process. Please try again in a moment.",
+        variant: "destructive",
+      });
     }
   } catch (err) {
     console.error("[Checkout] Exception:", err);
+    toast({
+      title: "Checkout unavailable",
+      description: "Something went wrong. Please try again.",
+      variant: "destructive",
+    });
   }
 }
