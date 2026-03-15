@@ -251,7 +251,7 @@ const History = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { setLoading(false); return; }
     supabase
       .from("alignment_history")
       .select("id, created_at, inferred_role, score, strength_label, top_gap, resume_built")
@@ -271,6 +271,9 @@ const History = () => {
         setLoading(false);
       });
   }, [user, authLoading]);
+
+  // Use mock data for non-pro users to show blurred preview
+  const displayEntries = isPro ? entries : MOCK_ENTRIES;
 
   /* ── chart data with smart x-axis ── */
   const chartData = useMemo(() => {
