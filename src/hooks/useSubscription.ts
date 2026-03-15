@@ -188,6 +188,7 @@ export function useSubscription(): SubscriptionState {
     isPro: data?.isPro ?? false,
     isFree: data?.isFree ?? true,
     hasOneTimeCredit: data?.hasOneTimeCredit ?? false,
+    hasConsumedOneTimeCredit: data?.hasConsumedOneTimeCredit ?? false,
     dailyRunCount: data?.dailyRunCount ?? 0,
     dailyRunsRemaining: data?.dailyRunsRemaining ?? FREE_DAILY_LIMIT,
     loading: isLoading || !authReady,

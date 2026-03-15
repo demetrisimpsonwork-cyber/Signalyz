@@ -156,7 +156,7 @@ const UpgradeModal = ({
                 initiateCheckout("one_time");
               }}
             >
-              Unlock Full Report — $9 one-time
+              {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Unlock Full Report — $9 one-time"}
             </Button>
 
             <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>

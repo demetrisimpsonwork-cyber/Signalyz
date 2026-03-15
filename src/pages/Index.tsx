@@ -1238,7 +1238,11 @@ const Index = () => {
                         <div className="space-y-1 flex-1">
                           <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
                           <p className="text-sm text-muted-foreground">
-                            {user ? "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments." : "Sign up to get 3 free analyses."}
+                            {user
+                              ? hasConsumedOneTimeCredit
+                                ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
+                                : "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments."
+                              : "Sign up to get 3 free analyses."}
                           </p>
                         </div>
                       </div>
