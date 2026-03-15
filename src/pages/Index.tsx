@@ -98,7 +98,7 @@ const SAMPLE_ROLES: SampleRole[] = [
   },
   {
     label: "Marketing Manager",
-    bullet: `Led integrated campaigns across email, paid social, and organic channels for a B2B SaaS company targeting HR and finance decision-makers. Managed a $120K quarterly campaign budget and reported ROI to VP of Marketing monthly. Built and maintained the content calendar, coordinating with design, product, and sales to align messaging. Tracked funnel performance in HubSpot — identifying drop-off points and testing variations to improve conversion rates.`,
+    bullet: `Experience\n\nMarketing Manager | BrightPath Corp | 2021 - Present\n- Led integrated campaigns across email, paid social, and organic channels for a B2B SaaS company targeting HR and finance decision-makers.\n- Managed a $120K quarterly campaign budget and reported ROI to VP of Marketing monthly.\n- Built and maintained the content calendar, coordinating with design, product, and sales to align messaging.\n- Tracked funnel performance in HubSpot — identifying drop-off points and testing variations to improve conversion rates.`,
     jd: `Looking for a Marketing Manager to own demand generation strategy across digital channels. Plan and execute integrated campaigns, manage budget allocation, analyze funnel performance, partner with sales to optimize lead quality. Required: B2B demand gen, HubSpot/Marketo, budget ownership, funnel analytics.`,
     sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month.",
     sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes.",
