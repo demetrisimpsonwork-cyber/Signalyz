@@ -1126,7 +1126,7 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
