@@ -160,7 +160,7 @@ export interface DeterministicScoreResult {
 
 export type RunType = "original" | "calibrated";
 
-export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original"): DeterministicScoreResult {
+export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original", originalResumeText?: string): DeterministicScoreResult {
   const rawResume = resumeText;
   const normalizedResume = normalizeText(rawResume);
   const sanitizedResume = sanitizeInput(normalizedResume);
