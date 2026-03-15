@@ -362,7 +362,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const { isPro, isFree, hasOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
+  const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
@@ -1166,9 +1166,11 @@ const Index = () => {
                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
                             Upgrade to Pro for Unlimited Runs
                           </Button>
-                          <p className="text-xs text-muted-foreground">
-                            You've used your 3 free analyses today. Upgrade to Pro for unlimited runs.
-                          </p>
+                           <p className="text-xs text-muted-foreground">
+                            {hasConsumedOneTimeCredit
+                              ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
+                              : "You've used your 3 free analyses today. Upgrade to Pro for unlimited runs."}
+                           </p>
                         </>
                       ) : (
                         <>
@@ -1236,7 +1238,11 @@ const Index = () => {
                         <div className="space-y-1 flex-1">
                           <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
                           <p className="text-sm text-muted-foreground">
-                            {user ? "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments." : "Sign up to get 3 free analyses."}
+                            {user
+                              ? hasConsumedOneTimeCredit
+                                ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
+                                : "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments."
+                              : "Sign up to get 3 free analyses."}
                           </p>
                         </div>
                       </div>
@@ -1611,6 +1617,7 @@ const Index = () => {
         trialLimit={TRIAL_LIMIT}
         onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
         isAuthenticated={!!user}
+        hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
       />
     </div>
   );

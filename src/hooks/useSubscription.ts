@@ -9,6 +9,7 @@ export interface SubscriptionState {
   isPro: boolean;
   isFree: boolean;
   hasOneTimeCredit: boolean;
+  hasConsumedOneTimeCredit: boolean;
   dailyRunCount: number;
   dailyRunsRemaining: number;
   loading: boolean;
@@ -50,6 +51,16 @@ async function fetchSubscriptionData() {
 
   const hasOneTimeCredit = !!(credits && (credits as any[]).length > 0);
 
+  // Check for consumed one-time purchases (user bought $9 but already used it)
+  const { data: usedCredits } = await supabase
+    .from("one_time_purchases" as any)
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("used", true)
+    .limit(1);
+
+  const hasConsumedOneTimeCredit = !!(usedCredits && (usedCredits as any[]).length > 0);
+
   // Reset daily count if it's a new day
   const resetAt = profile.daily_run_reset_at
     ? new Date(profile.daily_run_reset_at)
@@ -79,6 +90,7 @@ async function fetchSubscriptionData() {
     isPro: isPaid,
     isFree: !isPaid,
     hasOneTimeCredit,
+    hasConsumedOneTimeCredit,
     dailyRunCount: runCount,
     dailyRunsRemaining: isPaid ? 999 : Math.max(0, FREE_DAILY_LIMIT - runCount),
     _debug: {
@@ -88,6 +100,7 @@ async function fetchSubscriptionData() {
       rawSubId: (profile as any).subscription_id,
       resolvedTier: isPaid ? "pro" : "free",
       hasOneTimeCredit,
+      hasConsumedOneTimeCredit,
       queriedAt: new Date().toISOString(),
     },
   };
@@ -175,6 +188,7 @@ export function useSubscription(): SubscriptionState {
     isPro: data?.isPro ?? false,
     isFree: data?.isFree ?? true,
     hasOneTimeCredit: data?.hasOneTimeCredit ?? false,
+    hasConsumedOneTimeCredit: data?.hasConsumedOneTimeCredit ?? false,
     dailyRunCount: data?.dailyRunCount ?? 0,
     dailyRunsRemaining: data?.dailyRunsRemaining ?? FREE_DAILY_LIMIT,
     loading: isLoading || !authReady,
