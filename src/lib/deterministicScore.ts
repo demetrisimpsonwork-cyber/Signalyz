@@ -160,7 +160,7 @@ export interface DeterministicScoreResult {
 
 export type RunType = "original" | "calibrated";
 
-export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original"): DeterministicScoreResult {
+export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original", originalResumeText?: string): DeterministicScoreResult {
   const rawResume = resumeText;
   const normalizedResume = normalizeText(rawResume);
   const sanitizedResume = sanitizeInput(normalizedResume);
@@ -282,49 +282,101 @@ export function computeDeterministicScore(resumeText: string, jdText: string, ru
     (context_and_scale_alignment * 0.15) +
     (communication_and_leadership_alignment * 0.15);
 
-  // ─── Calibrated-language signal boost (only for run_type === "calibrated") ──
+  // ─── Calibrated-language signal boost with delta-validation ──
   const baseScore = Math.floor(weightedSum);
   let finalScore = baseScore;
 
-  if (runType === "calibrated") {
-    // Signal 1: Ownership language density in bullets
-    const ownershipDensitySignal = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
-    const hasOwnershipLanguage = ownershipDensitySignal >= 0.35;
+  if (runType === "calibrated" && originalResumeText) {
+    // ── Measure signals on the CURRENT (calibrated) resume ──
+    const ownershipDensityNow = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
+    const passiveDensityNow = toDensityPer100Words(passiveHits, resumeTokens.length);
+    const keywordCoverageNow = effectiveKeywordCoverage;
+    const outcomeDensityNow = toDensityPer100Words(outcomeLanguageHits + quantifiedOutcomeHits, resumeTokens.length);
 
-    // Signal 2: JD-mirrored vocabulary used in experience bullets (not just skills)
-    // effectiveKeywordCoverage already measures JD keyword presence across the full resume
-    const hasJdMirroredVocab = effectiveKeywordCoverage >= 0.45;
-
-    // Signal 3: Bullet lead verb rate above 75%
-    // Count lines that start with a strong or partial ownership verb
     const bulletLines = sanitizedResume.split(/\n/).map(l => l.trim()).filter(l => l.length > 15);
     const allLeadVerbs = [...OWNERSHIP_STRONG_PHRASES, ...OWNERSHIP_PARTIAL_PHRASES];
     const verbLedCount = bulletLines.reduce((count, line) => {
       const lower = line.toLowerCase();
-      const startsWithVerb = allLeadVerbs.some(v => lower.startsWith(v));
-      return count + (startsWithVerb ? 1 : 0);
+      return count + (allLeadVerbs.some(v => lower.startsWith(v)) ? 1 : 0);
     }, 0);
-    const verbLeadRate = bulletLines.length > 0 ? verbLedCount / bulletLines.length : 0;
-    const hasHighVerbLeadRate = verbLeadRate >= 0.75;
+    const verbLeadRateNow = bulletLines.length > 0 ? verbLedCount / bulletLines.length : 0;
 
-    // Anti-stuffing gate: flag if any single JD keyword appears > 6 times
+    // ── Measure the SAME signals on the ORIGINAL resume ──
+    const origNormalized = normalizeText(originalResumeText);
+    const origSanitized = sanitizeInput(origNormalized);
+    const origTokens = tokenize(origSanitized);
+    const origTokenSet = new Set(origTokens);
+    const origLower = origSanitized.toLowerCase();
+
+    const origOwnershipStrong = countPhraseHits(origLower, OWNERSHIP_STRONG_PHRASES);
+    const origPassive = countPhraseHits(origLower, PASSIVE_PHRASES);
+    const origOutcomeLang = countPhraseHits(origLower, OUTCOME_TERMS);
+    const origQuantified = (origLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
+
+    const origOwnershipDensity = toDensityPer100Words(origOwnershipStrong, origTokens.length);
+    const origPassiveDensity = toDensityPer100Words(origPassive, origTokens.length);
+    const origOutcomeDensity = toDensityPer100Words(origOutcomeLang + origQuantified, origTokens.length);
+
+    // Original keyword coverage
+    const origExactHits = jdModel.keywords.reduce((s, t) => s + (origTokenSet.has(t) ? 1 : 0), 0);
+    const origStemSet = new Set(origTokens.map(stem).filter(s => s.length >= 3));
+    const origStemHits = jdModel.stemmedKeywords.reduce((s, t) => s + (origStemSet.has(t) ? 1 : 0), 0);
+    const origKeywordCoverage = Math.max(
+      origExactHits / Math.max(jdModel.keywords.length, 1),
+      (origStemHits / Math.max(jdModel.stemmedKeywords.length, 1)) * 0.92,
+    );
+
+    const origBulletLines = origSanitized.split(/\n/).map(l => l.trim()).filter(l => l.length > 15);
+    const origVerbLed = origBulletLines.reduce((c, line) => {
+      const lower = line.toLowerCase();
+      return c + (allLeadVerbs.some(v => lower.startsWith(v)) ? 1 : 0);
+    }, 0);
+    const origVerbLeadRate = origBulletLines.length > 0 ? origVerbLed / origBulletLines.length : 0;
+
+    // ── Compute deltas (positive = improvement) ──
+    const deltaOwnership = ownershipDensityNow - origOwnershipDensity;
+    const deltaKeywordCov = keywordCoverageNow - origKeywordCoverage;
+    const deltaVerbRate = verbLeadRateNow - origVerbLeadRate;
+    const deltaOutcome = outcomeDensityNow - origOutcomeDensity;
+    const deltaPassive = origPassiveDensity - passiveDensityNow; // reduction is positive
+
+    // ── Validate: at least 3 of 5 dimensions must show improvement ──
+    const improvementFlags = [
+      deltaOwnership > 0.05,
+      deltaKeywordCov > 0.05,
+      deltaVerbRate > 0.05,
+      deltaOutcome > 0.03,
+      deltaPassive > 0.02,
+    ];
+    const improvementCount = improvementFlags.filter(Boolean).length;
+    const hasValidatedImprovement = improvementCount >= 3;
+
+    // ── Anti-stuffing gate ──
     const maxKeywordFreq = jdModel.keywords.reduce((mx, token) => {
       const count = resumeTokens.filter(t => t === token).length;
       return Math.max(mx, count);
     }, 0);
     const isKeywordStuffed = maxKeywordFreq > 6;
 
-    if (hasOwnershipLanguage && hasJdMirroredVocab && hasHighVerbLeadRate && !isKeywordStuffed) {
-      // Floor guarantee: only lifts scores that would otherwise under-credit calibrated text.
-      // The floor is modest (baseline + 8) with a small intensity bonus (0–3 pts max).
-      // baseScore remains the primary score source — floor only prevents under-crediting.
+    // ── Absolute quality gates (calibrated text must still meet minimums) ──
+    const meetsQualityGates =
+      ownershipDensityNow >= 0.35 &&
+      keywordCoverageNow >= 0.45 &&
+      verbLeadRateNow >= 0.75;
+
+    if (hasValidatedImprovement && meetsQualityGates && !isKeywordStuffed) {
+      // Delta-weighted floor: stronger real improvement → slightly higher floor
       const BASELINE_SCORE = 59;
       const boostFloor = BASELINE_SCORE + 8; // minimum 67
-      const ownershipExcess = clamp01((ownershipDensitySignal - 0.35) / 0.40);
-      const coverageExcess  = clamp01((effectiveKeywordCoverage - 0.45) / 0.40);
-      const verbExcess      = clamp01((verbLeadRate - 0.75) / 0.25);
-      const intensity = (ownershipExcess * 0.4) + (coverageExcess * 0.35) + (verbExcess * 0.25);
-      const boostTarget = boostFloor + Math.round(intensity * 3); // 67–70, capped
+      // Intensity from validated deltas only (0–1 scale, capped)
+      const deltaIntensity = clamp01(
+        (clamp01(deltaOwnership / 0.30) * 0.25) +
+        (clamp01(deltaKeywordCov / 0.30) * 0.25) +
+        (clamp01(deltaVerbRate / 0.20) * 0.20) +
+        (clamp01(deltaOutcome / 0.20) * 0.15) +
+        (clamp01(deltaPassive / 0.15) * 0.15)
+      );
+      const boostTarget = boostFloor + Math.round(deltaIntensity * 3); // 67–70
       finalScore = Math.max(baseScore, boostTarget);
     }
   }

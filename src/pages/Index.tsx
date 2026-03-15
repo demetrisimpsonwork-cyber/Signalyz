@@ -341,6 +341,7 @@ const Index = () => {
   const [bullet, setBullet] = useState("");
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
+  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -716,7 +717,7 @@ const Index = () => {
       const res = data as OptimizationResult;
       // Apply deterministic score override before storing
       const runType = isResumeFromCalibrated ? "calibrated" as const : "original" as const;
-      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType);
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, originalResumeBeforeCalibration ?? undefined);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
@@ -1067,7 +1068,7 @@ const Index = () => {
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
-            onResumeTextReplaced={(text) => { setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
+            onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
           />
         )}
 
@@ -1112,7 +1113,7 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
-                      setBullet(text); setIsResumeFromCalibrated(false);
+                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null);
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
@@ -1126,14 +1127,14 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
+                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
