@@ -362,7 +362,7 @@ const Index = () => {
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
-  const { isPro, isFree, hasOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
+  const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
   const {
     trialStarted,
