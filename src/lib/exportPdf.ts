@@ -195,17 +195,17 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         doc.text(proj.name, ML, y);
         y += 4;
         if (proj.description?.trim()) {
-          // Explicitly reset to normal weight BEFORE wrapping to ensure
-          // both splitTextToSize metrics and rendering use regular weight
+          // Force regular description metrics + rendering in this section only
           doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
           doc.setTextColor("#666666");
           const descText = `— ${proj.description.trim()}`;
-          const descMaxW = CONTENT_W - 1; // slight inset to prevent edge clipping
+          const descMaxW = 170; // A4 page width (210) - 40mm (20mm each side)
           const descLines = doc.splitTextToSize(descText, descMaxW) as string[];
           const descLh = (10 * 1.35 * 25.4) / 72;
           for (const dl of descLines) {
             ensureSpace(descLh);
+            doc.setFont("helvetica", "normal");
             doc.text(dl, ML, y);
             y += descLh;
           }
