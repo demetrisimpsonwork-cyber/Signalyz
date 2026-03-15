@@ -1113,7 +1113,7 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
-                      setBullet(text); setIsResumeFromCalibrated(false);
+                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null);
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
