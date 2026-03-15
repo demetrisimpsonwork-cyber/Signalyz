@@ -158,7 +158,9 @@ export interface DeterministicScoreResult {
   };
 }
 
-export function computeDeterministicScore(resumeText: string, jdText: string): DeterministicScoreResult {
+export type RunType = "original" | "calibrated";
+
+export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original"): DeterministicScoreResult {
   const rawResume = resumeText;
   const normalizedResume = normalizeText(rawResume);
   const sanitizedResume = sanitizeInput(normalizedResume);
