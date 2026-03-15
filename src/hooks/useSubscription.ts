@@ -51,6 +51,16 @@ async function fetchSubscriptionData() {
 
   const hasOneTimeCredit = !!(credits && (credits as any[]).length > 0);
 
+  // Check for consumed one-time purchases (user bought $9 but already used it)
+  const { data: usedCredits } = await supabase
+    .from("one_time_purchases" as any)
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("used", true)
+    .limit(1);
+
+  const hasConsumedOneTimeCredit = !!(usedCredits && (usedCredits as any[]).length > 0);
+
   // Reset daily count if it's a new day
   const resetAt = profile.daily_run_reset_at
     ? new Date(profile.daily_run_reset_at)
