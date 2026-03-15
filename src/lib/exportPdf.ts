@@ -16,9 +16,8 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
   try {
     toast.info("Generating PDF...");
-    const blob = await pdf(
-      React.createElement(CalibratedResumePDF, { resume })
-    ).toBlob();
+    const doc = React.createElement(CalibratedResumePDF, { resume });
+    const blob = await pdf(doc as any).toBlob();
     saveAs(blob, "Calibrated_Resume.pdf");
     toast.success("PDF exported");
   } catch (err) {
