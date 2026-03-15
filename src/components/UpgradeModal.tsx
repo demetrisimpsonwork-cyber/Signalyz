@@ -17,6 +17,7 @@ interface UpgradeModalProps {
   trialLimit?: number;
   onStartTrial?: () => void;
   isAuthenticated?: boolean;
+  hasConsumedOneTimeCredit?: boolean;
 }
 
 const UpgradeModal = ({
