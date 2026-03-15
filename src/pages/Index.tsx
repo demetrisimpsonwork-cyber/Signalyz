@@ -401,14 +401,9 @@ const Index = () => {
     }
   }, []);
 
-  // ─── Deterministic score override at render layer ───
-  const deterministicResult = useMemo(() => {
-    if (!result || !bullet.trim() || !jd.trim()) return null;
-    return computeDeterministicScore(bullet.trim(), jd.trim());
-  }, [result, bullet, jd]);
-
-  const displayScore = deterministicResult?.finalScore ?? result?.match_score ?? 0;
-  const displayBreakdown = deterministicResult?.breakdown ?? result?.scoring_breakdown;
+  // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
+  const displayScore = result?.match_score ?? 0;
+  const displayBreakdown = result?.scoring_breakdown;
 
   const animatedScore = useCountUp(displayScore, 1200);
 
