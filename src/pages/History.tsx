@@ -333,7 +333,7 @@ const History = () => {
           <p className="section-label">Alignment History</p>
           <p className="text-xs text-muted-foreground mt-1">Your signal trajectory over time</p>
         </div>
-        {displayEntries.length > 0 && (
+        {isPro && displayEntries.length > 0 && (
           <div className="text-right">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-end gap-1.5">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
