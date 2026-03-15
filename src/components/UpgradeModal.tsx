@@ -28,6 +28,7 @@ const UpgradeModal = ({
   trialLimit = 3,
   onStartTrial,
   isAuthenticated = true,
+  hasConsumedOneTimeCredit = false,
 }: UpgradeModalProps) => {
 
   const handleStartTrial = () => {
