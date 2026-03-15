@@ -55,9 +55,13 @@ const Pricing = () => {
             ))}
           </ul>
           {isAuthenticated ? (
-            <Button className="mt-8 w-full" variant="outline">Get started</Button>
+            <Button className="mt-8 w-full" variant="outline" asChild>
+              <a href="/">Get started</a>
+            </Button>
           ) : (
-            <Button className="mt-8 w-full" variant="outline">Get started</Button>
+            <Button className="mt-8 w-full" variant="outline" asChild>
+              <a href="/auth">Get started</a>
+            </Button>
           )}
         </div>
 
