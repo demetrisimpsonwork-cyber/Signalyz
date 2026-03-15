@@ -133,29 +133,23 @@ export function useSubscription(): SubscriptionState {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    // Find the oldest unused credit
-    const { data: credits } = await supabase
-      .from("one_time_purchases" as any)
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("used", false)
-      .order("created_at", { ascending: true })
-      .limit(1);
-
-    if (!credits || (credits as any[]).length === 0) return false;
-
-    const creditId = (credits as any[])[0].id;
-
-    const { error } = await supabase
-      .from("one_time_purchases" as any)
-      .update({ used: true, used_at: new Date().toISOString() } as any)
-      .eq("id", creditId);
+    // Use SECURITY DEFINER RPC to consume credit server-side (bypasses RLS)
+    const { data: consumed, error } = await supabase.rpc(
+      "consume_one_time_credit" as any,
+      { p_user_id: user.id } as any
+    );
 
     if (error) {
       console.error("[SubCheck] Failed to consume one-time credit:", error);
       return false;
     }
 
+    if (!consumed) {
+      console.warn("[SubCheck] No unused one-time credit found to consume");
+      return false;
+    }
+
+    console.log("[SubCheck] One-time credit consumed successfully");
     await queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
     return true;
   }, [queryClient]);
