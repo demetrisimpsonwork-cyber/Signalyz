@@ -153,6 +153,16 @@ function groupEntries(entries: HistoryEntry[]): HistoryGroup[] {
   });
 }
 
+/* ── mock data for non-pro preview ── */
+const MOCK_ENTRIES: HistoryEntry[] = [
+  { id: "m1", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), inferred_role: "Senior Product Manager", score: 82, strength_label: "Strong", top_gap: "Strategic planning signals", resume_built: true },
+  { id: "m2", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), inferred_role: "Senior Product Manager", score: 76, strength_label: "Moderate", top_gap: "Stakeholder management depth", resume_built: false },
+  { id: "m3", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), inferred_role: "Marketing Director", score: 68, strength_label: "Moderate", top_gap: "Revenue impact framing", resume_built: true },
+  { id: "m4", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), inferred_role: "Operations Lead", score: 54, strength_label: "Weak", top_gap: "Process optimization evidence", resume_built: false },
+  { id: "m5", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), inferred_role: "Marketing Director", score: 71, strength_label: "Moderate", top_gap: "Brand strategy signals", resume_built: true },
+  { id: "m6", created_at: new Date().toISOString(), inferred_role: "Senior Product Manager", score: 88, strength_label: "Strong", top_gap: null, resume_built: true },
+];
+
 type FilterKey = "all" | "high" | "moderate" | "weak";
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
