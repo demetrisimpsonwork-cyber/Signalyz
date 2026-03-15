@@ -277,8 +277,8 @@ const History = () => {
 
   /* ── chart data with smart x-axis ── */
   const chartData = useMemo(() => {
-    if (entries.length === 0) return { data: [], sameDay: false };
-    const reversed = [...entries].reverse();
+    if (displayEntries.length === 0) return { data: [], sameDay: false };
+    const reversed = [...displayEntries].reverse();
     const first = new Date(reversed[0].created_at);
     const last = new Date(reversed[reversed.length - 1].created_at);
     const sameDay = differenceInHours(last, first) < 24;
@@ -291,19 +291,19 @@ const History = () => {
         fill: scoreDotColor(e.score),
       })),
     };
-  }, [entries]);
+  }, [displayEntries]);
 
   /* ── groups ── */
   const groups = useMemo(() => {
-    const filtered = filter === "all" ? entries : entries.filter((e) => filterMatch(e.score, filter));
+    const filtered = filter === "all" ? displayEntries : displayEntries.filter((e) => filterMatch(e.score, filter));
     return groupEntries(filtered);
-  }, [entries, filter]);
+  }, [displayEntries, filter]);
 
   /* ── average ── */
   const avgScore = useMemo(() => {
-    if (entries.length === 0) return 0;
-    return Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length);
-  }, [entries]);
+    if (displayEntries.length === 0) return 0;
+    return Math.round(displayEntries.reduce((s, e) => s + e.score, 0) / displayEntries.length);
+  }, [displayEntries]);
 
   const handleViewResult = async (entry: HistoryEntry) => {
     if (expandedId === entry.id) { setExpandedId(null); setExpandedResult(null); return; }
