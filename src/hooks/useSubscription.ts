@@ -100,6 +100,7 @@ async function fetchSubscriptionData() {
       rawSubId: (profile as any).subscription_id,
       resolvedTier: isPaid ? "pro" : "free",
       hasOneTimeCredit,
+      hasConsumedOneTimeCredit,
       queriedAt: new Date().toISOString(),
     },
   };
