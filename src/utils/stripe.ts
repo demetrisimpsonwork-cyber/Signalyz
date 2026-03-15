@@ -30,7 +30,17 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
       console.error("[Checkout] Edge function error:", error);
       toast({
         title: "Checkout unavailable",
-        description: "We couldn't start the checkout process. Please try again in a moment.",
+        description: typeof error === "object" && error.message ? error.message : "We couldn't start the checkout process. Please try again in a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data?.error) {
+      console.error("[Checkout] Stripe error:", data.error, "type:", data.type, "status:", data.statusCode);
+      toast({
+        title: "Checkout error",
+        description: data.error,
         variant: "destructive",
       });
       return;
