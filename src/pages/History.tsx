@@ -333,7 +333,7 @@ const History = () => {
           <p className="section-label">Alignment History</p>
           <p className="text-xs text-muted-foreground mt-1">Your signal trajectory over time</p>
         </div>
-        {entries.length > 0 && (
+        {displayEntries.length > 0 && (
           <div className="text-right">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-end gap-1.5">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
@@ -344,57 +344,75 @@ const History = () => {
         )}
       </div>
 
-      {/* Trend chart */}
-      <div className="relative rounded-xl border bg-card p-4 mb-8">
+      {/* Blurred preview wrapper for non-pro users */}
+      <div className={`relative ${!isPro ? "min-h-[500px]" : ""}`}>
         {!isPro && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
-            <Button onClick={() => setShowUpgrade(true)}>Unlock History — Full Signal Intelligence</Button>
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div className="text-center space-y-4 max-w-sm px-4">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <span className="text-2xl text-primary">✦</span>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-foreground tracking-tight">Unlock Alignment History</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Track your signal trajectory over time, compare runs by role, and monitor your alignment progress.
+                </p>
+              </div>
+              <Button onClick={() => setShowUpgrade(true)} className="gap-2" size="lg">
+                <span style={{ color: "inherit" }}>✦</span>
+                Unlock History — Full Signal Intelligence
+              </Button>
+            </div>
           </div>
         )}
-        {entries.length === 0 ? (
-          <div className="flex items-center justify-center h-[120px] md:h-[160px]">
-            <p className="text-xs text-muted-foreground border-t-2 border-dashed border-muted-foreground/30 pt-3">
-              Your signal trajectory will appear here after your first alignment
-            </p>
-          </div>
-        ) : entries.length === 1 ? (
-          <div className="text-center py-6">
-            <span className={`text-3xl font-bold ${scoreColor(entries[0].score)}`}>{entries[0].score}%</span>
-            <p className="text-xs text-muted-foreground mt-2">Run another alignment to track your progress over time</p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={typeof window !== "undefined" && window.innerWidth < 768 ? 120 : 160}>
-            <LineChart data={chartData.data}>
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} width={30} />
-              <RechartsTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
 
-      {/* Filters */}
-      {entries.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`h-8 px-3 rounded-full text-xs font-medium transition-colors border ${
-                filter === f.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-muted-foreground border-border hover:border-primary/40"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      )}
+        <div className={!isPro ? "blur-[6px] opacity-50 pointer-events-none select-none" : ""}>
+          {/* Trend chart */}
+          <div className="rounded-xl border bg-card p-4 mb-8">
+            {displayEntries.length === 0 ? (
+              <div className="flex items-center justify-center h-[120px] md:h-[160px]">
+                <p className="text-xs text-muted-foreground border-t-2 border-dashed border-muted-foreground/30 pt-3">
+                  Your signal trajectory will appear here after your first alignment
+                </p>
+              </div>
+            ) : displayEntries.length === 1 ? (
+              <div className="text-center py-6">
+                <span className={`text-3xl font-bold ${scoreColor(displayEntries[0].score)}`}>{displayEntries[0].score}%</span>
+                <p className="text-xs text-muted-foreground mt-2">Run another alignment to track your progress over time</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={typeof window !== "undefined" && window.innerWidth < 768 ? 120 : 160}>
+                <LineChart data={chartData.data}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} width={30} />
+                  <RechartsTooltip content={<ChartTooltipContent />} />
+                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-      {/* Grouped cards */}
-      <div className={`space-y-[18px] relative ${!isPro ? "blur-sm pointer-events-none select-none" : ""}`}>
+          {/* Filters */}
+          {displayEntries.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`h-8 px-3 rounded-full text-xs font-medium transition-colors border ${
+                    filter === f.key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-primary/40"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Grouped cards */}
+          <div className="space-y-[18px]">
         {groups.map((group) => {
           const isMulti = group.entries.length > 1;
           const isGroupExpanded = expandedGroupKey === group.key;
