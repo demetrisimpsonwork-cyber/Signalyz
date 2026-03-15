@@ -315,15 +315,16 @@ export function computeDeterministicScore(resumeText: string, jdText: string, ru
     const isKeywordStuffed = maxKeywordFreq > 6;
 
     if (hasOwnershipLanguage && hasJdMirroredVocab && hasHighVerbLeadRate && !isKeywordStuffed) {
-      // Baseline anchor is 59 (the confirmed original baseline)
+      // Floor guarantee: only lifts scores that would otherwise under-credit calibrated text.
+      // The floor is modest (baseline + 8) with a small intensity bonus (0–3 pts max).
+      // baseScore remains the primary score source — floor only prevents under-crediting.
       const BASELINE_SCORE = 59;
       const boostFloor = BASELINE_SCORE + 8; // minimum 67
-      // Intensity bonus: 0-7 extra points based on signal strength
       const ownershipExcess = clamp01((ownershipDensitySignal - 0.35) / 0.40);
       const coverageExcess  = clamp01((effectiveKeywordCoverage - 0.45) / 0.40);
       const verbExcess      = clamp01((verbLeadRate - 0.75) / 0.25);
       const intensity = (ownershipExcess * 0.4) + (coverageExcess * 0.35) + (verbExcess * 0.25);
-      const boostTarget = boostFloor + Math.round(intensity * 7); // 67–74
+      const boostTarget = boostFloor + Math.round(intensity * 3); // 67–70, capped
       finalScore = Math.max(baseScore, boostTarget);
     }
   }
