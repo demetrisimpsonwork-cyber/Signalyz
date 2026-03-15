@@ -45,6 +45,7 @@ serve(async (req) => {
     const isOneTime = mode === "one_time";
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    console.log("[create-checkout] STRIPE_SECRET_KEY prefix:", stripeKey ? stripeKey.substring(0, 12) : "NOT SET");
     if (!stripeKey) {
       return new Response(
         JSON.stringify({ error: "Stripe not configured" }),
