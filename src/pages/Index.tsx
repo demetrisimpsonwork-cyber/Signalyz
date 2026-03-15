@@ -714,7 +714,8 @@ const Index = () => {
 
       const res = data as OptimizationResult;
       // Apply deterministic score override before storing
-      const detScore = computeDeterministicScore(bulletWithContext, normJd.text);
+      const runType = sessionResumeAssembled ? "calibrated" as const : "original" as const;
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
