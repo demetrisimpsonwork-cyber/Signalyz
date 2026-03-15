@@ -195,7 +195,8 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         doc.text(proj.name, ML, y);
         y += 4;
         if (proj.description?.trim()) {
-          drawWrapped(`— ${proj.description.trim()}`, ML, 10, { color: "#666666" });
+          doc.setFont("helvetica", "normal");
+          drawWrapped(`— ${proj.description.trim()}`, ML, 10, { color: "#666666", maxWidth: CONTENT_W });
         }
         for (const b of proj.bullets) {
           drawBullet(b);
