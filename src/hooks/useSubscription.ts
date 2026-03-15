@@ -90,6 +90,7 @@ async function fetchSubscriptionData() {
     isPro: isPaid,
     isFree: !isPaid,
     hasOneTimeCredit,
+    hasConsumedOneTimeCredit,
     dailyRunCount: runCount,
     dailyRunsRemaining: isPaid ? 999 : Math.max(0, FREE_DAILY_LIMIT - runCount),
     _debug: {
