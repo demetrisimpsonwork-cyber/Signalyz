@@ -1617,6 +1617,7 @@ const Index = () => {
         trialLimit={TRIAL_LIMIT}
         onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
         isAuthenticated={!!user}
+        hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
       />
     </div>
   );
