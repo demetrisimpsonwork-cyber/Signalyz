@@ -141,10 +141,16 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
     /* ── Professional Experience ── */
     if (resume.experience.length) {
-      drawSectionHeader("Professional Experience");
+      drawSectionHeader("Experience");
       for (const exp of resume.experience) {
-        // Estimate space for title + company + first bullet ≈ 14 mm
-        ensureSpace(14);
+        // Estimate total height for the entire role block (title + company + all bullets)
+        // so it stays together on one page
+        const bulletLines = exp.bullets.reduce((sum, b) => {
+          const lines = doc.splitTextToSize(b, CONTENT_W - 7) as string[];
+          return sum + lines.length;
+        }, 0);
+        const roleBlockH = 4.5 + (exp.company ? 4 : 0) + bulletLines * ((10 * 1.32 * 25.4) / 72) + 2;
+        ensureSpace(Math.min(roleBlockH, PAGE_H - MT - MB)); // cap at page height for very long blocks
         // Title + dates
         doc.setFont("helvetica", "italic");
         doc.setFontSize(10.5);
