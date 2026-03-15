@@ -154,10 +154,13 @@ serve(async (req) => {
       JSON.stringify({ url: checkoutSession.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
-    console.error("Checkout error:", err);
+  } catch (err: any) {
+    const errMsg = err?.raw?.message || err?.message || String(err);
+    const errType = err?.raw?.type || err?.type || "unknown";
+    const errStatus = err?.raw?.statusCode || err?.statusCode || 500;
+    console.error("Checkout error:", errMsg, "type:", errType, "status:", errStatus);
     return new Response(
-      JSON.stringify({ error: "Checkout failed" }),
+      JSON.stringify({ error: errMsg, type: errType, statusCode: errStatus }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
