@@ -516,7 +516,9 @@ const History = () => {
             <p className="text-sm text-muted-foreground">No results match this filter</p>
           </div>
         )}
-      </div>
+        </div>
+        </div>{/* end blur wrapper */}
+      </div>{/* end relative wrapper */}
 
       <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
