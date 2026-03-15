@@ -465,6 +465,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_one_time_credit: { Args: { p_user_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
