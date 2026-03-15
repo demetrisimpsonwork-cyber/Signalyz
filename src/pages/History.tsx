@@ -153,6 +153,16 @@ function groupEntries(entries: HistoryEntry[]): HistoryGroup[] {
   });
 }
 
+/* ── mock data for non-pro preview ── */
+const MOCK_ENTRIES: HistoryEntry[] = [
+  { id: "m1", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), inferred_role: "Senior Product Manager", score: 82, strength_label: "Strong", top_gap: "Strategic planning signals", resume_built: true },
+  { id: "m2", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), inferred_role: "Senior Product Manager", score: 76, strength_label: "Moderate", top_gap: "Stakeholder management depth", resume_built: false },
+  { id: "m3", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), inferred_role: "Marketing Director", score: 68, strength_label: "Moderate", top_gap: "Revenue impact framing", resume_built: true },
+  { id: "m4", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), inferred_role: "Operations Lead", score: 54, strength_label: "Weak", top_gap: "Process optimization evidence", resume_built: false },
+  { id: "m5", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), inferred_role: "Marketing Director", score: 71, strength_label: "Moderate", top_gap: "Brand strategy signals", resume_built: true },
+  { id: "m6", created_at: new Date().toISOString(), inferred_role: "Senior Product Manager", score: 88, strength_label: "Strong", top_gap: null, resume_built: true },
+];
+
 type FilterKey = "all" | "high" | "moderate" | "weak";
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -241,7 +251,7 @@ const History = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { setLoading(false); return; }
     supabase
       .from("alignment_history")
       .select("id, created_at, inferred_role, score, strength_label, top_gap, resume_built")
@@ -262,10 +272,13 @@ const History = () => {
       });
   }, [user, authLoading]);
 
+  // Use mock data for non-pro users to show blurred preview
+  const displayEntries = isPro ? entries : MOCK_ENTRIES;
+
   /* ── chart data with smart x-axis ── */
   const chartData = useMemo(() => {
-    if (entries.length === 0) return { data: [], sameDay: false };
-    const reversed = [...entries].reverse();
+    if (displayEntries.length === 0) return { data: [], sameDay: false };
+    const reversed = [...displayEntries].reverse();
     const first = new Date(reversed[0].created_at);
     const last = new Date(reversed[reversed.length - 1].created_at);
     const sameDay = differenceInHours(last, first) < 24;
@@ -278,19 +291,19 @@ const History = () => {
         fill: scoreDotColor(e.score),
       })),
     };
-  }, [entries]);
+  }, [displayEntries]);
 
   /* ── groups ── */
   const groups = useMemo(() => {
-    const filtered = filter === "all" ? entries : entries.filter((e) => filterMatch(e.score, filter));
+    const filtered = filter === "all" ? displayEntries : displayEntries.filter((e) => filterMatch(e.score, filter));
     return groupEntries(filtered);
-  }, [entries, filter]);
+  }, [displayEntries, filter]);
 
   /* ── average ── */
   const avgScore = useMemo(() => {
-    if (entries.length === 0) return 0;
-    return Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length);
-  }, [entries]);
+    if (displayEntries.length === 0) return 0;
+    return Math.round(displayEntries.reduce((s, e) => s + e.score, 0) / displayEntries.length);
+  }, [displayEntries]);
 
   const handleViewResult = async (entry: HistoryEntry) => {
     if (expandedId === entry.id) { setExpandedId(null); setExpandedResult(null); return; }
@@ -320,7 +333,7 @@ const History = () => {
           <p className="section-label">Alignment History</p>
           <p className="text-xs text-muted-foreground mt-1">Your signal trajectory over time</p>
         </div>
-        {entries.length > 0 && (
+        {displayEntries.length > 0 && (
           <div className="text-right">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-end gap-1.5">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
@@ -331,57 +344,75 @@ const History = () => {
         )}
       </div>
 
-      {/* Trend chart */}
-      <div className="relative rounded-xl border bg-card p-4 mb-8">
+      {/* Blurred preview wrapper for non-pro users */}
+      <div className={`relative ${!isPro ? "min-h-[500px]" : ""}`}>
         {!isPro && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
-            <Button onClick={() => setShowUpgrade(true)}>Unlock History — Full Signal Intelligence</Button>
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div className="text-center space-y-4 max-w-sm px-4">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <span className="text-2xl text-primary">✦</span>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-foreground tracking-tight">Unlock Alignment History</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Track your signal trajectory over time, compare runs by role, and monitor your alignment progress.
+                </p>
+              </div>
+              <Button onClick={() => setShowUpgrade(true)} className="gap-2" size="lg">
+                <span style={{ color: "inherit" }}>✦</span>
+                Unlock History — Full Signal Intelligence
+              </Button>
+            </div>
           </div>
         )}
-        {entries.length === 0 ? (
-          <div className="flex items-center justify-center h-[120px] md:h-[160px]">
-            <p className="text-xs text-muted-foreground border-t-2 border-dashed border-muted-foreground/30 pt-3">
-              Your signal trajectory will appear here after your first alignment
-            </p>
-          </div>
-        ) : entries.length === 1 ? (
-          <div className="text-center py-6">
-            <span className={`text-3xl font-bold ${scoreColor(entries[0].score)}`}>{entries[0].score}%</span>
-            <p className="text-xs text-muted-foreground mt-2">Run another alignment to track your progress over time</p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={typeof window !== "undefined" && window.innerWidth < 768 ? 120 : 160}>
-            <LineChart data={chartData.data}>
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} width={30} />
-              <RechartsTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
 
-      {/* Filters */}
-      {entries.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`h-8 px-3 rounded-full text-xs font-medium transition-colors border ${
-                filter === f.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-muted-foreground border-border hover:border-primary/40"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      )}
+        <div className={!isPro ? "blur-[6px] opacity-50 pointer-events-none select-none" : ""}>
+          {/* Trend chart */}
+          <div className="rounded-xl border bg-card p-4 mb-8">
+            {displayEntries.length === 0 ? (
+              <div className="flex items-center justify-center h-[120px] md:h-[160px]">
+                <p className="text-xs text-muted-foreground border-t-2 border-dashed border-muted-foreground/30 pt-3">
+                  Your signal trajectory will appear here after your first alignment
+                </p>
+              </div>
+            ) : displayEntries.length === 1 ? (
+              <div className="text-center py-6">
+                <span className={`text-3xl font-bold ${scoreColor(displayEntries[0].score)}`}>{displayEntries[0].score}%</span>
+                <p className="text-xs text-muted-foreground mt-2">Run another alignment to track your progress over time</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={typeof window !== "undefined" && window.innerWidth < 768 ? 120 : 160}>
+                <LineChart data={chartData.data}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} width={30} />
+                  <RechartsTooltip content={<ChartTooltipContent />} />
+                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-      {/* Grouped cards */}
-      <div className={`space-y-[18px] relative ${!isPro ? "blur-sm pointer-events-none select-none" : ""}`}>
+          {/* Filters */}
+          {displayEntries.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`h-8 px-3 rounded-full text-xs font-medium transition-colors border ${
+                    filter === f.key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-primary/40"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Grouped cards */}
+          <div className="space-y-[18px]">
         {groups.map((group) => {
           const isMulti = group.entries.length > 1;
           const isGroupExpanded = expandedGroupKey === group.key;
@@ -485,7 +516,9 @@ const History = () => {
             <p className="text-sm text-muted-foreground">No results match this filter</p>
           </div>
         )}
-      </div>
+        </div>
+        </div>{/* end blur wrapper */}
+      </div>{/* end relative wrapper */}
 
       <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
