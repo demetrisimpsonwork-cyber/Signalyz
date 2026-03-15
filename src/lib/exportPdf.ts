@@ -196,11 +196,11 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         y += 4;
         if (proj.description?.trim()) {
           // Force regular description metrics + rendering in this section only
-          doc.setFont("helvetica", "normal");
+          doc.setFont(undefined, "normal");
           doc.setFontSize(10);
           doc.setTextColor("#666666");
           const descText = `— ${proj.description.trim()}`;
-          const descLines = doc.splitTextToSize(descText, 170) as string[];
+          const descLines = doc.splitTextToSize(descText, 155) as string[];
           const descLh = (10 * 1.35 * 25.4) / 72;
           for (const dl of descLines) {
             ensureSpace(descLh);
