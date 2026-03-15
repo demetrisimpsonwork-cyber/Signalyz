@@ -1067,7 +1067,7 @@ const Index = () => {
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
-            onResumeTextReplaced={(text) => { setBullet(text); setInputSource("paste"); }}
+            onResumeTextReplaced={(text) => { setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
           />
         )}
 
