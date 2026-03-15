@@ -195,8 +195,20 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         doc.text(proj.name, ML, y);
         y += 4;
         if (proj.description?.trim()) {
+          // Explicitly reset to normal weight BEFORE wrapping to ensure
+          // both splitTextToSize metrics and rendering use regular weight
           doc.setFont("helvetica", "normal");
-          drawWrapped(`— ${proj.description.trim()}`, ML, 10, { color: "#666666", maxWidth: CONTENT_W });
+          doc.setFontSize(10);
+          doc.setTextColor("#666666");
+          const descText = `— ${proj.description.trim()}`;
+          const descMaxW = CONTENT_W - 1; // slight inset to prevent edge clipping
+          const descLines = doc.splitTextToSize(descText, descMaxW) as string[];
+          const descLh = (10 * 1.35 * 25.4) / 72;
+          for (const dl of descLines) {
+            ensureSpace(descLh);
+            doc.text(dl, ML, y);
+            y += descLh;
+          }
         }
         for (const b of proj.bullets) {
           drawBullet(b);
