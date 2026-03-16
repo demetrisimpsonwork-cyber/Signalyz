@@ -185,52 +185,78 @@ YOUR TASK:
 3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
+═══ SCORING SYSTEM AWARENESS ═══
+The calibrated output will be scored by an automated signal engine that measures EXACT dimensions. Your calibration MUST target these specific measurable signals:
+
+SIGNAL 1 — OWNERSHIP DENSITY: The scorer counts these EXACT verbs at the START of each bullet: led, drove, owned, spearheaded, architected, orchestrated, directed, launched, built, scaled, implemented, executed, transformed, championed, governed, delivered, established, redesigned, pioneered, devised, instituted, restructured, consolidated, mobilized, accelerated, elevated, oversaw, administered, standardized, created, developed, designed, automated, negotiated, facilitated, optimized, revamped, formulated, engineered, deployed, maintained, resolved, streamlined, trained, mentored, supervised. EVERY bullet MUST start with one of these EXACT verbs. The scorer gives ZERO credit for bullets starting with any other word.
+
+SIGNAL 2 — JD KEYWORD COVERAGE: The scorer extracts the top 15 most frequent 4+ letter non-stop-words from the JD and checks if they appear IN THE BULLET TEXT (not in skills or headers). You MUST embed as many of these JD-specific terms as possible DIRECTLY INTO bullet sentences. Generic words don't count — only distinctive JD vocabulary matters.
+
+SIGNAL 3 — OUTCOME/IMPACT TERMS: The scorer checks for these EXACT terms in each bullet: increased, reduced, improved, grew, saved, delivered, achieved, exceeded, decreased, boosted, lowered, raised, generated, optimized, reducing, improving, streamlined, standardizing, minimized, eliminated, enhancing, resulting in, leading to, which led to, driving, enabling. EVERY bullet must contain at least one of these outcome terms.
+
+SIGNAL 4 — PASSIVE LANGUAGE: The scorer PENALIZES these exact phrases: helped, assisted, supported, participated in, was involved, tasked with. NEVER use any of these phrases anywhere in the output.
+
+SIGNAL 5 — SCOPE INDICATORS: The scorer gives bonus credit for scope signals: dollar amounts ($), percentages (%), team/people counts, cross-functional, end-to-end, enterprise-wide, global, regional, multi-site, high-volume, portfolio, program, p&l, budget, revenue, governance. Include as many HONEST scope indicators as possible.
+
+═══ END SCORING AWARENESS ═══
+
 BULLET CALIBRATION RULES (CRITICAL — ABSOLUTE CONSTRAINTS):
 Each original bullet has its character count shown as [N chars]. Your calibrated version MUST meet or exceed that character count.
 
 RULE 1 — OWNERSHIP VERB MANDATE:
-Every single calibrated bullet MUST open with a strong, clear ownership verb. No exceptions.
-- REQUIRED openers: Led, Executed, Built, Resolved, Implemented, Managed, Optimized, Directed, Orchestrated, Spearheaded, Engineered, Drove, Delivered, Established, Transformed, Streamlined, Architected, Negotiated, Launched, Secured, Oversaw, Championed, Redesigned, Accelerated, Consolidated
-- BANNED openers: "Assisted with", "Helped", "Was responsible for", "Participated in", "Involved in", "Contributed to", "Worked on", "Supported", "Played a role in", "Tasked with"
-- If the original bullet starts with a weak/passive construction, REPLACE the opener entirely with the strongest accurate ownership verb. The candidate did the work — frame it that way.
+Every single calibrated bullet MUST open with one of the EXACT verbs from Signal 1 above. No exceptions. The FIRST WORD of every bullet must be from that list.
+- BANNED openers: "Assisted with", "Helped", "Was responsible for", "Participated in", "Involved in", "Contributed to", "Worked on", "Supported", "Played a role in", "Tasked with", "Responsible for", "Utilized", "Leveraged", "Ensured", "Focused on", "Served as"
+- If the original bullet starts with a weak/passive construction, REPLACE the opener entirely with the strongest accurate ownership verb from Signal 1. The candidate did the work — frame it that way.
+- VARY your verb choices across bullets. Do not repeat the same verb more than twice across the entire resume.
 
 RULE 2 — JD VOCABULARY MIRRORING (MANDATORY):
-You MUST integrate JD-specific vocabulary into at least 3 bullets PER ROLE. This is non-negotiable.
-- Extract the top 8-10 distinctive phrases from the JD (not generic words like "team" or "work", but specific operational language like "cross-functional collaboration", "revenue optimization", "client lifecycle management", "regulatory compliance", "SLA adherence").
-- For each role, identify 3+ bullets where these JD phrases can be honestly woven in as natural extensions of what the candidate actually did.
+You MUST integrate JD-specific vocabulary into at least 4 bullets PER ROLE. This is non-negotiable.
+- Read the JD carefully and extract the top 8-10 distinctive multi-word phrases (not generic words like "team" or "work", but specific operational language like "cross-functional collaboration", "revenue optimization", "client lifecycle management", "regulatory compliance", "SLA adherence").
+- Also extract the top 10-15 distinctive single words (4+ letters) that appear frequently in the JD — these are the EXACT keywords the scorer will look for.
+- For each role, weave these JD terms DIRECTLY INTO the bullet text as natural extensions of what the candidate actually did.
 - Example: If JD says "drive operational efficiency" and the original bullet says "Improved processes to reduce wait times" → calibrate to "Drove operational efficiency by redesigning queue management processes, reducing average wait times by 30% across all service channels."
 - The mirrored vocabulary must feel organic, not forced. Integrate it as context, scope, or outcome framing.
 
 RULE 3 — OUTCOME/IMPACT MANDATE:
-Every single calibrated bullet MUST contain an outcome, impact, or scope indicator. No bullet may end with just an action.
-- If the original has a metric → preserve it and add context (e.g., "15% reduction" → "15% reduction in resolution time, directly improving customer retention metrics").
-- If the original lacks a metric → add the closest HONEST contextual signal:
+Every single calibrated bullet MUST contain at least one outcome term from Signal 3 above. No bullet may end with just an action description.
+- If the original has a metric → preserve it verbatim and ADD outcome framing context (e.g., "15% reduction" → "reduced resolution time by 15%, directly improving customer retention metrics").
+- If the original lacks a metric → add the closest HONEST scope/outcome signal:
   * Scale: team size, number of accounts, volume of transactions, geographic scope
   * Stakeholders: who benefited (internal teams, clients, executives, end users)
-  * Operational effect: "reducing manual effort by approximately X hours weekly", "enabling the team to handle Y% more volume", "ensuring zero compliance incidents during the period"
-  * Business framing: "contributing to department-wide cost savings", "supporting quarterly revenue targets", "maintaining 99%+ SLA compliance"
+  * Operational effect: "reducing manual effort", "enabling the team to handle increased volume", "eliminating compliance gaps"
+  * Business framing: "driving department-wide cost savings", "improving quarterly performance", "achieving consistent SLA compliance"
 - NEVER fabricate specific numbers. Use honest contextual framing: "across multiple departments", "for a portfolio of enterprise accounts", "within a high-volume operational environment".
+
+RULE 4 — PASSIVE ELIMINATION (MANDATORY):
+Scan every bullet for ANY of these phrases: helped, assisted, supported, participated in, was involved, tasked with. If found, REPLACE the entire construction with an active ownership framing. The candidate OWNED the work — frame it accordingly.
+- "Helped implement" → "Implemented"
+- "Assisted in managing" → "Managed"  
+- "Supported the development of" → "Developed"
+- "Was involved in" → "Directed" / "Executed"
+- "Participated in" → "Led" / "Drove"
+- "Tasked with" → "Owned" / "Executed"
 
 ADDITIVE CALIBRATION — never subtractive:
 - START with the original bullet content as your base. Keep every word of substance.
-- LAYER ON TOP: stronger ownership verbs, JD-mirrored vocabulary, outcome framing, and specificity.
+- LAYER ON TOP: ownership verbs from Signal 1, JD keywords from Signal 2, outcome terms from Signal 3, and scope indicators from Signal 5.
 - You MUST preserve EVERY specific detail — stakeholder names, volume metrics, process outcomes, tool names, team sizes, dollar amounts.
 - Do NOT summarize, condense, or rephrase into fewer words. EXPAND and STRENGTHEN.
 - If the original says "Managed a team of 12 customer service representatives handling 500+ daily inquiries across phone and email channels" — your output must contain ALL of those details PLUS additional alignment language.
+- If the original already contains strong outcome framing or scope metrics, PRESERVE them and ADD more context around them.
 
 LENGTH ENFORCEMENT:
-- The calibrated bullet MUST be at least 15% LONGER than the original. This is non-negotiable.
-- If the original is 80 characters, your calibrated version must be at least 92 characters.
-- If the original is 150 characters, your calibrated version must be at least 173 characters.
+- The calibrated bullet MUST be at least 20% LONGER than the original. This is non-negotiable.
+- If the original is 80 characters, your calibrated version must be at least 96 characters.
+- If the original is 150 characters, your calibrated version must be at least 180 characters.
 - The additional length comes from: ownership verb upgrades, JD vocabulary integration, outcome/impact framing, and scope indicators.
 - If a calibrated bullet exceeds 4 lines (~280 characters), split into two bullets. The second begins with "Additionally," "Further," or "Concurrently,".
 
-CALIBRATION INTENSITY — aim for MAXIMUM differentiation:
-- Do NOT produce bullets that are minor word-swaps of the original. Every bullet must be substantially restructured.
+CALIBRATION INTENSITY — aim for MAXIMUM signal differentiation:
+- Do NOT produce bullets that are minor word-swaps of the original. Every bullet must be substantially restructured to maximize scoring signals.
 - The calibrated version should feel like a senior professional rewrote their resume specifically for this target role.
-- Restructure sentence flow: lead with the most impressive element (scope, impact, or ownership), then detail the action, then the outcome.
-- Example of INSUFFICIENT calibration: "Managed customer complaints" → "Managed and resolved customer complaints" (too similar)
-- Example of SUFFICIENT calibration: "Managed customer complaints" → "Directed end-to-end resolution of escalated customer complaints across a multi-channel support environment, implementing root-cause analysis protocols that reduced repeat contact rates and improved first-call resolution metrics"
+- Restructure sentence flow: LEAD with a Signal 1 ownership verb, EMBED Signal 2 JD keywords in the middle, END with a Signal 3 outcome term and Signal 5 scope indicator.
+- Example of INSUFFICIENT calibration: "Managed customer complaints" → "Managed and resolved customer complaints" (too similar, no JD keywords, no outcome term)
+- Example of SUFFICIENT calibration: "Managed customer complaints" → "Directed end-to-end resolution of escalated customer complaints across a multi-channel support environment, implementing root-cause analysis protocols that reduced repeat contact rates and improved first-call resolution metrics for a portfolio of enterprise accounts"
 
 PRO FILTER (ZERO FABRICATION):
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
@@ -279,9 +305,11 @@ Return ONLY this JSON (no markdown, no code fences):
 CRITICAL: 
 - calibrated_professional_roles must have the SAME number of roles as the professional input roles, in the SAME order. Each role must have the SAME number of bullets.
 - calibrated_independent_projects must have the SAME number as independent project inputs.
-- Every calibrated bullet must be at least 15% LONGER than its original. Never compress.
-- Every bullet MUST start with an ownership verb. No exceptions.
-- At least 3 bullets per role MUST contain JD-mirrored vocabulary.
+- Every calibrated bullet must be at least 20% LONGER than its original. Never compress.
+- Every bullet MUST start with an ownership verb from Signal 1. No exceptions. The FIRST WORD must be from that exact list.
+- At least 4 bullets per role MUST contain JD-mirrored vocabulary embedded directly in the bullet text.
+- Every bullet MUST contain at least one outcome term from Signal 3.
+- ZERO passive phrases from Signal 4 anywhere in the output.
 - Every bullet MUST contain an outcome, impact, or scope indicator.`;
 
     let content = await callAI(apiKey, prompt);
