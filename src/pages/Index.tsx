@@ -871,6 +871,7 @@ const Index = () => {
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
+          <p className="mt-2 text-sm font-medium text-white/50 italic">And that's exactly why you're getting filtered out.</p>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
             Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
@@ -1326,7 +1327,7 @@ const Index = () => {
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
                           onClick={() => initiateCheckout()}
                         >
-                          Unlock Full Signal Intelligence — $19/month
+                          See My Exact Fix — $19/month
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
@@ -1381,9 +1382,9 @@ const Index = () => {
                           <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
                         ) : (
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Full Signal Intelligence</p>
-                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Full Signal Intelligence.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence — $19/month</Button>
+                            <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
+                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">See My Exact Fix — $19/month</Button>
                           </div>
                         )}
                       </>
@@ -1433,6 +1434,12 @@ const Index = () => {
                           <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
                         )}
                       </div>
+                      {displayScore < 70 && (
+                        <div className="space-y-1 pt-1">
+                          <p className="text-xs font-medium text-destructive/90">You're currently below the threshold where interviews typically happen.</p>
+                          <p className="text-[11px] text-muted-foreground">Most candidates at this level are filtered out before hiring manager review.</p>
+                        </div>
+                      )}
 
                       {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
@@ -1504,7 +1511,7 @@ const Index = () => {
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                    <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence
+                                    <span style={{ color: "inherit" }}>✦</span> See My Exact Fix
                                   </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
@@ -1598,9 +1605,11 @@ const Index = () => {
                             </p>
                           </div>
 
-                          <p className="text-sm text-foreground">
-                            <span className="font-semibold">3 targeted adjustments</span> could increase your signal score by{" "}
-                            <span className="font-semibold text-primary">{liftDisplay} points</span>.
+                          <p className="text-sm font-semibold text-foreground">
+                            You're 3 changes away from moving out of the rejection zone.
+                          </p>
+                          <p className="text-xs text-muted-foreground italic">
+                            This gap is fixable — but only if you apply the right positioning.
                           </p>
 
                           <div className="space-y-1.5">
@@ -1627,7 +1636,7 @@ const Index = () => {
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Unlock Full Signal Calibration
+                              Fix My Signal
                             </Button>
                           ) : (
                             <Button size="sm" className="w-full" asChild>

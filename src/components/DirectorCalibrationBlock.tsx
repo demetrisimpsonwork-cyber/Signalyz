@@ -423,7 +423,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
             {isAuthenticated ? (
               <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
                 <span style={{ color: "inherit" }}>✦</span>
-                Unlock Full Signal Intelligence — $19/month
+                See My Exact Fix — $19/month
               </Button>
             ) : (
               <Button className="w-full gap-2" size="lg" asChild>

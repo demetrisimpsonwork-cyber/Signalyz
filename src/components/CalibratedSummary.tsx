@@ -71,7 +71,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
            <p className="text-sm font-semibold text-foreground">Unlock Calibrated Summary — Full Signal Intelligence</p>
            <p className="text-xs text-muted-foreground">Your professional identity, repositioned for this role.</p>
            {user ? (
-             <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence — $19/month</Button>
+             <Button size="sm" onClick={onUpgrade}>See My Exact Fix</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}

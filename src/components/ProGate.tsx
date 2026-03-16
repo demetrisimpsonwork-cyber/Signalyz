@@ -121,7 +121,7 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                Upgrade to Full Signal Intelligence
+                Fix My Signal
               </Button>
 
               <div className="relative flex items-center justify-center">

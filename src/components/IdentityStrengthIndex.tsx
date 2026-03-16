@@ -166,7 +166,7 @@ function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
       {user ? (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" onClick={onUpgrade}>
           <Lock className="h-3 w-3" />
-          Unlock Full Signal Intelligence
+          See My Exact Fix
         </Button>
       ) : (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" asChild>
