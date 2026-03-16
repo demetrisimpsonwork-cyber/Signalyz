@@ -1476,7 +1476,7 @@ const Index = () => {
                           <div className="space-y-3">
                             {strengths.length > 0 && (
                               <div className="space-y-1">
-                                <p className="section-label">What's Working</p>
+                                <p className="section-label">What's Landing</p>
                                 <ul className="space-y-0.5">
                                   {strengths.map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
