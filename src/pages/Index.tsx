@@ -1486,7 +1486,7 @@ const Index = () => {
                             )}
                             {gaps.length > 0 && (
                               <div className="space-y-1">
-                                <p className="section-label">What's Missing</p>
+                                <p className="section-label">Screen-Out Risks</p>
                                 <ul className="space-y-0.5">
                                   {gaps.map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
