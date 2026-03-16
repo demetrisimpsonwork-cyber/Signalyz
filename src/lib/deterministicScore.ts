@@ -635,16 +635,16 @@ export function computeDeterministicScore(
     const deltaOutcome = nowSignals.outcomeDensity - origSignals.outcomeDensity;
     const deltaPassive = origSignals.passiveDensity - nowSignals.passiveDensity; // reduction is positive
 
-    // Validate: at least 3 of 5 dimensions must show improvement
+    // Validate: at least 2 of 5 dimensions must show improvement (relaxed from 3)
     const improvementFlags = [
-      deltaOwnership > 0.05,
-      deltaKeywordCov > 0.05,
-      deltaVerbRate > 0.05,
-      deltaOutcome > 0.03,
-      deltaPassive > 0.02,
+      deltaOwnership > 0.03,
+      deltaKeywordCov > 0.03,
+      deltaVerbRate > 0.03,
+      deltaOutcome > 0.02,
+      deltaPassive > 0.01,
     ];
     const improvementCount = improvementFlags.filter(Boolean).length;
-    const hasValidatedImprovement = improvementCount >= 3;
+    const hasValidatedImprovement = improvementCount >= 2;
 
     // Anti-stuffing gate
     const resumeTokens = tokenize(sanitizedResume);
@@ -654,23 +654,23 @@ export function computeDeterministicScore(
     }, 0);
     const isKeywordStuffed = maxKeywordFreq > 6;
 
-    // Absolute quality gates
+    // Absolute quality gates (relaxed to reward genuine partial improvement)
     const meetsQualityGates =
-      nowSignals.ownershipDensity >= 0.35 &&
-      nowSignals.keywordCoverage >= 0.45 &&
-      nowSignals.verbLeadRate >= 0.75;
+      nowSignals.ownershipDensity >= 0.25 &&
+      nowSignals.keywordCoverage >= 0.30 &&
+      nowSignals.verbLeadRate >= 0.60;
 
     if (hasValidatedImprovement && meetsQualityGates && !isKeywordStuffed) {
       const BASELINE_SCORE = 59;
       const boostFloor = BASELINE_SCORE + 8; // minimum 67
       const deltaIntensity = clamp01(
-        (clamp01(deltaOwnership / 0.30) * 0.25) +
-        (clamp01(deltaKeywordCov / 0.30) * 0.25) +
-        (clamp01(deltaVerbRate / 0.20) * 0.20) +
-        (clamp01(deltaOutcome / 0.20) * 0.15) +
-        (clamp01(deltaPassive / 0.15) * 0.15)
+        (clamp01(deltaOwnership / 0.20) * 0.25) +
+        (clamp01(deltaKeywordCov / 0.20) * 0.25) +
+        (clamp01(deltaVerbRate / 0.15) * 0.20) +
+        (clamp01(deltaOutcome / 0.15) * 0.15) +
+        (clamp01(deltaPassive / 0.10) * 0.15)
       );
-      const boostTarget = boostFloor + Math.round(deltaIntensity * 3); // 67–70
+      const boostTarget = boostFloor + Math.round(deltaIntensity * 11); // 67–78
       finalScore = Math.max(baseScore, boostTarget);
     }
   }
