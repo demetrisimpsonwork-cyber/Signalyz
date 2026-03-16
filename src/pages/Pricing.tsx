@@ -159,7 +159,7 @@ const Pricing = () => {
               variant="outline"
               onClick={() => initiateCheckout("one_time")}
             >
-              Unlock Full Report — $9
+              See My Exact Fix — $9
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
