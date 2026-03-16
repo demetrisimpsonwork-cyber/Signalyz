@@ -90,12 +90,14 @@ describe("computeDeterministicScore", () => {
     expect(result.finalScore).toBeGreaterThanOrEqual(0);
   });
 
-  it("2. clearly improved calibrated resume gets uplift", () => {
+  it("2. clearly improved calibrated resume gets uplift (capped at +25)", () => {
+    const origResult = computeDeterministicScore(ORIGINAL_RESUME, JD, "original");
     const result = computeDeterministicScore(
       CALIBRATED_RESUME_STRONG, JD, "calibrated", ORIGINAL_RESUME
     );
-    // Should activate the floor (>= 67)
-    expect(result.finalScore).toBeGreaterThanOrEqual(67);
+    // Should show positive uplift, capped at 25
+    expect(result.finalScore).toBeGreaterThan(origResult.finalScore);
+    expect(result.finalScore - origResult.finalScore).toBeLessThanOrEqual(25);
   });
 
   it("3. minimally changed resume does NOT get uplift", () => {
