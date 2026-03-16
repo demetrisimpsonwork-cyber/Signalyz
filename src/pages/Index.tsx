@@ -1501,6 +1501,9 @@ const Index = () => {
                     {/* Pro-only sections — only render when Pro */}
                     {effectiveIsPro && (
                       <>
+                        {/* Signal Action Plan — top of Pro section */}
+                        <SignalActionPlan alignmentResult={result} />
+
                         {/* Calibrated Summary */}
                         <CalibratedSummary
                           experience={bullet}
