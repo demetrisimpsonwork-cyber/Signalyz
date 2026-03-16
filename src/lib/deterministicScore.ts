@@ -679,7 +679,7 @@ export function computeDeterministicScore(
       finalScore = Math.max(baseScore, boostTarget);
     }
 
-    let retryPassTriggered = false;
+    // ─── (retryPassTriggered declared at outer scope) ───
     // ─── Scoring Integrity Safeguards ─────────────────────────────────────
 
     // 1. Score Floor Guard: calibrated score must never be lower than original
