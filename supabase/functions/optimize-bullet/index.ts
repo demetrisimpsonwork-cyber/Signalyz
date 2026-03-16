@@ -768,13 +768,13 @@ JSON SCHEMA:
 
 Identity_strength_index pillars: exactly 4 (Role Signal Clarity, Commercial Framing Power, Risk Compression Strength, Narrative Cohesion), each 0-25, strict evidence-based.
 
-SCORE_RATIONALE CLASSIFICATION (CRITICAL):
+SCORE_RATIONALE CLASSIFICATION (CRITICAL — DIAGNOSTIC + DIRECTIVE FORMAT):
 Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]':
-- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal (e.g. "aligns with", "demonstrates", "shows", "translates to", "evidenced by")
-- '[GAP]' = the resume is missing this signal or it is weak/absent (e.g. "missing", "lacks", "no evidence of", "absent", "unclear", "not demonstrated")
-Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
-Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals from the resume relative to the JD priority signals. Always return 4 [STRENGTH] items.
-Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical absent signals relative to the JD priority signals. Always return 4 [GAP] items.
+- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal. Format: State the signal detected, then why it matters for this role. Example: "[STRENGTH] Operational throughput ownership detected — this directly addresses the JD's emphasis on process efficiency and SLA management."
+- '[GAP]' = the resume is missing this signal. Format: State the missing signal, the CONSEQUENCE (why it causes screen-out), and the CORRECTIVE ACTION. Example: "[GAP] No evidence of P&L ownership — hiring managers will read this as inability to operate at budget-accountable scope, which is a primary filter for this role. Add revenue/cost figures to your most senior role bullets."
+Do NOT write passive descriptions like "Missing technical onboarding experience." Instead write cause + consequence + fix: "No technical onboarding signal — this creates a perception that you cannot manage implementation-heavy accounts, which is a dealbreaker for this CSM role. Reframe your training or setup work as onboarding delivery."
+Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals. Always return 4 [STRENGTH] items.
+Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical screen-out risks, ranked by severity. Each GAP must include: what's missing, why it causes rejection, and one concrete action to fix it. Always return 4 [GAP] items.
 The score_rationale array must contain exactly 8 items total: 4 prefixed with [STRENGTH] followed by 4 prefixed with [GAP]. Both sections are required. Neither can be absent.
 
 HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
