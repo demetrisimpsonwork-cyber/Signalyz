@@ -717,8 +717,12 @@ const Index = () => {
 
       const res = data as OptimizationResult;
       // Apply deterministic score override before storing
-      const runType = isResumeFromCalibrated ? "calibrated" as const : "original" as const;
-      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, originalResumeBeforeCalibration ?? undefined);
+      // Use the ref to determine if this specific run was triggered as a calibrated rerun
+      const isCalibratedRun = calibratedRunPendingRef.current;
+      calibratedRunPendingRef.current = false; // consume immediately — one-shot
+      setIsResumeFromCalibrated(false); // reset state as well
+      const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
