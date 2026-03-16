@@ -1069,6 +1069,21 @@ const Index = () => {
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
             onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
+            originalResumeBeforeCalibration={originalResumeBeforeCalibration}
+            onRerunSignalAnalysis={(calibratedText) => {
+              if (!originalResumeBeforeCalibration) return;
+              // Set the calibrated text as the current resume input
+              setBullet(calibratedText);
+              setIsResumeFromCalibrated(true);
+              setInputSource("paste");
+              // Switch to alignment tab and trigger run
+              setMode("alignment");
+              // Use a microtask to ensure state is settled before triggering
+              setTimeout(() => {
+                const runBtn = document.getElementById("run-alignment-btn");
+                if (runBtn) runBtn.click();
+              }, 150);
+            }}
           />
         )}
 
