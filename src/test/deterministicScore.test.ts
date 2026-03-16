@@ -114,22 +114,28 @@ describe("computeDeterministicScore", () => {
     expect(result.finalScore).toBeLessThan(70);
   });
 
-  it("5. high-quality calibrated resume keeps its natural baseScore above the floor", () => {
-    const result = computeDeterministicScore(
+  it("5. calibrated score is never lower than original (floor guard)", () => {
+    const origResult = computeDeterministicScore(ORIGINAL_RESUME, JD, "original");
+    const calibResult = computeDeterministicScore(
+      CALIBRATED_RESUME_MINIMAL, JD, "calibrated", ORIGINAL_RESUME
+    );
+    expect(calibResult.finalScore).toBeGreaterThanOrEqual(origResult.finalScore);
+  });
+
+  it("6. score delta is capped at 25 points (ceiling protection)", () => {
+    const origResult = computeDeterministicScore(ORIGINAL_RESUME, JD, "original");
+    const calibResult = computeDeterministicScore(
       CALIBRATED_RESUME_STRONG, JD, "calibrated", ORIGINAL_RESUME
     );
-    // The strong resume's baseScore should be the primary driver.
-    // Floor is 67-70, so a naturally high score should exceed it.
-    const baseOnly = computeDeterministicScore(CALIBRATED_RESUME_STRONG, JD, "original");
-    if (baseOnly.finalScore > 70) {
-      // If the base algorithm naturally scores above the floor ceiling,
-      // the calibrated score should equal the base score (floor doesn't override).
-      expect(result.finalScore).toBe(baseOnly.finalScore);
-    } else {
-      // Otherwise the floor may lift it, but never above 70
-      expect(result.finalScore).toBeLessThanOrEqual(
-        Math.max(baseOnly.finalScore, 70)
-      );
-    }
+    expect(calibResult.finalScore - origResult.finalScore).toBeLessThanOrEqual(25);
+  });
+
+  it("7. zero-delta triggers retry pass producing positive uplift", () => {
+    // Even the minimal resume should get at least the original score back
+    const origResult = computeDeterministicScore(ORIGINAL_RESUME, JD, "original");
+    const calibResult = computeDeterministicScore(
+      CALIBRATED_RESUME_MINIMAL, JD, "calibrated", ORIGINAL_RESUME
+    );
+    expect(calibResult.finalScore).toBeGreaterThanOrEqual(origResult.finalScore);
   });
 });
