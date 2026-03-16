@@ -305,9 +305,11 @@ Return ONLY this JSON (no markdown, no code fences):
 CRITICAL: 
 - calibrated_professional_roles must have the SAME number of roles as the professional input roles, in the SAME order. Each role must have the SAME number of bullets.
 - calibrated_independent_projects must have the SAME number as independent project inputs.
-- Every calibrated bullet must be at least 15% LONGER than its original. Never compress.
-- Every bullet MUST start with an ownership verb. No exceptions.
-- At least 3 bullets per role MUST contain JD-mirrored vocabulary.
+- Every calibrated bullet must be at least 20% LONGER than its original. Never compress.
+- Every bullet MUST start with an ownership verb from Signal 1. No exceptions. The FIRST WORD must be from that exact list.
+- At least 4 bullets per role MUST contain JD-mirrored vocabulary embedded directly in the bullet text.
+- Every bullet MUST contain at least one outcome term from Signal 3.
+- ZERO passive phrases from Signal 4 anywhere in the output.
 - Every bullet MUST contain an outcome, impact, or scope indicator.`;
 
     let content = await callAI(apiKey, prompt);
