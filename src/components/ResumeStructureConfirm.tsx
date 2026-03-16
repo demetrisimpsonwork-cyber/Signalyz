@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,18 +12,34 @@ interface ResumeStructureConfirmProps {
   onSkip: () => void;
 }
 
+/**
+ * Strip entries that are entirely hollow (no meaningful content)
+ * so the user sees a clean starting point rather than noisy placeholders.
+ */
+function cleanForPresentation(resume: CalibratedResumeData) {
+  const experience = resume.experience.filter(
+    (exp) => exp.company.trim() || exp.title.trim() || exp.dates.trim()
+  );
+  const education = resume.education.filter(
+    (edu) => edu.institution?.trim() || edu.degree?.trim() || edu.year?.trim()
+  );
+  return { experience, education };
+}
+
 export default function ResumeStructureConfirm({
   resume,
   issues,
   onConfirm,
   onSkip,
 }: ResumeStructureConfirmProps) {
+  const cleaned = useMemo(() => cleanForPresentation(resume), [resume]);
+
   const [header, setHeader] = useState({ ...resume.header });
   const [experience, setExperience] = useState(
-    resume.experience.map((e) => ({ ...e, bullets: [...e.bullets] }))
+    cleaned.experience.map((e) => ({ ...e, bullets: [...e.bullets] }))
   );
   const [education, setEducation] = useState(
-    resume.education.map((e) => ({ ...e }))
+    cleaned.education.map((e) => ({ ...e }))
   );
 
   const updateExp = (idx: number, field: string, value: string) => {
@@ -58,6 +74,7 @@ export default function ResumeStructureConfirm({
 
   const hasNameIssue = issues.some((i) => i.startsWith("name_"));
   const hasContactIssue = issues.includes("contact_in_experience") || issues.includes("artifact_in_experience");
+  const hasExpHollow = issues.includes("experience_mostly_hollow");
   const hasEduIssue = issues.some((i) => i.startsWith("education_"));
   const hasLocationIssue = issues.includes("location_contaminated");
 
@@ -65,14 +82,15 @@ export default function ResumeStructureConfirm({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Banner */}
       <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
-        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-500" />
+        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "hsl(var(--warning, 38 92% 50%))" }} />
         <div className="space-y-1">
           <h3 className="text-sm font-semibold text-foreground">
             Confirm Resume Structure
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            We detected potential parsing issues with your uploaded PDF. Please verify
-            the fields below before we assemble your Calibrated Resume.
+            Some fields could not be confidently extracted from your PDF.
+            Empty fields below were left blank intentionally — please fill in any missing information
+            so your Calibrated Resume is accurate.
           </p>
         </div>
       </div>
@@ -127,10 +145,12 @@ export default function ResumeStructureConfirm({
       {/* Experience */}
       <FieldSection
         title={`Experience (${experience.length} entries)`}
-        flagged={hasContactIssue}
+        flagged={hasContactIssue || hasExpHollow}
       >
         {experience.length === 0 && (
-          <p className="text-xs text-muted-foreground italic">No experience entries detected.</p>
+          <p className="text-xs text-muted-foreground italic">
+            No experience entries were reliably extracted. They will be populated from your alignment data once you confirm.
+          </p>
         )}
         {experience.map((exp, idx) => (
           <div
@@ -177,7 +197,9 @@ export default function ResumeStructureConfirm({
         flagged={hasEduIssue}
       >
         {education.length === 0 && (
-          <p className="text-xs text-muted-foreground italic">No education entries detected.</p>
+          <p className="text-xs text-muted-foreground italic">
+            No education entries were reliably extracted. Add them below if applicable.
+          </p>
         )}
         {education.map((edu, idx) => (
           <div

@@ -57,30 +57,29 @@ export default function PdfFallbackState({
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      {/* Success + guidance banner */}
+      {/* Status banner */}
       <div className="rounded-lg border border-border bg-card p-5 space-y-3">
         <div className="flex items-start gap-3">
           <CheckCircle className="h-5 w-5 shrink-0 mt-0.5 text-emerald-500" />
           <div className="space-y-1.5">
             <h3 className="text-sm font-semibold text-foreground">
-              PDF analysis complete — resume structure needs confirmation
+              Signal analysis complete — calibrated resume assembly paused
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Your Signal Diagnosis, gap analysis, and interview intelligence results are ready.
-              However, the PDF formatting made it difficult to reliably extract structured fields
-              (name, experience blocks, education) for a clean Calibrated Resume.
+              Your alignment score, gap analysis, and interview intelligence are ready in the Signal Report tab.
+              However, the PDF's formatting made it difficult to extract reliable structure
+              (name, job titles, company names, education) for an accurate Calibrated Resume.
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Choose one of the options below to generate an accurate Calibrated Resume:
+              Choose one of the options below so we can build your resume correctly:
             </p>
           </div>
         </div>
       </div>
 
-      {/* Options */}
+      {/* Recovery options */}
       {mode === "choose" && (
         <div className="grid gap-3 sm:grid-cols-3">
-          {/* Option 1: Upload DOCX */}
           <button
             onClick={() => inputRef.current?.click()}
             className="flex flex-col items-center gap-2.5 rounded-lg border border-border bg-card p-5 text-center transition-colors hover:bg-muted/50 hover:border-primary/30 cursor-pointer"
@@ -88,11 +87,10 @@ export default function PdfFallbackState({
             <Upload className="h-6 w-6 text-primary" />
             <span className="text-sm font-medium text-foreground">Upload DOCX</span>
             <span className="text-[11px] text-muted-foreground leading-snug">
-              DOCX files preserve structure accurately
+              Best option — DOCX preserves structure accurately
             </span>
           </button>
 
-          {/* Option 2: Paste text */}
           <button
             onClick={() => setMode("paste")}
             className="flex flex-col items-center gap-2.5 rounded-lg border border-border bg-card p-5 text-center transition-colors hover:bg-muted/50 hover:border-primary/30 cursor-pointer"
@@ -100,11 +98,10 @@ export default function PdfFallbackState({
             <ClipboardPaste className="h-6 w-6 text-primary" />
             <span className="text-sm font-medium text-foreground">Paste Resume Text</span>
             <span className="text-[11px] text-muted-foreground leading-snug">
-              Copy text directly from your resume
+              Copy-paste the full text from your resume file
             </span>
           </button>
 
-          {/* Option 3: Continue with edit mode */}
           <button
             onClick={onContinueWithEditMode}
             className="flex flex-col items-center gap-2.5 rounded-lg border border-border bg-card p-5 text-center transition-colors hover:bg-muted/50 hover:border-primary/30 cursor-pointer"
@@ -112,7 +109,7 @@ export default function PdfFallbackState({
             <Pencil className="h-6 w-6 text-primary" />
             <span className="text-sm font-medium text-foreground">Review & Edit</span>
             <span className="text-[11px] text-muted-foreground leading-snug">
-              Confirm extracted fields manually
+              Verify and correct the extracted fields manually
             </span>
           </button>
 
