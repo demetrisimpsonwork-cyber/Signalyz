@@ -17,6 +17,7 @@ import ResumeUpload from "@/components/ResumeUpload";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import SignalGapActions from "@/components/SignalGapActions";
+import SignalActionPlan from "@/components/SignalActionPlan";
 import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
@@ -1500,6 +1501,9 @@ const Index = () => {
                     {/* Pro-only sections — only render when Pro */}
                     {effectiveIsPro && (
                       <>
+                        {/* Signal Action Plan — top of Pro section */}
+                        <SignalActionPlan alignmentResult={result} />
+
                         {/* Calibrated Summary */}
                         <CalibratedSummary
                           experience={bullet}
