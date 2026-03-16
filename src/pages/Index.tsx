@@ -1436,11 +1436,9 @@ const Index = () => {
 
                       {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
-                        {(result.signal_model?.gaps?.[0] || result.top_missing_signal) && (
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Top gap:</span> {result.signal_model?.gaps?.[0] || result.top_missing_signal}
+                            <span className="font-medium text-destructive">Primary blocker:</span> {result.signal_model?.interview_gap_diagnosis?.primary_blocker || result.signal_model?.interview_gap_diagnosis?.primary_issue || result.signal_model?.gaps?.[0] || result.top_missing_signal}
                           </p>
-                        )}
                         {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
                           <p className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
@@ -1474,6 +1472,13 @@ const Index = () => {
                         }
                         return (
                           <div className="space-y-3">
+                            {/* Primary Blocker — first GAP elevated */}
+                            {gaps.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="section-label text-destructive">Primary Blocker</p>
+                                <p className="text-xs text-foreground font-medium">• {gaps[0]}</p>
+                              </div>
+                            )}
                             {strengths.length > 0 && (
                               <div className="space-y-1">
                                 <p className="section-label">What's Landing</p>
@@ -1484,11 +1489,11 @@ const Index = () => {
                                 </ul>
                               </div>
                             )}
-                            {gaps.length > 0 && (
+                            {gaps.length > 1 && (
                               <div className="space-y-1">
-                                <p className="section-label">Screen-Out Risks</p>
+                                <p className="section-label">Secondary Risks</p>
                                 <ul className="space-y-0.5">
-                                  {gaps.map((r, i) => (
+                                  {gaps.slice(1).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
                                   ))}
                                 </ul>

@@ -126,7 +126,8 @@ export interface SignalDiagnosticData {
     }>;
   };
   interview_gap_diagnosis?: {
-    primary_issue?: string;
+    primary_blocker?: string;
+    primary_issue?: string; // legacy fallback
     what_hiring_managers_see?: string[];
     what_this_creates?: string;
     strategic_fixes?: string[];
@@ -671,10 +672,10 @@ function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<Sign
         <SectionLabel>Why You're Not Getting Interviews</SectionLabel>
       </div>
 
-      {data.primary_issue && (
+      {(data.primary_blocker || data.primary_issue) && (
         <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Primary Issue</p>
-          <p className="text-sm text-foreground leading-relaxed">{data.primary_issue}</p>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-destructive">Primary Blocker</p>
+          <p className="text-sm text-foreground leading-relaxed font-medium">{data.primary_blocker || data.primary_issue}</p>
         </div>
       )}
 
@@ -804,7 +805,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
   return (
     <div className="space-y-4">
       {/* Why You're Not Getting Interviews — visible to all users */}
-      {data.interview_gap_diagnosis?.primary_issue && (
+      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} />
       )}
 

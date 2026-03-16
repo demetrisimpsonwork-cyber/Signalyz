@@ -192,7 +192,8 @@ export interface SignalModel {
 
   /** Interview Gap Diagnosis — why you're not getting interviews */
   interview_gap_diagnosis?: {
-    primary_issue: string;
+    primary_blocker: string;
+    primary_issue?: string; // legacy fallback
     what_hiring_managers_see: string[];
     what_this_creates: string;
     strategic_fixes: string[];
