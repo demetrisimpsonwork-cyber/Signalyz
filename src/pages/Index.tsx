@@ -997,31 +997,35 @@ const Index = () => {
         {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
-          <div className="flex lg:hidden overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {([
-              { id: "alignment" as const, label: "Align", proOnly: false },
-              { id: "director" as const, label: "Position", proOnly: false },
-              { id: "calibrated" as const, label: "Resume", proOnly: true },
-              { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
-                  const scrollY = window.scrollY;
-                  setMode(tab.id);
-                  requestAnimationFrame(() => window.scrollTo(0, scrollY));
-                }}
-                className={`px-3 py-2.5 text-sm font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
-                  mode === tab.id
-                    ? "text-primary border-primary"
-                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="relative lg:hidden w-full">
+            <div className="flex overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden pr-6" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              {([
+                { id: "alignment" as const, label: "Align", proOnly: false },
+                { id: "director" as const, label: "Position", proOnly: false },
+                { id: "calibrated" as const, label: "Resume", proOnly: true },
+                { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
+                { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                    const scrollY = window.scrollY;
+                    setMode(tab.id);
+                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                  }}
+                  className={`px-3 py-2.5 text-sm font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                    mode === tab.id
+                      ? "text-primary border-primary"
+                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {/* Right-edge gradient fade for scroll affordance */}
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent" />
           </div>
 
           {/* Desktop layout */}
