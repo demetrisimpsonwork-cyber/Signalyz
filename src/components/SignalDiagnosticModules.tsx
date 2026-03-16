@@ -835,9 +835,9 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
 
   return (
     <div className="space-y-4">
-      {/* Why You're Not Getting Interviews — visible to all users */}
+      {/* Why You're Not Getting Interviews — visible to all users, but fixes/predictions gated */}
       {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
-        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} />
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
       )}
 
       {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
