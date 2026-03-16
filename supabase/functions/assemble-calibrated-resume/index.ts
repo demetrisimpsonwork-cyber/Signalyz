@@ -878,8 +878,8 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   if (report.gap_analyzer?.rewrite_targets?.length) {
     const types = report.gap_analyzer.rewrite_targets
       .map((t: any) => t.upgrade_type)
-      .filter(Boolean);
-    signalKeywords = [...new Set(types)].map((t: string) =>
+      .filter(Boolean) as string[];
+    signalKeywords = [...new Set(types)].map((t) =>
       t.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
     );
   }
