@@ -341,6 +341,7 @@ const Index = () => {
   const [bullet, setBullet] = useState("");
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
+  const calibratedRunPendingRef = useRef(false);
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -716,8 +717,12 @@ const Index = () => {
 
       const res = data as OptimizationResult;
       // Apply deterministic score override before storing
-      const runType = isResumeFromCalibrated ? "calibrated" as const : "original" as const;
-      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, originalResumeBeforeCalibration ?? undefined);
+      // Use the ref to determine if this specific run was triggered as a calibrated rerun
+      const isCalibratedRun = calibratedRunPendingRef.current;
+      calibratedRunPendingRef.current = false; // consume immediately — one-shot
+      setIsResumeFromCalibrated(false); // reset state as well
+      const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
+      const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
@@ -1068,12 +1073,13 @@ const Index = () => {
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
-            onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
+            onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); calibratedRunPendingRef.current = true; }}
             originalResumeBeforeCalibration={originalResumeBeforeCalibration}
             onRerunSignalAnalysis={(calibratedText) => {
               if (!originalResumeBeforeCalibration) return;
               // Set the calibrated text as the current resume input
               setBullet(calibratedText);
+              calibratedRunPendingRef.current = true; // signal the next run to use calibrated path
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
               // Switch to alignment tab and trigger run
