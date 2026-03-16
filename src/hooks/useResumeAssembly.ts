@@ -44,11 +44,11 @@ interface UseResumeAssemblyReturn {
   confidence: ConfidenceResult | null;
   /** The raw (pre-confirmation) resume when confidence is low */
   pendingResume: CalibratedResumeData | null;
-  /** Accept user-corrected data and finalize assembly */
   confirmResume: (corrected: CalibratedResumeData) => void;
-  /** Skip confirmation and use the raw data as-is */
   skipConfirmation: () => void;
   assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
+  /** Clear all assembled state — use when a new alignment run begins */
+  reset: () => void;
 }
 
 const STEPS = [
@@ -58,17 +58,7 @@ const STEPS = [
 ];
 
 export function useResumeAssembly(): UseResumeAssemblyReturn {
-  // Restore previously assembled resume from localStorage on mount
-  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(() => {
-    try {
-      const stored = localStorage.getItem("signalyz_calibrated_resume_data");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.header && parsed?.experience) return parsed as CalibratedResumeData;
-      }
-    } catch {}
-    return null;
-  });
+  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(null);
   const [pendingResume, setPendingResume] = useState<CalibratedResumeData | null>(null);
   const [confidence, setConfidence] = useState<ConfidenceResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -97,7 +87,16 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     }
   }, [pendingResume, finalizeResume]);
 
+  const reset = useCallback(() => {
+    setAssembledResume(null);
+    setPendingResume(null);
+    setConfidence(null);
+    setError(null);
+    setStep(0);
+  }, []);
+
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => {
+    setAssembledResume(null);
     setLoading(true);
     setError(null);
     setStep(0);
@@ -382,5 +381,5 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     }
   }, [finalizeResume]);
 
-  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble };
+  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble, reset };
 }
