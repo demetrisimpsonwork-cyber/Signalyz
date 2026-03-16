@@ -660,8 +660,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 11: Why You're Not Getting Interviews ─── */
-function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]> }) {
-  const currentScore = data.current_score ?? 0;
+function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number }) {
+  const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
 
   return (
@@ -730,8 +730,8 @@ function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 12: Predicted Signal Lift ─── */
-function PredictedSignalLift({ data }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]> }) {
-  const currentScore = data.current_score ?? 0;
+function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; overrideScore?: number }) {
+  const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
   const dims = (data.dimensions ?? [])
     .slice()
@@ -805,7 +805,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     <div className="space-y-4">
       {/* Why You're Not Getting Interviews — visible to all users */}
       {data.interview_gap_diagnosis?.primary_issue && (
-        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} />
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} />
       )}
 
       {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
@@ -851,7 +851,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
           )}
 
           {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
-            <PredictedSignalLift data={data.predicted_signal_lift} />
+            <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
           )}
         </>
       )}
