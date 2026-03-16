@@ -878,8 +878,8 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   if (report.gap_analyzer?.rewrite_targets?.length) {
     const types = report.gap_analyzer.rewrite_targets
       .map((t: any) => t.upgrade_type)
-      .filter(Boolean);
-    signalKeywords = [...new Set(types)].map((t: string) =>
+      .filter(Boolean) as string[];
+    signalKeywords = [...new Set(types)].map((t) =>
       t.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
     );
   }
@@ -980,6 +980,525 @@ Return ONLY the summary text, no JSON, no quotes, no labels.`,
   }
 }
 
+const SIGNAL_STOP_WORDS = new Set([
+  "the","and","for","with","that","this","from","your","you","our","are","was","were","have","has","had","will","can","must","should","into","onto","through","across","over","under","about","within","between","using","use","used","their","they","them","job","role","position","candidate","required","preferred","responsibilities","requirements","experience","ability","skills","skill","work","working","team","teams","customer","customers","service","services","business",
+]);
+
+const STRONG_SIGNAL_VERBS = [
+  "led","drove","owned","spearheaded","architected","orchestrated","directed","launched","built","scaled","implemented","executed","transformed","championed","governed","delivered","established","redesigned","pioneered","devised","instituted","restructured","consolidated","mobilized","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
+] as const;
+
+const PARTIAL_SIGNAL_VERBS = [
+  "managed","coordinated","responsible for","handled","worked on","contributed to","involved in","engaged","tracked","monitored","reviewed","prepared","processed","compiled","organized","planned","conducted","performed","served",
+] as const;
+
+const PASSIVE_SIGNAL_PHRASES = [
+  "helped","assisted","supported","participated in","was involved","tasked with",
+] as const;
+
+const OUTCOME_SIGNAL_TERMS = [
+  "increased","reduced","improved","grew","saved","delivered","achieved","exceeded","decreased","boosted","lowered","raised","generated","optimized","reducing","improving","streamlined","standardizing","minimized","eliminated","enhancing","resulting in","leading to","which led to","driving","enabling",
+] as const;
+
+const SIGNAL_SCOPE_RX = /(?:\$\s?\d[\d,.]*\s?[kmb]?(?:illion)?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\+?\s?(?:team|teams|people|members|staff|engineers|reports|employees|headcount|users|customers|clients|accounts|projects|locations|regions|departments|stakeholders|hours|days|weeks|months|years|sites|offices|vendors|partners|units)|\bcross[- ]?functional\b|\bend[- ]?to[- ]?end\b|\benterprise[- ]?wide\b|\bglobal\b|\bregional\b|\bmulti[- ]?site\b|\bhigh[- ]?volume\b|\bportfolio\b|\bprogram\b|\bp&l\b|\bbudget\b|\brevenue\b|\bgovernance\b)/gi;
+
+const SIGNAL_SEMANTIC_CLUSTERS = [
+  ["escalation", "escalation handling", "issue resolution", "complaint", "dispute", "dispute resolution", "conflict resolution", "grievance", "case management", "issue triage", "customer issue", "problem resolution", "incident management", "service recovery"],
+  ["sla", "service level", "service performance", "performance accountability", "service standard", "quality assurance", "case throughput", "response target", "response time", "turnaround time", "service metric", "service delivery"],
+  ["complaint routing", "case management", "ticket management", "issue workflow", "case routing", "intake", "intake workflow", "customer issue workflow", "queue management", "triage", "work order"],
+  ["cross-functional", "cross functional", "department collaboration", "interdepartmental", "multi-team", "cross-team", "collaborative", "stakeholder liaison", "team coordination", "department coordination", "department leadership", "inter-department"],
+  ["process improvement", "process documentation", "operational efficiency", "workflow optimization", "continuous improvement", "process standardization", "lean", "six sigma", "operational improvement", "operational optimization", "efficiency improvement", "process redesign", "process engineering"],
+  ["customer service", "customer support", "client service", "client support", "customer experience", "customer success", "customer relations", "client relations", "customer satisfaction", "customer retention", "customer engagement", "customer care", "service excellence"],
+  ["leadership", "management", "supervision", "team lead", "team management", "people management", "staff management", "direct reports", "team oversight", "crew management", "shift management"],
+  ["training", "coaching", "mentoring", "onboarding", "development", "upskilling", "staff development", "employee development", "performance coaching"],
+  ["reporting", "analytics", "dashboards", "metrics", "kpi", "data analysis", "performance tracking", "performance monitoring", "trend analysis", "root cause analysis"],
+  ["scheduling", "workforce planning", "capacity planning", "resource allocation", "staffing", "labor scheduling", "shift scheduling", "headcount planning"],
+  ["vendor management", "supplier management", "third-party management", "partner management", "vendor relations", "contract management", "outsourcing"],
+  ["budget", "cost management", "p&l", "financial oversight", "cost reduction", "expense management", "cost control", "budget accountability"],
+  ["compliance", "regulatory", "audit", "policy", "governance", "risk management", "quality control", "standard operating procedure", "sop"],
+  ["stakeholder", "executive", "senior leadership", "c-suite", "board", "sponsor", "executive reporting", "leadership briefing"],
+  ["retail", "store operations", "floor management", "merchandising", "point of sale", "inventory", "store performance", "retail supervision"],
+  ["operations", "operational", "ops", "logistics", "supply chain", "fulfillment", "distribution", "warehouse", "order management"],
+] as const;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeSignalText(text: string): string {
+  return text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function tokenizeSignalText(text: string): string[] {
+  return text.toLowerCase().match(/[a-z0-9]+(?:[+#/&-][a-z0-9]+)*/g) || [];
+}
+
+function stemSignalToken(word: string): string {
+  return word
+    .replace(/ies$/, "i")
+    .replace(/ied$/, "i")
+    .replace(/(ing|tion|ment|ness|ence|ance|ity|ous|ive|ful|less|able|ible|ated|ting|sion)$/, "")
+    .replace(/s$/, "")
+    .replace(/ed$/, "");
+}
+
+function countSignalPhraseHits(text: string, phrases: readonly string[]): number {
+  return phrases.reduce((sum, phrase) => {
+    const escaped = escapeRegExp(phrase).replace(/\s+/g, "\\s+");
+    const rx = new RegExp(`\\b${escaped}\\b`, "gi");
+    return sum + ((text.match(rx) || []).length);
+  }, 0);
+}
+
+function densityPer100Words(hits: number, tokenCount: number): number {
+  const units = Math.max(tokenCount / 100, 1);
+  return hits / units;
+}
+
+function buildSignalJdModel(jdText: string) {
+  const normalized = normalizeSignalText(jdText.toLowerCase());
+  const tokens = tokenizeSignalText(normalized).filter((token) => token.length >= 4 && !SIGNAL_STOP_WORDS.has(token));
+  const tokenFreq = new Map<string, number>();
+  for (const token of tokens) {
+    tokenFreq.set(token, (tokenFreq.get(token) || 0) + 1);
+  }
+
+  const keywords = [...tokenFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 15)
+    .map(([token]) => token);
+
+  const stemmedKeywords = [...new Set(keywords.map(stemSignalToken))].filter((token) => token.length >= 3);
+
+  const sentences = normalized.split(/[\n.;:!?]+/).map((segment) => segment.trim()).filter(Boolean);
+  const bigramFreq = new Map<string, number>();
+  for (const sentence of sentences) {
+    const sentenceTokens = tokenizeSignalText(sentence).filter((token) => token.length >= 4 && !SIGNAL_STOP_WORDS.has(token));
+    for (let i = 0; i < sentenceTokens.length - 1; i++) {
+      const bigram = `${sentenceTokens[i]} ${sentenceTokens[i + 1]}`;
+      bigramFreq.set(bigram, (bigramFreq.get(bigram) || 0) + 1);
+    }
+  }
+
+  const bigrams = [...bigramFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 10)
+    .map(([bigram]) => bigram);
+
+  const clusterTerms = SIGNAL_SEMANTIC_CLUSTERS.map((cluster) =>
+    [...cluster]
+      .filter((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(normalized))
+      .sort((a, b) => b.length - a.length)
+  );
+
+  return { keywords, stemmedKeywords, bigrams, clusterTerms };
+}
+
+interface SignalSnapshot {
+  ownershipDensity: number;
+  keywordCoverage: number;
+  verbLeadRate: number;
+  outcomeDensity: number;
+  passiveDensity: number;
+}
+
+function measureSignalSnapshot(resumeText: string, jdModel: ReturnType<typeof buildSignalJdModel>): SignalSnapshot {
+  const normalized = normalizeSignalText(resumeText);
+  const tokens = tokenizeSignalText(normalized);
+  const tokenSet = new Set(tokens);
+  const stemSet = new Set(tokens.map(stemSignalToken).filter((token) => token.length >= 3));
+  const lower = normalized.toLowerCase();
+
+  const ownershipStrong = countSignalPhraseHits(lower, STRONG_SIGNAL_VERBS);
+  const passiveHits = countSignalPhraseHits(lower, PASSIVE_SIGNAL_PHRASES);
+  const outcomeHits = countSignalPhraseHits(lower, OUTCOME_SIGNAL_TERMS);
+  const quantifiedHits = (lower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
+
+  const exactHits = jdModel.keywords.reduce((sum, token) => sum + (tokenSet.has(token) ? 1 : 0), 0);
+  const stemHits = jdModel.stemmedKeywords.reduce((sum, token) => sum + (stemSet.has(token) ? 1 : 0), 0);
+  const keywordCoverage = Math.max(
+    exactHits / Math.max(jdModel.keywords.length, 1),
+    (stemHits / Math.max(jdModel.stemmedKeywords.length, 1)) * 0.92,
+  );
+
+  const bulletLines = normalized.split(/\n/).map((line) => line.trim()).filter((line) => line.length > 15);
+  const allLeadVerbs = [...STRONG_SIGNAL_VERBS, ...PARTIAL_SIGNAL_VERBS];
+  const verbLedCount = bulletLines.reduce((count, line) => {
+    const lowerLine = line.toLowerCase();
+    return count + (allLeadVerbs.some((verb) => lowerLine.startsWith(verb)) ? 1 : 0);
+  }, 0);
+
+  return {
+    ownershipDensity: densityPer100Words(ownershipStrong, tokens.length),
+    keywordCoverage,
+    verbLeadRate: bulletLines.length > 0 ? verbLedCount / bulletLines.length : 0,
+    outcomeDensity: densityPer100Words(outcomeHits + quantifiedHits, tokens.length),
+    passiveDensity: densityPer100Words(passiveHits, tokens.length),
+  };
+}
+
+function countImprovedDimensions(originalText: string, finalText: string, jdModel: ReturnType<typeof buildSignalJdModel>) {
+  const originalSignals = measureSignalSnapshot(originalText, jdModel);
+  const finalSignals = measureSignalSnapshot(finalText, jdModel);
+
+  const flags = {
+    ownership: finalSignals.ownershipDensity - originalSignals.ownershipDensity > 0.03,
+    keywords: finalSignals.keywordCoverage - originalSignals.keywordCoverage > 0.03,
+    verbLead: finalSignals.verbLeadRate - originalSignals.verbLeadRate > 0.03,
+    outcome: finalSignals.outcomeDensity - originalSignals.outcomeDensity > 0.02,
+    passive: originalSignals.passiveDensity - finalSignals.passiveDensity > 0.01,
+  };
+
+  return {
+    originalSignals,
+    finalSignals,
+    flags,
+    improvementCount: Object.values(flags).filter(Boolean).length,
+  };
+}
+
+function structuredResumeToText(resume: any): string {
+  const lines: string[] = [];
+  if (resume.summary) lines.push("SUMMARY", resume.summary);
+  if (Array.isArray(resume.experience) && resume.experience.length > 0) {
+    lines.push("EXPERIENCE");
+    for (const exp of resume.experience) {
+      const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
+      if (header) lines.push(header);
+      for (const bullet of exp.bullets || []) lines.push(`- ${bullet}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function getLeadWord(text: string): string {
+  return text.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+}
+
+function appendClause(bullet: string, clause: string): string {
+  const base = bullet.trim().replace(/[\s,.;:]+$/, "");
+  const cleanClause = clause.trim().replace(/^[\s,.;:]+/, "").replace(/[\s,.;:]+$/, "");
+  if (!cleanClause) return `${base}.`;
+  return `${base}, ${cleanClause}.`;
+}
+
+function countKeywordMatchesInBullet(bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>): number {
+  const lower = bullet.toLowerCase();
+  const tokens = tokenizeSignalText(lower);
+  const tokenSet = new Set(tokens);
+  const stemSet = new Set(tokens.map(stemSignalToken).filter((token) => token.length >= 3));
+
+  let hits = 0;
+  for (const keyword of jdModel.keywords) {
+    if (tokenSet.has(keyword) || stemSet.has(stemSignalToken(keyword))) hits += 1;
+  }
+  for (const bigram of jdModel.bigrams) {
+    const rx = new RegExp(`\\b${escapeRegExp(bigram).replace(/\s+/g, "\\s+")}\\b`, "i");
+    if (rx.test(lower)) hits += 1;
+  }
+  return hits;
+}
+
+function chooseSignalVerb(original: string, bullet: string, usedVerbs: Map<string, number>): string {
+  const originalLead = getLeadWord(original);
+  if (STRONG_SIGNAL_VERBS.includes(originalLead as typeof STRONG_SIGNAL_VERBS[number])) {
+    return originalLead.charAt(0).toUpperCase() + originalLead.slice(1);
+  }
+
+  const lower = `${original} ${bullet}`.toLowerCase();
+  const candidates: string[] = [];
+
+  if (/team|staff|people|reports|headcount|supervis/i.test(lower)) candidates.push("Directed", "Oversaw", "Supervised");
+  if (/launch|rollout|deploy|implement|migration|release/i.test(lower)) candidates.push("Implemented", "Launched", "Deployed");
+  if (/design|build|develop|engineer|architect|create|platform|system|application/i.test(lower)) candidates.push("Built", "Developed", "Engineered", "Architected", "Designed", "Created");
+  if (/process|workflow|efficien|optimi|streamline|automation|manual/i.test(lower)) candidates.push("Optimized", "Streamlined", "Automated", "Standardized");
+  if (/complaint|issue|escalat|case|ticket|resolve|troubleshoot/i.test(lower)) candidates.push("Resolved", "Directed", "Delivered");
+  if (/client|customer|stakeholder|partner|cross-functional|cross functional/i.test(lower)) candidates.push("Facilitated", "Orchestrated", "Directed");
+  if (/train|coach|mentor|onboard/i.test(lower)) candidates.push("Trained", "Mentored");
+  if (/compliance|policy|audit|risk|governance/i.test(lower)) candidates.push("Governed", "Established", "Standardized");
+
+  candidates.push("Led", "Owned", "Delivered", "Executed", "Established");
+
+  let chosen = candidates[0];
+  let chosenCount = Number.POSITIVE_INFINITY;
+  for (const candidate of candidates) {
+    const count = usedVerbs.get(candidate.toLowerCase()) || 0;
+    if (count < chosenCount) {
+      chosen = candidate;
+      chosenCount = count;
+    }
+  }
+
+  usedVerbs.set(chosen.toLowerCase(), (usedVerbs.get(chosen.toLowerCase()) || 0) + 1);
+  return chosen;
+}
+
+function stripWeakLead(text: string): string {
+  return text
+    .trim()
+    .replace(/^[-•▪►*]\s*/, "")
+    .replace(/^(additionally|further|concurrently),?\s+/i, "")
+    .replace(/^(?:responsible\s+for|helped(?:\s+to)?|assisted(?:\s+with|\s+in)?|supported|participated\s+in|was\s+involved\s+in|tasked\s+with|worked\s+on|contributed\s+to|focused\s+on|served\s+as|utilized|leveraged|ensured)\s+/i, "")
+    .trim();
+}
+
+function eliminatePassiveLanguage(text: string): string {
+  return text
+    .replace(/\bhelped(?:\s+to)?\b/gi, "drove")
+    .replace(/\bassisted(?:\s+with|\s+in)?\b/gi, "executed")
+    .replace(/\bsupported\b/gi, "advanced")
+    .replace(/\bparticipated in\b/gi, "executed")
+    .replace(/\bwas involved in\b/gi, "owned")
+    .replace(/\btasked with\b/gi, "owned");
+}
+
+function extractOriginalScopeEvidence(original: string): string[] {
+  const scopeMatches = original.match(new RegExp(SIGNAL_SCOPE_RX.source, "gi")) || [];
+  const normalized = original.toLowerCase();
+  const phraseMatches = [
+    "cross-functional", "cross functional", "end-to-end", "end to end", "enterprise-wide", "enterprise wide",
+    "global", "regional", "multi-site", "multi site", "high-volume", "high volume", "portfolio",
+    "program", "p&l", "budget", "revenue", "governance",
+  ].filter((phrase) => normalized.includes(phrase));
+
+  return [...new Set([...scopeMatches, ...phraseMatches])].slice(0, 3);
+}
+
+function extractEvidenceTail(original: string): string {
+  const trimmed = original.trim().replace(/^[-•▪►*]\s*/, "").replace(/\.$/, "");
+  const withoutLead = trimmed.replace(/^[A-Z][a-z]+(?:\s+[a-z]+)?\s+/, "").trim();
+  const candidate = withoutLead || trimmed;
+  const firstClause = candidate.split(/[.;]/)[0]?.trim() || candidate;
+  return firstClause.slice(0, 140).replace(/[\s,.;:]+$/, "");
+}
+
+function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<string, number>): string {
+  const leadWord = getLeadWord(bullet);
+  if (STRONG_SIGNAL_VERBS.includes(leadWord as typeof STRONG_SIGNAL_VERBS[number])) return bullet;
+
+  const cleaned = stripWeakLead(bullet);
+  const remainder = cleaned ? cleaned.charAt(0).toLowerCase() + cleaned.slice(1) : extractEvidenceTail(original).toLowerCase();
+  const verb = chooseSignalVerb(original, cleaned || original, usedVerbs);
+  return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
+}
+
+function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof buildSignalJdModel>): string[] {
+  const lower = text.toLowerCase();
+  const candidates = new Set<string>();
+
+  for (const keyword of jdModel.keywords) {
+    if (lower.includes(keyword)) candidates.add(keyword);
+  }
+
+  for (const bigram of jdModel.bigrams) {
+    const parts = bigram.split(/\s+/);
+    if (parts.some((part) => lower.includes(part))) candidates.add(bigram);
+  }
+
+  SIGNAL_SEMANTIC_CLUSTERS.forEach((cluster, index) => {
+    if (!jdModel.clusterTerms[index]?.length) return;
+    const clusterMatch = cluster.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
+    if (clusterMatch) candidates.add(jdModel.clusterTerms[index][0]);
+  });
+
+  return [...candidates].sort((a, b) => b.length - a.length);
+}
+
+function ensureScopePreserved(original: string, bullet: string): string {
+  const evidence = extractOriginalScopeEvidence(original);
+  if (!evidence.length) return bullet;
+
+  const lower = bullet.toLowerCase();
+  const missing = evidence.filter((item) => !lower.includes(item.toLowerCase()));
+  if (!missing.length) return bullet;
+
+  const tail = extractEvidenceTail(original);
+  if (tail && !lower.includes(tail.toLowerCase())) {
+    return appendClause(bullet, `including ${tail.charAt(0).toLowerCase() + tail.slice(1)}`);
+  }
+
+  const snippet = missing.slice(0, 2).join(" and ");
+  return appendClause(bullet, `including ${snippet}`);
+}
+
+function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
+  if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
+  const minHits = aggressive ? 2 : 1;
+  if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
+
+  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
+    .filter((candidate) => !bullet.toLowerCase().includes(candidate.toLowerCase()));
+
+  if (!candidates.length) return bullet;
+
+  const selected = candidates.slice(0, aggressive ? 2 : 1);
+  const clause = selected.length === 1
+    ? `aligned to ${selected[0]} priorities`
+    : `aligned to ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} priorities`;
+
+  return appendClause(bullet, clause);
+}
+
+function ensureOutcomeFraming(original: string, bullet: string, aggressive = false): string {
+  const lower = bullet.toLowerCase();
+  const hasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
+  if (hasOutcome) return bullet;
+
+  const originalLower = original.toLowerCase();
+  const originalHasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(originalLower));
+  if (originalHasOutcome) {
+    const tail = extractEvidenceTail(original);
+    if (tail && !lower.includes(tail.toLowerCase())) {
+      return appendClause(bullet, `including ${tail.charAt(0).toLowerCase() + tail.slice(1)}`);
+    }
+  }
+
+  const context = `${original} ${bullet}`.toLowerCase();
+  if (/compliance|audit|risk|policy|governance/.test(context)) {
+    return appendClause(bullet, aggressive ? "reducing operational risk and strengthening compliance outcomes" : "reducing operational risk");
+  }
+  if (/customer|client|service|support|case|ticket|account/.test(context)) {
+    return appendClause(bullet, aggressive ? "improving service outcomes and stakeholder trust" : "improving service outcomes");
+  }
+  if (/team|staff|training|onboard|workflow|process|system|automation|manual|efficien/.test(context)) {
+    return appendClause(bullet, aggressive ? "improving operational efficiency and team execution" : "improving operational efficiency");
+  }
+  return appendClause(bullet, aggressive ? "driving stronger operational outcomes" : "improving operational outcomes");
+}
+
+function ensureSubstantiveLength(original: string, bullet: string): string {
+  if (bullet.length >= original.length * 0.95) return bullet;
+  const tail = extractEvidenceTail(original);
+  if (!tail || bullet.toLowerCase().includes(tail.toLowerCase())) return bullet;
+  return appendClause(bullet, `including ${tail.charAt(0).toLowerCase() + tail.slice(1)}`);
+}
+
+function repairSignalBullet(
+  original: string,
+  candidate: string,
+  jdModel: ReturnType<typeof buildSignalJdModel>,
+  usedVerbs: Map<string, number>,
+  aggressive = false,
+): string {
+  let bullet = (candidate || original || "").trim();
+  if (!bullet) return bullet;
+
+  bullet = eliminatePassiveLanguage(bullet);
+  bullet = ensureOwnershipLead(original, bullet, usedVerbs);
+  bullet = ensureSubstantiveLength(original, bullet);
+  bullet = ensureScopePreserved(original, bullet);
+  bullet = ensureJdAlignment(original, bullet, jdModel, aggressive);
+  bullet = ensureOutcomeFraming(original, bullet, aggressive);
+
+  return bullet
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
+function strengthenFinalExperience(
+  experience: any[],
+  sourceExperience: any[],
+  jdModel: ReturnType<typeof buildSignalJdModel>,
+  aggressive = false,
+): any[] {
+  const usedVerbs = new Map<string, number>();
+
+  return experience.map((role: any, roleIndex: number) => {
+    const sourceRole = sourceExperience[roleIndex] || role;
+    const sourceBullets = Array.isArray(sourceRole?.bullets) && sourceRole.bullets.length > 0
+      ? sourceRole.bullets
+      : Array.isArray(role?.bullets) ? role.bullets : [];
+    const candidateBullets = Array.isArray(role?.bullets) ? role.bullets : [];
+
+    const repairedBullets = sourceBullets.map((originalBullet: string, bulletIndex: number) =>
+      repairSignalBullet(originalBullet, candidateBullets[bulletIndex] || originalBullet, jdModel, usedVerbs, aggressive)
+    );
+
+    return {
+      ...role,
+      bullets: repairedBullets,
+    };
+  });
+}
+
+function countRepairOpportunities(sourceExperience: any[], jdModel: ReturnType<typeof buildSignalJdModel>): number {
+  let opportunities = 0;
+
+  for (const role of sourceExperience) {
+    for (const bullet of role?.bullets || []) {
+      const lower = bullet.toLowerCase();
+      if (!STRONG_SIGNAL_VERBS.includes(getLeadWord(bullet) as typeof STRONG_SIGNAL_VERBS[number])) opportunities += 1;
+      if (PASSIVE_SIGNAL_PHRASES.some((phrase) => lower.includes(phrase))) opportunities += 1;
+      if (!OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower))) opportunities += 1;
+      if (jdModel.keywords.length > 0 && countKeywordMatchesInBullet(bullet, jdModel) === 0 && buildAllowedKeywordCandidates(bullet, jdModel).length > 0) opportunities += 1;
+    }
+  }
+
+  return opportunities;
+}
+
+function enforceFinalSignalDelta(
+  assembled: any,
+  originalResumeText: string,
+  sourceExperience: any[],
+  directorResult: any,
+  requestId: string,
+) {
+  const jdSignals = extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSignals);
+
+  if (!assembled?.experience?.length || (!jdModel.keywords.length && !jdModel.bigrams.length)) {
+    return assembled;
+  }
+
+  let finalized = {
+    ...assembled,
+    experience: strengthenFinalExperience(assembled.experience, sourceExperience, jdModel, false),
+  };
+
+  let delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
+  const repairOpportunities = countRepairOpportunities(sourceExperience, jdModel);
+
+  if (delta.improvementCount <= 1 && repairOpportunities >= 2) {
+    console.warn(JSON.stringify({
+      request_id: requestId,
+      post_processing: "signal_delta_insufficient",
+      improvement_count: delta.improvementCount,
+      repair_opportunities: repairOpportunities,
+      action: "aggressive_rework",
+    }));
+
+    finalized = {
+      ...finalized,
+      experience: strengthenFinalExperience(finalized.experience, sourceExperience, jdModel, true),
+    };
+
+    delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
+  }
+
+  console.log(JSON.stringify({
+    request_id: requestId,
+    post_processing: "final_signal_delta_validated",
+    improvement_count: delta.improvementCount,
+    improved_dimensions: delta.flags,
+  }));
+
+  return finalized;
+}
+
 async function rewriteExperienceBullets(
   experience: any[],
   directorResult: any,
@@ -989,10 +1508,11 @@ async function rewriteExperienceBullets(
   if (experience.length === 0) return experience;
 
   const jdSignals = extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSignals);
 
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
-    const bullets = exp.bullets.map((b: string, bi: number) => `  [${bi}] ${b}`).join("\n");
+    const bullets = exp.bullets.map((b: string, bi: number) => `  [${bi}] (${b.length} chars) ${b}`).join("\n");
     return `[ROLE ${i}] ${header}\n${bullets}`;
   }).join("\n\n");
 
@@ -1011,30 +1531,34 @@ async function rewriteExperienceBullets(
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         temperature: 0,
-        system: `You are rewriting resume experience bullets to align with a target job description.
+        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve scoring signals without fabricating experience.
 
 TARGET JD SIGNAL CONTEXT:
 ${jdSignals}
 
-INSTRUCTIONS:
-1. For each role, identify the 2-3 bullets with the strongest transferable signal to the target JD
-2. Rewrite ONLY those high-signal bullets using the JD's language architecture — genuine reframing of actual work performed, not keyword stuffing
-3. Keep remaining bullets as-is (minor polish OK but no substantive changes)
-4. Preserve company names, titles, and dates EXACTLY as provided
-5. ZERO FABRICATION: Do not invent metrics, titles, responsibilities, or experience not present in the original
-6. Elevate ownership language and add outcome framing where the underlying work genuinely supports it
+NON-NEGOTIABLE RULES:
+1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already preserve metrics, scope, and outcomes.
+2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
+3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
+4. Every bullet must preserve or strengthen truthfully implied outcome framing.
+5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
 
-BULLET LENGTH RULES (CRITICAL):
-- Each bullet MUST be a single clean sentence — maximum 40 words
-- If the original bullet is long, extract the SINGLE strongest signal and rewrite THAT signal only
-- Do NOT concatenate the original text with the rewrite — produce ONE clean sentence
-- NEVER include placeholders like "[Insert %]", "[Insert amount]", "[Insert metric]" — if a metric is unknown, write the bullet without it
-- Cap bullets: 3 per role for older roles, 4 for the most recent/current role, never more than 4
+SIGNAL TARGETS:
+- Ownership Language Density: first word should be a strong action / ownership verb.
+- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role.
+- Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
+- Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
+- Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
+
+OUTPUT RULES:
+- Keep the SAME number of roles in the SAME order.
+- Keep the SAME number of bullets per role in the SAME order.
+- Each bullet should stay at least as information-dense as the original and should usually be longer, not shorter.
+- Every bullet must be one clean sentence.
+- No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
-[{"company":"","title":"","dates":"","bullets":["..."]}]
-
-Keep ALL roles. Preserve exact order.`,
+[{"company":"","title":"","dates":"","bullets":["..."]}]`,
         messages: [{ role: "user", content: expText }],
       }),
       signal: controller.signal,
@@ -1043,17 +1567,30 @@ Keep ALL roles. Preserve exact order.`,
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
-      return experience;
+      return strengthenFinalExperience(experience, experience, jdModel, false);
     }
+
     const data = await response.json();
     const raw = data.content?.[0]?.text || "";
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
-    return Array.isArray(parsed) ? parsed : experience;
+
+    const merged = experience.map((role: any, roleIndex: number) => {
+      const aiRole = Array.isArray(parsed) ? parsed[roleIndex] || {} : {};
+      const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
+      return {
+        company: aiRole?.company || role.company || "",
+        title: aiRole?.title || role.title || "",
+        dates: aiRole?.dates || role.dates || "",
+        bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => aiBullets[bulletIndex] || originalBullet),
+      };
+    });
+
+    return strengthenFinalExperience(merged, experience, jdModel, false);
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
-    return experience;
+    return strengthenFinalExperience(experience, experience, jdModel, false);
   }
 }
 
@@ -1120,12 +1657,20 @@ serve(async (req) => {
       structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
     );
 
-    // ── Merge results ──
-    const result = normalizeResult({
+    // ── Merge results and validate against the persisted final output ──
+    const normalizedResult = normalizeResult({
       ...structure,
       summary: rewrittenSummary,
       experience: rewrittenExperience,
     });
+
+    const result = enforceFinalSignalDelta(
+      normalizedResult,
+      originalResume || structuredResumeToText({ summary: structure.summary, experience: structure.experience }),
+      structure.experience,
+      signalContext || {},
+      request_id,
+    );
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
