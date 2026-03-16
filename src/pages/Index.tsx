@@ -1511,7 +1511,7 @@ const Index = () => {
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                    <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence
+                                    <span style={{ color: "inherit" }}>✦</span> See My Exact Fix
                                   </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
