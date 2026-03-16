@@ -829,7 +829,8 @@ const Index = () => {
             timestamp: new Date().toISOString(),
           });
           const msg = retryErr.message || FRIENDLY_FAIL_MSG;
-          setResult(null);
+          // Preserve last successful result as fallback — don't clear UI
+          console.warn("[Alignment] Preserving last successful result as fallback.");
           // Use localErrorCode to determine display, not stale React state
           if (localErrorCode === "DAILY_LIMIT") {
             setAlignmentError({ message: msg, error_code: "DAILY_LIMIT" });
