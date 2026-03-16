@@ -721,7 +721,7 @@ export function computeDeterministicScore(
 
   return {
     finalScore,
-    retryPassTriggered: runType === "calibrated" ? retryPassTriggered : false,
+    retryPassTriggered,
     breakdown: {
       role_outcomes_alignment,
       tools_and_workflow_alignment,
