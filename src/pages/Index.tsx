@@ -1073,7 +1073,7 @@ const Index = () => {
             onAssembled={() => setSessionResumeAssembled(true)}
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
-            onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
+            onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); calibratedRunPendingRef.current = true; }}
             originalResumeBeforeCalibration={originalResumeBeforeCalibration}
             onRerunSignalAnalysis={(calibratedText) => {
               if (!originalResumeBeforeCalibration) return;
