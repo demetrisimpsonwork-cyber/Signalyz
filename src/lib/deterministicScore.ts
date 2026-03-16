@@ -307,7 +307,7 @@ function normalizeText(input: string): string {
 
 // ─── Component 1: JD Mirroring Score (40%) ───────────────────────────────────
 
-function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<typeof buildJdSignalVocabulary>): number {
+function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<typeof buildJdSignalVocabulary>, jdText: string): number {
   const bulletsText = sections.bullets.join(" ").toLowerCase();
   const bulletsTokens = tokenize(bulletsText);
   const bulletsTokenSet = new Set(bulletsTokens);
@@ -341,7 +341,7 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
         // Try semantic equivalence against full resume text as last resort
         const fullSemCredit = findSemanticCredit(kw, sections.fullText);
         if (fullSemCredit > 0) {
-          semanticHits += fullSemCredit * 0.4; // heavily discounted for non-bullet match
+          semanticHits += fullSemCredit * 0.5; // discounted for non-bullet match
         }
       }
     }
@@ -379,9 +379,18 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const maxBigrams = Math.max(jdModel.bigrams.length, 1);
   const bigramCoverage = bigramScore / maxBigrams;
 
-  // Final JD Mirroring = exact/stemmed (40%) + semantic (25%) + bigram (20%) + skills-only (15%)
-  const raw = (bulletKeywordCoverage * 0.40) + (semanticCoverage * 0.25) + (bigramCoverage * 0.20) + (skillsOnlyPenalized * 0.15);
-  const curved = Math.sqrt(clamp01(raw)); // sqrt curve lifts mid-range scores
+  // Cumulative semantic cluster coverage bonus:
+  // When multiple transferable concept clusters match between JD and resume,
+  // grant a proportional bonus reflecting broad operational alignment.
+  const clusterCount = countSemanticClusterCoverage(jdText, bulletsText);
+  // Bonus scales: 2 clusters = 0.04, 4 clusters = 0.10, 6+ clusters = 0.15
+  const clusterBonus = clusterCount >= 2 ? Math.min(0.15, (clusterCount - 1) * 0.03) : 0;
+
+  // Final JD Mirroring = exact/stemmed (35%) + semantic (30%) + bigram (15%) + skills-only (10%) + cluster bonus (10%)
+  const raw = (bulletKeywordCoverage * 0.35) + (semanticCoverage * 0.30) + (bigramCoverage * 0.15) + (skillsOnlyPenalized * 0.10) + (clusterBonus * 0.10 / Math.max(clusterBonus, 0.01));
+  // Simplify: cluster bonus is additive when present
+  const rawWithCluster = (bulletKeywordCoverage * 0.35) + (semanticCoverage * 0.30) + (bigramCoverage * 0.15) + (skillsOnlyPenalized * 0.10) + clusterBonus;
+  const curved = Math.sqrt(clamp01(rawWithCluster)); // sqrt curve lifts mid-range scores
   return Math.floor(100 * curved);
 }
 
