@@ -258,9 +258,11 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const maxBigrams = Math.max(jdModel.bigrams.length, 1);
   const bigramCoverage = bigramScore / maxBigrams;
 
-  // Final JD Mirroring = bullet keyword coverage (55%) + bigram coverage (35%) + skills-only penalized (10%)
-  const raw = (bulletKeywordCoverage * 0.55) + (bigramCoverage * 0.35) + (skillsOnlyPenalized * 0.10);
-  return Math.floor(100 * clamp01(raw));
+  // Final JD Mirroring = bullet keyword coverage (50%) + bigram coverage (30%) + skills-only (20%)
+  // Apply sqrt curve to prevent low-partial-match scores from collapsing toward zero
+  const raw = (bulletKeywordCoverage * 0.50) + (bigramCoverage * 0.30) + (skillsOnlyPenalized * 0.20);
+  const curved = Math.sqrt(clamp01(raw)); // sqrt curve lifts mid-range scores
+  return Math.floor(100 * curved);
 }
 
 // ─── Component 2: Ownership & Scope Density (30%) ────────────────────────────
