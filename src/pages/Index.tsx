@@ -17,6 +17,7 @@ import ResumeUpload from "@/components/ResumeUpload";
 import WeakAlignmentNudge from "@/components/WeakAlignmentNudge";
 import IdentityStrengthIndex from "@/components/IdentityStrengthIndex";
 import SignalGapActions from "@/components/SignalGapActions";
+import SignalActionPlan from "@/components/SignalActionPlan";
 import CalibratedSummary from "@/components/CalibratedSummary";
 import ATSSignalPanel from "@/components/ATSSignalPanel";
 import InterviewIntelligence from "@/components/InterviewIntelligence";
