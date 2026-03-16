@@ -674,7 +674,7 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 11: Why You're Not Getting Interviews ─── */
-function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number }) {
+function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
 
@@ -687,38 +687,75 @@ function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<Sign
 
       {/* Primary Blocker, What Hiring Managers See, and What This Creates are shown in the Signal Diagnosis card above — not repeated here */}
 
-      {data.strategic_fixes && data.strategic_fixes.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
-          <ol className="space-y-1">
-            {data.strategic_fixes.slice(0, 3).map((fix, i) => {
-              // Clean duplicate numbering from AI output (e.g., "1. Fix something" → "Fix something")
-              const cleanedFix = fix.replace(/^\d+\.\s*/, "");
-              return (
-                <li key={i} className="text-xs text-foreground flex gap-2">
-                  <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{cleanedFix}
-                </li>
-              );
-            })}
-          </ol>
+      {/* Strategic Fixes — Pro only */}
+      {isPro ? (
+        data.strategic_fixes && data.strategic_fixes.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
+            <ol className="space-y-1">
+              {data.strategic_fixes.slice(0, 3).map((fix, i) => {
+                const cleanedFix = fix.replace(/^\d+\.\s*/, "");
+                return (
+                  <li key={i} className="text-xs text-foreground flex gap-2">
+                    <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{cleanedFix}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
+          </div>
+          <div className="space-y-1.5 pointer-events-none select-none blur-[3px] opacity-40">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex gap-2 items-start">
+                <span className="text-xs font-semibold text-primary tabular-nums">{i}.</span>
+                <div className="h-3 bg-muted rounded w-full" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Predicted Signal Improvement — Pro only */}
       {currentScore > 0 && predictedScore > 0 && (
-        <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
-          <div className="flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground">Current</p>
-              <p className="text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-primary" />
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground">After Calibration</p>
-              <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+        isPro ? (
+          <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground">Current</p>
+                <p className="text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary" />
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground">After Calibration</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border bg-background p-3 space-y-2 relative overflow-hidden">
+            <div className="pointer-events-none select-none blur-[3px] opacity-40">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="text-[10px] text-muted-foreground">Current</p>
+                  <p className="text-xl font-bold text-muted tabular-nums">—</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted" />
+                <div className="text-center">
+                  <p className="text-[10px] text-muted-foreground">After</p>
+                  <p className="text-xl font-bold text-muted tabular-nums">—</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       )}
     </div>
   );
@@ -798,9 +835,9 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
 
   return (
     <div className="space-y-4">
-      {/* Why You're Not Getting Interviews — visible to all users */}
+      {/* Why You're Not Getting Interviews — visible to all users, but fixes/predictions gated */}
       {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
-        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} />
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
       )}
 
       {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
