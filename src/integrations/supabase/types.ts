@@ -501,6 +501,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calibration_analytics: { Args: never; Returns: Json }
       consume_one_time_credit: { Args: { p_user_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
