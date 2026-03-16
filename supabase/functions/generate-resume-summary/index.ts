@@ -166,7 +166,7 @@ serve(async (req) => {
       return `INDEPENDENT PROJECT ${i + 1}: ${header || "Project"}\n${bulletList}`;
     }).join("\n\n") : "";
 
-    const prompt = `You are a professional resume calibration engine. You will receive structured resume roles with individual bullets, plus a target job description.
+    const prompt = `You are an aggressive professional resume calibration engine. You will receive structured resume roles with individual bullets, plus a target job description. Your job is to MAXIMALLY reposition the candidate's language to mirror the target role while preserving factual accuracy.
 
 Address the user directly in second person throughout all output. Use 'you' and 'your' exclusively. Never use the candidate's name or third-person pronouns (he/his/she/her/they/their) when referring to the candidate or their experience. The product speaks to the user, never about them.
 
@@ -181,39 +181,65 @@ YOUR TASK:
    - NEVER open a sentence with: "Demonstrates", "Possesses", "reflecting", "Highly accomplished", "Dedicated experience".
    - Replace passive constructions with active ownership language.
    - First person present tense for the summary.
+   - CRITICAL SUMMARY CALIBRATION: The summary MUST mirror the vocabulary, tone, and seniority framing of the target JD. Extract 3-5 key phrases from the JD (e.g., "operational excellence", "stakeholder engagement", "P&L ownership") and weave them naturally into the summary where they honestly reflect the candidate's experience. The summary should read as if the candidate wrote it specifically for THIS role.
 3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
 BULLET CALIBRATION RULES (CRITICAL — ABSOLUTE CONSTRAINTS):
 Each original bullet has its character count shown as [N chars]. Your calibrated version MUST meet or exceed that character count.
 
+RULE 1 — OWNERSHIP VERB MANDATE:
+Every single calibrated bullet MUST open with a strong, clear ownership verb. No exceptions.
+- REQUIRED openers: Led, Executed, Built, Resolved, Implemented, Managed, Optimized, Directed, Orchestrated, Spearheaded, Engineered, Drove, Delivered, Established, Transformed, Streamlined, Architected, Negotiated, Launched, Secured, Oversaw, Championed, Redesigned, Accelerated, Consolidated
+- BANNED openers: "Assisted with", "Helped", "Was responsible for", "Participated in", "Involved in", "Contributed to", "Worked on", "Supported", "Played a role in", "Tasked with"
+- If the original bullet starts with a weak/passive construction, REPLACE the opener entirely with the strongest accurate ownership verb. The candidate did the work — frame it that way.
+
+RULE 2 — JD VOCABULARY MIRRORING (MANDATORY):
+You MUST integrate JD-specific vocabulary into at least 3 bullets PER ROLE. This is non-negotiable.
+- Extract the top 8-10 distinctive phrases from the JD (not generic words like "team" or "work", but specific operational language like "cross-functional collaboration", "revenue optimization", "client lifecycle management", "regulatory compliance", "SLA adherence").
+- For each role, identify 3+ bullets where these JD phrases can be honestly woven in as natural extensions of what the candidate actually did.
+- Example: If JD says "drive operational efficiency" and the original bullet says "Improved processes to reduce wait times" → calibrate to "Drove operational efficiency by redesigning queue management processes, reducing average wait times by 30% across all service channels."
+- The mirrored vocabulary must feel organic, not forced. Integrate it as context, scope, or outcome framing.
+
+RULE 3 — OUTCOME/IMPACT MANDATE:
+Every single calibrated bullet MUST contain an outcome, impact, or scope indicator. No bullet may end with just an action.
+- If the original has a metric → preserve it and add context (e.g., "15% reduction" → "15% reduction in resolution time, directly improving customer retention metrics").
+- If the original lacks a metric → add the closest HONEST contextual signal:
+  * Scale: team size, number of accounts, volume of transactions, geographic scope
+  * Stakeholders: who benefited (internal teams, clients, executives, end users)
+  * Operational effect: "reducing manual effort by approximately X hours weekly", "enabling the team to handle Y% more volume", "ensuring zero compliance incidents during the period"
+  * Business framing: "contributing to department-wide cost savings", "supporting quarterly revenue targets", "maintaining 99%+ SLA compliance"
+- NEVER fabricate specific numbers. Use honest contextual framing: "across multiple departments", "for a portfolio of enterprise accounts", "within a high-volume operational environment".
+
 ADDITIVE CALIBRATION — never subtractive:
 - START with the original bullet content as your base. Keep every word of substance.
-- LAYER ON TOP: stronger ownership verbs (e.g., "Managed" → "Directed"; "Helped" → "Orchestrated"), JD-mirrored vocabulary, outcome framing, and specificity.
+- LAYER ON TOP: stronger ownership verbs, JD-mirrored vocabulary, outcome framing, and specificity.
 - You MUST preserve EVERY specific detail — stakeholder names, volume metrics, process outcomes, tool names, team sizes, dollar amounts.
 - Do NOT summarize, condense, or rephrase into fewer words. EXPAND and STRENGTHEN.
 - If the original says "Managed a team of 12 customer service representatives handling 500+ daily inquiries across phone and email channels" — your output must contain ALL of those details PLUS additional alignment language.
 
 LENGTH ENFORCEMENT:
-- The calibrated bullet MUST be LONGER than the original. This is non-negotiable.
-- If the original is 80 characters, your calibrated version must be at least 85 characters.
-- If the original is 150 characters, your calibrated version must be at least 155 characters.
-- Add ownership context, outcome impact, or JD-relevant framing to increase length meaningfully.
+- The calibrated bullet MUST be at least 15% LONGER than the original. This is non-negotiable.
+- If the original is 80 characters, your calibrated version must be at least 92 characters.
+- If the original is 150 characters, your calibrated version must be at least 173 characters.
+- The additional length comes from: ownership verb upgrades, JD vocabulary integration, outcome/impact framing, and scope indicators.
 - If a calibrated bullet exceeds 4 lines (~280 characters), split into two bullets. The second begins with "Additionally," "Further," or "Concurrently,".
 
-WHAT "CALIBRATION" MEANS — it means making bullets STRONGER, not shorter:
-- Replace weak verbs with high-ownership verbs: "Assisted" → "Spearheaded", "Worked on" → "Engineered", "Was responsible for" → "Directed"
-- Add JD vocabulary as natural extensions: if the JD says "cross-functional collaboration," weave that phrase into bullets where the candidate worked across teams
-- Add outcome framing: if the original states an action without a result, add the implied business outcome
-- Add scope language: team sizes, budget ranges, geographic scope, stakeholder types
+CALIBRATION INTENSITY — aim for MAXIMUM differentiation:
+- Do NOT produce bullets that are minor word-swaps of the original. Every bullet must be substantially restructured.
+- The calibrated version should feel like a senior professional rewrote their resume specifically for this target role.
+- Restructure sentence flow: lead with the most impressive element (scope, impact, or ownership), then detail the action, then the outcome.
+- Example of INSUFFICIENT calibration: "Managed customer complaints" → "Managed and resolved customer complaints" (too similar)
+- Example of SUFFICIENT calibration: "Managed customer complaints" → "Directed end-to-end resolution of escalated customer complaints across a multi-channel support environment, implementing root-cause analysis protocols that reduced repeat contact rates and improved first-call resolution metrics"
 
-PRO FILTER:
+PRO FILTER (ZERO FABRICATION):
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
+- Never invent specific numbers — use contextual framing instead ("significant", "across multiple", "enterprise-scale").
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
 - Use operational language: what was built, owned, fixed, decided.
-- Never use: "results-driven", "leveraging synergies", "passionate about", "dynamic environment", "fast-paced team".
+- Never use: "results-driven", "leveraging synergies", "passionate about", "dynamic environment", "fast-paced team", "proven track record".
 - Vary sentence cadence — no symmetrical bullet structures.
-- Write like a capable professional explaining work to a peer.
+- Write like a capable professional explaining work to a peer who speaks the JD's language.
 
 INPUTS:
 ${proRolesDescription}
@@ -230,14 +256,14 @@ MATCH SCORE: ${matchScore || "N/A"}%
 
 Return ONLY this JSON (no markdown, no code fences):
 {
-  "positioning_statement": "string (3-4 sentence professional summary)",
+  "positioning_statement": "string (3-4 sentence professional summary, heavily mirroring JD vocabulary)",
   "interview_preparation_notice": "string (2-3 sentences on remaining gaps)",
   "calibrated_professional_roles": [
     {
       "company": "string",
       "title": "string",
       "date_range": "string",
-      "calibrated_bullets": ["string (each bullet individually calibrated, LONGER than original)"]
+      "calibrated_bullets": ["string (each bullet individually calibrated, LONGER than original, with ownership verb + JD mirroring + outcome)"]
     }
   ],
   "calibrated_independent_projects": [
@@ -253,7 +279,10 @@ Return ONLY this JSON (no markdown, no code fences):
 CRITICAL: 
 - calibrated_professional_roles must have the SAME number of roles as the professional input roles, in the SAME order. Each role must have the SAME number of bullets.
 - calibrated_independent_projects must have the SAME number as independent project inputs.
-- Every calibrated bullet must be EQUAL TO OR LONGER than its original. Never compress.`;
+- Every calibrated bullet must be at least 15% LONGER than its original. Never compress.
+- Every bullet MUST start with an ownership verb. No exceptions.
+- At least 3 bullets per role MUST contain JD-mirrored vocabulary.
+- Every bullet MUST contain an outcome, impact, or scope indicator.`;
 
     let content = await callAI(apiKey, prompt);
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
@@ -297,7 +326,7 @@ CRITICAL:
       for (let bi = 0; bi < calBullets.length && bi < origBullets.length; bi++) {
         const origLen = sanitizeInput(origBullets[bi] || "").trim().length;
         const calLen = (calBullets[bi] || "").trim().length;
-        if (origLen > 0 && calLen < origLen * 0.9) {
+        if (origLen > 0 && calLen < origLen * 0.85) {
           // Bullet was trimmed — restore original content with calibrated language appended
           console.warn(JSON.stringify({
             request_id: requestId,
