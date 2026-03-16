@@ -569,6 +569,7 @@ function measureSignals(resumeText: string, jdModel: ReturnType<typeof buildJdSi
 
 export interface DeterministicScoreResult {
   finalScore: number;
+  retryPassTriggered: boolean;
   breakdown: {
     role_outcomes_alignment: number;
     tools_and_workflow_alignment: number;
