@@ -183,7 +183,7 @@ const Pricing = () => {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
             <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
-              Unlock Full Signal Intelligence — $19/month
+              Fix My Signal — $19/month
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
               Need just one report? Unlock it for $9
