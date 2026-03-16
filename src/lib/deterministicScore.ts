@@ -705,6 +705,7 @@ export function computeDeterministicScore(
         );
         const retryBoost = 3 + Math.round(retryIntensity * 5); // +3 to +8
         finalScore = originalScore + retryBoost;
+        retryPassTriggered = true;
       }
     }
 
