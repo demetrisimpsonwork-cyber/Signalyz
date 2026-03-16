@@ -624,6 +624,7 @@ export function computeDeterministicScore(
   const context_and_scale_alignment = Math.floor((ownershipScopeScore * 0.5 + jdMirroringScore * 0.5));
   const communication_and_leadership_alignment = Math.floor((perceptionGapScore * 0.5 + ownershipScopeScore * 0.5));
 
+  let retryPassTriggered = false;
   // ─── Calibrated-language signal boost with delta-validation ───────────────
   if (runType === "calibrated" && originalResumeText) {
     const origResult = computeDeterministicScore(originalResumeText, jdText, "original");
