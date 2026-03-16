@@ -146,9 +146,17 @@ serve(async (req) => {
     }
 
     // Build roles description — truncate individual bullets to prevent blowup
+    // Also track original bullet lengths for post-processing validation
+    const originalBulletLengths: number[][] = [];
     const proRolesDescription = professionalRoles.map((r: any, i: number) => {
       const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
-      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${truncate(sanitizeInput(b), 500)}`).join("\n");
+      const roleBulletLengths: number[] = [];
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => {
+        const cleaned = truncate(sanitizeInput(b), 500);
+        roleBulletLengths.push(cleaned.length);
+        return `  ${bi + 1}. [${cleaned.length} chars] ${cleaned}`;
+      }).join("\n");
+      originalBulletLengths.push(roleBulletLengths);
       return `PROFESSIONAL ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
     }).join("\n\n");
 
