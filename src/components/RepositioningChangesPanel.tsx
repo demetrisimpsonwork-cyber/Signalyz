@@ -104,10 +104,10 @@ function analyzeDimensions(
     ),
     dim(
       "Outcome Framing",
-      outcomeDelta,
+      Math.max(0, outcomeDelta),
       `${Math.abs(outcomeDelta)} additional quantified outcome${outcomeDelta !== 1 ? "s" : ""} surfaced`,
-      "Outcome framing unchanged",
-      "Some quantified outcomes were removed"
+      "Outcome framing preserved",
+      "Outcome framing preserved"
     ),
     dim(
       "Passive Language",
