@@ -1400,6 +1400,15 @@ const Index = () => {
 
                 {result && (
                   <>
+                    {/* Signal profile lock-in */}
+                    <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
+                      <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
+                      <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
+                      {!effectiveIsPro && (
+                        <p className="text-xs text-destructive/80 italic">Leaving now means applying without fixing the gaps identified here.</p>
+                      )}
+                    </div>
+
                     {/* Professional Signal Diagnosis headline */}
                     <div className="text-center space-y-1">
                       <h2 className="text-lg font-semibold tracking-tight text-foreground">Professional Signal Diagnosis</h2>
