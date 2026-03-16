@@ -997,8 +997,8 @@ const Index = () => {
         {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
-          <div className="relative lg:hidden w-full">
-            <div className="flex overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden pr-6" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="relative lg:hidden w-full overflow-hidden">
+            <div className="flex overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {([
                 { id: "alignment" as const, label: "Align", proOnly: false },
                 { id: "director" as const, label: "Position", proOnly: false },
@@ -1025,7 +1025,7 @@ const Index = () => {
               ))}
             </div>
             {/* Right-edge gradient fade for scroll affordance */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background via-background/70 to-transparent" />
           </div>
 
           {/* Desktop layout */}
