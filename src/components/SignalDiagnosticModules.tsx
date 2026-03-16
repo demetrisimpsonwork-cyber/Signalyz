@@ -730,8 +730,8 @@ function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<Sign
 }
 
 /* ─── MODULE 12: Predicted Signal Lift ─── */
-function PredictedSignalLift({ data }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]> }) {
-  const currentScore = data.current_score ?? 0;
+function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; overrideScore?: number }) {
+  const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
   const dims = (data.dimensions ?? [])
     .slice()
