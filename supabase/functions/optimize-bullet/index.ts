@@ -779,7 +779,14 @@ Do NOT write passive descriptions like "Missing technical onboarding experience.
 Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals. Always return 4 [STRENGTH] items.
 Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical screen-out risks, ranked by severity. GAP #1 is the PRIMARY BLOCKER — the single most important reason for rejection. GAPs #2-#4 are SECONDARY RISKS. Each GAP must include: what's missing, why it causes rejection, and one concrete action to fix it. Always return 4 [GAP] items.
 The score_rationale array must contain exactly 8 items total: 4 prefixed with [STRENGTH] followed by 4 prefixed with [GAP]. Both sections are required. Neither can be absent.
-DEDUPLICATION RULE: The interview_gap_diagnosis.primary_blocker MUST be the same issue as score_rationale GAP #1. Do NOT introduce a new issue in primary_blocker that doesn't appear in GAPs. Do NOT repeat the primary_blocker issue in GAPs #2-#4. Each GAP must be a distinct issue.
+ DEDUPLICATION RULE: The interview_gap_diagnosis.primary_blocker MUST be the same issue as score_rationale GAP #1. Do NOT introduce a new issue in primary_blocker that doesn't appear in GAPs. Do NOT repeat the primary_blocker issue in GAPs #2-#4. Each GAP must be a distinct issue.
+CROSS-SECTION DEDUPLICATION (CRITICAL):
+- executive_insight_summary.primary_insight must NOT restate any GAP or the primary_blocker. It is a meta-level synthesis ONLY.
+- executive_insight_summary.strategic_repositioning_opportunity must NOT repeat any strategic_fix. It is a higher-level positioning shift.
+- what_hiring_managers_see items must be EVIDENCE supporting the primary_blocker, not independent issues that duplicate Secondary Risks.
+- strategic_gap_actions must NOT duplicate strategic_fixes. If both exist, strategic_fixes = tactical resume edits, strategic_gap_actions = broader career moves.
+- Each section has ONE job. Do not let sections bleed into each other's purpose.
+VERBOSITY CONTROL: Every sentence must add new information. Cut any sentence that restates what another section already says. Prefer 1 sharp sentence over 2 soft ones. Total output should be ~20-30% shorter than default — achieve this by eliminating redundancy, not by removing insights.
 
 HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
 Assign risk levels based on the extracted signal gaps deterministically. For the same gap profile, always assign the same risk level at each stage. Do not vary risk assessments between runs.

@@ -182,10 +182,11 @@ function ExecutiveInsight({ data, evidenceLedger }: { data: NonNullable<SignalDi
     <div className="rounded-xl border-l-4 border-l-primary bg-card p-5 space-y-3">
       <SectionLabel>Executive Insight</SectionLabel>
       <p className="text-sm font-medium text-foreground leading-relaxed">{data.primary_insight}</p>
-      <div className="space-y-2 text-xs text-muted-foreground">
-        <p><span className="font-semibold text-foreground">Why this matters:</span> {data.why_it_matters}</p>
-        <p><span className="font-semibold text-primary">Repositioning opportunity:</span> {data.strategic_repositioning_opportunity}</p>
-      </div>
+      {data.strategic_repositioning_opportunity && (
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-primary">Repositioning opportunity:</span> {data.strategic_repositioning_opportunity}
+        </p>
+      )}
       <EvidenceLedger entries={evidenceEntries} />
     </div>
   );
