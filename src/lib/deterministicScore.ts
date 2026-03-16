@@ -477,7 +477,11 @@ export function computeDeterministicScore(
     (perceptionGapScore * 0.20) +
     (readabilityScore * 0.10);
 
-  const baseScore = Math.floor(weightedSum);
+  // Apply lower-bound scaling: resumes with any meaningful signal shouldn't collapse below ~40
+  // This uses a linear remap from [0-100] to [floor-100] where floor scales with raw score
+  const rawBase = Math.floor(weightedSum);
+  const signalFloor = rawBase > 10 ? Math.min(rawBase, 40) * (rawBase / 100) : 0;
+  const baseScore = Math.max(rawBase, Math.floor(signalFloor));
   let finalScore = baseScore;
 
   // ─── Map 4 components to 5-field breakdown for backward compatibility ────
