@@ -46,6 +46,8 @@ const CalibratedResumeTab = ({
   alignmentResult,
   inputSource = "paste",
   onResumeTextReplaced,
+  onRerunSignalAnalysis,
+  originalResumeBeforeCalibration,
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
