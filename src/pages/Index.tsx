@@ -1480,11 +1480,11 @@ const Index = () => {
                           <div className="space-y-3">
                             {/* Primary Blocker — single unified section */}
                             {primaryBlocker && (
-                              <div className="space-y-1.5">
-                                <p className="section-label text-destructive">Primary Blocker</p>
-                                <p className="text-xs text-foreground font-medium">• {primaryBlocker}</p>
+                              <div className="rounded-md border border-destructive/25 bg-destructive/5 p-3 space-y-1.5">
+                                <p className="section-label text-destructive tracking-widest">Primary Blocker</p>
+                                <p className="text-xs text-foreground font-medium leading-relaxed">• {primaryBlocker}</p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
-                                  <ul className="space-y-0.5 pl-2 border-l-2 border-destructive/20 ml-1">
+                                  <ul className="space-y-0.5 pl-2 border-l-2 border-destructive/30 ml-1 mt-1">
                                     {hiringManagersSee.map((s, i) => (
                                       <li key={i} className="text-xs text-muted-foreground">• {s}</li>
                                     ))}
