@@ -59,7 +59,7 @@ const buildExportText = (r: ExportResultsProps["result"]): string => {
     gaps.push(...sm.gaps);
   }
 
-  const topGap = sm?.gaps?.[0] || r.top_missing_signal || gaps[0] || "None identified";
+  const primaryBlocker = sm?.interview_gap_diagnosis?.primary_blocker || sm?.interview_gap_diagnosis?.primary_issue || sm?.gaps?.[0] || r.top_missing_signal || gaps[0] || "None identified";
   const primaryStrength = sm?.executive_insight_summary?.primary_strength || strengths[0] || "None identified";
   const repositioning = sm?.executive_insight_summary?.strategic_repositioning_opportunity || r.alignment_notes || "None identified";
 
