@@ -138,6 +138,61 @@ function extractSections(resumeText: string): ResumeSections {
   };
 }
 
+// ─── Semantic Equivalence Map ────────────────────────────────────────────────
+// Bidirectional concept clusters: if a JD keyword matches any term in a cluster,
+// resume terms from the SAME cluster receive partial semantic credit.
+
+const SEMANTIC_CLUSTERS: string[][] = [
+  ["escalation", "issue resolution", "complaint", "dispute", "conflict resolution", "grievance", "case management"],
+  ["sla", "service level", "service performance", "performance accountability", "service standard", "quality assurance"],
+  ["complaint routing", "case management", "ticket management", "issue workflow", "case routing", "intake"],
+  ["cross-functional", "cross functional", "department collaboration", "interdepartmental", "multi-team", "cross-team", "collaborative"],
+  ["process improvement", "process documentation", "operational efficiency", "workflow optimization", "continuous improvement", "process standardization", "lean", "six sigma"],
+  ["customer service", "customer support", "client service", "client support", "customer experience", "customer success", "customer relations", "client relations"],
+  ["leadership", "management", "supervision", "team lead", "team management", "people management", "staff management", "direct reports"],
+  ["training", "coaching", "mentoring", "onboarding", "development", "upskilling"],
+  ["reporting", "analytics", "dashboards", "metrics", "kpi", "data analysis", "performance tracking"],
+  ["scheduling", "workforce planning", "capacity planning", "resource allocation", "staffing"],
+  ["vendor management", "supplier management", "third-party management", "partner management", "vendor relations"],
+  ["budget", "cost management", "p&l", "financial oversight", "cost reduction", "expense management"],
+  ["compliance", "regulatory", "audit", "policy", "governance", "risk management"],
+  ["stakeholder", "executive", "senior leadership", "c-suite", "board", "sponsor"],
+  ["retail", "store operations", "floor management", "merchandising", "point of sale", "inventory"],
+  ["operations", "operational", "ops", "logistics", "supply chain", "fulfillment", "distribution"],
+];
+
+function findSemanticCredit(keyword: string, resumeText: string): number {
+  const kwLower = keyword.toLowerCase();
+  const resumeLower = resumeText.toLowerCase();
+
+  for (const cluster of SEMANTIC_CLUSTERS) {
+    // Check if the JD keyword matches any term in this cluster
+    const kwInCluster = cluster.some(term => {
+      if (term.length <= 4) return kwLower === term;
+      return kwLower.includes(term) || term.includes(kwLower);
+    });
+
+    if (!kwInCluster) continue;
+
+    // Check if the resume contains any OTHER term from the same cluster
+    let bestMatch = 0;
+    for (const term of cluster) {
+      if (term.includes(kwLower) || kwLower.includes(term)) continue; // skip self-matches
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      const rx = new RegExp(`\\b${escaped}\\b`, "i");
+      if (rx.test(resumeLower)) {
+        // Longer matching terms get higher credit (more specific = more valuable)
+        const credit = Math.min(0.65, 0.4 + (term.length / 40));
+        bestMatch = Math.max(bestMatch, credit);
+      }
+    }
+
+    if (bestMatch > 0) return bestMatch;
+  }
+
+  return 0;
+}
+
 // ─── JD Signal Vocabulary ────────────────────────────────────────────────────
 
 function buildJdSignalVocabulary(jdText: string) {
