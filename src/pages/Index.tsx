@@ -733,6 +733,34 @@ const Index = () => {
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
 
+      // ─── Internal delta logging for calibration runs ──────────────────────
+      if (isCalibratedRun && originalResumeBeforeCalibration && user) {
+        try {
+          const origScore = computeDeterministicScore(originalResumeBeforeCalibration, normJd.text, "original");
+          const dims = ["Ownership Language Density", "JD Keyword Alignment", "Action Verb Lead Rate", "Outcome Framing", "Passive Language Reduction"];
+          const origB = origScore.breakdown;
+          const calB = detScore.breakdown;
+          const origVals = [origB.role_outcomes_alignment, origB.tools_and_workflow_alignment, origB.domain_and_context_alignment, origB.context_and_scale_alignment, origB.communication_and_leadership_alignment];
+          const calVals = [calB.role_outcomes_alignment, calB.tools_and_workflow_alignment, calB.domain_and_context_alignment, calB.context_and_scale_alignment, calB.communication_and_leadership_alignment];
+          const improved: string[] = [];
+          const unchanged: string[] = [];
+          dims.forEach((d, i) => {
+            if (calVals[i] > origVals[i] + 2) improved.push(d);
+            else unchanged.push(d);
+          });
+          await supabase.from("calibration_runs").insert({
+            user_id: user.id,
+            original_score: origScore.finalScore,
+            calibrated_score: detScore.finalScore,
+            score_delta: detScore.finalScore - origScore.finalScore,
+            improved_dimensions: improved,
+            unchanged_dimensions: unchanged,
+          });
+        } catch (e) {
+          console.warn("[CalibrationLog] Failed to log calibration delta:", e);
+        }
+      }
+
       try {
         const jdFingerprint = normJd.text.replace(/\s+/g, " ").toLowerCase().slice(0, 150);
         sessionStorage.setItem("signalyz_alignment_score", JSON.stringify({
