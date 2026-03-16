@@ -221,7 +221,7 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
     const inSkillsOnly = !inBullets && !inBulletsStemmed && skillsTokenSet.has(kw);
 
     if (inBullets) bulletKeywordHits += 1.0;
-    else if (inBulletsStemmed) bulletKeywordHits += 0.85;
+    else if (inBulletsStemmed) bulletKeywordHits += 0.90;
     else if (inSkillsOnly) skillsOnlyHits += 1;
   }
 
