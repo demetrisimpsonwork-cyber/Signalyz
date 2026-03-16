@@ -1467,13 +1467,35 @@ const Index = () => {
                             strengths.push(cleaned);
                           }
                         }
+                        const hiringManagersSee = result.signal_model?.interview_gap_diagnosis?.what_hiring_managers_see;
+                        const whatThisCreates = result.signal_model?.interview_gap_diagnosis?.what_this_creates;
+                        const primaryBlocker = result.signal_model?.interview_gap_diagnosis?.primary_blocker || result.signal_model?.interview_gap_diagnosis?.primary_issue || (gaps.length > 0 ? gaps[0] : null);
+                        // Deduplicate: remove the primary blocker from gaps list
+                        const secondaryGaps = gaps.filter((g, i) => {
+                          if (i === 0) return false; // first gap is the primary blocker
+                          if (primaryBlocker && g.toLowerCase().includes(primaryBlocker.toLowerCase().slice(0, 30))) return false;
+                          return true;
+                        });
                         return (
                           <div className="space-y-3">
-                            {/* Primary Blocker — first GAP elevated */}
-                            {gaps.length > 0 && (
-                              <div className="space-y-1">
+                            {/* Primary Blocker — single unified section */}
+                            {primaryBlocker && (
+                              <div className="space-y-1.5">
                                 <p className="section-label text-destructive">Primary Blocker</p>
-                                <p className="text-xs text-foreground font-medium">• {gaps[0]}</p>
+                                <p className="text-xs text-foreground font-medium">• {primaryBlocker}</p>
+                                {hiringManagersSee && hiringManagersSee.length > 0 && (
+                                  <ul className="space-y-0.5 pl-2 border-l-2 border-destructive/20 ml-1">
+                                    {hiringManagersSee.map((s, i) => (
+                                      <li key={i} className="text-xs text-muted-foreground">• {s}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                            {whatThisCreates && (
+                              <div className="space-y-1">
+                                <p className="section-label">What This Creates</p>
+                                <p className="text-xs text-muted-foreground">• {whatThisCreates}</p>
                               </div>
                             )}
                             {strengths.length > 0 && (
@@ -1486,11 +1508,11 @@ const Index = () => {
                                 </ul>
                               </div>
                             )}
-                            {gaps.length > 1 && (
+                            {secondaryGaps.length > 0 && (
                               <div className="space-y-1">
                                 <p className="section-label">Secondary Risks</p>
                                 <ul className="space-y-0.5">
-                                  {gaps.slice(1).map((r, i) => (
+                                  {secondaryGaps.map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
                                   ))}
                                 </ul>
