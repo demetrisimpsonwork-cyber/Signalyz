@@ -1,7 +1,10 @@
 /**
  * Client-side deterministic scoring engine.
- * Mirrors the server-side computeRecalibratedScore logic so the final
- * displayed score is computed at the render layer — independent of LLM output.
+ * 4-component rubric:
+ *   1. JD Mirroring Score        (40%)
+ *   2. Ownership & Scope Density (30%)
+ *   3. Perception Gap Closure    (20%)
+ *   4. Readability & Signal Density (10%)
  */
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -10,11 +13,11 @@ const STOP_WORDS = new Set([
   "the","and","for","with","that","this","from","your","you","our","are","was","were","have","has","had","will","can","must","should","into","onto","through","across","over","under","about","within","between","using","use","used","their","they","them","job","role","position","candidate","required","preferred","responsibilities","requirements","experience","ability","skills","skill","work","working","team","teams","customer","customers","service","services","business",
 ]);
 
-const OWNERSHIP_STRONG_PHRASES = [
+const STRONG_OWNERSHIP_VERBS = [
   "led","drove","owned","spearheaded","architected","orchestrated","directed","launched","built","scaled","implemented","executed","transformed","championed","governed","delivered","established","redesigned","pioneered","devised","instituted","restructured","consolidated","mobilized","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
 ];
 
-const OWNERSHIP_PARTIAL_PHRASES = [
+const PARTIAL_OWNERSHIP_VERBS = [
   "managed","coordinated","responsible for","handled","worked on","contributed to","involved in","engaged","tracked","monitored","reviewed","prepared","processed","compiled","organized","planned","conducted","performed","served",
 ];
 
@@ -22,24 +25,20 @@ const PASSIVE_PHRASES = [
   "helped","assisted","supported","participated in","was involved","tasked with",
 ];
 
-const STAKEHOLDER_COMPLEXITY_PHRASES = [
-  "cross-functional","cross functional","stakeholder","stakeholders","executive","leadership team","vp","director","c-suite","client-facing","client facing","vendor","partnered with","matrix","governance","internal teams","external","departments","leadership","clients","partners","administrators",
+const SCOPE_INDICATORS_RE = /(?:\$\s?\d[\d,.]*\s?[kmb]?(?:illion)?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\+?\s?(?:team|teams|people|members|staff|engineers|reports|employees|headcount|users|customers|clients|accounts|projects|locations|regions|departments|stakeholders|hours|days|weeks|months|years|sites|offices|vendors|partners|units)|\bcross[- ]?functional\b|\bend[- ]?to[- ]?end\b|\benterprise[- ]?wide\b|\bglobal\b|\bregional\b|\bmulti[- ]?site\b|\bhigh[- ]?volume\b|\bportfolio\b|\bprogram\b|\bp&l\b|\bbudget\b|\brevenue\b|\bgovernance\b)/gi;
+
+// Senior-level language signals in JDs
+const SENIOR_LANGUAGE = [
+  "strategic","led","owned","drove","spearheaded","architected","governed","p&l","cross-functional","cross functional","executive","stakeholder governance","decision-making","decision making","accountability","end-to-end","end to end","enterprise","portfolio","roadmap","transformation","scaled","built","launched",
 ];
 
-const OPERATIONAL_SCOPE_PHRASES = [
-  "end-to-end","end to end","portfolio","program","roadmap","workflow","process","operating model","sla","kpi","governance","capacity","throughput","multi-site","global","regional","standardized","playbook","high-volume","high volume","caseload","concurrent","pipeline","routing","triage","escalation","documentation","protocols","intake",
-];
-
-const ACCOUNTABILITY_PHRASES = [
-  "accountable","accountability","ownership","owned","p&l","budget","decision","decision-making","decision making","authority","risk","compliance","governance","end-to-end","end to end","primary","responsible","audit","traceability","accuracy","standards",
+// Junior-level language signals in JDs
+const JUNIOR_LANGUAGE = [
+  "assisted","supported","helped","participated","contributed","involved","tasked","entry-level","entry level","junior","intern","trainee","associate",
 ];
 
 const OUTCOME_TERMS = [
-  "increased","reduced","improved","grew","saved","delivered","achieved","exceeded","decreased","boosted","lowered","raised","generated","optimized","reducing","improving","streamlined","standardizing","minimized","eliminated","enhancing",
-];
-
-const TOOL_SIGNAL_PHRASES = [
-  "crm","salesforce","hubspot","marketo","jira","asana","tableau","power bi","excel","sql","python","zendesk","servicenow","workday","sap","oracle","adobe","microsoft office","microsoft","slack","monday","confluence","sharepoint","google sheets","quickbooks","netsuite",
+  "increased","reduced","improved","grew","saved","delivered","achieved","exceeded","decreased","boosted","lowered","raised","generated","optimized","reducing","improving","streamlined","standardizing","minimized","eliminated","enhancing","resulting in","leading to","which led to","driving","enabling",
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -77,10 +76,69 @@ function toDensityPer100Words(hits: number, tokenCount: number): number {
   return hits / units;
 }
 
-function qualityFromDensity(hits: number, tokenCount: number, targetDensity: number): number {
-  const density = toDensityPer100Words(hits, tokenCount);
-  return clamp01(density / targetDensity);
+// ─── Section Extraction ──────────────────────────────────────────────────────
+
+interface ResumeSections {
+  bullets: string[];       // Experience bullet lines
+  skillsText: string;      // Text from skills sections
+  summaryText: string;     // Professional summary text
+  fullText: string;
 }
+
+function extractSections(resumeText: string): ResumeSections {
+  const lines = resumeText.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const bullets: string[] = [];
+  const skillLines: string[] = [];
+  const summaryLines: string[] = [];
+  let currentSection = "other";
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    // Detect section headers
+    if (/^(skills|technical\s+skills|core\s+competencies|technologies|tools)\s*[:：]?\s*$/i.test(line) ||
+        /^(skills|technical\s+skills|core\s+competencies)\b/i.test(line) && line.length < 40) {
+      currentSection = "skills";
+      continue;
+    }
+    if (/^(summary|professional\s+summary|profile|objective|about)\s*[:：]?\s*$/i.test(line) ||
+        /^(summary|professional\s+summary|profile)\b/i.test(line) && line.length < 40) {
+      currentSection = "summary";
+      continue;
+    }
+    if (/^(experience|work\s+experience|employment|professional\s+experience|career)\s*[:：]?\s*$/i.test(line) ||
+        /^(experience|work\s+experience|employment)\b/i.test(line) && line.length < 50) {
+      currentSection = "experience";
+      continue;
+    }
+    if (/^(education|certifications?|awards?|publications?|projects?)\s*[:：]?\s*$/i.test(line)) {
+      currentSection = "other";
+      continue;
+    }
+
+    // Classify line
+    const isBulletLike = /^[-•●○◦▪▸–—]/.test(line) || /^\d+[.)]\s/.test(line) || line.length > 20;
+
+    if (currentSection === "skills") {
+      skillLines.push(line);
+    } else if (currentSection === "summary") {
+      summaryLines.push(line);
+    } else if (currentSection === "experience" && isBulletLike && line.length > 15) {
+      bullets.push(line.replace(/^[-•●○◦▪▸–—]\s*/, "").replace(/^\d+[.)]\s*/, ""));
+    } else if (currentSection === "other" && isBulletLike && line.length > 15) {
+      // If no explicit experience section, treat long bullet-like lines as bullets
+      bullets.push(line.replace(/^[-•●○◦▪▸–—]\s*/, "").replace(/^\d+[.)]\s*/, ""));
+    }
+  }
+
+  return {
+    bullets,
+    skillsText: skillLines.join(" "),
+    summaryText: summaryLines.join(" "),
+    fullText: resumeText,
+  };
+}
+
+// ─── JD Signal Vocabulary ────────────────────────────────────────────────────
 
 function buildJdSignalVocabulary(jdText: string) {
   const jdTokens = tokenize(jdText).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
@@ -99,32 +157,29 @@ function buildJdSignalVocabulary(jdText: string) {
 
   const stemmedKeywords = [...new Set(keywords.map(stem))].filter(s => s.length >= 3);
 
-  const phraseFreq = new Map<string, number>();
+  // Extract bigrams from JD
   const sentences = jdText.toLowerCase().split(/[\n.;:!?]+/).map((s) => s.trim()).filter(Boolean);
+  const bigramFreq = new Map<string, number>();
   for (const sentence of sentences) {
     const words = tokenize(sentence).filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
     for (let i = 0; i < words.length - 1; i++) {
       const bi = `${words[i]} ${words[i + 1]}`;
-      phraseFreq.set(bi, (phraseFreq.get(bi) || 0) + 1);
-      if (i < words.length - 2) {
-        const tri = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
-        phraseFreq.set(tri, (phraseFreq.get(tri) || 0) + 1);
-      }
+      bigramFreq.set(bi, (bigramFreq.get(bi) || 0) + 1);
     }
   }
 
-  const phrases = [...phraseFreq.entries()]
+  const bigrams = [...bigramFreq.entries()]
     .sort((a, b) => {
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 8)
+    .slice(0, 10)
     .map(([phrase]) => phrase);
 
-  return { keywords, phrases, stemmedKeywords };
+  return { keywords, bigrams, stemmedKeywords };
 }
 
-// ─── Sanitization (mirrors server-side) ──────────────────────────────────────
+// ─── Sanitization ────────────────────────────────────────────────────────────
 
 function sanitizeInput(input: string): string {
   return input
@@ -145,6 +200,241 @@ function normalizeText(input: string): string {
     .trim();
 }
 
+// ─── Component 1: JD Mirroring Score (40%) ───────────────────────────────────
+
+function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<typeof buildJdSignalVocabulary>): number {
+  const bulletsText = sections.bullets.join(" ").toLowerCase();
+  const bulletsTokens = tokenize(bulletsText);
+  const bulletsTokenSet = new Set(bulletsTokens);
+  const bulletsStemSet = new Set(bulletsTokens.map(stem).filter(s => s.length >= 3));
+
+  const skillsTokens = tokenize(sections.skillsText.toLowerCase());
+  const skillsTokenSet = new Set(skillsTokens);
+
+  // Count keyword matches in bullets
+  let bulletKeywordHits = 0;
+  let skillsOnlyHits = 0;
+
+  for (const kw of jdModel.keywords) {
+    const inBullets = bulletsTokenSet.has(kw);
+    const inBulletsStemmed = bulletsStemSet.has(stem(kw));
+    const inSkillsOnly = !inBullets && !inBulletsStemmed && skillsTokenSet.has(kw);
+
+    if (inBullets) bulletKeywordHits += 1.0;
+    else if (inBulletsStemmed) bulletKeywordHits += 0.85;
+    else if (inSkillsOnly) skillsOnlyHits += 1;
+  }
+
+  const maxKeywords = Math.max(jdModel.keywords.length, 1);
+  const bulletKeywordCoverage = bulletKeywordHits / maxKeywords;
+  // Penalize skills-only matches: they count at 30% value
+  const skillsOnlyPenalized = (skillsOnlyHits * 0.3) / maxKeywords;
+
+  // Bigram matches in bullets — weight lead-position matches higher
+  let bigramScore = 0;
+  for (const bigram of jdModel.bigrams) {
+    const escaped = bigram.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    const rx = new RegExp(`\\b${escaped}\\b`, "i");
+
+    // Check if bigram appears in bullet lead (first 8 words)
+    let leadMatch = false;
+    let anyMatch = false;
+    for (const bullet of sections.bullets) {
+      const lower = bullet.toLowerCase();
+      if (rx.test(lower)) {
+        anyMatch = true;
+        const leadWords = lower.split(/\s+/).slice(0, 8).join(" ");
+        if (rx.test(leadWords)) {
+          leadMatch = true;
+          break;
+        }
+      }
+    }
+
+    if (leadMatch) bigramScore += 1.0;
+    else if (anyMatch) bigramScore += 0.6;
+  }
+
+  const maxBigrams = Math.max(jdModel.bigrams.length, 1);
+  const bigramCoverage = bigramScore / maxBigrams;
+
+  // Final JD Mirroring = bullet keyword coverage (55%) + bigram coverage (35%) + skills-only penalized (10%)
+  const raw = (bulletKeywordCoverage * 0.55) + (bigramCoverage * 0.35) + (skillsOnlyPenalized * 0.10);
+  return Math.floor(100 * clamp01(raw));
+}
+
+// ─── Component 2: Ownership & Scope Density (30%) ────────────────────────────
+
+function computeOwnershipScopeScore(sections: ResumeSections): number {
+  const { bullets } = sections;
+  if (bullets.length === 0) return 0;
+
+  let totalScore = 0;
+
+  for (const bullet of bullets) {
+    const lower = bullet.toLowerCase();
+    const words = lower.split(/\s+/);
+    const leadWord = words[0] || "";
+
+    // Check ownership verb in lead position
+    const hasStrongOwnership = STRONG_OWNERSHIP_VERBS.some(v => leadWord.startsWith(v) || lower.startsWith(v));
+    const hasPartialOwnership = !hasStrongOwnership && PARTIAL_OWNERSHIP_VERBS.some(v => lower.startsWith(v));
+    const isPassive = PASSIVE_PHRASES.some(v => lower.startsWith(v));
+
+    // Check scope indicators
+    const scopeMatches = bullet.match(SCOPE_INDICATORS_RE);
+    const hasScope = scopeMatches !== null && scopeMatches.length > 0;
+
+    // Check for outcome/impact language
+    const hasOutcome = OUTCOME_TERMS.some(t => {
+      const rx = new RegExp(`\\b${t}\\b`, "i");
+      return rx.test(bullet);
+    });
+
+    const hasScopeOrOutcome = hasScope || hasOutcome;
+
+    if (isPassive) {
+      totalScore += 0; // Passive = zero
+    } else if (hasStrongOwnership && hasScopeOrOutcome) {
+      totalScore += 1.0; // Full points
+    } else if (hasStrongOwnership || (hasPartialOwnership && hasScopeOrOutcome)) {
+      totalScore += 0.6; // Partial: strong verb alone OR partial verb + scope
+    } else if (hasPartialOwnership) {
+      totalScore += 0.3; // Partial verb, no scope
+    } else if (hasScopeOrOutcome) {
+      totalScore += 0.25; // Scope but no ownership verb lead
+    } else {
+      totalScore += 0.1; // Neutral: not passive but nothing special
+    }
+  }
+
+  const density = totalScore / bullets.length;
+  return Math.floor(100 * clamp01(density));
+}
+
+// ─── Component 3: Perception Gap Closure (20%) ──────────────────────────────
+
+function computePerceptionGapScore(sections: ResumeSections, jdText: string): number {
+  const jdLower = jdText.toLowerCase();
+  const resumeLower = (sections.bullets.join(" ") + " " + sections.summaryText).toLowerCase();
+
+  // Determine JD seniority level
+  const seniorHitsJd = countPhraseHits(jdLower, SENIOR_LANGUAGE);
+  const juniorHitsJd = countPhraseHits(jdLower, JUNIOR_LANGUAGE);
+  const jdTokenCount = tokenize(jdText).length;
+
+  const seniorDensityJd = toDensityPer100Words(seniorHitsJd, jdTokenCount);
+  const juniorDensityJd = toDensityPer100Words(juniorHitsJd, jdTokenCount);
+
+  // -1 (very junior) to +1 (very senior)
+  const jdSenioritySignal = clamp01((seniorDensityJd * 2) / Math.max(seniorDensityJd + juniorDensityJd + 0.5, 1));
+
+  // Measure resume seniority language
+  const resumeTokens = tokenize(resumeLower);
+  const seniorHitsResume = countPhraseHits(resumeLower, SENIOR_LANGUAGE);
+  const juniorHitsResume = countPhraseHits(resumeLower, JUNIOR_LANGUAGE);
+  const passiveHitsResume = countPhraseHits(resumeLower, PASSIVE_PHRASES);
+
+  const seniorDensityResume = toDensityPer100Words(seniorHitsResume, resumeTokens.length);
+  const juniorDensityResume = toDensityPer100Words(juniorHitsResume, resumeTokens.length);
+  const passiveDensityResume = toDensityPer100Words(passiveHitsResume, resumeTokens.length);
+
+  const resumeSenioritySignal = clamp01((seniorDensityResume * 2) / Math.max(seniorDensityResume + juniorDensityResume + passiveDensityResume + 0.5, 1));
+
+  // Score = how closely resume matches JD's implied level
+  // If JD is senior, resume needs senior language. Penalize junior/passive language.
+  const levelMatch = 1 - Math.abs(jdSenioritySignal - resumeSenioritySignal);
+
+  // Also penalize heavy passive usage regardless
+  const passivePenalty = clamp01(passiveDensityResume / 2) * 0.3;
+
+  const raw = clamp01(levelMatch - passivePenalty);
+  return Math.floor(100 * raw);
+}
+
+// ─── Component 4: Readability & Signal Density (10%) ────────────────────────
+
+function computeReadabilityScore(sections: ResumeSections): number {
+  const { bullets } = sections;
+  if (bullets.length === 0) return 50; // neutral default
+
+  let totalPenalty = 0;
+  let passiveCount = 0;
+  let validBullets = 0;
+
+  for (const bullet of bullets) {
+    const words = bullet.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    validBullets++;
+
+    // Penalize bullets under 15 words or over 50 words
+    if (wordCount < 15) {
+      totalPenalty += 0.3 * ((15 - wordCount) / 15); // More penalty for shorter
+    } else if (wordCount > 50) {
+      totalPenalty += 0.3 * ((wordCount - 50) / 50);
+    }
+
+    // Passive construction penalty
+    const lower = bullet.toLowerCase();
+    if (PASSIVE_PHRASES.some(p => lower.includes(p))) {
+      passiveCount++;
+    }
+  }
+
+  const avgPenalty = totalPenalty / validBullets;
+  const passiveRate = passiveCount / validBullets;
+
+  // Score: start at 100, subtract penalties
+  const raw = clamp01(1 - avgPenalty - (passiveRate * 0.4));
+  return Math.floor(100 * raw);
+}
+
+// ─── Signal Measurement (for delta validation) ──────────────────────────────
+
+interface SignalSnapshot {
+  ownershipDensity: number;
+  keywordCoverage: number;
+  verbLeadRate: number;
+  outcomeDensity: number;
+  passiveDensity: number;
+}
+
+function measureSignals(resumeText: string, jdModel: ReturnType<typeof buildJdSignalVocabulary>): SignalSnapshot {
+  const normalized = normalizeText(resumeText);
+  const sanitized = sanitizeInput(normalized);
+  const tokens = tokenize(sanitized);
+  const tokenSet = new Set(tokens);
+  const lower = sanitized.toLowerCase();
+
+  const ownershipStrong = countPhraseHits(lower, STRONG_OWNERSHIP_VERBS);
+  const passiveHits = countPhraseHits(lower, PASSIVE_PHRASES);
+  const outcomeHits = countPhraseHits(lower, OUTCOME_TERMS);
+  const quantifiedHits = (lower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
+
+  const exactHits = jdModel.keywords.reduce((s, t) => s + (tokenSet.has(t) ? 1 : 0), 0);
+  const stemSet = new Set(tokens.map(stem).filter(s => s.length >= 3));
+  const stemHits = jdModel.stemmedKeywords.reduce((s, t) => s + (stemSet.has(t) ? 1 : 0), 0);
+  const keywordCoverage = Math.max(
+    exactHits / Math.max(jdModel.keywords.length, 1),
+    (stemHits / Math.max(jdModel.stemmedKeywords.length, 1)) * 0.92,
+  );
+
+  const bulletLines = sanitized.split(/\n/).map(l => l.trim()).filter(l => l.length > 15);
+  const allLeadVerbs = [...STRONG_OWNERSHIP_VERBS, ...PARTIAL_OWNERSHIP_VERBS];
+  const verbLedCount = bulletLines.reduce((count, line) => {
+    const lineLower = line.toLowerCase();
+    return count + (allLeadVerbs.some(v => lineLower.startsWith(v)) ? 1 : 0);
+  }, 0);
+
+  return {
+    ownershipDensity: toDensityPer100Words(ownershipStrong, tokens.length),
+    keywordCoverage,
+    verbLeadRate: bulletLines.length > 0 ? verbLedCount / bulletLines.length : 0,
+    outcomeDensity: toDensityPer100Words(outcomeHits + quantifiedHits, tokens.length),
+    passiveDensity: toDensityPer100Words(passiveHits, tokens.length),
+  };
+}
+
 // ─── Main scoring function ───────────────────────────────────────────────────
 
 export interface DeterministicScoreResult {
@@ -160,187 +450,58 @@ export interface DeterministicScoreResult {
 
 export type RunType = "original" | "calibrated";
 
-export function computeDeterministicScore(resumeText: string, jdText: string, runType: RunType = "original", originalResumeText?: string): DeterministicScoreResult {
-  const rawResume = resumeText;
-  const normalizedResume = normalizeText(rawResume);
+export function computeDeterministicScore(
+  resumeText: string,
+  jdText: string,
+  runType: RunType = "original",
+  originalResumeText?: string,
+): DeterministicScoreResult {
+  const normalizedResume = normalizeText(resumeText);
   const sanitizedResume = sanitizeInput(normalizedResume);
-
-  const resumeTokens = tokenize(sanitizedResume);
-  const resumeTokenSet = new Set(resumeTokens);
-  const resumeLower = sanitizedResume.toLowerCase();
-
+  const sections = extractSections(sanitizedResume);
   const jdModel = buildJdSignalVocabulary(jdText);
 
-  // Exact keyword matches
-  const jdKeywordHitsExact = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
+  // ─── 4-Component Scoring ──────────────────────────────────────────────────
+  const jdMirroringScore = computeJdMirroringScore(sections, jdModel);           // 0-100
+  const ownershipScopeScore = computeOwnershipScopeScore(sections);              // 0-100
+  const perceptionGapScore = computePerceptionGapScore(sections, jdText);        // 0-100
+  const readabilityScore = computeReadabilityScore(sections);                    // 0-100
 
-  // Stemmed keyword matches
-  const resumeStemSet = new Set(resumeTokens.map(stem).filter(s => s.length >= 3));
-  const jdKeywordHitsStemmed = jdModel.stemmedKeywords.reduce((sum, stemmed) => sum + (resumeStemSet.has(stemmed) ? 1 : 0), 0);
-
-  const exactCoverage = jdKeywordHitsExact / Math.max(jdModel.keywords.length, 1);
-  const stemmedCoverage = jdKeywordHitsStemmed / Math.max(jdModel.stemmedKeywords.length, 1);
-  const effectiveKeywordCoverage = Math.max(exactCoverage, stemmedCoverage * 0.92);
-
-  const jdPhraseHits = jdModel.phrases.reduce((sum, phrase) => {
-    const escaped = phrase
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      .replace(/\s+/g, "\\s+");
-    const rx = new RegExp(`\\b${escaped}\\b`, "i");
-    return sum + (rx.test(resumeLower) ? 1 : 0);
-  }, 0);
-
-  const ownershipStrongHits = countPhraseHits(resumeLower, OWNERSHIP_STRONG_PHRASES);
-  const ownershipPartialHits = countPhraseHits(resumeLower, OWNERSHIP_PARTIAL_PHRASES);
-  const passiveHits = countPhraseHits(resumeLower, PASSIVE_PHRASES);
-  const stakeholderHits = countPhraseHits(resumeLower, STAKEHOLDER_COMPLEXITY_PHRASES);
-  const operationalScopeHits = countPhraseHits(resumeLower, OPERATIONAL_SCOPE_PHRASES);
-  const accountabilityHits = countPhraseHits(resumeLower, ACCOUNTABILITY_PHRASES);
-  const outcomeLanguageHits = countPhraseHits(resumeLower, OUTCOME_TERMS);
-  const toolHits = countPhraseHits(resumeLower, TOOL_SIGNAL_PHRASES);
-  const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
-
-  const jdPhraseCoverage = jdPhraseHits / Math.max(jdModel.phrases.length, 1);
-
-  // Quality computations
-  const jdMirrorQuality = clamp01((effectiveKeywordCoverage * 0.65) + (jdPhraseCoverage * 0.35));
-
-  const ownershipQuality = clamp01(
-    (qualityFromDensity(ownershipStrongHits, resumeTokens.length, 0.25) * 0.55) +
-    (qualityFromDensity(ownershipPartialHits, resumeTokens.length, 0.35) * 0.30) +
-    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.15) -
-    (qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.10),
-  );
-
-  const stakeholderQuality = clamp01(
-    (qualityFromDensity(stakeholderHits, resumeTokens.length, 0.30) * 0.60) + (jdMirrorQuality * 0.40),
-  );
-
-  const operationalScopeQuality = clamp01(
-    (qualityFromDensity(operationalScopeHits, resumeTokens.length, 0.30) * 0.60) +
-    (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.40),
-  );
-
-  const accountabilityQuality = clamp01(
-    (qualityFromDensity(accountabilityHits, resumeTokens.length, 0.30) * 0.65) + (ownershipQuality * 0.35),
-  );
-
-  const measurableOutcomesQuality = clamp01(
-    (qualityFromDensity(quantifiedOutcomeHits, resumeTokens.length, 0.25) * 0.60) +
-    (qualityFromDensity(outcomeLanguageHits, resumeTokens.length, 0.35) * 0.40),
-  );
-
-  const toolWorkflowQuality = clamp01(
-    (qualityFromDensity(toolHits, resumeTokens.length, 0.20) * 0.45) + (jdMirrorQuality * 0.55),
-  );
-
-  const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.5);
-
-  // Vocab bonus
-  const strongOwnershipDensity = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
-  const ownershipRatio = ownershipStrongHits / Math.max(ownershipStrongHits + passiveHits, 1);
-  const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.35) * 0.18;
-
-  // Dimension scores
-  const role_outcomes_alignment = Math.floor(100 * clamp01(
-    (ownershipQuality * 0.28) +
-    (measurableOutcomesQuality * 0.25) +
-    (accountabilityQuality * 0.20) +
-    (jdMirrorQuality * 0.22) +
-    vocabBonus -
-    (passivePenalty * 0.06),
-  ));
-
-  const tools_and_workflow_alignment = Math.floor(100 * clamp01(
-    (toolWorkflowQuality * 0.50) + (jdMirrorQuality * 0.50),
-  ));
-
-  const domain_and_context_alignment = Math.floor(100 * clamp01(
-    (jdMirrorQuality * 0.65) + (operationalScopeQuality * 0.35),
-  ));
-
-  const context_and_scale_alignment = Math.floor(100 * clamp01(
-    (operationalScopeQuality * 0.38) +
-    (measurableOutcomesQuality * 0.30) +
-    (accountabilityQuality * 0.18) +
-    (jdMirrorQuality * 0.14),
-  ));
-
-  const communication_and_leadership_alignment = Math.floor(100 * clamp01(
-    (stakeholderQuality * 0.28) +
-    (ownershipQuality * 0.25) +
-    (accountabilityQuality * 0.20) +
-    (jdMirrorQuality * 0.22) +
-    vocabBonus -
-    (passivePenalty * 0.08),
-  ));
-
+  // Final weighted score: 40% + 30% + 20% + 10%
   const weightedSum =
-    (role_outcomes_alignment * 0.30) +
-    (tools_and_workflow_alignment * 0.20) +
-    (domain_and_context_alignment * 0.20) +
-    (context_and_scale_alignment * 0.15) +
-    (communication_and_leadership_alignment * 0.15);
+    (jdMirroringScore * 0.40) +
+    (ownershipScopeScore * 0.30) +
+    (perceptionGapScore * 0.20) +
+    (readabilityScore * 0.10);
 
-  // ─── Calibrated-language signal boost with delta-validation ──
   const baseScore = Math.floor(weightedSum);
   let finalScore = baseScore;
 
+  // ─── Map 4 components to 5-field breakdown for backward compatibility ────
+  // role_outcomes_alignment ← Ownership & Scope (primary driver)
+  // tools_and_workflow_alignment ← JD Mirroring (keyword/bigram alignment)
+  // domain_and_context_alignment ← Perception Gap Closure
+  // context_and_scale_alignment ← blend of Ownership + JD Mirroring scope
+  // communication_and_leadership_alignment ← blend of Perception Gap + Ownership
+  const role_outcomes_alignment = ownershipScopeScore;
+  const tools_and_workflow_alignment = jdMirroringScore;
+  const domain_and_context_alignment = perceptionGapScore;
+  const context_and_scale_alignment = Math.floor((ownershipScopeScore * 0.5 + jdMirroringScore * 0.5));
+  const communication_and_leadership_alignment = Math.floor((perceptionGapScore * 0.5 + ownershipScopeScore * 0.5));
+
+  // ─── Calibrated-language signal boost with delta-validation ───────────────
   if (runType === "calibrated" && originalResumeText) {
-    // ── Measure signals on the CURRENT (calibrated) resume ──
-    const ownershipDensityNow = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
-    const passiveDensityNow = toDensityPer100Words(passiveHits, resumeTokens.length);
-    const keywordCoverageNow = effectiveKeywordCoverage;
-    const outcomeDensityNow = toDensityPer100Words(outcomeLanguageHits + quantifiedOutcomeHits, resumeTokens.length);
+    const nowSignals = measureSignals(sanitizedResume, jdModel);
+    const origSignals = measureSignals(originalResumeText, jdModel);
 
-    const bulletLines = sanitizedResume.split(/\n/).map(l => l.trim()).filter(l => l.length > 15);
-    const allLeadVerbs = [...OWNERSHIP_STRONG_PHRASES, ...OWNERSHIP_PARTIAL_PHRASES];
-    const verbLedCount = bulletLines.reduce((count, line) => {
-      const lower = line.toLowerCase();
-      return count + (allLeadVerbs.some(v => lower.startsWith(v)) ? 1 : 0);
-    }, 0);
-    const verbLeadRateNow = bulletLines.length > 0 ? verbLedCount / bulletLines.length : 0;
+    // Compute deltas (positive = improvement)
+    const deltaOwnership = nowSignals.ownershipDensity - origSignals.ownershipDensity;
+    const deltaKeywordCov = nowSignals.keywordCoverage - origSignals.keywordCoverage;
+    const deltaVerbRate = nowSignals.verbLeadRate - origSignals.verbLeadRate;
+    const deltaOutcome = nowSignals.outcomeDensity - origSignals.outcomeDensity;
+    const deltaPassive = origSignals.passiveDensity - nowSignals.passiveDensity; // reduction is positive
 
-    // ── Measure the SAME signals on the ORIGINAL resume ──
-    const origNormalized = normalizeText(originalResumeText);
-    const origSanitized = sanitizeInput(origNormalized);
-    const origTokens = tokenize(origSanitized);
-    const origTokenSet = new Set(origTokens);
-    const origLower = origSanitized.toLowerCase();
-
-    const origOwnershipStrong = countPhraseHits(origLower, OWNERSHIP_STRONG_PHRASES);
-    const origPassive = countPhraseHits(origLower, PASSIVE_PHRASES);
-    const origOutcomeLang = countPhraseHits(origLower, OUTCOME_TERMS);
-    const origQuantified = (origLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
-
-    const origOwnershipDensity = toDensityPer100Words(origOwnershipStrong, origTokens.length);
-    const origPassiveDensity = toDensityPer100Words(origPassive, origTokens.length);
-    const origOutcomeDensity = toDensityPer100Words(origOutcomeLang + origQuantified, origTokens.length);
-
-    // Original keyword coverage
-    const origExactHits = jdModel.keywords.reduce((s, t) => s + (origTokenSet.has(t) ? 1 : 0), 0);
-    const origStemSet = new Set(origTokens.map(stem).filter(s => s.length >= 3));
-    const origStemHits = jdModel.stemmedKeywords.reduce((s, t) => s + (origStemSet.has(t) ? 1 : 0), 0);
-    const origKeywordCoverage = Math.max(
-      origExactHits / Math.max(jdModel.keywords.length, 1),
-      (origStemHits / Math.max(jdModel.stemmedKeywords.length, 1)) * 0.92,
-    );
-
-    const origBulletLines = origSanitized.split(/\n/).map(l => l.trim()).filter(l => l.length > 15);
-    const origVerbLed = origBulletLines.reduce((c, line) => {
-      const lower = line.toLowerCase();
-      return c + (allLeadVerbs.some(v => lower.startsWith(v)) ? 1 : 0);
-    }, 0);
-    const origVerbLeadRate = origBulletLines.length > 0 ? origVerbLed / origBulletLines.length : 0;
-
-    // ── Compute deltas (positive = improvement) ──
-    const deltaOwnership = ownershipDensityNow - origOwnershipDensity;
-    const deltaKeywordCov = keywordCoverageNow - origKeywordCoverage;
-    const deltaVerbRate = verbLeadRateNow - origVerbLeadRate;
-    const deltaOutcome = outcomeDensityNow - origOutcomeDensity;
-    const deltaPassive = origPassiveDensity - passiveDensityNow; // reduction is positive
-
-    // ── Validate: at least 3 of 5 dimensions must show improvement ──
+    // Validate: at least 3 of 5 dimensions must show improvement
     const improvementFlags = [
       deltaOwnership > 0.05,
       deltaKeywordCov > 0.05,
@@ -351,24 +512,23 @@ export function computeDeterministicScore(resumeText: string, jdText: string, ru
     const improvementCount = improvementFlags.filter(Boolean).length;
     const hasValidatedImprovement = improvementCount >= 3;
 
-    // ── Anti-stuffing gate ──
+    // Anti-stuffing gate
+    const resumeTokens = tokenize(sanitizedResume);
     const maxKeywordFreq = jdModel.keywords.reduce((mx, token) => {
       const count = resumeTokens.filter(t => t === token).length;
       return Math.max(mx, count);
     }, 0);
     const isKeywordStuffed = maxKeywordFreq > 6;
 
-    // ── Absolute quality gates (calibrated text must still meet minimums) ──
+    // Absolute quality gates
     const meetsQualityGates =
-      ownershipDensityNow >= 0.35 &&
-      keywordCoverageNow >= 0.45 &&
-      verbLeadRateNow >= 0.75;
+      nowSignals.ownershipDensity >= 0.35 &&
+      nowSignals.keywordCoverage >= 0.45 &&
+      nowSignals.verbLeadRate >= 0.75;
 
     if (hasValidatedImprovement && meetsQualityGates && !isKeywordStuffed) {
-      // Delta-weighted floor: stronger real improvement → slightly higher floor
       const BASELINE_SCORE = 59;
       const boostFloor = BASELINE_SCORE + 8; // minimum 67
-      // Intensity from validated deltas only (0–1 scale, capped)
       const deltaIntensity = clamp01(
         (clamp01(deltaOwnership / 0.30) * 0.25) +
         (clamp01(deltaKeywordCov / 0.30) * 0.25) +
