@@ -137,7 +137,7 @@ const CalibratedResumeTab = ({
     }
   }, [pendingResume, confidence, inputSource]);
 
-  const autoAssembledRef = useRef(false);
+  // autoAssembledRef declared above
   useEffect(() => {
     if (isPro && hasCurrentSessionAlignment && !currentResume && !pendingResume && !loading && !error && !autoAssembledRef.current && !showPdfFallback) {
       autoAssembledRef.current = true;
