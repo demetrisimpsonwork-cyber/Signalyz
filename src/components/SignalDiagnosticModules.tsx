@@ -178,12 +178,24 @@ function ExecutiveInsight({ data, evidenceLedger }: { data: NonNullable<SignalDi
     confidence: "High" as const,
   }));
 
+  // Split first sentence from the rest for typographic emphasis
+  const insight = data.primary_insight || "";
+  const firstSentenceMatch = insight.match(/^(.+?[.!?])\s*(.*)/s);
+  const firstSentence = firstSentenceMatch ? firstSentenceMatch[1] : insight;
+  const remainingText = firstSentenceMatch ? firstSentenceMatch[2] : "";
+
   return (
-    <div className="rounded-xl border-l-4 border-l-primary bg-card p-5 space-y-3">
-      <SectionLabel>Executive Insight</SectionLabel>
-      <p className="text-sm font-medium text-foreground leading-relaxed">{data.primary_insight}</p>
+    <div className="mt-8 rounded-xl border-l-4 border-l-primary bg-card p-6 space-y-3">
+      <div className="flex items-center gap-2 pb-1 border-b border-border/30 mb-1">
+        <SectionLabel>Executive Insight</SectionLabel>
+        <span className="text-[10px] text-muted-foreground/60 tracking-wide uppercase">Final Synthesis</span>
+      </div>
+      <p className="text-[15px] font-semibold text-foreground leading-relaxed tracking-[-0.01em]">{firstSentence}</p>
+      {remainingText && (
+        <p className="text-sm text-muted-foreground leading-relaxed">{remainingText}</p>
+      )}
       {data.strategic_repositioning_opportunity && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground pt-1">
           <span className="font-semibold text-primary">Repositioning opportunity:</span> {data.strategic_repositioning_opportunity}
         </p>
       )}
