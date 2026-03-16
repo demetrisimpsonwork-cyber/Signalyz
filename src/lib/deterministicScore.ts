@@ -221,14 +221,14 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
     const inSkillsOnly = !inBullets && !inBulletsStemmed && skillsTokenSet.has(kw);
 
     if (inBullets) bulletKeywordHits += 1.0;
-    else if (inBulletsStemmed) bulletKeywordHits += 0.85;
+    else if (inBulletsStemmed) bulletKeywordHits += 0.90;
     else if (inSkillsOnly) skillsOnlyHits += 1;
   }
 
   const maxKeywords = Math.max(jdModel.keywords.length, 1);
   const bulletKeywordCoverage = bulletKeywordHits / maxKeywords;
-  // Penalize skills-only matches: they count at 30% value
-  const skillsOnlyPenalized = (skillsOnlyHits * 0.3) / maxKeywords;
+  // Skills-only matches contribute at 50% value (reduced penalty)
+  const skillsOnlyPenalized = (skillsOnlyHits * 0.5) / maxKeywords;
 
   // Bigram matches in bullets — weight lead-position matches higher
   let bigramScore = 0;
@@ -258,9 +258,11 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const maxBigrams = Math.max(jdModel.bigrams.length, 1);
   const bigramCoverage = bigramScore / maxBigrams;
 
-  // Final JD Mirroring = bullet keyword coverage (55%) + bigram coverage (35%) + skills-only penalized (10%)
-  const raw = (bulletKeywordCoverage * 0.55) + (bigramCoverage * 0.35) + (skillsOnlyPenalized * 0.10);
-  return Math.floor(100 * clamp01(raw));
+  // Final JD Mirroring = bullet keyword coverage (50%) + bigram coverage (30%) + skills-only (20%)
+  // Apply sqrt curve to prevent low-partial-match scores from collapsing toward zero
+  const raw = (bulletKeywordCoverage * 0.50) + (bigramCoverage * 0.30) + (skillsOnlyPenalized * 0.20);
+  const curved = Math.sqrt(clamp01(raw)); // sqrt curve lifts mid-range scores
+  return Math.floor(100 * curved);
 }
 
 // ─── Component 2: Ownership & Scope Density (30%) ────────────────────────────
@@ -300,11 +302,11 @@ function computeOwnershipScopeScore(sections: ResumeSections): number {
     } else if (hasStrongOwnership || (hasPartialOwnership && hasScopeOrOutcome)) {
       totalScore += 0.6; // Partial: strong verb alone OR partial verb + scope
     } else if (hasPartialOwnership) {
-      totalScore += 0.3; // Partial verb, no scope
+      totalScore += 0.4; // Partial verb, no scope — still shows ownership
     } else if (hasScopeOrOutcome) {
-      totalScore += 0.25; // Scope but no ownership verb lead
+      totalScore += 0.35; // Scope but no ownership verb lead
     } else {
-      totalScore += 0.1; // Neutral: not passive but nothing special
+      totalScore += 0.15; // Neutral: not passive but nothing special
     }
   }
 
@@ -342,11 +344,12 @@ function computePerceptionGapScore(sections: ResumeSections, jdText: string): nu
   const resumeSenioritySignal = clamp01((seniorDensityResume * 2) / Math.max(seniorDensityResume + juniorDensityResume + passiveDensityResume + 0.5, 1));
 
   // Score = how closely resume matches JD's implied level
-  // If JD is senior, resume needs senior language. Penalize junior/passive language.
-  const levelMatch = 1 - Math.abs(jdSenioritySignal - resumeSenioritySignal);
+  // Use a softer gap penalty: square the gap so moderate mismatches are gentle
+  const gap = Math.abs(jdSenioritySignal - resumeSenioritySignal);
+  const levelMatch = 1 - (gap * gap); // quadratic: 0.3 gap → 0.91, 0.5 gap → 0.75
 
-  // Also penalize heavy passive usage regardless
-  const passivePenalty = clamp01(passiveDensityResume / 2) * 0.3;
+  // Softer passive penalty
+  const passivePenalty = clamp01(passiveDensityResume / 3) * 0.2;
 
   const raw = clamp01(levelMatch - passivePenalty);
   return Math.floor(100 * raw);
@@ -474,7 +477,11 @@ export function computeDeterministicScore(
     (perceptionGapScore * 0.20) +
     (readabilityScore * 0.10);
 
-  const baseScore = Math.floor(weightedSum);
+  // Apply lower-bound scaling: resumes with any meaningful signal shouldn't collapse below ~40
+  // This uses a linear remap from [0-100] to [floor-100] where floor scales with raw score
+  const rawBase = Math.floor(weightedSum);
+  const signalFloor = rawBase > 10 ? Math.min(rawBase, 40) * (rawBase / 100) : 0;
+  const baseScore = Math.max(rawBase, Math.floor(signalFloor));
   let finalScore = baseScore;
 
   // ─── Map 4 components to 5-field breakdown for backward compatibility ────
