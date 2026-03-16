@@ -755,7 +755,11 @@ const Index = () => {
             score_delta: detScore.finalScore - origScore.finalScore,
             improved_dimensions: improved,
             unchanged_dimensions: unchanged,
-          });
+            dimensions_improved_count: improved.length,
+            dimensions_unchanged_count: unchanged.length,
+            retry_pass_triggered: detScore.retryPassTriggered,
+            calibration_pass_number: 1,
+          } as any);
         } catch (e) {
           console.warn("[CalibrationLog] Failed to log calibration delta:", e);
         }

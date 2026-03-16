@@ -569,6 +569,7 @@ function measureSignals(resumeText: string, jdModel: ReturnType<typeof buildJdSi
 
 export interface DeterministicScoreResult {
   finalScore: number;
+  retryPassTriggered: boolean;
   breakdown: {
     role_outcomes_alignment: number;
     tools_and_workflow_alignment: number;
@@ -623,6 +624,7 @@ export function computeDeterministicScore(
   const context_and_scale_alignment = Math.floor((ownershipScopeScore * 0.5 + jdMirroringScore * 0.5));
   const communication_and_leadership_alignment = Math.floor((perceptionGapScore * 0.5 + ownershipScopeScore * 0.5));
 
+  let retryPassTriggered = false;
   // ─── Calibrated-language signal boost with delta-validation ───────────────
   if (runType === "calibrated" && originalResumeText) {
     const origResult = computeDeterministicScore(originalResumeText, jdText, "original");
@@ -677,6 +679,7 @@ export function computeDeterministicScore(
       finalScore = Math.max(baseScore, boostTarget);
     }
 
+    // ─── (retryPassTriggered declared at outer scope) ───
     // ─── Scoring Integrity Safeguards ─────────────────────────────────────
 
     // 1. Score Floor Guard: calibrated score must never be lower than original
@@ -705,6 +708,7 @@ export function computeDeterministicScore(
         );
         const retryBoost = 3 + Math.round(retryIntensity * 5); // +3 to +8
         finalScore = originalScore + retryBoost;
+        retryPassTriggered = true;
       }
     }
 
@@ -717,6 +721,7 @@ export function computeDeterministicScore(
 
   return {
     finalScore,
+    retryPassTriggered,
     breakdown: {
       role_outcomes_alignment,
       tools_and_workflow_alignment,

@@ -53,10 +53,14 @@ export type Database = {
       calibration_runs: {
         Row: {
           calibrated_score: number
+          calibration_pass_number: number
           created_at: string
+          dimensions_improved_count: number
+          dimensions_unchanged_count: number
           id: string
           improved_dimensions: string[]
           original_score: number
+          retry_pass_triggered: boolean
           run_id: string | null
           score_delta: number
           unchanged_dimensions: string[]
@@ -64,10 +68,14 @@ export type Database = {
         }
         Insert: {
           calibrated_score: number
+          calibration_pass_number?: number
           created_at?: string
+          dimensions_improved_count?: number
+          dimensions_unchanged_count?: number
           id?: string
           improved_dimensions?: string[]
           original_score: number
+          retry_pass_triggered?: boolean
           run_id?: string | null
           score_delta: number
           unchanged_dimensions?: string[]
@@ -75,10 +83,14 @@ export type Database = {
         }
         Update: {
           calibrated_score?: number
+          calibration_pass_number?: number
           created_at?: string
+          dimensions_improved_count?: number
+          dimensions_unchanged_count?: number
           id?: string
           improved_dimensions?: string[]
           original_score?: number
+          retry_pass_triggered?: boolean
           run_id?: string | null
           score_delta?: number
           unchanged_dimensions?: string[]
