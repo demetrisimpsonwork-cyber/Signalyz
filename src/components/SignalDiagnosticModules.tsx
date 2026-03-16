@@ -672,30 +672,7 @@ function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<Sign
         <SectionLabel>Why You're Not Getting Interviews</SectionLabel>
       </div>
 
-      {(data.primary_blocker || data.primary_issue) && (
-        <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-destructive">Primary Blocker</p>
-          <p className="text-sm text-foreground leading-relaxed font-medium">{data.primary_blocker || data.primary_issue}</p>
-        </div>
-      )}
-
-      {data.what_hiring_managers_see && data.what_hiring_managers_see.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">What Hiring Managers See</p>
-          <ul className="space-y-0.5">
-            {data.what_hiring_managers_see.map((s, i) => (
-              <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {data.what_this_creates && (
-        <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">What This Creates</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{data.what_this_creates}</p>
-        </div>
-      )}
+      {/* Primary Blocker, What Hiring Managers See, and What This Creates are shown in the Signal Diagnosis card above — not repeated here */}
 
       {data.strategic_fixes && data.strategic_fixes.length > 0 && (
         <div className="space-y-1.5">
