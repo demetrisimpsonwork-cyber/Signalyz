@@ -143,27 +143,45 @@ function extractSections(resumeText: string): ResumeSections {
 // resume terms from the SAME cluster receive partial semantic credit.
 
 const SEMANTIC_CLUSTERS: string[][] = [
-  ["escalation", "issue resolution", "complaint", "dispute", "conflict resolution", "grievance", "case management"],
-  ["sla", "service level", "service performance", "performance accountability", "service standard", "quality assurance"],
-  ["complaint routing", "case management", "ticket management", "issue workflow", "case routing", "intake"],
-  ["cross-functional", "cross functional", "department collaboration", "interdepartmental", "multi-team", "cross-team", "collaborative"],
-  ["process improvement", "process documentation", "operational efficiency", "workflow optimization", "continuous improvement", "process standardization", "lean", "six sigma"],
-  ["customer service", "customer support", "client service", "client support", "customer experience", "customer success", "customer relations", "client relations"],
-  ["leadership", "management", "supervision", "team lead", "team management", "people management", "staff management", "direct reports"],
-  ["training", "coaching", "mentoring", "onboarding", "development", "upskilling"],
-  ["reporting", "analytics", "dashboards", "metrics", "kpi", "data analysis", "performance tracking"],
-  ["scheduling", "workforce planning", "capacity planning", "resource allocation", "staffing"],
-  ["vendor management", "supplier management", "third-party management", "partner management", "vendor relations"],
-  ["budget", "cost management", "p&l", "financial oversight", "cost reduction", "expense management"],
-  ["compliance", "regulatory", "audit", "policy", "governance", "risk management"],
-  ["stakeholder", "executive", "senior leadership", "c-suite", "board", "sponsor"],
-  ["retail", "store operations", "floor management", "merchandising", "point of sale", "inventory"],
-  ["operations", "operational", "ops", "logistics", "supply chain", "fulfillment", "distribution"],
+  // Escalation & issue resolution (broad cluster)
+  ["escalation", "escalation handling", "issue resolution", "complaint", "dispute", "dispute resolution", "conflict resolution", "grievance", "case management", "issue triage", "customer issue", "problem resolution", "incident management", "service recovery"],
+  // SLA & service performance
+  ["sla", "service level", "service performance", "performance accountability", "service standard", "quality assurance", "case throughput", "response target", "response time", "turnaround time", "service metric", "service delivery"],
+  // Case/complaint workflow
+  ["complaint routing", "case management", "ticket management", "issue workflow", "case routing", "intake", "intake workflow", "customer issue workflow", "queue management", "triage", "work order"],
+  // Cross-functional collaboration
+  ["cross-functional", "cross functional", "department collaboration", "interdepartmental", "multi-team", "cross-team", "collaborative", "stakeholder liaison", "team coordination", "department coordination", "department leadership", "inter-department"],
+  // Process & operational improvement
+  ["process improvement", "process documentation", "operational efficiency", "workflow optimization", "continuous improvement", "process standardization", "lean", "six sigma", "operational improvement", "operational optimization", "efficiency improvement", "process redesign", "process engineering"],
+  // Customer service & experience
+  ["customer service", "customer support", "client service", "client support", "customer experience", "customer success", "customer relations", "client relations", "customer satisfaction", "customer retention", "customer engagement", "customer care", "service excellence"],
+  // Leadership & people management
+  ["leadership", "management", "supervision", "team lead", "team management", "people management", "staff management", "direct reports", "team oversight", "crew management", "shift management"],
+  // Training & development
+  ["training", "coaching", "mentoring", "onboarding", "development", "upskilling", "staff development", "employee development", "performance coaching"],
+  // Reporting & analytics
+  ["reporting", "analytics", "dashboards", "metrics", "kpi", "data analysis", "performance tracking", "performance monitoring", "trend analysis", "root cause analysis"],
+  // Scheduling & capacity
+  ["scheduling", "workforce planning", "capacity planning", "resource allocation", "staffing", "labor scheduling", "shift scheduling", "headcount planning"],
+  // Vendor & partner management
+  ["vendor management", "supplier management", "third-party management", "partner management", "vendor relations", "contract management", "outsourcing"],
+  // Budget & financial
+  ["budget", "cost management", "p&l", "financial oversight", "cost reduction", "expense management", "cost control", "budget accountability"],
+  // Compliance & governance
+  ["compliance", "regulatory", "audit", "policy", "governance", "risk management", "quality control", "standard operating procedure", "sop"],
+  // Stakeholder & executive engagement
+  ["stakeholder", "executive", "senior leadership", "c-suite", "board", "sponsor", "executive reporting", "leadership briefing"],
+  // Retail & store operations
+  ["retail", "store operations", "floor management", "merchandising", "point of sale", "inventory", "store performance", "retail supervision"],
+  // Operations & logistics
+  ["operations", "operational", "ops", "logistics", "supply chain", "fulfillment", "distribution", "warehouse", "order management"],
 ];
 
 function findSemanticCredit(keyword: string, resumeText: string): number {
   const kwLower = keyword.toLowerCase();
   const resumeLower = resumeText.toLowerCase();
+
+  let bestCredit = 0;
 
   for (const cluster of SEMANTIC_CLUSTERS) {
     // Check if the JD keyword matches any term in this cluster
@@ -174,23 +192,55 @@ function findSemanticCredit(keyword: string, resumeText: string): number {
 
     if (!kwInCluster) continue;
 
-    // Check if the resume contains any OTHER term from the same cluster
-    let bestMatch = 0;
+    // Count how many distinct cluster terms appear in the resume (excluding self)
+    let matchCount = 0;
+    let localBest = 0;
     for (const term of cluster) {
       if (term.includes(kwLower) || kwLower.includes(term)) continue; // skip self-matches
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
       const rx = new RegExp(`\\b${escaped}\\b`, "i");
       if (rx.test(resumeLower)) {
+        matchCount++;
         // Longer matching terms get higher credit (more specific = more valuable)
-        const credit = Math.min(0.65, 0.4 + (term.length / 40));
-        bestMatch = Math.max(bestMatch, credit);
+        const credit = Math.min(0.70, 0.45 + (term.length / 35));
+        localBest = Math.max(localBest, credit);
       }
     }
 
-    if (bestMatch > 0) return bestMatch;
+    // Multiple concept matches within the same cluster boost credit
+    if (matchCount > 1) {
+      localBest = Math.min(0.85, localBest + (matchCount - 1) * 0.08);
+    }
+
+    bestCredit = Math.max(bestCredit, localBest);
   }
 
-  return 0;
+  return bestCredit;
+}
+
+/**
+ * Count how many distinct semantic clusters have matches between JD and resume.
+ * Used to provide a cumulative bonus for broad transferable coverage.
+ */
+function countSemanticClusterCoverage(jdText: string, resumeText: string): number {
+  const jdLower = jdText.toLowerCase();
+  const resumeLower = resumeText.toLowerCase();
+  let clustersHit = 0;
+
+  for (const cluster of SEMANTIC_CLUSTERS) {
+    let jdHasCluster = false;
+    let resumeHasCluster = false;
+    for (const term of cluster) {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      const rx = new RegExp(`\\b${escaped}\\b`, "i");
+      if (!jdHasCluster && rx.test(jdLower)) jdHasCluster = true;
+      if (!resumeHasCluster && rx.test(resumeLower)) resumeHasCluster = true;
+      if (jdHasCluster && resumeHasCluster) break;
+    }
+    if (jdHasCluster && resumeHasCluster) clustersHit++;
+  }
+
+  return clustersHit;
 }
 
 // ─── JD Signal Vocabulary ────────────────────────────────────────────────────
@@ -257,7 +307,7 @@ function normalizeText(input: string): string {
 
 // ─── Component 1: JD Mirroring Score (40%) ───────────────────────────────────
 
-function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<typeof buildJdSignalVocabulary>): number {
+function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<typeof buildJdSignalVocabulary>, jdText: string): number {
   const bulletsText = sections.bullets.join(" ").toLowerCase();
   const bulletsTokens = tokenize(bulletsText);
   const bulletsTokenSet = new Set(bulletsTokens);
@@ -291,7 +341,7 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
         // Try semantic equivalence against full resume text as last resort
         const fullSemCredit = findSemanticCredit(kw, sections.fullText);
         if (fullSemCredit > 0) {
-          semanticHits += fullSemCredit * 0.4; // heavily discounted for non-bullet match
+          semanticHits += fullSemCredit * 0.5; // discounted for non-bullet match
         }
       }
     }
@@ -329,9 +379,16 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const maxBigrams = Math.max(jdModel.bigrams.length, 1);
   const bigramCoverage = bigramScore / maxBigrams;
 
-  // Final JD Mirroring = exact/stemmed (40%) + semantic (25%) + bigram (20%) + skills-only (15%)
-  const raw = (bulletKeywordCoverage * 0.40) + (semanticCoverage * 0.25) + (bigramCoverage * 0.20) + (skillsOnlyPenalized * 0.15);
-  const curved = Math.sqrt(clamp01(raw)); // sqrt curve lifts mid-range scores
+  // Cumulative semantic cluster coverage bonus:
+  // When multiple transferable concept clusters match between JD and resume,
+  // grant a proportional bonus reflecting broad operational alignment.
+  const clusterCount = countSemanticClusterCoverage(jdText, bulletsText);
+  // Bonus scales: 2 clusters = 0.04, 4 clusters = 0.10, 6+ clusters = 0.15
+  const clusterBonus = clusterCount >= 2 ? Math.min(0.15, (clusterCount - 1) * 0.03) : 0;
+
+  // Final JD Mirroring = exact/stemmed (35%) + semantic (30%) + bigram (15%) + skills-only (10%) + cluster bonus
+  const rawWithCluster = (bulletKeywordCoverage * 0.35) + (semanticCoverage * 0.30) + (bigramCoverage * 0.15) + (skillsOnlyPenalized * 0.10) + clusterBonus;
+  const curved = Math.sqrt(clamp01(rawWithCluster)); // sqrt curve lifts mid-range scores
   return Math.floor(100 * curved);
 }
 
@@ -535,7 +592,7 @@ export function computeDeterministicScore(
   const jdModel = buildJdSignalVocabulary(jdText);
 
   // ─── 4-Component Scoring ──────────────────────────────────────────────────
-  const jdMirroringScore = computeJdMirroringScore(sections, jdModel);           // 0-100
+  const jdMirroringScore = computeJdMirroringScore(sections, jdModel, jdText);   // 0-100
   const ownershipScopeScore = computeOwnershipScopeScore(sections);              // 0-100
   const perceptionGapScore = computePerceptionGapScore(sections, jdText);        // 0-100
   const readabilityScore = computeReadabilityScore(sections);                    // 0-100
