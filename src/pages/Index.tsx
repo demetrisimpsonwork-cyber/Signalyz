@@ -669,9 +669,8 @@ const Index = () => {
 
     if (!validate()) return;
     setLoading(true);
-    setResult(null);
-    setDirectorResult(null);
-    setSessionResumeAssembled(false);
+    // Don't clear result/directorResult/sessionResumeAssembled eagerly —
+    // preserve last successful state as fallback if this run fails.
     setAlignmentError(null);
     setInputTruncated(false);
     setShowSamples(false);
