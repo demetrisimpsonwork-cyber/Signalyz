@@ -1484,7 +1484,7 @@ const Index = () => {
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">What hiring managers see</p>
                                     <ul className="space-y-1 pl-2.5 border-l-2 border-destructive/20">
-                                      {hiringManagersSee.map((s, i) => (
+                                      {hiringManagersSee.slice(0, effectiveIsPro ? undefined : 2).map((s, i) => (
                                         <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
                                       ))}
                                     </ul>
@@ -1493,32 +1493,53 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* What This Creates */}
-                            {whatThisCreates && (
+                            {/* Conversion CTA — after Primary Blocker, free users only */}
+                            {!effectiveIsPro && primaryBlocker && (
+                              <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
+                                <p className="text-sm font-semibold text-foreground">
+                                  See exactly how to fix this and increase your score
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Unlock Strategic Fixes, predicted score improvement, and a full calibrated resume.
+                                </p>
+                                {user ? (
+                                  <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                                    <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence
+                                  </Button>
+                                ) : (
+                                  <Button size="sm" className="gap-2" asChild>
+                                    <a href="/auth">Get Started Free</a>
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* What This Creates — Pro only */}
+                            {effectiveIsPro && whatThisCreates && (
                               <div className="pl-3 border-l-2 border-border">
                                 <p className="section-label mb-1">What This Creates</p>
                                 <p className="text-xs text-muted-foreground leading-relaxed">{whatThisCreates}</p>
                               </div>
                             )}
 
-                            {/* What's Landing */}
+                            {/* What's Landing — free: 1 item, Pro: all */}
                             {strengths.length > 0 && (
                               <div className="space-y-1.5">
                                 <p className="section-label">What's Landing</p>
                                 <ul className="space-y-1">
-                                  {strengths.map((r, i) => (
+                                  {(effectiveIsPro ? strengths : strengths.slice(0, 1)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
                               </div>
                             )}
 
-                            {/* Secondary Risks */}
+                            {/* Secondary Risks — free: max 2, Pro: all */}
                             {secondaryGaps.length > 0 && (
                               <div className="space-y-1.5">
                                 <p className="section-label">Secondary Risks</p>
                                 <ul className="space-y-1">
-                                  {secondaryGaps.map((r, i) => (
+                                  {(effectiveIsPro ? secondaryGaps : secondaryGaps.slice(0, 2)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
