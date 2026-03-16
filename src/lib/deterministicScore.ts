@@ -181,6 +181,8 @@ function findSemanticCredit(keyword: string, resumeText: string): number {
   const kwLower = keyword.toLowerCase();
   const resumeLower = resumeText.toLowerCase();
 
+  let bestCredit = 0;
+
   for (const cluster of SEMANTIC_CLUSTERS) {
     // Check if the JD keyword matches any term in this cluster
     const kwInCluster = cluster.some(term => {
@@ -190,23 +192,55 @@ function findSemanticCredit(keyword: string, resumeText: string): number {
 
     if (!kwInCluster) continue;
 
-    // Check if the resume contains any OTHER term from the same cluster
-    let bestMatch = 0;
+    // Count how many distinct cluster terms appear in the resume (excluding self)
+    let matchCount = 0;
+    let localBest = 0;
     for (const term of cluster) {
       if (term.includes(kwLower) || kwLower.includes(term)) continue; // skip self-matches
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
       const rx = new RegExp(`\\b${escaped}\\b`, "i");
       if (rx.test(resumeLower)) {
+        matchCount++;
         // Longer matching terms get higher credit (more specific = more valuable)
-        const credit = Math.min(0.65, 0.4 + (term.length / 40));
-        bestMatch = Math.max(bestMatch, credit);
+        const credit = Math.min(0.70, 0.45 + (term.length / 35));
+        localBest = Math.max(localBest, credit);
       }
     }
 
-    if (bestMatch > 0) return bestMatch;
+    // Multiple concept matches within the same cluster boost credit
+    if (matchCount > 1) {
+      localBest = Math.min(0.85, localBest + (matchCount - 1) * 0.08);
+    }
+
+    bestCredit = Math.max(bestCredit, localBest);
   }
 
-  return 0;
+  return bestCredit;
+}
+
+/**
+ * Count how many distinct semantic clusters have matches between JD and resume.
+ * Used to provide a cumulative bonus for broad transferable coverage.
+ */
+function countSemanticClusterCoverage(jdText: string, resumeText: string): number {
+  const jdLower = jdText.toLowerCase();
+  const resumeLower = resumeText.toLowerCase();
+  let clustersHit = 0;
+
+  for (const cluster of SEMANTIC_CLUSTERS) {
+    let jdHasCluster = false;
+    let resumeHasCluster = false;
+    for (const term of cluster) {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      const rx = new RegExp(`\\b${escaped}\\b`, "i");
+      if (!jdHasCluster && rx.test(jdLower)) jdHasCluster = true;
+      if (!resumeHasCluster && rx.test(resumeLower)) resumeHasCluster = true;
+      if (jdHasCluster && resumeHasCluster) break;
+    }
+    if (jdHasCluster && resumeHasCluster) clustersHit++;
+  }
+
+  return clustersHit;
 }
 
 // ─── JD Signal Vocabulary ────────────────────────────────────────────────────
