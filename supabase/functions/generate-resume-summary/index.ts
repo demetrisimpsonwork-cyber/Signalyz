@@ -289,6 +289,37 @@ CRITICAL:
       proj.date_range = proj.date_range || "";
     }
 
+    // Post-processing: validate calibrated bullets are not shorter than originals
+    // If any bullet was trimmed by the AI, restore the original and append alignment framing
+    for (let ri = 0; ri < calibrated_roles.length && ri < professionalRoles.length; ri++) {
+      const origBullets = professionalRoles[ri]?.bullets || [];
+      const calBullets = calibrated_roles[ri]?.calibrated_bullets || [];
+      for (let bi = 0; bi < calBullets.length && bi < origBullets.length; bi++) {
+        const origLen = sanitizeInput(origBullets[bi] || "").trim().length;
+        const calLen = (calBullets[bi] || "").trim().length;
+        if (origLen > 0 && calLen < origLen * 0.9) {
+          // Bullet was trimmed — restore original content with calibrated language appended
+          console.warn(JSON.stringify({
+            request_id: requestId,
+            warning: "BULLET_TRIMMED_BY_AI",
+            role_index: ri,
+            bullet_index: bi,
+            original_len: origLen,
+            calibrated_len: calLen,
+          }));
+          // Use the calibrated version as an addendum to the original
+          const origText = sanitizeInput(origBullets[bi]).trim();
+          const calText = (calBullets[bi] || "").trim();
+          // If calibrated text is substantially different, merge; otherwise just use original
+          if (calText && calText.length > 20) {
+            calBullets[bi] = `${origText} — ${calText}`;
+          } else {
+            calBullets[bi] = origText;
+          }
+        }
+      }
+    }
+
     console.log(JSON.stringify({ request_id: requestId, status: "success", roles_returned: calibrated_roles.length, projects_returned: independent_projects.length }));
 
     return ok({
