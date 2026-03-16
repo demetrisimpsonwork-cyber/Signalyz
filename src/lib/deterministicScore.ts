@@ -594,7 +594,7 @@ export function computeDeterministicScore(
   const jdModel = buildJdSignalVocabulary(jdText);
 
   // ─── 4-Component Scoring ──────────────────────────────────────────────────
-  const jdMirroringScore = computeJdMirroringScore(sections, jdModel);           // 0-100
+  const jdMirroringScore = computeJdMirroringScore(sections, jdModel, jdText);   // 0-100
   const ownershipScopeScore = computeOwnershipScopeScore(sections);              // 0-100
   const perceptionGapScore = computePerceptionGapScore(sections, jdText);        // 0-100
   const readabilityScore = computeReadabilityScore(sections);                    // 0-100
