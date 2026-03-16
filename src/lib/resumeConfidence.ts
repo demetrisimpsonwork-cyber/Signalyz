@@ -57,7 +57,16 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
     }
   }
 
-  // 3. Education contamination
+  // 3. Hollow experience entries (company + title both blank after sanitization)
+  const hollowExpCount = resume.experience.filter(
+    (exp) => !exp.company.trim() && !exp.title.trim()
+  ).length;
+  if (hollowExpCount > 0 && hollowExpCount >= resume.experience.length * 0.5) {
+    issues.push("experience_mostly_hollow");
+    deductions += 20;
+  }
+
+  // 4. Education contamination
   for (const edu of resume.education) {
     const inst = edu.institution || "";
     const deg = edu.degree || "";
@@ -79,7 +88,16 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
     }
   }
 
-  // 4. Location looks like a bullet fragment
+  // 5. All-blank education entries (institution + degree both empty)
+  const hollowEduCount = resume.education.filter(
+    (edu) => !edu.institution?.trim() && !edu.degree?.trim()
+  ).length;
+  if (hollowEduCount > 0 && hollowEduCount === resume.education.length) {
+    issues.push("education_all_hollow");
+    deductions += 10;
+  }
+
+  // 6. Location looks like a bullet fragment
   if (h.location) {
     const firstWord = h.location.split(/[\s,]/)[0]?.toLowerCase() || "";
     if (ACTION_VERBS.has(firstWord)) {
@@ -88,20 +106,19 @@ export function evaluateConfidence(resume: CalibratedResumeData): ConfidenceResu
     }
   }
 
-  // 5. Very few experience entries (possible mis-parse)
+  // 7. Very few experience entries (possible mis-parse)
   if (resume.experience.length === 0) {
     issues.push("no_experience");
     deductions += 15;
   }
 
-  // 6. Title looks contaminated
+  // 8. Title looks contaminated
   if (h.title && CONTACT_RX.test(h.title)) {
     issues.push("title_contaminated");
     deductions += 10;
   }
 
   const score = Math.max(0, 100 - deductions);
-  // Always require confirmation if the name couldn't be extracted
   const hasNameIssue = issues.includes("name_missing") || issues.includes("name_placeholder");
 
   return {
