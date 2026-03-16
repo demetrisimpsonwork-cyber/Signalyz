@@ -87,7 +87,16 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     }
   }, [pendingResume, finalizeResume]);
 
+  const reset = useCallback(() => {
+    setAssembledResume(null);
+    setPendingResume(null);
+    setConfidence(null);
+    setError(null);
+    setStep(0);
+  }, []);
+
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => {
+    setAssembledResume(null);
     setLoading(true);
     setError(null);
     setStep(0);
