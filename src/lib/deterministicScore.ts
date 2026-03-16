@@ -386,9 +386,7 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   // Bonus scales: 2 clusters = 0.04, 4 clusters = 0.10, 6+ clusters = 0.15
   const clusterBonus = clusterCount >= 2 ? Math.min(0.15, (clusterCount - 1) * 0.03) : 0;
 
-  // Final JD Mirroring = exact/stemmed (35%) + semantic (30%) + bigram (15%) + skills-only (10%) + cluster bonus (10%)
-  const raw = (bulletKeywordCoverage * 0.35) + (semanticCoverage * 0.30) + (bigramCoverage * 0.15) + (skillsOnlyPenalized * 0.10) + (clusterBonus * 0.10 / Math.max(clusterBonus, 0.01));
-  // Simplify: cluster bonus is additive when present
+  // Final JD Mirroring = exact/stemmed (35%) + semantic (30%) + bigram (15%) + skills-only (10%) + cluster bonus
   const rawWithCluster = (bulletKeywordCoverage * 0.35) + (semanticCoverage * 0.30) + (bigramCoverage * 0.15) + (skillsOnlyPenalized * 0.10) + clusterBonus;
   const curved = Math.sqrt(clamp01(rawWithCluster)); // sqrt curve lifts mid-range scores
   return Math.floor(100 * curved);
