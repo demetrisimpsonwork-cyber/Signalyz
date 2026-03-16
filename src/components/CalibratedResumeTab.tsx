@@ -11,6 +11,7 @@ import ResumeAssemblyLoader from "@/components/ResumeAssemblyLoader";
 import ResumeCanvas from "@/components/ResumeCanvas";
 import ResumeToolbar from "@/components/ResumeToolbar";
 import SignalKeywordsBlock from "@/components/SignalKeywordsBlock";
+import RepositioningChangesPanel from "@/components/RepositioningChangesPanel";
 import ResumeStructureConfirm from "@/components/ResumeStructureConfirm";
 import PdfFallbackState from "@/components/PdfFallbackState";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
@@ -257,6 +258,11 @@ const CalibratedResumeTab = ({
           </div>
 
           <SignalKeywordsBlock keywords={currentResume.signal_keywords} />
+
+          <RepositioningChangesPanel
+            originalResume={originalResume}
+            calibratedResume={currentResume}
+          />
 
           {/* Re-run Signal Analysis with calibrated text */}
           {onRerunSignalAnalysis && (
