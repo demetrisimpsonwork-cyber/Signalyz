@@ -805,7 +805,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
   return (
     <div className="space-y-4">
       {/* Why You're Not Getting Interviews — visible to all users */}
-      {data.interview_gap_diagnosis?.primary_issue && (
+      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} />
       )}
 

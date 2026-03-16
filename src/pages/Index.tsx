@@ -1472,6 +1472,13 @@ const Index = () => {
                         }
                         return (
                           <div className="space-y-3">
+                            {/* Primary Blocker — first GAP elevated */}
+                            {gaps.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="section-label text-destructive">Primary Blocker</p>
+                                <p className="text-xs text-foreground font-medium">• {gaps[0]}</p>
+                              </div>
+                            )}
                             {strengths.length > 0 && (
                               <div className="space-y-1">
                                 <p className="section-label">What's Landing</p>
@@ -1482,11 +1489,11 @@ const Index = () => {
                                 </ul>
                               </div>
                             )}
-                            {gaps.length > 0 && (
+                            {gaps.length > 1 && (
                               <div className="space-y-1">
-                                <p className="section-label">Screen-Out Risks</p>
+                                <p className="section-label">Secondary Risks</p>
                                 <ul className="space-y-0.5">
-                                  {gaps.map((r, i) => (
+                                  {gaps.slice(1).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground">• {r}</li>
                                   ))}
                                 </ul>
