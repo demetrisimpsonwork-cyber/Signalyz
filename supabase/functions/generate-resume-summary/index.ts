@@ -326,7 +326,7 @@ CRITICAL:
       for (let bi = 0; bi < calBullets.length && bi < origBullets.length; bi++) {
         const origLen = sanitizeInput(origBullets[bi] || "").trim().length;
         const calLen = (calBullets[bi] || "").trim().length;
-        if (origLen > 0 && calLen < origLen * 0.9) {
+        if (origLen > 0 && calLen < origLen * 0.85) {
           // Bullet was trimmed — restore original content with calibrated language appended
           console.warn(JSON.stringify({
             request_id: requestId,
