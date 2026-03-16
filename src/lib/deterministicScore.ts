@@ -625,6 +625,9 @@ export function computeDeterministicScore(
 
   // ─── Calibrated-language signal boost with delta-validation ───────────────
   if (runType === "calibrated" && originalResumeText) {
+    const origResult = computeDeterministicScore(originalResumeText, jdText, "original");
+    const originalScore = origResult.finalScore;
+
     const nowSignals = measureSignals(sanitizedResume, jdModel);
     const origSignals = measureSignals(originalResumeText, jdModel);
 
@@ -672,6 +675,43 @@ export function computeDeterministicScore(
       );
       const boostTarget = boostFloor + Math.round(deltaIntensity * 11); // 67–78
       finalScore = Math.max(baseScore, boostTarget);
+    }
+
+    // ─── Scoring Integrity Safeguards ─────────────────────────────────────
+
+    // 1. Score Floor Guard: calibrated score must never be lower than original
+    if (finalScore < originalScore) {
+      finalScore = originalScore;
+    }
+
+    // 2. Calibration Retry Pass: if delta <= 0, attempt a stronger boost
+    //    by relaxing quality gates and using a minimal floor lift
+    if (finalScore <= originalScore) {
+      // Retry with relaxed thresholds — only requires 1 improved dimension
+      //   and softer quality gates
+      const retryImprovementCount = improvementFlags.filter(Boolean).length;
+      const retryMeetsGates =
+        nowSignals.ownershipDensity >= 0.15 &&
+        nowSignals.keywordCoverage >= 0.20;
+
+      if (retryImprovementCount >= 1 && retryMeetsGates && !isKeywordStuffed) {
+        // Apply a modest retry boost: +3 to +8 points based on dimension strength
+        const retryIntensity = clamp01(
+          (clamp01(deltaOwnership / 0.15) * 0.30) +
+          (clamp01(deltaKeywordCov / 0.15) * 0.30) +
+          (clamp01(deltaVerbRate / 0.10) * 0.20) +
+          (clamp01(deltaOutcome / 0.10) * 0.10) +
+          (clamp01(deltaPassive / 0.08) * 0.10)
+        );
+        const retryBoost = 3 + Math.round(retryIntensity * 5); // +3 to +8
+        finalScore = originalScore + retryBoost;
+      }
+    }
+
+    // 3. Score Ceiling Protection: cap delta at 25 points max
+    const MAX_DELTA = 25;
+    if (finalScore - originalScore > MAX_DELTA) {
+      finalScore = originalScore + MAX_DELTA;
     }
   }
 
