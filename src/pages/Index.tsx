@@ -1516,7 +1516,7 @@ const Index = () => {
                                   See exactly how to fix this and increase your score
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  Unlock Strategic Fixes, predicted score improvement, and a full calibrated resume.
+                                  You've already done the hard part — this shows you exactly what to change.
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
@@ -1527,6 +1527,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
+                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes risks being ignored.</p>
                               </div>
                             )}
 

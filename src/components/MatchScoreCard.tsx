@@ -123,7 +123,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
       </p>
       <p className="mt-0.5 text-xs text-muted-foreground">Weighted employer priority alignment.</p>
       <p className="mt-1.5 text-[11px] text-muted-foreground/70 italic">
-        Typical resumes for this role score between 45–65.
+        Most candidates who get interviews score 70%+
       </p>
     </div>
   );

@@ -82,12 +82,15 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <h3 className="text-sm font-semibold tracking-tight text-foreground">
           Your Signal Action Plan
         </h3>
         <p className="text-xs text-muted-foreground">
-          The fastest ways to improve your signal for this role.
+          This is the exact gap between you and interview-level candidates.
+        </p>
+        <p className="text-xs text-destructive/80 italic">
+          Right now, you're applying without closing it.
         </p>
       </div>
       <ol className="space-y-2 pl-0">
