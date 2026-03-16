@@ -1487,8 +1487,8 @@ const Index = () => {
                     {/* Signal Action Plan preview + unified Pro gate for non-Pro users */}
                     {!effectiveIsPro && (() => {
                       const liftData = result?.signal_model?.predicted_signal_lift || (result as any)?.predicted_signal_lift;
-                      const liftPoints = liftData?.projected_score
-                        ? Math.round(liftData.projected_score - (result?.match_score ?? 0))
+                      const liftPoints = liftData?.predicted_score
+                        ? Math.round(liftData.predicted_score - (result?.match_score ?? 0))
                         : null;
                       const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
                       return (
