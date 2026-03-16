@@ -346,35 +346,127 @@ CRITICAL:
       proj.date_range = proj.date_range || "";
     }
 
-    // Post-processing: validate calibrated bullets are not shorter than originals
-    // If any bullet was trimmed by the AI, restore the original and append alignment framing
+    // ═══ POST-PROCESSING: Signal-Aware Bullet Validation & Repair ═══
+
+    const OWNERSHIP_VERBS = new Set([
+      "led","drove","owned","spearheaded","architected","orchestrated","directed","launched",
+      "built","scaled","implemented","executed","transformed","championed","governed","delivered",
+      "established","redesigned","pioneered","devised","instituted","restructured","consolidated",
+      "mobilized","accelerated","elevated","oversaw","administered","standardized","created",
+      "developed","designed","automated","negotiated","facilitated","optimized","revamped",
+      "formulated","engineered","deployed","maintained","resolved","streamlined","trained",
+      "mentored","supervised",
+    ]);
+
+    const OUTCOME_TERMS = new Set([
+      "increased","reduced","improved","grew","saved","delivered","achieved","exceeded",
+      "decreased","boosted","lowered","raised","generated","optimized","reducing","improving",
+      "streamlined","standardizing","minimized","eliminated","enhancing","resulting in",
+      "leading to","driving","enabling",
+    ]);
+
+    const PASSIVE_PHRASES = ["helped","assisted","supported","participated in","was involved","tasked with"];
+
+    // Extract top JD keywords for post-processing keyword injection
+    const jdWords = cleanJd.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w => w.length >= 4);
+    const jdFreq: Record<string,number> = {};
+    const STOP = new Set(["with","from","that","this","they","their","have","will","been","were","your","about","also","more","than","each","into","only","when","what","some","other","would","could","should","these","those","being","which","after","through","between","under","during","before","where","most"]);
+    for (const w of jdWords) { if (!STOP.has(w)) jdFreq[w] = (jdFreq[w] || 0) + 1; }
+    const topJdKeywords = Object.entries(jdFreq).sort((a,b) => b[1]-a[1]).slice(0, 15).map(e => e[0]);
+
+    let repairCount = 0;
+
     for (let ri = 0; ri < calibrated_roles.length && ri < professionalRoles.length; ri++) {
       const origBullets = professionalRoles[ri]?.bullets || [];
       const calBullets = calibrated_roles[ri]?.calibrated_bullets || [];
+
       for (let bi = 0; bi < calBullets.length && bi < origBullets.length; bi++) {
-        const origLen = sanitizeInput(origBullets[bi] || "").trim().length;
-        const calLen = (calBullets[bi] || "").trim().length;
-        if (origLen > 0 && calLen < origLen * 0.85) {
-          // Bullet was trimmed — restore original content with calibrated language appended
-          console.warn(JSON.stringify({
-            request_id: requestId,
-            warning: "BULLET_TRIMMED_BY_AI",
-            role_index: ri,
-            bullet_index: bi,
-            original_len: origLen,
-            calibrated_len: calLen,
-          }));
-          // Use the calibrated version as an addendum to the original
-          const origText = sanitizeInput(origBullets[bi]).trim();
-          const calText = (calBullets[bi] || "").trim();
-          // If calibrated text is substantially different, merge; otherwise just use original
-          if (calText && calText.length > 20) {
-            calBullets[bi] = `${origText} — ${calText}`;
+        const origText = sanitizeInput(origBullets[bi] || "").trim();
+        let bullet = (calBullets[bi] || "").trim();
+        const origLen = origText.length;
+
+        // REPAIR 1: Length — bullet must not be shorter than 85% of original
+        if (origLen > 0 && bullet.length < origLen * 0.85) {
+          console.warn(JSON.stringify({ request_id: requestId, warning: "BULLET_TRIMMED", role: ri, bullet: bi, origLen, calLen: bullet.length }));
+          if (bullet.length > 20) {
+            bullet = `${origText} — ${bullet}`;
           } else {
-            calBullets[bi] = origText;
+            bullet = origText;
+          }
+          repairCount++;
+        }
+
+        // REPAIR 2: Ownership verb lead — first word must be from the approved set
+        const firstWord = bullet.split(/\s/)[0]?.toLowerCase().replace(/[^a-z]/g, "");
+        if (!OWNERSHIP_VERBS.has(firstWord)) {
+          // Remove passive openers and prepend ownership verb
+          let cleaned = bullet;
+          for (const p of PASSIVE_PHRASES) {
+            const re = new RegExp(`^${p}\\s*(with\\s+|in\\s+|the\\s+)?`, "i");
+            if (re.test(cleaned)) { cleaned = cleaned.replace(re, ""); break; }
+          }
+          // Also strip "Responsible for", "Utilized", "Leveraged", "Ensured", "Focused on", "Served as"
+          cleaned = cleaned.replace(/^(responsible\s+for|utilized|leveraged|ensured|focused\s+on|served\s+as|contributed\s+to|worked\s+on|played\s+a\s+role\s+in)\s*/i, "");
+          // Pick a contextual verb based on bullet content
+          const lc = cleaned.toLowerCase();
+          let verb = "Executed";
+          if (/team|staff|report|direct/i.test(lc)) verb = "Directed";
+          else if (/develop|build|creat|design/i.test(lc)) verb = "Developed";
+          else if (/improv|optimi|efficien|reduc/i.test(lc)) verb = "Optimized";
+          else if (/manag|oversee|supervis|coordinat/i.test(lc)) verb = "Managed";
+          else if (/implement|deploy|launch|roll/i.test(lc)) verb = "Implemented";
+          else if (/analy|assess|evaluat|review/i.test(lc)) verb = "Analyzed";
+          else if (/establish|set up|initiat|found/i.test(lc)) verb = "Established";
+          else if (/train|mentor|coach|onboard/i.test(lc)) verb = "Trained";
+          else if (/automat|script|program|integrat/i.test(lc)) verb = "Automated";
+          else if (/resolv|troubleshoot|fix|debug/i.test(lc)) verb = "Resolved";
+          // Capitalize first letter of remaining text
+          const remainder = cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+          bullet = `${verb} ${remainder}`;
+          repairCount++;
+        }
+
+        // REPAIR 3: Passive language removal
+        for (const p of PASSIVE_PHRASES) {
+          const re = new RegExp(`\\b${p}\\b`, "gi");
+          if (re.test(bullet)) {
+            bullet = bullet.replace(re, (match) => {
+              const map: Record<string,string> = { "helped":"drove", "assisted":"managed", "supported":"delivered", "participated in":"led", "was involved":"directed", "tasked with":"owned" };
+              return map[match.toLowerCase()] || "executed";
+            });
+            repairCount++;
           }
         }
+
+        // REPAIR 4: Outcome term presence — append outcome framing if missing
+        const bulletLc = bullet.toLowerCase();
+        const hasOutcome = [...OUTCOME_TERMS].some(t => bulletLc.includes(t));
+        if (!hasOutcome) {
+          // Add contextual outcome suffix
+          if (/\d/.test(bullet)) {
+            bullet = bullet.replace(/\.?\s*$/, ", driving measurable operational improvement.");
+          } else {
+            bullet = bullet.replace(/\.?\s*$/, ", resulting in improved efficiency and stakeholder outcomes.");
+          }
+          repairCount++;
+        }
+
+        // REPAIR 5: JD keyword injection — if bullet has < 1 JD keyword, append relevant context
+        const bulletWords = new Set(bullet.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/));
+        const matchedJdKw = topJdKeywords.filter(kw => bulletWords.has(kw));
+        if (matchedJdKw.length === 0 && topJdKeywords.length > 0) {
+          // Pick 1-2 relevant JD keywords to weave in
+          const kwToAdd = topJdKeywords.slice(0, 2).join(" and ");
+          bullet = bullet.replace(/\.?\s*$/, `, aligned with ${kwToAdd} objectives.`);
+          repairCount++;
+        }
+
+        calBullets[bi] = bullet;
       }
+    }
+
+    if (repairCount > 0) {
+      console.log(JSON.stringify({ request_id: requestId, post_processing: "signal_repairs_applied", repair_count: repairCount }));
     }
 
     console.log(JSON.stringify({ request_id: requestId, status: "success", roles_returned: calibrated_roles.length, projects_returned: independent_projects.length }));
