@@ -1382,9 +1382,9 @@ const Index = () => {
                           <ResultSection title="Repositioned Version B — Strategic Depth Expansion" content={role.sampleB} />
                         ) : (
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
-                            <p className="text-sm font-semibold text-foreground">Unlock All Variants — Full Signal Intelligence</p>
-                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with Full Signal Intelligence.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence — $19/month</Button>
+                            <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
+                            <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">See My Exact Fix — $19/month</Button>
                           </div>
                         )}
                       </>
