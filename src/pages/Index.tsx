@@ -1484,19 +1484,63 @@ const Index = () => {
                       onUpgrade={() => setShowUpgrade(true)}
                     />
 
-                    {/* Single unified Pro gate card for all gated sections */}
-                    {!effectiveIsPro && (
-                      <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
-                        <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-                        <p className="text-sm font-semibold text-foreground">Unlock the full Signal Calibration Report — Full Signal Intelligence</p>
-                        <p className="text-xs text-muted-foreground">Signal Gap Actions, Calibrated Summary, Identity Strength Index, ATS Signal Panel, Interview Preparation, Cover Letter Engine, and more.</p>
-                        {user ? (
-                          <Button onClick={() => setShowUpgrade(true)} size="sm">Unlock Full Signal Intelligence — $19/month</Button>
-                        ) : (
-                          <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
-                        )}
-                      </div>
-                    )}
+                    {/* Signal Action Plan preview + unified Pro gate for non-Pro users */}
+                    {!effectiveIsPro && (() => {
+                      const liftData = result?.signal_model?.predicted_signal_lift || (result as any)?.predicted_signal_lift;
+                      const liftPoints = liftData?.projected_score
+                        ? Math.round(liftData.projected_score - (result?.total_score ?? result?.deterministic_score ?? 0))
+                        : null;
+                      const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
+                      return (
+                        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                              Your Signal Action Plan
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              The fastest ways to improve your signal for this role.
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-foreground">
+                            <span className="font-semibold">3 targeted adjustments</span> could increase your signal score by{" "}
+                            <span className="font-semibold text-primary">{liftDisplay} points</span>.
+                          </p>
+
+                          <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">Upgrade to Pro to see:</p>
+                            <ul className="space-y-1 text-sm text-muted-foreground pl-0">
+                              <li className="flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span>
+                                The exact resume changes that close your gap
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span>
+                                Calibrated bullet rewrites tailored to this role
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span>
+                                A repositioned professional summary
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span>
+                                Interview signals hiring managers will probe
+                              </li>
+                            </ul>
+                          </div>
+
+                          {user ? (
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
+                              Unlock Full Signal Calibration
+                            </Button>
+                          ) : (
+                            <Button size="sm" className="w-full" asChild>
+                              <a href="/auth">Get Started Free</a>
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Pro-only sections — only render when Pro */}
                     {effectiveIsPro && (
