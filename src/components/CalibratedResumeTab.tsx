@@ -259,6 +259,11 @@ const CalibratedResumeTab = ({
 
           <SignalKeywordsBlock keywords={currentResume.signal_keywords} />
 
+          <RepositioningChangesPanel
+            originalResume={originalResume}
+            calibratedResume={currentResume}
+          />
+
           {/* Re-run Signal Analysis with calibrated text */}
           {onRerunSignalAnalysis && (
             <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
