@@ -1472,43 +1472,54 @@ const Index = () => {
                           return true;
                         });
                         return (
-                          <div className="space-y-3">
-                            {/* Primary Blocker — single unified section */}
+                          <div className="space-y-4">
+                            {/* Primary Blocker — dominant diagnostic moment */}
                             {primaryBlocker && (
-                              <div className="rounded-md border border-destructive/25 bg-destructive/5 p-3 space-y-1.5">
-                                <p className="section-label text-destructive tracking-widest">Primary Blocker</p>
-                                <p className="text-xs text-foreground font-medium leading-relaxed">• {primaryBlocker}</p>
+                              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-3">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
+                                <p className="text-[13px] text-foreground font-semibold leading-relaxed">
+                                  {primaryBlocker}
+                                </p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
-                                  <ul className="space-y-0.5 pl-2 border-l-2 border-destructive/30 ml-1 mt-1">
-                                    {hiringManagersSee.map((s, i) => (
-                                      <li key={i} className="text-xs text-muted-foreground">• {s}</li>
-                                    ))}
-                                  </ul>
+                                  <div className="pt-2 mt-1 border-t border-destructive/10">
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">What hiring managers see</p>
+                                    <ul className="space-y-1 pl-2.5 border-l-2 border-destructive/20">
+                                      {hiringManagersSee.map((s, i) => (
+                                        <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
                                 )}
                               </div>
                             )}
+
+                            {/* What This Creates */}
                             {whatThisCreates && (
-                              <div className="space-y-1">
-                                <p className="section-label">What This Creates</p>
-                                <p className="text-xs text-muted-foreground">• {whatThisCreates}</p>
+                              <div className="pl-3 border-l-2 border-border">
+                                <p className="section-label mb-1">What This Creates</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{whatThisCreates}</p>
                               </div>
                             )}
+
+                            {/* What's Landing */}
                             {strengths.length > 0 && (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <p className="section-label">What's Landing</p>
-                                <ul className="space-y-0.5">
+                                <ul className="space-y-1">
                                   {strengths.map((r, i) => (
-                                    <li key={i} className="text-xs text-muted-foreground">• {r}</li>
+                                    <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
                               </div>
                             )}
+
+                            {/* Secondary Risks */}
                             {secondaryGaps.length > 0 && (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <p className="section-label">Secondary Risks</p>
-                                <ul className="space-y-0.5">
+                                <ul className="space-y-1">
                                   {secondaryGaps.map((r, i) => (
-                                    <li key={i} className="text-xs text-muted-foreground">• {r}</li>
+                                    <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
                               </div>
