@@ -68,24 +68,21 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              Unlock Full Signal Intelligence
+              You're Being Screened Out — Here's How to Fix It
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              You are currently seeing surface-level alignment only.
-              <br />
-              Upgrade to access the full signal calibration engine.
+              This role is filtering you out based on how your experience is currently positioned.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-4 grid grid-cols-2 gap-6">
+          <div className="mt-5 grid grid-cols-2 gap-6">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Signal Preview</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
               <ul className="space-y-2">
                 {[
-                  "3 alignments per day",
-                  "Calibrated bullet (1 version)",
-                  "Overall alignment score",
-                  "Top signal gap identification",
+                  "Surface-level score",
+                  "High-level blocker",
+                  "Partial insights",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
@@ -96,17 +93,13 @@ const UpgradeModal = ({
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">Full Signal Intelligence</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">What you unlock</p>
               <ul className="space-y-2">
                 {[
-                  "Unlimited alignments",
-                  "Identity Strength Index™ — all 4 pillars",
-                  "Complete Signal Risk Projection",
-                  "Multi-variant repositioned bullets",
-                  "Build My Calibrated Resume (DOCX)",
-                  "Executive Signal Audit access",
-                  "Interview Preparation Notice",
-                  "Alignment history",
+                  "Exact resume changes to fix your blocker",
+                  "Rewritten bullets aligned to this role",
+                  "Clear positioning strategy hiring managers respond to",
+                  "Interview questions based on your gaps",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-foreground">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
@@ -119,27 +112,19 @@ const UpgradeModal = ({
 
           <Separator className="my-5" />
 
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Hiring managers don't scan resumes.
-            <br />
-            They evaluate risk and signal strength.
-            <br />
-            <span className="text-foreground font-medium">Signalyz shows you what they actually see.</span>
-          </p>
-
-          <Separator className="my-5" />
-
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground text-center leading-snug">The average job search takes 5 months. Most candidates never know why.</p>
+            <p className="text-sm font-medium text-foreground text-center leading-snug">
+              Most users increase their score by 15–25 points after applying these changes.
+            </p>
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
                 onClose();
-                initiateCheckout("subscription");
+                initiateCheckout("one_time");
               }}
             >
-              Unlock Full Signal Intelligence — $19/month
+              {hasConsumedOneTimeCredit ? "See My Exact Fix Again → $9" : "See My Exact Fix → $9"}
             </Button>
 
             <div className="relative flex items-center justify-center">
@@ -153,13 +138,13 @@ const UpgradeModal = ({
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
                 onClose();
-                initiateCheckout("one_time");
+                initiateCheckout("subscription");
               }}
             >
-              {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Unlock Full Report — $9 one-time"}
+              Unlock Full Access → $19/month
             </Button>
 
-            <p className="text-xs text-muted-foreground/70 italic text-center">Less than one rejected application costs you.</p>
+            <p className="text-xs text-destructive/70 italic text-center">Every application without this fix risks rejection.</p>
           </div>
         </div>
 
@@ -167,7 +152,7 @@ const UpgradeModal = ({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-muted-foreground/50 hover:text-muted-foreground"
+            className="w-full text-muted-foreground/40 hover:text-muted-foreground/60 text-xs"
             onClick={onClose}
           >
             Continue with Signal Preview
