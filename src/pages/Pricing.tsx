@@ -111,7 +111,7 @@ const Pricing = () => {
               variant="default"
               onClick={() => initiateCheckout("subscription")}
             >
-              Unlock Full Signal Intelligence
+              Fix My Signal
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
