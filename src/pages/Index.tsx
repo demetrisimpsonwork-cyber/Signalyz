@@ -660,42 +660,6 @@ const Index = () => {
     } catch {}
   };
 
-  // ─── Restore most recent alignment result on mount for logged-in users ──
-  const restoredRef = useRef(false);
-  useEffect(() => {
-    if (!user || restoredRef.current) return;
-    // Only restore if there's no current result (fresh page load)
-    if (result) return;
-    restoredRef.current = true;
-
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("alignment_history")
-          .select("full_result_json, score, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (!data?.full_result_json) return;
-
-        const saved = data.full_result_json as Record<string, any>;
-        // Restore JD and resume inputs
-        if (saved.jd_text && typeof saved.jd_text === "string") setJd(saved.jd_text);
-        if (saved.resume_text && typeof saved.resume_text === "string") setBullet(saved.resume_text);
-        if (saved.original_resume_before_calibration && typeof saved.original_resume_before_calibration === "string") {
-          setOriginalResumeBeforeCalibration(saved.original_resume_before_calibration);
-        }
-
-        // Restore the result object (strip persistence-only fields)
-        const { jd_text, resume_text, original_resume_before_calibration, ...restoredResult } = saved;
-        setResult(restoredResult as unknown as OptimizationResult);
-      } catch {
-        // Silent — non-critical
-      }
-    })();
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOptimize = async () => {
     // 2s debounce
