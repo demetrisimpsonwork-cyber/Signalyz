@@ -1400,6 +1400,15 @@ const Index = () => {
 
                 {result && (
                   <>
+                    {/* Signal profile lock-in */}
+                    <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
+                      <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
+                      <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
+                      {!effectiveIsPro && (
+                        <p className="text-xs text-destructive/80 italic">Leaving now means applying without fixing the gaps identified here.</p>
+                      )}
+                    </div>
+
                     {/* Professional Signal Diagnosis headline */}
                     <div className="text-center space-y-1">
                       <h2 className="text-lg font-semibold tracking-tight text-foreground">Professional Signal Diagnosis</h2>
@@ -1507,7 +1516,7 @@ const Index = () => {
                                   See exactly how to fix this and increase your score
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  Unlock Strategic Fixes, predicted score improvement, and a full calibrated resume.
+                                  You've already done the hard part — this shows you exactly what to change.
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
@@ -1518,6 +1527,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
+                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes risks being ignored.</p>
                               </div>
                             )}
 
