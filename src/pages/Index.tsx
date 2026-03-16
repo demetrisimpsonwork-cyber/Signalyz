@@ -1434,6 +1434,12 @@ const Index = () => {
                           <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
                         )}
                       </div>
+                      {displayScore < 70 && (
+                        <div className="space-y-1 pt-1">
+                          <p className="text-xs font-medium text-destructive/90">You're currently below the threshold where interviews typically happen.</p>
+                          <p className="text-[11px] text-muted-foreground">Most candidates at this level are filtered out before hiring manager review.</p>
+                        </div>
+                      )}
 
                       {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
