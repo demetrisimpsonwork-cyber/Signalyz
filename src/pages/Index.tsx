@@ -721,6 +721,10 @@ const Index = () => {
       const isCalibratedRun = calibratedRunPendingRef.current;
       calibratedRunPendingRef.current = false; // consume immediately — one-shot
       setIsResumeFromCalibrated(false); // reset state as well
+      // Capture the original resume baseline on the first non-calibrated run
+      if (!isCalibratedRun && !originalResumeBeforeCalibration) {
+        setOriginalResumeBeforeCalibration(bulletWithContext);
+      }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
       res.match_score = detScore.finalScore;
