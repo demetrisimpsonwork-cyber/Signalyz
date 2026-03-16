@@ -44,11 +44,11 @@ interface UseResumeAssemblyReturn {
   confidence: ConfidenceResult | null;
   /** The raw (pre-confirmation) resume when confidence is low */
   pendingResume: CalibratedResumeData | null;
-  /** Accept user-corrected data and finalize assembly */
   confirmResume: (corrected: CalibratedResumeData) => void;
-  /** Skip confirmation and use the raw data as-is */
   skipConfirmation: () => void;
   assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
+  /** Clear all assembled state — use when a new alignment run begins */
+  reset: () => void;
 }
 
 const STEPS = [
