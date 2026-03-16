@@ -690,6 +690,9 @@ serve(async (req) => {
 
     const prompt = `You are Alignment Engine V2. Analyze resume vs JD. No fabrication. Address user as "you/your" only — never third person.
 
+OUTPUT TONE — DIAGNOSTIC + DIRECTIVE (CRITICAL):
+You are writing like a hiring manager's internal evaluation notes — not a career coach. Every gap must state WHY the candidate would be screened out and WHAT specific action fixes it. Every strength must state WHY it matters for this role. No passive descriptions. No generic advice. No fluff. Be sharp, direct, and specific. The output should feel like a confidential hiring committee debrief, not a resume review.
+
 RULES: Never invent tools/metrics/certs. Only reframe existing experience. Return ONLY valid JSON.
 
 DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
@@ -752,7 +755,7 @@ JSON SCHEMA:
     {"stage":"Hiring Manager Review","status":"string","criteria":["string"],"explanation":"string"},
     {"stage":"Panel Interview Signal","status":"string","criteria":["string"],"explanation":"string"}
   ],
-  "executive_insight_summary": {"primary_insight":"string","primary_strength":"string","why_it_matters":"string","strategic_repositioning_opportunity":"string"},
+  "executive_insight_summary": {"primary_insight":"string — diagnostic: state the core positioning problem in one sentence. Example: 'Your resume signals operational competence but not strategic ownership, which places you below the decision-making threshold for this role.'","primary_strength":"string — the single strongest signal that is already landing correctly","why_it_matters":"string — why this strength gives them a competitive edge for THIS specific role","strategic_repositioning_opportunity":"string — one specific reframing move that would close the largest perception gap"},
   "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
   "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC — CRITICAL: Each dimension is scored 0-25 by counting keyword evidence matches. Given identical inputs, return identical scores every time. Do not vary. Use the counting rubric: 0 matches=0, 1-2=5-10, 3-4=10-15, 5+=15-20, 7+=20-25. Round down when between two values.),
   "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (IMPORTANT: These values are on a 0-100 PERCENTAGE scale — INDEPENDENT from signal_map's /25 scale. "before" = current signal strength percentage for this dimension based on resume evidence analysis. "after" = projected signal strength percentage after repositioning. These are NOT derived from signal_map scores — they are an independent percentage assessment. DETERMINISTIC PER-DIMENSION DELTAS: Language-addressable gaps receive +15 to +28 percentage points improvement. Structural gaps that cannot be fixed through language alone receive +5 to +12 percentage points improvement. Each delta must be calculated independently. HARD CAP: No "after" value can exceed 95 — there will always be remaining gap.),
@@ -761,20 +764,20 @@ JSON SCHEMA:
     "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
   },
   "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]} (DETERMINISTIC BENCHMARKS: The median_candidate_score and top_candidate_threshold represent the typical applicant pool for this role type and must be consistent across runs. For a given role type, always return the same median and top threshold values. These are population-level constants, not user-specific. Do not vary these values between runs.),
-  "interview_gap_diagnosis": {"primary_issue":"string","what_hiring_managers_see":["string"],"what_this_creates":"string","strategic_fixes":["string — EXACTLY 3 items, no more, no less, ranked by impact on match score"],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY ISSUE: The primary_issue field identifies the single largest structural gap. Select based on the gap with the highest weight × severity product from the gap analysis. For the same gap profile, always select the same primary issue. Do not vary between runs.),
+  "interview_gap_diagnosis": {"primary_issue":"string — STATE AS A SCREEN-OUT REASON, not a description. Example: 'You are being screened out because your resume reads as operational execution without budget accountability — hiring managers cannot justify advancing a candidate who shows no commercial ownership at this level.' Be direct and specific.","what_hiring_managers_see":["string — each item states what the hiring manager CONCLUDES from reading the resume, not what is missing. Example: 'Reads as a senior IC who managed tasks, not a manager who owned outcomes.'"],"what_this_creates":"string — the hiring consequence. Example: 'Your application is filtered before reaching the hiring manager because ATS keyword gaps and passive framing trigger automatic deprioritization.'","strategic_fixes":["string — EXACTLY 3 items, each stating WHAT to change and WHERE. Example: 'Add budget/revenue figures to your most recent 2 roles — even approximate ranges signal commercial accountability.' Not vague advice. Specific resume edits."],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY ISSUE: Select based on the gap with the highest weight × severity product. For the same gap profile, always select the same primary issue.),
   "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Each dimension "lift" represents the realistic maximum improvement in percentage points (typically 5-8 per dimension). These lifts are generated independently by the model based on gap severity — NOT derived from the 0.50 formula. The 0.50 formula applies ONLY to the final predicted_score calculation: sum all dimension lift values, multiply by 0.50, add to current_score, round to nearest integer, cap at current_score + 15. The 0.50 rate does NOT affect individual lift values. Example: lifts 7+6+6+7=26, 26×0.50=13, current 58+13=71. The individual lifts must remain realistic model judgments.),
   "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
 }
 
 Identity_strength_index pillars: exactly 4 (Role Signal Clarity, Commercial Framing Power, Risk Compression Strength, Narrative Cohesion), each 0-25, strict evidence-based.
 
-SCORE_RATIONALE CLASSIFICATION (CRITICAL):
+SCORE_RATIONALE CLASSIFICATION (CRITICAL — DIAGNOSTIC + DIRECTIVE FORMAT):
 Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]':
-- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal (e.g. "aligns with", "demonstrates", "shows", "translates to", "evidenced by")
-- '[GAP]' = the resume is missing this signal or it is weak/absent (e.g. "missing", "lacks", "no evidence of", "absent", "unclear", "not demonstrated")
-Do NOT mix — a bullet describing something the candidate HAS is always [STRENGTH], never [GAP].
-Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals from the resume relative to the JD priority signals. Always return 4 [STRENGTH] items.
-Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical absent signals relative to the JD priority signals. Always return 4 [GAP] items.
+- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal. Format: State the signal detected, then why it matters for this role. Example: "[STRENGTH] Operational throughput ownership detected — this directly addresses the JD's emphasis on process efficiency and SLA management."
+- '[GAP]' = the resume is missing this signal. Format: State the missing signal, the CONSEQUENCE (why it causes screen-out), and the CORRECTIVE ACTION. Example: "[GAP] No evidence of P&L ownership — hiring managers will read this as inability to operate at budget-accountable scope, which is a primary filter for this role. Add revenue/cost figures to your most senior role bullets."
+Do NOT write passive descriptions like "Missing technical onboarding experience." Instead write cause + consequence + fix: "No technical onboarding signal — this creates a perception that you cannot manage implementation-heavy accounts, which is a dealbreaker for this CSM role. Reframe your training or setup work as onboarding delivery."
+Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals. Always return 4 [STRENGTH] items.
+Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical screen-out risks, ranked by severity. Each GAP must include: what's missing, why it causes rejection, and one concrete action to fix it. Always return 4 [GAP] items.
 The score_rationale array must contain exactly 8 items total: 4 prefixed with [STRENGTH] followed by 4 prefixed with [GAP]. Both sections are required. Neither can be absent.
 
 HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
@@ -819,7 +822,7 @@ This applies individually and explicitly to EACH of these numeric fields — sco
 For each numeric field: classify match quality, apply quality weights, use scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
 
 STRATEGIC FIXES COUNT (CRITICAL):
-interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. The section heading is always "Three Strategic Fixes" so the list must always contain 3 items.
+interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. Each fix must be a SPECIFIC resume edit instruction — not general advice. State what to add/change, where to add/change it, and why it matters. Example: "Reframe your Q3 process improvement bullet to include the dollar value of efficiency gains — even an estimate like 'reduced processing costs by ~$40K annually' converts operational work into commercial signal."
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
