@@ -184,15 +184,28 @@ YOUR TASK:
 3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
-BULLET CALIBRATION RULES (CRITICAL):
-- Reposition each bullet to align with the target JD's priority signals.
-- You MUST preserve EVERY specific detail from the original bullet — stakeholder names, volume metrics, process outcomes, tool names.
-- Do NOT remove any detail that exists in the original.
-- ADD JD-aligned language, stronger ownership framing, and role-native vocabulary ON TOP of what already exists.
-- The calibrated bullet must ALWAYS be equal to or LONGER than the original bullet.
-- If the original bullet is already well-aligned, elevate the language while keeping ALL specifics intact.
-- NEVER produce a bullet that loses detail the original contained.
-- If a calibrated bullet exceeds 4 lines of text (~280 characters), split it into two bullets. The second bullet should begin with a continuation verb ("Additionally," "Further," "Concurrently,").
+BULLET CALIBRATION RULES (CRITICAL — ABSOLUTE CONSTRAINTS):
+Each original bullet has its character count shown as [N chars]. Your calibrated version MUST meet or exceed that character count.
+
+ADDITIVE CALIBRATION — never subtractive:
+- START with the original bullet content as your base. Keep every word of substance.
+- LAYER ON TOP: stronger ownership verbs (e.g., "Managed" → "Directed"; "Helped" → "Orchestrated"), JD-mirrored vocabulary, outcome framing, and specificity.
+- You MUST preserve EVERY specific detail — stakeholder names, volume metrics, process outcomes, tool names, team sizes, dollar amounts.
+- Do NOT summarize, condense, or rephrase into fewer words. EXPAND and STRENGTHEN.
+- If the original says "Managed a team of 12 customer service representatives handling 500+ daily inquiries across phone and email channels" — your output must contain ALL of those details PLUS additional alignment language.
+
+LENGTH ENFORCEMENT:
+- The calibrated bullet MUST be LONGER than the original. This is non-negotiable.
+- If the original is 80 characters, your calibrated version must be at least 85 characters.
+- If the original is 150 characters, your calibrated version must be at least 155 characters.
+- Add ownership context, outcome impact, or JD-relevant framing to increase length meaningfully.
+- If a calibrated bullet exceeds 4 lines (~280 characters), split into two bullets. The second begins with "Additionally," "Further," or "Concurrently,".
+
+WHAT "CALIBRATION" MEANS — it means making bullets STRONGER, not shorter:
+- Replace weak verbs with high-ownership verbs: "Assisted" → "Spearheaded", "Worked on" → "Engineered", "Was responsible for" → "Directed"
+- Add JD vocabulary as natural extensions: if the JD says "cross-functional collaboration," weave that phrase into bullets where the candidate worked across teams
+- Add outcome framing: if the original states an action without a result, add the implied business outcome
+- Add scope language: team sizes, budget ranges, geographic scope, stakeholder types
 
 PRO FILTER:
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
