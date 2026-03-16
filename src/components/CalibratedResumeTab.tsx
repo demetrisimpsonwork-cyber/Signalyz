@@ -30,6 +30,8 @@ interface CalibratedResumeTabProps {
   alignmentResult?: Record<string, unknown>;
   inputSource?: ResumeInputSource;
   onResumeTextReplaced?: (text: string) => void;
+  onRerunSignalAnalysis?: (calibratedText: string) => void;
+  originalResumeBeforeCalibration?: string | null;
 }
 
 const CalibratedResumeTab = ({
