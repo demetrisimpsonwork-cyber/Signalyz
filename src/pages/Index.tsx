@@ -733,6 +733,9 @@ const Index = () => {
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
+      // Clear previous state now that we have a successful new result
+      setDirectorResult(null);
+      setSessionResumeAssembled(false);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
