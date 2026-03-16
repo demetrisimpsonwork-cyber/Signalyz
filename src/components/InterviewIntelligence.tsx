@@ -65,7 +65,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
     <div className="space-y-4">
       <div className="section-header">
         <p className="section-label">Interview Intelligence™</p>
-        <p className="text-xs text-muted-foreground mt-1">The questions this role will probe — built from your specific gaps</p>
+        <p className="text-xs font-medium text-foreground mt-1">These are the exact questions you'll be judged on based on your current gaps</p>
       </div>
       <div className="space-y-4">
         {/* Show first question to all users */}
