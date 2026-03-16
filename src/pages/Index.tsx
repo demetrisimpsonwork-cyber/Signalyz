@@ -1079,6 +1079,7 @@ const Index = () => {
               if (!originalResumeBeforeCalibration) return;
               // Set the calibrated text as the current resume input
               setBullet(calibratedText);
+              calibratedRunPendingRef.current = true; // signal the next run to use calibrated path
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
               // Switch to alignment tab and trigger run
