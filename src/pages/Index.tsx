@@ -1069,6 +1069,21 @@ const Index = () => {
             alignmentResult={result as unknown as Record<string, unknown> || undefined}
             inputSource={inputSource}
             onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); }}
+            originalResumeBeforeCalibration={originalResumeBeforeCalibration}
+            onRerunSignalAnalysis={(calibratedText) => {
+              if (!originalResumeBeforeCalibration) return;
+              // Set the calibrated text as the current resume input
+              setBullet(calibratedText);
+              setIsResumeFromCalibrated(true);
+              setInputSource("paste");
+              // Switch to alignment tab and trigger run
+              setMode("alignment");
+              // Use a microtask to ensure state is settled before triggering
+              setTimeout(() => {
+                const runBtn = document.getElementById("run-alignment-btn");
+                if (runBtn) runBtn.click();
+              }, 150);
+            }}
           />
         )}
 
@@ -1187,7 +1202,7 @@ const Index = () => {
                       )}
                     </div>
                   ) : (
-                    <Button onClick={handleOptimize} disabled={loading || subLoading} className={`gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97] ${errors.bullet ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}>
+                    <Button id="run-alignment-btn" onClick={handleOptimize} disabled={loading || subLoading} className={`gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97] ${errors.bullet ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : subLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                       {subLoading ? "Initializing…" : "Run Alignment"}
                     </Button>

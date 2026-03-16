@@ -17,7 +17,40 @@ import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
+import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
+/** Convert structured resume data to plain text for scoring */
+function resumeDataToText(r: CalibratedResumeData): string {
+  const lines: string[] = [];
+  if (r.header.name) lines.push(r.header.name);
+  if (r.header.title) lines.push(r.header.title);
+  const contact = [r.header.email, r.header.phone, r.header.linkedin, r.header.location].filter(Boolean).join(" | ");
+  if (contact) lines.push(contact);
+  if (r.summary) { lines.push("", "SUMMARY", r.summary); }
+  if (r.core_competencies.length) { lines.push("", "CORE COMPETENCIES", r.core_competencies.join(" · ")); }
+  if (r.experience.length) {
+    lines.push("", "EXPERIENCE");
+    for (const exp of r.experience) {
+      const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
+      lines.push(header);
+      for (const b of exp.bullets) lines.push(`- ${b}`);
+    }
+  }
+  if (r.independent_projects?.length) {
+    lines.push("", "PROJECTS");
+    for (const p of r.independent_projects) {
+      lines.push(p.name + (p.description ? ` — ${p.description}` : ""));
+      for (const b of p.bullets) lines.push(`- ${b}`);
+    }
+  }
+  if (r.skills.length) { lines.push("", "SKILLS", r.skills.join(", ")); }
+  if (r.certifications.length) { lines.push("", "CERTIFICATIONS", r.certifications.join(", ")); }
+  if (r.education.length) {
+    lines.push("", "EDUCATION");
+    for (const edu of r.education) lines.push([edu.degree, edu.institution, edu.year].filter(Boolean).join(" — "));
+  }
+  return lines.join("\n");
+}
 interface CalibratedResumeTabProps {
   isPro: boolean;
   onUpgrade: () => void;
@@ -30,6 +63,8 @@ interface CalibratedResumeTabProps {
   alignmentResult?: Record<string, unknown>;
   inputSource?: ResumeInputSource;
   onResumeTextReplaced?: (text: string) => void;
+  onRerunSignalAnalysis?: (calibratedText: string) => void;
+  originalResumeBeforeCalibration?: string | null;
 }
 
 const CalibratedResumeTab = ({
@@ -44,6 +79,8 @@ const CalibratedResumeTab = ({
   alignmentResult,
   inputSource = "paste",
   onResumeTextReplaced,
+  onRerunSignalAnalysis,
+  originalResumeBeforeCalibration,
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
@@ -220,6 +257,33 @@ const CalibratedResumeTab = ({
           </div>
 
           <SignalKeywordsBlock keywords={currentResume.signal_keywords} />
+
+          {/* Re-run Signal Analysis with calibrated text */}
+          {onRerunSignalAnalysis && (
+            <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1 space-y-0.5">
+                <p className="text-sm font-medium text-foreground">Re-score with your calibrated resume</p>
+                <p className="text-xs text-muted-foreground">
+                  {originalResumeBeforeCalibration
+                    ? "Run the Alignment Engine using your calibrated output to see your updated score."
+                    : "Original resume baseline not found — re-run alignment from the Alignment tab first."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 shrink-0"
+                disabled={!originalResumeBeforeCalibration}
+                onClick={() => {
+                  const text = resumeDataToText(currentResume);
+                  onRerunSignalAnalysis(text);
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Re-run Signal Analysis
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>
