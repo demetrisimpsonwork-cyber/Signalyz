@@ -1488,7 +1488,7 @@ const Index = () => {
                     {!effectiveIsPro && (() => {
                       const liftData = result?.signal_model?.predicted_signal_lift || (result as any)?.predicted_signal_lift;
                       const liftPoints = liftData?.projected_score
-                        ? Math.round(liftData.projected_score - (result?.total_score ?? result?.deterministic_score ?? 0))
+                        ? Math.round(liftData.projected_score - (result?.match_score ?? 0))
                         : null;
                       const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
                       return (
