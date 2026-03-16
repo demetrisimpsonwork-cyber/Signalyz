@@ -381,5 +381,5 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     }
   }, [finalizeResume]);
 
-  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble };
+  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble, reset };
 }
