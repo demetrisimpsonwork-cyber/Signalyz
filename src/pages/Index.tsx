@@ -597,7 +597,7 @@ const Index = () => {
     if (normResume.truncated) setInputTruncated(true);
     setDirectorExperience(normResume.text);
     setDirectorLoading(true);
-    setDirectorResult(null);
+    // Don't clear directorResult eagerly — preserve as fallback if this run fails
     setDirectorError(null);
     // telemetry: positioning_run_clicked
 
