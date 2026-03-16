@@ -1436,14 +1436,9 @@ const Index = () => {
 
                       {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
-                        {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
+                      {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
                           <p className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
-                          </p>
-                        )}
-                        {(result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity) && (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-primary">Repositioning opportunity:</span> {result.signal_model?.executive_insight_summary?.strategic_repositioning_opportunity || (result as any).executive_insight_summary?.strategic_repositioning_opportunity}
                           </p>
                         )}
                       </div>
