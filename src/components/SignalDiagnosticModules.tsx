@@ -676,13 +676,17 @@ function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<Sign
 
       {data.strategic_fixes && data.strategic_fixes.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Three Strategic Fixes</p>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
           <ol className="space-y-1">
-            {data.strategic_fixes.slice(0, 3).map((fix, i) => (
-              <li key={i} className="text-xs text-foreground flex gap-2">
-                <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{fix}
-              </li>
-            ))}
+            {data.strategic_fixes.slice(0, 3).map((fix, i) => {
+              // Clean duplicate numbering from AI output (e.g., "1. Fix something" → "Fix something")
+              const cleanedFix = fix.replace(/^\d+\.\s*/, "");
+              return (
+                <li key={i} className="text-xs text-foreground flex gap-2">
+                  <span className="font-semibold text-primary tabular-nums">{i + 1}.</span>{cleanedFix}
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}
