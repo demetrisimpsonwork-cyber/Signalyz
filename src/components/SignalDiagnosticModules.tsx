@@ -660,8 +660,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 11: Why You're Not Getting Interviews ─── */
-function InterviewGapDiagnosis({ data }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]> }) {
-  const currentScore = data.current_score ?? 0;
+function InterviewGapDiagnosis({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number }) {
+  const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
 
   return (
