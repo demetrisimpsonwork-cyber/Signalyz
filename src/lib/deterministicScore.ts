@@ -302,11 +302,11 @@ function computeOwnershipScopeScore(sections: ResumeSections): number {
     } else if (hasStrongOwnership || (hasPartialOwnership && hasScopeOrOutcome)) {
       totalScore += 0.6; // Partial: strong verb alone OR partial verb + scope
     } else if (hasPartialOwnership) {
-      totalScore += 0.3; // Partial verb, no scope
+      totalScore += 0.4; // Partial verb, no scope — still shows ownership
     } else if (hasScopeOrOutcome) {
-      totalScore += 0.25; // Scope but no ownership verb lead
+      totalScore += 0.35; // Scope but no ownership verb lead
     } else {
-      totalScore += 0.1; // Neutral: not passive but nothing special
+      totalScore += 0.15; // Neutral: not passive but nothing special
     }
   }
 
