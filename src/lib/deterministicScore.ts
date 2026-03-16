@@ -227,8 +227,8 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
 
   const maxKeywords = Math.max(jdModel.keywords.length, 1);
   const bulletKeywordCoverage = bulletKeywordHits / maxKeywords;
-  // Penalize skills-only matches: they count at 30% value
-  const skillsOnlyPenalized = (skillsOnlyHits * 0.3) / maxKeywords;
+  // Skills-only matches contribute at 50% value (reduced penalty)
+  const skillsOnlyPenalized = (skillsOnlyHits * 0.5) / maxKeywords;
 
   // Bigram matches in bullets — weight lead-position matches higher
   let bigramScore = 0;
