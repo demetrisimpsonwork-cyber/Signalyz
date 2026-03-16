@@ -146,9 +146,17 @@ serve(async (req) => {
     }
 
     // Build roles description — truncate individual bullets to prevent blowup
+    // Also track original bullet lengths for post-processing validation
+    const originalBulletLengths: number[][] = [];
     const proRolesDescription = professionalRoles.map((r: any, i: number) => {
       const header = [r.company, r.title, r.date_range].filter(Boolean).join(" | ");
-      const bulletList = (r.bullets || []).map((b: string, bi: number) => `  ${bi + 1}. ${truncate(sanitizeInput(b), 500)}`).join("\n");
+      const roleBulletLengths: number[] = [];
+      const bulletList = (r.bullets || []).map((b: string, bi: number) => {
+        const cleaned = truncate(sanitizeInput(b), 500);
+        roleBulletLengths.push(cleaned.length);
+        return `  ${bi + 1}. [${cleaned.length} chars] ${cleaned}`;
+      }).join("\n");
+      originalBulletLengths.push(roleBulletLengths);
       return `PROFESSIONAL ROLE ${i + 1}: ${header || "Untitled Role"}\n${bulletList}`;
     }).join("\n\n");
 
@@ -176,15 +184,28 @@ YOUR TASK:
 3. For EACH role, calibrate EACH bullet individually. Preserve the original role structure — do NOT merge bullets across roles.
 4. Generate an INTERVIEW PREPARATION NOTICE (2-3 sentences identifying remaining perception gaps after calibration).
 
-BULLET CALIBRATION RULES (CRITICAL):
-- Reposition each bullet to align with the target JD's priority signals.
-- You MUST preserve EVERY specific detail from the original bullet — stakeholder names, volume metrics, process outcomes, tool names.
-- Do NOT remove any detail that exists in the original.
-- ADD JD-aligned language, stronger ownership framing, and role-native vocabulary ON TOP of what already exists.
-- The calibrated bullet must ALWAYS be equal to or LONGER than the original bullet.
-- If the original bullet is already well-aligned, elevate the language while keeping ALL specifics intact.
-- NEVER produce a bullet that loses detail the original contained.
-- If a calibrated bullet exceeds 4 lines of text (~280 characters), split it into two bullets. The second bullet should begin with a continuation verb ("Additionally," "Further," "Concurrently,").
+BULLET CALIBRATION RULES (CRITICAL — ABSOLUTE CONSTRAINTS):
+Each original bullet has its character count shown as [N chars]. Your calibrated version MUST meet or exceed that character count.
+
+ADDITIVE CALIBRATION — never subtractive:
+- START with the original bullet content as your base. Keep every word of substance.
+- LAYER ON TOP: stronger ownership verbs (e.g., "Managed" → "Directed"; "Helped" → "Orchestrated"), JD-mirrored vocabulary, outcome framing, and specificity.
+- You MUST preserve EVERY specific detail — stakeholder names, volume metrics, process outcomes, tool names, team sizes, dollar amounts.
+- Do NOT summarize, condense, or rephrase into fewer words. EXPAND and STRENGTHEN.
+- If the original says "Managed a team of 12 customer service representatives handling 500+ daily inquiries across phone and email channels" — your output must contain ALL of those details PLUS additional alignment language.
+
+LENGTH ENFORCEMENT:
+- The calibrated bullet MUST be LONGER than the original. This is non-negotiable.
+- If the original is 80 characters, your calibrated version must be at least 85 characters.
+- If the original is 150 characters, your calibrated version must be at least 155 characters.
+- Add ownership context, outcome impact, or JD-relevant framing to increase length meaningfully.
+- If a calibrated bullet exceeds 4 lines (~280 characters), split into two bullets. The second begins with "Additionally," "Further," or "Concurrently,".
+
+WHAT "CALIBRATION" MEANS — it means making bullets STRONGER, not shorter:
+- Replace weak verbs with high-ownership verbs: "Assisted" → "Spearheaded", "Worked on" → "Engineered", "Was responsible for" → "Directed"
+- Add JD vocabulary as natural extensions: if the JD says "cross-functional collaboration," weave that phrase into bullets where the candidate worked across teams
+- Add outcome framing: if the original states an action without a result, add the implied business outcome
+- Add scope language: team sizes, budget ranges, geographic scope, stakeholder types
 
 PRO FILTER:
 - Never fabricate skills, metrics, tools, certifications, or responsibilities not present in the original.
@@ -266,6 +287,37 @@ CRITICAL:
       proj.company = proj.company || "";
       proj.title = proj.title || "";
       proj.date_range = proj.date_range || "";
+    }
+
+    // Post-processing: validate calibrated bullets are not shorter than originals
+    // If any bullet was trimmed by the AI, restore the original and append alignment framing
+    for (let ri = 0; ri < calibrated_roles.length && ri < professionalRoles.length; ri++) {
+      const origBullets = professionalRoles[ri]?.bullets || [];
+      const calBullets = calibrated_roles[ri]?.calibrated_bullets || [];
+      for (let bi = 0; bi < calBullets.length && bi < origBullets.length; bi++) {
+        const origLen = sanitizeInput(origBullets[bi] || "").trim().length;
+        const calLen = (calBullets[bi] || "").trim().length;
+        if (origLen > 0 && calLen < origLen * 0.9) {
+          // Bullet was trimmed — restore original content with calibrated language appended
+          console.warn(JSON.stringify({
+            request_id: requestId,
+            warning: "BULLET_TRIMMED_BY_AI",
+            role_index: ri,
+            bullet_index: bi,
+            original_len: origLen,
+            calibrated_len: calLen,
+          }));
+          // Use the calibrated version as an addendum to the original
+          const origText = sanitizeInput(origBullets[bi]).trim();
+          const calText = (calBullets[bi] || "").trim();
+          // If calibrated text is substantially different, merge; otherwise just use original
+          if (calText && calText.length > 20) {
+            calBullets[bi] = `${origText} — ${calText}`;
+          } else {
+            calBullets[bi] = origText;
+          }
+        }
+      }
     }
 
     console.log(JSON.stringify({ request_id: requestId, status: "success", roles_returned: calibrated_roles.length, projects_returned: independent_projects.length }));
