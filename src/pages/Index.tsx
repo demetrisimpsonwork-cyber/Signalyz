@@ -597,7 +597,7 @@ const Index = () => {
     if (normResume.truncated) setInputTruncated(true);
     setDirectorExperience(normResume.text);
     setDirectorLoading(true);
-    setDirectorResult(null);
+    // Don't clear directorResult eagerly — preserve as fallback if this run fails
     setDirectorError(null);
     // telemetry: positioning_run_clicked
 
@@ -669,9 +669,8 @@ const Index = () => {
 
     if (!validate()) return;
     setLoading(true);
-    setResult(null);
-    setDirectorResult(null);
-    setSessionResumeAssembled(false);
+    // Don't clear result/directorResult/sessionResumeAssembled eagerly —
+    // preserve last successful state as fallback if this run fails.
     setAlignmentError(null);
     setInputTruncated(false);
     setShowSamples(false);
@@ -734,6 +733,9 @@ const Index = () => {
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
+      // Clear previous state now that we have a successful new result
+      setDirectorResult(null);
+      setSessionResumeAssembled(false);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
@@ -827,7 +829,8 @@ const Index = () => {
             timestamp: new Date().toISOString(),
           });
           const msg = retryErr.message || FRIENDLY_FAIL_MSG;
-          setResult(null);
+          // Preserve last successful result as fallback — don't clear UI
+          console.warn("[Alignment] Preserving last successful result as fallback.");
           // Use localErrorCode to determine display, not stale React state
           if (localErrorCode === "DAILY_LIMIT") {
             setAlignmentError({ message: msg, error_code: "DAILY_LIMIT" });
