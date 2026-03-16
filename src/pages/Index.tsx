@@ -871,6 +871,7 @@ const Index = () => {
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
+          <p className="mt-2 text-sm font-medium text-white/50 italic">And that's exactly why you're getting filtered out.</p>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
             Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
