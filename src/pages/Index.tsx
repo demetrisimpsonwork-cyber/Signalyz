@@ -1605,9 +1605,11 @@ const Index = () => {
                             </p>
                           </div>
 
-                          <p className="text-sm text-foreground">
-                            <span className="font-semibold">3 targeted adjustments</span> could increase your signal score by{" "}
-                            <span className="font-semibold text-primary">{liftDisplay} points</span>.
+                          <p className="text-sm font-semibold text-foreground">
+                            You're 3 changes away from moving out of the rejection zone.
+                          </p>
+                          <p className="text-xs text-muted-foreground italic">
+                            This gap is fixable — but only if you apply the right positioning.
                           </p>
 
                           <div className="space-y-1.5">

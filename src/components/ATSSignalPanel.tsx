@@ -82,7 +82,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
           <p className="text-sm font-semibold text-foreground">Unlock ATS Signal Panel — Full Signal Intelligence</p>
           <p className="text-xs text-muted-foreground">See how your resume reads to automated screening systems.</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence — $19/month</Button>
+            <Button size="sm" onClick={onUpgrade}>See My Exact Fix</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}

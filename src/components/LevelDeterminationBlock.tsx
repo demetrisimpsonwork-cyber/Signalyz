@@ -392,7 +392,7 @@ const LevelDeterminationBlock = ({
           <p className="text-sm font-semibold text-foreground">Unlock Signal Calibration Report — Full Signal Intelligence</p>
           <p className="text-xs text-muted-foreground">Target Role Calibration, Ownership Classification, Signal Risk Projection, and Strategic Upgrade Priority.</p>
           {isAuthenticated ? (
-            onUpgrade && <Button onClick={onUpgrade} size="sm">Unlock Full Signal Intelligence — $19/month</Button>
+            onUpgrade && <Button onClick={onUpgrade} size="sm">See My Exact Fix</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
