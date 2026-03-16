@@ -85,12 +85,23 @@ const CalibratedResumeTab = ({
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
-    confidence, pendingResume, confirmResume, skipConfirmation,
+    confidence, pendingResume, confirmResume, skipConfirmation, reset: resetAssembly,
   } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
 
   const currentResume = editedResume || assembledResume;
   const [showPdfFallback, setShowPdfFallback] = useState(false);
+
+  // Clear stale calibrated resume when a new alignment run starts (hasCurrentSessionAlignment resets to false)
+  const prevAlignmentRef = useRef(hasCurrentSessionAlignment);
+  useEffect(() => {
+    if (prevAlignmentRef.current && !hasCurrentSessionAlignment) {
+      // Alignment was reset — clear stale calibrated resume state
+      resetAssembly();
+      autoAssembledRef.current = false;
+    }
+    prevAlignmentRef.current = hasCurrentSessionAlignment;
+  }, [hasCurrentSessionAlignment, resetAssembly]);
 
   useEffect(() => {
     if (assembledResume && onAssembled) onAssembled();
