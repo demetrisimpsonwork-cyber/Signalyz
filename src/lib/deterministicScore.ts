@@ -266,23 +266,40 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const skillsTokens = tokenize(sections.skillsText.toLowerCase());
   const skillsTokenSet = new Set(skillsTokens);
 
-  // Count keyword matches in bullets
+  // Count keyword matches in bullets (exact, stemmed, semantic, skills-only)
   let bulletKeywordHits = 0;
   let skillsOnlyHits = 0;
+  let semanticHits = 0;
 
   for (const kw of jdModel.keywords) {
     const inBullets = bulletsTokenSet.has(kw);
     const inBulletsStemmed = bulletsStemSet.has(stem(kw));
     const inSkillsOnly = !inBullets && !inBulletsStemmed && skillsTokenSet.has(kw);
 
-    if (inBullets) bulletKeywordHits += 1.0;
-    else if (inBulletsStemmed) bulletKeywordHits += 0.90;
-    else if (inSkillsOnly) skillsOnlyHits += 1;
+    if (inBullets) {
+      bulletKeywordHits += 1.0;
+    } else if (inBulletsStemmed) {
+      bulletKeywordHits += 0.90;
+    } else {
+      // Try semantic equivalence against bullet text
+      const semCredit = findSemanticCredit(kw, bulletsText);
+      if (semCredit > 0) {
+        semanticHits += semCredit;
+      } else if (inSkillsOnly) {
+        skillsOnlyHits += 1;
+      } else {
+        // Try semantic equivalence against full resume text as last resort
+        const fullSemCredit = findSemanticCredit(kw, sections.fullText);
+        if (fullSemCredit > 0) {
+          semanticHits += fullSemCredit * 0.4; // heavily discounted for non-bullet match
+        }
+      }
+    }
   }
 
   const maxKeywords = Math.max(jdModel.keywords.length, 1);
   const bulletKeywordCoverage = bulletKeywordHits / maxKeywords;
-  // Skills-only matches contribute at 50% value (reduced penalty)
+  const semanticCoverage = semanticHits / maxKeywords;
   const skillsOnlyPenalized = (skillsOnlyHits * 0.5) / maxKeywords;
 
   // Bigram matches in bullets — weight lead-position matches higher
@@ -291,7 +308,6 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
     const escaped = bigram.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
     const rx = new RegExp(`\\b${escaped}\\b`, "i");
 
-    // Check if bigram appears in bullet lead (first 8 words)
     let leadMatch = false;
     let anyMatch = false;
     for (const bullet of sections.bullets) {
@@ -313,9 +329,8 @@ function computeJdMirroringScore(sections: ResumeSections, jdModel: ReturnType<t
   const maxBigrams = Math.max(jdModel.bigrams.length, 1);
   const bigramCoverage = bigramScore / maxBigrams;
 
-  // Final JD Mirroring = bullet keyword coverage (50%) + bigram coverage (30%) + skills-only (20%)
-  // Apply sqrt curve to prevent low-partial-match scores from collapsing toward zero
-  const raw = (bulletKeywordCoverage * 0.50) + (bigramCoverage * 0.30) + (skillsOnlyPenalized * 0.20);
+  // Final JD Mirroring = exact/stemmed (40%) + semantic (25%) + bigram (20%) + skills-only (15%)
+  const raw = (bulletKeywordCoverage * 0.40) + (semanticCoverage * 0.25) + (bigramCoverage * 0.20) + (skillsOnlyPenalized * 0.15);
   const curved = Math.sqrt(clamp01(raw)); // sqrt curve lifts mid-range scores
   return Math.floor(100 * curved);
 }
