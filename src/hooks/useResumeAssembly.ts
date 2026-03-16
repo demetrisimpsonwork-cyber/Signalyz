@@ -58,7 +58,17 @@ const STEPS = [
 ];
 
 export function useResumeAssembly(): UseResumeAssemblyReturn {
-  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(null);
+  // Restore previously assembled resume from localStorage on mount
+  const [assembledResume, setAssembledResume] = useState<CalibratedResumeData | null>(() => {
+    try {
+      const stored = localStorage.getItem("signalyz_calibrated_resume_data");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.header && parsed?.experience) return parsed as CalibratedResumeData;
+      }
+    } catch {}
+    return null;
+  });
   const [pendingResume, setPendingResume] = useState<CalibratedResumeData | null>(null);
   const [confidence, setConfidence] = useState<ConfidenceResult | null>(null);
   const [loading, setLoading] = useState(false);
