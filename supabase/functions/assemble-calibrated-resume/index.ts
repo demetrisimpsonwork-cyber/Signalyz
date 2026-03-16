@@ -1657,12 +1657,20 @@ serve(async (req) => {
       structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
     );
 
-    // ── Merge results ──
-    const result = normalizeResult({
+    // ── Merge results and validate against the persisted final output ──
+    const normalizedResult = normalizeResult({
       ...structure,
       summary: rewrittenSummary,
       experience: rewrittenExperience,
     });
+
+    const result = enforceFinalSignalDelta(
+      normalizedResult,
+      originalResume || structuredResumeToText({ summary: structure.summary, experience: structure.experience }),
+      structure.experience,
+      signalContext || {},
+      request_id,
+    );
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
