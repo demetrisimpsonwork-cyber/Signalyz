@@ -819,7 +819,7 @@ This applies individually and explicitly to EACH of these numeric fields — sco
 For each numeric field: classify match quality, apply quality weights, use scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
 
 STRATEGIC FIXES COUNT (CRITICAL):
-interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. The section heading is always "Three Strategic Fixes" so the list must always contain 3 items.
+interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. Each fix must be a SPECIFIC resume edit instruction — not general advice. State what to add/change, where to add/change it, and why it matters. Example: "Reframe your Q3 process improvement bullet to include the dollar value of efficiency gains — even an estimate like 'reduced processing costs by ~$40K annually' converts operational work into commercial signal."
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
