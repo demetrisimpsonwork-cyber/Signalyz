@@ -344,11 +344,12 @@ function computePerceptionGapScore(sections: ResumeSections, jdText: string): nu
   const resumeSenioritySignal = clamp01((seniorDensityResume * 2) / Math.max(seniorDensityResume + juniorDensityResume + passiveDensityResume + 0.5, 1));
 
   // Score = how closely resume matches JD's implied level
-  // If JD is senior, resume needs senior language. Penalize junior/passive language.
-  const levelMatch = 1 - Math.abs(jdSenioritySignal - resumeSenioritySignal);
+  // Use a softer gap penalty: square the gap so moderate mismatches are gentle
+  const gap = Math.abs(jdSenioritySignal - resumeSenioritySignal);
+  const levelMatch = 1 - (gap * gap); // quadratic: 0.3 gap → 0.91, 0.5 gap → 0.75
 
-  // Also penalize heavy passive usage regardless
-  const passivePenalty = clamp01(passiveDensityResume / 2) * 0.3;
+  // Softer passive penalty
+  const passivePenalty = clamp01(passiveDensityResume / 3) * 0.2;
 
   const raw = clamp01(levelMatch - passivePenalty);
   return Math.floor(100 * raw);
