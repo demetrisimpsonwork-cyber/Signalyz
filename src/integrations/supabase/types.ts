@@ -50,6 +50,42 @@ export type Database = {
         }
         Relationships: []
       }
+      calibration_runs: {
+        Row: {
+          calibrated_score: number
+          created_at: string
+          id: string
+          improved_dimensions: string[]
+          original_score: number
+          run_id: string | null
+          score_delta: number
+          unchanged_dimensions: string[]
+          user_id: string | null
+        }
+        Insert: {
+          calibrated_score: number
+          created_at?: string
+          id?: string
+          improved_dimensions?: string[]
+          original_score: number
+          run_id?: string | null
+          score_delta: number
+          unchanged_dimensions?: string[]
+          user_id?: string | null
+        }
+        Update: {
+          calibrated_score?: number
+          created_at?: string
+          id?: string
+          improved_dimensions?: string[]
+          original_score?: number
+          run_id?: string | null
+          score_delta?: number
+          unchanged_dimensions?: string[]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
