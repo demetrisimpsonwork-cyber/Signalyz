@@ -1025,7 +1025,7 @@ const Index = () => {
               ))}
             </div>
             {/* Right-edge gradient fade for scroll affordance */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background via-background/70 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background/90 via-background/40 to-transparent" />
           </div>
 
           {/* Desktop layout */}
