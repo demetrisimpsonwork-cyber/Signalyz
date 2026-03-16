@@ -91,12 +91,12 @@ const CalibratedResumeTab = ({
 
   const currentResume = editedResume || assembledResume;
   const [showPdfFallback, setShowPdfFallback] = useState(false);
+  const autoAssembledRef = useRef(false);
 
   // Clear stale calibrated resume when a new alignment run starts (hasCurrentSessionAlignment resets to false)
   const prevAlignmentRef = useRef(hasCurrentSessionAlignment);
   useEffect(() => {
     if (prevAlignmentRef.current && !hasCurrentSessionAlignment) {
-      // Alignment was reset — clear stale calibrated resume state
       resetAssembly();
       autoAssembledRef.current = false;
     }
