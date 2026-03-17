@@ -1391,7 +1391,7 @@ const Position = () => {
 
               {/* 10 — Market Position Assessment (always visible) */}
               {result.market_position_assessment && (
-                <Section title="10. Market Position Assessment">
+                <Section title="Market Position Assessment">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${levelColor(result.market_position_assessment.level)}`}>
