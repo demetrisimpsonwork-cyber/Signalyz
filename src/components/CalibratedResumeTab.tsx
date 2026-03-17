@@ -312,20 +312,29 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
-        <Lock className="h-8 w-8 text-muted-foreground" />
-        <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-          {user ? "3 exact changes that would move your score above 70%. You're closer than you think." : "Sign up to access resume assembly — 3 free analyses included."}
-        </p>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <span className="text-2xl text-primary">✦</span>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-foreground tracking-tight">
+            Your resume is ready to be repositioned — not rewritten
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+            {user
+              ? "The Calibrated Resume takes your exact experience and repositions every bullet to match the signals this role actually weights. No fabrication — just professional framing."
+              : "Sign up to access the Calibrated Resume builder — repositioned from your real experience."}
+          </p>
+          {user && (
+            <p className="text-[11px] font-semibold text-destructive/80">Submitting your current version means the same gaps keep filtering you out.</p>
+          )}
+        </div>
         {user ? (
-          <>
-            <Button onClick={onUpgrade} size="lg" className="gap-2">
-              <Lock className="h-4 w-4" />
+          <div className="space-y-3 w-full max-w-xs">
+            <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
               Fix This Now → $9
             </Button>
-            <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
-          </>
-        
+            <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+          </div>
         ) : (
           <Button size="lg" className="gap-2" asChild>
             <a href="/auth">Get Started Free</a>

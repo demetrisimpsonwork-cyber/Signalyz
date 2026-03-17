@@ -72,26 +72,27 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-5 text-center">
-        <Lock className="h-8 w-8 text-muted-foreground" />
-        <h3 className="text-lg font-bold text-foreground">Your Signal-Calibrated Cover Letter is ready</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-          {user ? "Upgrade to generate, customize, and export your signal-calibrated cover letter." : "Sign up to access cover letter generation — 3 free analyses included."}
-        </p>
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <span className="text-2xl text-primary">✦</span>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-foreground tracking-tight">
+            Your cover letter is reinforcing the same gaps your resume has
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+            {user
+              ? "A signal-calibrated cover letter closes the positioning gap your resume can't fix alone — framed around the exact signals this role weights."
+              : "Sign up to generate a signal-calibrated cover letter built from your alignment analysis."}
+          </p>
+          {user && (
+            <p className="text-[11px] font-semibold text-destructive/80">Generic cover letters get skipped — this one addresses your specific blocker.</p>
+          )}
+        </div>
         {user ? (
-          <div className="flex flex-col gap-2 w-full max-w-xs">
+          <div className="space-y-3 w-full max-w-xs">
             <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
-              <Lock className="h-4 w-4" />
               Fix This Now → $9
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 w-full"
-              onClick={() => {
-                import("@/utils/stripe").then(m => m.initiateCheckout("one_time"));
-              }}
-            >
-              Fix This Now — $9 one-time
             </Button>
             <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
           </div>

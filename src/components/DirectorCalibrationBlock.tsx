@@ -414,17 +414,20 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-foreground tracking-tight">
-                Unlock the full Signal Positioning Report — Full Signal Intelligence
+                Your hiring friction points are mapped — here's exactly where you're losing
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Career Signal Map, Signal Alignment Analysis, Hiring Signal Benchmark, Dimension Comparison, Signal Shift Projection, and more — available with Full Signal Intelligence.
+                You've seen the surface-level read. The full report shows where you'll be screened out at each hiring stage — and the exact repositioning to fix it.
               </p>
+              <p className="text-[11px] font-semibold text-destructive/80">Most candidates never see this data — that's why they keep getting filtered.</p>
             </div>
             {isAuthenticated ? (
-              <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-                <span style={{ color: "inherit" }}>✦</span>
-                See My Exact Fix — $19/month
-              </Button>
+              <div className="space-y-3">
+                <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
+                  Fix This Now → $9
+                </Button>
+                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+              </div>
             ) : (
               <Button className="w-full gap-2" size="lg" asChild>
                 <a href="/auth">Get Started Free</a>
