@@ -1490,9 +1490,10 @@ const Index = () => {
                         return (
                           <div className="space-y-4">
                             {/* Primary Blocker — dominant diagnostic moment */}
-                            {primaryBlocker && (
+                             {primaryBlocker && (
                               <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
+                                <p className="text-xs font-bold text-destructive/90">This is the main reason you're not getting interviews.</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
                                   {primaryBlocker}
                                 </p>
@@ -1513,10 +1514,10 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                 <p className="text-sm font-semibold text-foreground">
-                                  See exactly how to fix this and increase your score
+                                  You'll see exactly how your experience gets rewritten to match this role.
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  You've already done the hard part — this shows you exactly what to change.
+                                  Most users increase their signal score by 10–25 points after applying these fixes.
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
@@ -1646,7 +1647,7 @@ const Index = () => {
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix My Signal
+                              See My Exact Fix
                             </Button>
                           ) : (
                             <Button size="sm" className="w-full" asChild>
