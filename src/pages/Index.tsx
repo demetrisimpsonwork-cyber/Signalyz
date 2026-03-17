@@ -1268,8 +1268,8 @@ const Index = () => {
 
             <div className={`grid gap-6 sm:gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
-              <div className="space-y-5">
-                <div>
+              <div className="space-y-5 min-w-0">
+                <div className="min-w-0">
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
