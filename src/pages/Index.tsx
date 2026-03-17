@@ -416,19 +416,41 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // Check if a previous analysis exists (but don't auto-load it)
+  const [hasSavedAnalysis, setHasSavedAnalysis] = useState(false);
+  const [savedAnalysisDismissed, setSavedAnalysisDismissed] = useState(false);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
-      if (saved && !result) {
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.result && parsed.bullet && parsed.jd) {
+          // Only show banner if inputs are still clean (user hasn't started typing)
+          setHasSavedAnalysis(true);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handleRestorePreviousRun = useCallback(() => {
+    try {
+      const saved = localStorage.getItem("signalyz_last_analysis");
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
           setResult(parsed.result);
           setBullet(parsed.bullet);
           setJd(parsed.jd);
+          setHasSavedAnalysis(false);
+          setSavedAnalysisDismissed(false);
         }
       }
     } catch {}
+  }, []);
+
+  const handleDismissSavedAnalysis = useCallback(() => {
+    setSavedAnalysisDismissed(true);
   }, []);
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
