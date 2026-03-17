@@ -278,7 +278,7 @@ function DirectorModeContent({
 
   // Full report UI — only mounts when result exists
   return (
-    <div className="grid gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
+    <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
       <div className="space-y-4 min-w-0 overflow-hidden">
         <div>
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
@@ -1071,41 +1071,38 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
+      <section id="alignment-tool" className="py-8 sm:py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
 
         {/* Sub-navigation tabs */}
-        {/* Sub-navigation tabs */}
-        <div className="mb-6 flex justify-center mt-3">
-          {/* Mobile layout */}
-          <div className="relative lg:hidden w-full overflow-hidden">
-            <div className="flex overflow-x-auto w-full pb-1 items-center gap-0.5 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="mb-6 sm:mb-8 flex justify-center">
+          {/* Mobile layout — all 5 tabs visible, evenly distributed */}
+          <div className="lg:hidden w-full border-b border-border">
+            <div className="flex w-full">
               {([
-                { id: "alignment" as const, label: "Align", proOnly: false },
-                { id: "director" as const, label: "Position", proOnly: false },
+                { id: "alignment" as const, label: "Align" },
+                { id: "director" as const, label: "Signal" },
                 { id: "calibrated" as const, label: "Resume", proOnly: true },
-                { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
+                { id: "coverletter" as const, label: "Letter", proOnly: true },
                 { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
               ] as const).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => {
-                    if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                    if ((tab as any).proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
                     const scrollY = window.scrollY;
                     setMode(tab.id);
                     requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
-                  className={`px-2.5 py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                  className={`flex-1 py-2.5 text-[12px] font-medium transition-colors text-center border-b-2 ${
                     mode === tab.id
                       ? "text-primary border-primary"
-                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                      : "text-muted-foreground border-transparent"
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            {/* Right-edge gradient fade for scroll affordance */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background/90 via-background/40 to-transparent" />
           </div>
 
           {/* Desktop layout */}
@@ -1218,9 +1215,9 @@ const Index = () => {
         {/* Alignment Mode */}
         {mode === "alignment" && (
           <>
-            <div className={`grid gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
+            <div className={`grid gap-6 sm:gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
@@ -1305,7 +1302,7 @@ const Index = () => {
                       {subLoading ? "Initializing…" : "Run Alignment"}
                     </Button>
                   )}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     <span className="text-xs text-muted-foreground">Try sample:</span>
                     {SAMPLE_ROLES.map((r, i) => (
                       <button key={i} onClick={() => fillSample(i)} className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors">
