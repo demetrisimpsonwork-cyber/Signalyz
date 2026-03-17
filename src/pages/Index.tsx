@@ -1071,11 +1071,10 @@ const Index = () => {
       </section>
 
       {/* Mode toggle + Tool */}
-      <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
+      <section id="alignment-tool" className="py-8 sm:py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
 
         {/* Sub-navigation tabs */}
-        {/* Sub-navigation tabs */}
-        <div className="mb-6 flex justify-center mt-3">
+        <div className="mb-6 sm:mb-8 flex justify-center">
           {/* Mobile layout — all 5 tabs visible, evenly distributed */}
           <div className="lg:hidden w-full border-b border-border">
             <div className="flex w-full">
