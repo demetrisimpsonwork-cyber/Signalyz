@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Check, Loader2 } from "lucide-react";
+import { Copy, Check, Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LinkedInSignalTabProps {
   experience: string;
   inferredRole: string;
   signalKeywords?: string[];
   onRunAlignment?: () => void;
+  isPro?: boolean;
+  onUpgrade?: () => void;
 }
 
 interface HeadlineVariant {
@@ -17,13 +20,14 @@ interface HeadlineVariant {
   text: string;
 }
 
-const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRunAlignment }: LinkedInSignalTabProps) => {
+const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRunAlignment, isPro = false, onUpgrade }: LinkedInSignalTabProps) => {
   const [headline, setHeadline] = useState("");
   const [aboutSection, setAboutSection] = useState("");
   const [headlineVariants, setHeadlineVariants] = useState<HeadlineVariant[]>([]);
   const [calibratedAbout, setCalibratedAbout] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const handleCopy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
@@ -35,7 +39,6 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   const calibrateAll = async () => {
     setLoading(true);
     try {
-      // Run both in parallel
       const [headlineRes, aboutRes] = await Promise.all([
         supabase.functions.invoke("generate-pro-content", {
           body: { type: "linkedin_headline", experience, currentHeadline: headline, inferredRole },
@@ -65,6 +68,40 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
         <Button variant="outline" size="sm" onClick={onRunAlignment}>
           Run Alignment →
         </Button>
+      </div>
+    );
+  }
+
+  // Gate for non-Pro users — show problem + consequence + fix
+  if (!isPro) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <span className="text-2xl text-primary">✦</span>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-foreground tracking-tight">
+              Your LinkedIn is sending a different signal than your resume
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+              Recruiters check LinkedIn before they read your resume. If your headline and about section don't match the role signal, you lose credibility before the interview even starts.
+            </p>
+            <p className="text-[11px] font-semibold text-destructive/80">Most candidates don't realize their LinkedIn is contradicting their application.</p>
+          </div>
+          {user ? (
+            <div className="space-y-3 w-full max-w-xs">
+              <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
+                Fix This Now → $9
+              </Button>
+              <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+            </div>
+          ) : (
+            <Button size="lg" className="gap-2" asChild>
+              <a href="/auth">Get Started Free</a>
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -133,12 +170,10 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
           <p className="section-label">Headline Variants</p>
           {headlineVariants.map((v, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Before */}
               <div className="rounded-lg border bg-muted/30 p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Before</p>
                 <p className="text-sm text-muted-foreground">{headline || <span className="italic">No headline provided</span>}</p>
               </div>
-              {/* After */}
               <div className="rounded-lg border border-primary/20 bg-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -160,12 +195,10 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
         <div className="space-y-4">
           <p className="section-label">About Section</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Before */}
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Before</p>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{aboutSection || <span className="italic">No About section provided</span>}</p>
             </div>
-            {/* After */}
             <div className="rounded-lg border-l-4 border-l-primary border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
