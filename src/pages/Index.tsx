@@ -694,6 +694,7 @@ const Index = () => {
     lastClickRef.current = now;
 
     if (!validate()) return;
+    trackEvent("analysis_started", { target_role: result?.inferred_role_title, source: "alignment" });
     setLoading(true);
     // Don't clear result/directorResult/sessionResumeAssembled eagerly —
     // preserve last successful state as fallback if this run fails.
