@@ -388,43 +388,43 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           {/* Letter card */}
           {isEditing ? (
             <div
-              className="mx-auto bg-white rounded-sm relative"
+             className="mx-auto rounded-sm relative"
               style={{
                 maxWidth: "720px",
                 boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
                 padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
+                backgroundColor: "white",
               }}
             >
               {/* Header (read-only in edit mode) */}
               <div style={{ marginBottom: "20px" }}>
                 {contact.name && (
-                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
+                  <p className="text-foreground" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "2px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
                 )}
                 {(contact.email || contact.phone) && (
-                  <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0", fontFamily: "'Georgia', 'Times New Roman', serif" }}>
+                  <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "0", fontFamily: "'Georgia', 'Times New Roman', serif" }}>
                     {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
                   </p>
                 )}
               </div>
-              <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
+              <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
               {(hiringManager || companyName) && (
                 <div style={{ marginBottom: "16px" }}>
-                  {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{hiringManager}</p>}
-                  {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{companyName}</p>}
+                  {hiringManager && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{hiringManager}</p>}
+                  {companyName && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{companyName}</p>}
                 </div>
               )}
-              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
+              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
 
               {/* Editable body */}
               <textarea
                 value={editedLetter}
                 onChange={(e) => handleEditChange(e.target.value)}
-                className="w-full border border-border/50 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                className="w-full border border-border/50 rounded-md bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
                 style={{
                   fontFamily: "'Georgia', 'Times New Roman', serif",
                   fontSize: "11.5px",
                   lineHeight: "1.7",
-                  color: "#1A1A2E",
                   padding: "12px",
                   minHeight: "280px",
                 }}
@@ -432,9 +432,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
               {/* Closing (read-only) */}
               <div style={{ marginTop: "20px" }}>
-                <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>Sincerely,</p>
+                <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "4px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>Sincerely,</p>
                 {contact.name && (
-                  <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
+                  <p className="text-foreground" style={{ fontSize: "12px", fontWeight: 700, fontFamily: "'Georgia', 'Times New Roman', serif" }}>{contact.name}</p>
                 )}
               </div>
             </div>
