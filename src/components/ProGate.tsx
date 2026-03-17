@@ -94,10 +94,10 @@ export function ProGate({
 
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-foreground tracking-tight">
-              {isAuthenticated ? `Unlock ${featureName}` : "Create Your Free Account"}
+              {isAuthenticated ? "3 exact changes that would move your score above 70%" : "Create Your Free Account"}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {isAuthenticated ? featureDescription : "Sign up to access this feature — 3 free analyses included."}
+              {isAuthenticated ? "You're closer than you think — but missing positioning, not experience." : "Sign up to access this feature — 3 free analyses included."}
             </p>
           </div>
 
