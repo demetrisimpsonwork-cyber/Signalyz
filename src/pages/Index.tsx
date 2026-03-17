@@ -278,7 +278,7 @@ function DirectorModeContent({
 
   // Full report UI — only mounts when result exists
   return (
-    <div className="grid gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
+    <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
       <div className="space-y-4 min-w-0 overflow-hidden">
         <div>
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
