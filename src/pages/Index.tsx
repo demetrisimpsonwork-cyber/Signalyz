@@ -1239,7 +1239,7 @@ const Index = () => {
                       {user ? (
                         <>
                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            See My Exact Fix
+                            Unlock Your Exact Fix → $9
                           </Button>
                            <p className="text-xs text-muted-foreground">
                             {hasConsumedOneTimeCredit
