@@ -1517,7 +1517,10 @@ const Index = () => {
                             {/* Conversion CTA — after Primary Blocker, free users only */}
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                <p className="text-sm font-semibold text-foreground">
+                                <p className="text-sm font-bold text-foreground">
+                                  You're 3 changes away from fixing this
+                                </p>
+                                <p className="text-xs text-muted-foreground">
                                   You'll see exactly how your experience gets rewritten to match this role.
                                 </p>
                                 <p className="text-xs text-muted-foreground">
@@ -1622,11 +1625,8 @@ const Index = () => {
                             </p>
                           </div>
 
-                          <p className="text-sm font-semibold text-foreground">
-                            You're 3 changes away from moving out of the rejection zone.
-                          </p>
-                          <p className="text-xs text-muted-foreground italic">
-                            This gap is fixable — but only if you apply the right positioning.
+                          <p className="text-sm font-bold text-foreground">
+                            You're 3 changes away from fixing this
                           </p>
 
                           <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
@@ -1634,6 +1634,7 @@ const Index = () => {
                             <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
                           </div>
 
+                          <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
                           <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
 
                           {user ? (
