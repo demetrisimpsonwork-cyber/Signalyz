@@ -767,6 +767,17 @@ const Index = () => {
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
+      trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
+
+      // Session persistence: save last analysis for returning users
+      try {
+        localStorage.setItem("signalyz_last_analysis", JSON.stringify({
+          result: res,
+          bullet: bulletWithContext,
+          jd: normJd.text,
+          ts: Date.now(),
+        }));
+      } catch {}
 
       // ─── Internal delta logging for calibration runs ──────────────────────
       if (isCalibratedRun && originalResumeBeforeCalibration && user) {
