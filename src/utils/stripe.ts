@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 export async function initiateCheckout(mode: "subscription" | "one_time" = "subscription") {
   const {
