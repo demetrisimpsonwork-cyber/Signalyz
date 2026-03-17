@@ -1288,8 +1288,8 @@ const Index = () => {
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
                       onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); }}
-                      rows={4}
-                      className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
+                      rows={bullet && bullet.length > 200 ? 8 : 4}
+                      className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""} max-h-[50vh] overflow-y-auto break-words whitespace-pre-wrap`}
                     />
                     {bullet && (
                       <button
