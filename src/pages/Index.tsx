@@ -1542,6 +1542,27 @@ const Index = () => {
                         </div>
                       )}
 
+                      {/* SIGNAL VERDICT — perception anchor */}
+                      {result.signal_model?.signal_verdict && (
+                        <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-2.5">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/70">Signal Verdict</p>
+                          <div className="space-y-2">
+                            <p className="text-[13px] text-foreground leading-relaxed">
+                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Current Positioning</span>
+                              {result.signal_model.signal_verdict.current_positioning}
+                            </p>
+                            <p className="text-[13px] text-foreground leading-relaxed">
+                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Target Expectation</span>
+                              {result.signal_model.signal_verdict.target_expectation}
+                            </p>
+                            <p className="text-[13px] text-foreground font-semibold leading-relaxed">
+                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Core Gap</span>
+                              {result.signal_model.signal_verdict.core_gap}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Structured diagnosis insights from SignalModel */}
                       <div className="space-y-2 border-t border-border/40 pt-3">
                       {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (

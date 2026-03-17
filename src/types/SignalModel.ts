@@ -190,6 +190,13 @@ export interface SignalModel {
     }>;
   };
 
+  /** Signal Verdict — top-level perception anchor */
+  signal_verdict?: {
+    current_positioning: string;
+    target_expectation: string;
+    core_gap: string;
+  };
+
   /** Interview Gap Diagnosis — why you're not getting interviews */
   interview_gap_diagnosis?: {
     primary_blocker: string;
