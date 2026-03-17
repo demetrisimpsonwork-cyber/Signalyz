@@ -1522,6 +1522,7 @@ const Index = () => {
                                 <p className="text-xs text-muted-foreground">
                                   Most users increase their signal score by 10–25 points after applying these fixes.
                                 </p>
+                                <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                     <span style={{ color: "inherit" }}>✦</span> See My Exact Fix
@@ -1531,7 +1532,8 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes risks being ignored.</p>
+                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                               </div>
                             )}
 
