@@ -1352,26 +1352,39 @@ const Position = () => {
               </Section>
 
               {/* 8 — Interview Dominance Script */}
-              <Section title="8. Interview Dominance Script" copyText={result.interview_dominance_script}>
+              <Section title="Interview Dominance Script" copyText={result.interview_dominance_script}>
                 <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
                   {result.interview_dominance_script}
                 </p>
               </Section>
 
+              {/* ── AUTHORITY LAYER ── */}
+              <div className="pt-2">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Authority Layer — Strategic Assessment</p>
+              </div>
+
               {/* 9 — Match Score Forecast */}
-              <Section title="9. Match Score Forecast">
-                <div className="flex items-center gap-6">
+              <Section title="Match Score Forecast">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Before</p>
-                    <span className="text-2xl font-bold text-destructive">{result.match_score_forecast.before_percent}%</span>
+                    <span className="text-2xl font-bold text-destructive tabular-nums">{result.match_score_forecast.before_percent}%</span>
                   </div>
-                  <div className="flex-1 h-px bg-border" />
+                  <div className="flex-1 relative">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-destructive to-primary transition-all" style={{ width: `${result.match_score_forecast.after_percent}%` }} />
+                    </div>
+                    <div className="absolute top-3 left-0 right-0 flex justify-between">
+                      <span className="text-[9px] text-muted-foreground">0%</span>
+                      <span className="text-[9px] text-muted-foreground">Interview range →</span>
+                    </div>
+                  </div>
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">After</p>
-                    <span className="text-2xl font-bold text-primary">{result.match_score_forecast.after_percent}%</span>
+                    <span className="text-2xl font-bold text-primary tabular-nums">{result.match_score_forecast.after_percent}%</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1">{result.match_score_forecast.rationale}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-3">{result.match_score_forecast.rationale}</p>
               </Section>
 
               {/* ── STRATEGIC AUTHORITY LAYER ── */}
