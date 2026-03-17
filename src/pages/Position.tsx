@@ -1002,35 +1002,36 @@ const Position = () => {
 
   return (
     <div className="container max-w-6xl md:max-w-tool py-8">
-      {/* Header */}
+      {/* Header — clearly differentiated from Alignment Engine */}
       <div className="mb-8 text-center max-w-2xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-primary mb-2">Strategic Interpretation Layer</p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Strategic Positioning Engine
+          Signal Positioning Report
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Shifts perceived identity — not keyword density. Role DNA extraction, commercial value conversion, gap mitigation, calibrated bullet repositioning, and interview scripts. Zero fabrication.
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
+          The Alignment Engine scores where you stand. This report tells you <span className="font-medium text-foreground">exactly how to close the gap</span> — role identity deconstruction, commercial reframing, and strategic repositioning.
         </p>
       </div>
 
-      {/* Steps */}
+      {/* How it works — differentiates from AE */}
       <div className="mb-10 mx-auto max-w-2xl">
-        <ol className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { step: "Extract Role DNA", desc: "Identifies the 5 core identity pillars the employer is actually hiring for." },
-            { step: "Reposition Your Experience", desc: "Maps your real background into role-native commercial language — no fabrication." },
-            { step: "Get Your Full Package", desc: "Calibrated bullet repositioning, gap mitigation strategy, market position assessment, and interview intelligence." },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-4">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
-                {i + 1}
-              </span>
-              <div>
-                <p className="text-sm font-medium text-foreground">{item.step}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{item.desc}</p>
+            { step: "1", title: "Deconstruct", desc: "Extracts the 5 identity pillars the employer is actually hiring for — not keywords." },
+            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's commercial language with zero fabrication." },
+            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market position assessment." },
+          ].map((item) => (
+            <div key={item.step} className="rounded-lg border bg-card p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {item.step}
+                </span>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
               </div>
-            </li>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -1090,18 +1091,18 @@ const Position = () => {
           </div>
 
           {!effectiveIsPro ? (
-            <Button onClick={() => setShowUpgrade(true)} className="gap-2">
+            <Button onClick={() => setShowUpgrade(true)} className="gap-2" size="lg">
               <Lock className="h-4 w-4" />
-              Generate Positioning Package
+              Generate Positioning Report
             </Button>
           ) : (
-            <Button onClick={handleRun} disabled={loading} className="gap-2">
+            <Button onClick={handleRun} disabled={loading} className="gap-2" size="lg">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Generate Positioning Package
+              Generate Positioning Report
             </Button>
           )}
-          <p className="text-xs text-muted-foreground">
-            Takes 30–60 seconds. 11-section output. Zero fabrication.
+          <p className="text-[11px] text-muted-foreground">
+            Full 12-section strategic report · 30–60 seconds · Zero fabrication
           </p>
 
           <UpgradeModal
@@ -1115,7 +1116,7 @@ const Position = () => {
         </div>
 
         {/* Right — Results */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Three mutually exclusive display states: IDLE, RUNNING, COMPLETE */}
           {loading ? (
             /* RUNNING — generation in progress */
@@ -1127,9 +1128,15 @@ const Position = () => {
               jdLen={jd.length}
             />
           ) : !result ? (
-            /* IDLE — before Generate is clicked */
-            <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
-              <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
+            /* IDLE — premium diagnostic intro */
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] p-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your positioning report will appear here</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                This goes deeper than signal scoring — it deconstructs the role's identity requirements and rebuilds your narrative to match them.
+              </p>
             </div>
           ) : null}
 
