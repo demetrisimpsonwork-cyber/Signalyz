@@ -124,8 +124,8 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                 Fix This Now → $9
-               </Button>
+                Unlock Full Signal Intelligence — $19/mo
+              </Button>
 
               <div className="relative flex items-center justify-center">
                 <Separator className="flex-1" />

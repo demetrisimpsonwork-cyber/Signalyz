@@ -239,7 +239,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
             <p className="text-xs text-muted-foreground mt-1">Each variant targets a different recruiter search pattern for <span className="font-medium text-foreground">{inferredRole}</span>.</p>
           </div>
           {headlineVariants.map((v, i) => (
-            <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-lg border bg-muted/30 p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Before</p>
                 <p className="text-sm text-muted-foreground">{headline || <span className="italic">No headline provided</span>}</p>
@@ -267,7 +267,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
             <p className="section-label">About Section</p>
             <p className="text-xs text-muted-foreground mt-1">Repositioned to reinforce the same signal your calibrated resume sends — ownership language, commercial framing, and role-native terminology.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Before</p>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{aboutSection || <span className="italic">No About section provided</span>}</p>

@@ -179,8 +179,8 @@ class DirectorCalibrationErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-          <p className="text-sm text-white leading-relaxed">
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <p className="text-sm text-foreground leading-relaxed">
             Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.
           </p>
           <button
@@ -320,9 +320,9 @@ function DirectorModeContent({
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
         {directorError && !directorLoading && (
-          <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-            <p className="text-sm text-white leading-relaxed">{directorError}</p>
-            <Button onClick={onRunDirector} variant="outline" className="w-full gap-2 border-white/20 text-white hover:bg-white/10">
+          <div className="rounded-xl border bg-card p-6 space-y-4">
+            <p className="text-sm text-foreground leading-relaxed">{directorError}</p>
+            <Button onClick={onRunDirector} variant="outline" className="w-full gap-2">
               <RefreshCw className="h-4 w-4" />
               Retry Analysis
             </Button>
@@ -1078,7 +1078,7 @@ const Index = () => {
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
           <div className="relative lg:hidden w-full overflow-hidden">
-            <div className="flex overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <div className="flex overflow-x-auto w-full pb-1 items-center gap-0.5 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {([
                 { id: "alignment" as const, label: "Align", proOnly: false },
                 { id: "director" as const, label: "Position", proOnly: false },
@@ -1094,7 +1094,7 @@ const Index = () => {
                     setMode(tab.id);
                     requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
-                  className={`px-3 py-2.5 text-sm font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                  className={`px-2.5 py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
                     mode === tab.id
                       ? "text-primary border-primary"
                       : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"

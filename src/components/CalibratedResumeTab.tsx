@@ -261,8 +261,7 @@ const CalibratedResumeTab = ({
           />
 
           <div
-            className="rounded-lg py-8 px-4"
-            style={{ backgroundColor: "#F3F4F6" }}
+            className="rounded-lg py-8 px-4 bg-muted"
           >
             <div id="resume-canvas">
               <ResumeCanvas
