@@ -1302,7 +1302,7 @@ const Index = () => {
                       {subLoading ? "Initializing…" : "Run Alignment"}
                     </Button>
                   )}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     <span className="text-xs text-muted-foreground">Try sample:</span>
                     {SAMPLE_ROLES.map((r, i) => (
                       <button key={i} onClick={() => fillSample(i)} className="text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors">
