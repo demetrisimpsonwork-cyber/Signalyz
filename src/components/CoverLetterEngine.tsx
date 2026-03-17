@@ -440,48 +440,47 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
             </div>
           ) : (
             <div
-              className="mx-auto bg-white rounded-sm relative"
+              className="mx-auto rounded-sm relative"
               style={{
                 maxWidth: "720px",
                 boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
                 fontFamily: "'Georgia', 'Times New Roman', serif",
-                color: "#1A1A2E",
                 padding: "clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px)",
+                backgroundColor: "white",
               }}
             >
               {/* Candidate Header */}
               <div style={{ marginBottom: "20px" }}>
                 {contact.name && (
-                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A2E", marginBottom: "2px" }}>{contact.name}</p>
+                  <p className="text-foreground" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "2px" }}>{contact.name}</p>
                 )}
                 {(contact.email || contact.phone) && (
-                  <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "0" }}>
+                  <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "0" }}>
                     {[contact.email, contact.phone].filter(Boolean).join("  |  ")}
                   </p>
                 )}
               </div>
 
               {/* Date */}
-              <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "16px" }}>{formatDate()}</p>
+              <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px" }}>{formatDate()}</p>
 
               {/* Recipient */}
               {(hiringManager || companyName) && (
                 <div style={{ marginBottom: "16px" }}>
-                  {hiringManager && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{hiringManager}</p>}
-                  {companyName && <p style={{ fontSize: "12px", color: "#1A1A2E" }}>{companyName}</p>}
+                  {hiringManager && <p className="text-foreground" style={{ fontSize: "12px" }}>{hiringManager}</p>}
+                  {companyName && <p className="text-foreground" style={{ fontSize: "12px" }}>{companyName}</p>}
                 </div>
               )}
 
               {/* Salutation */}
-              <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "16px" }}>{salutation}</p>
+              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{salutation}</p>
 
               {/* Body — structured paragraphs */}
               <div style={{ marginBottom: "20px" }}>
                 {splitParagraphs(activeLetter).map((p, i) => (
-                  <p key={i} style={{
+                  <p key={i} className="text-foreground" style={{
                     fontSize: "11.5px",
                     lineHeight: "1.7",
-                    color: "#1A1A2E",
                     marginBottom: "14px",
                     fontWeight: 400,
                   }}>
@@ -492,9 +491,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
               {/* Closing */}
               <div>
-                <p style={{ fontSize: "12px", color: "#1A1A2E", marginBottom: "4px" }}>Sincerely,</p>
+                <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "4px" }}>Sincerely,</p>
                 {contact.name && (
-                  <p style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A2E" }}>{contact.name}</p>
+                  <p className="text-foreground" style={{ fontSize: "12px", fontWeight: 700 }}>{contact.name}</p>
                 )}
               </div>
             </div>
