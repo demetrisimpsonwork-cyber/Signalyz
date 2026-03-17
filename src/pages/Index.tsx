@@ -179,8 +179,8 @@ class DirectorCalibrationErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-          <p className="text-sm text-white leading-relaxed">
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <p className="text-sm text-foreground leading-relaxed">
             Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.
           </p>
           <button
