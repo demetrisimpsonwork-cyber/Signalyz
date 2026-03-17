@@ -1094,7 +1094,7 @@ const Index = () => {
                     setMode(tab.id);
                     requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
-                  className={`px-3 py-2.5 text-sm font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                  className={`px-2.5 py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
                     mode === tab.id
                       ? "text-primary border-primary"
                       : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
