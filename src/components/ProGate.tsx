@@ -127,8 +127,8 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                See My Exact Fix
-              </Button>
+                 Unlock My Exact Fix → $9
+               </Button>
 
               <div className="relative flex items-center justify-center">
                 <Separator className="flex-1" />
