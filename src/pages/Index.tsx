@@ -1517,20 +1517,20 @@ const Index = () => {
                             {/* Conversion CTA — after Primary Blocker, free users only */}
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                <p className="text-sm font-bold text-foreground">
-                                  You're 3 changes away from fixing this
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  You'll see exactly how your experience gets rewritten to match this role.
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Most users increase their signal score by 10–25 points after applying these fixes.
-                                </p>
-                                <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
-                                {user ? (
-                                  <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                    <span style={{ color: "inherit" }}>✦</span> See My Exact Fix
-                                  </Button>
+                                 <p className="text-sm font-bold text-foreground">
+                                   You're 3 changes away from fixing this
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   You'll see exactly how your experience gets rewritten to match this role.
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   Most users increase their signal score by 10–25 points after applying these fixes.
+                                 </p>
+                                 <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
+                                 {user ? (
+                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                                     <span style={{ color: "inherit" }}>✦</span> Unlock My Exact Fix → $9
+                                   </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
                                     <a href="/auth">Get Started Free</a>
