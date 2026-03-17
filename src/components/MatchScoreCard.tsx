@@ -125,6 +125,11 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
       <p className="mt-1.5 text-[11px] text-muted-foreground/70 italic">
         Most candidates who get interviews score 70%+
       </p>
+      {score < 70 && (
+        <p className="mt-0.5 text-[11px] font-semibold text-destructive">
+          You're {70 - score}% below interview range
+        </p>
+      )}
     </div>
   );
 };
