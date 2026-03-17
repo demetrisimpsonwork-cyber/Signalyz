@@ -798,6 +798,7 @@ const Index = () => {
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
+      console.log("[DEBUG] Full response signal_model:", JSON.stringify(res.signal_model?.signal_verdict ?? "MISSING"));
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
 
