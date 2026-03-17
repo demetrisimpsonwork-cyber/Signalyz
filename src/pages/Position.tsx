@@ -1329,7 +1329,7 @@ const Position = () => {
               </Section>
 
               {/* 6 — Optimized Summary */}
-              <Section title="6. Optimized Summary (Rebuilt Identity)" copyText={result.optimized_summary}>
+              <Section title="Optimized Summary" copyText={result.optimized_summary}>
                 <p className="text-sm leading-relaxed text-muted-foreground">{result.optimized_summary}</p>
               </Section>
 
