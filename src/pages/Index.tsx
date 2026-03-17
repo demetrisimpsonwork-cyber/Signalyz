@@ -1078,7 +1078,7 @@ const Index = () => {
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
           <div className="relative lg:hidden w-full overflow-hidden">
-            <div className="flex overflow-x-auto w-full pb-1 items-center gap-1 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <div className="flex overflow-x-auto w-full pb-1 items-center gap-0.5 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {([
                 { id: "alignment" as const, label: "Align", proOnly: false },
                 { id: "director" as const, label: "Position", proOnly: false },
