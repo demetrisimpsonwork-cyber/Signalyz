@@ -183,10 +183,10 @@ const Pricing = () => {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
             <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
-              See My Exact Fix — $19/month
+              Unlock My Exact Fix → $19/month
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
-              Need just one report? Unlock it for $9
+              Unlock My Exact Fix → $9
             </Button>
             <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
           </div>
