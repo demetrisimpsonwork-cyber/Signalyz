@@ -1334,7 +1334,7 @@ const Position = () => {
               </Section>
 
               {/* 7 — Bullet Rewrites */}
-              <Section title="7. Calibrated Bullet Repositioning">
+              <Section title="Calibrated Bullet Repositioning">
                 <div className="space-y-3">
                   {result.bullet_rewrites.map((b, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
