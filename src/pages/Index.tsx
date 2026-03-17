@@ -384,6 +384,7 @@ const Index = () => {
 
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
+    const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
     if (searchParams.get("upgrade") === "success") {
       trackEvent("payment_completed", { payment_mode: "subscription" });
       toast("Your exact fix is now unlocked — scroll to see your changes", {
@@ -394,10 +395,6 @@ const Index = () => {
       searchParams.delete("upgrade");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
-      // Scroll to results if they exist
-      setTimeout(() => {
-        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
-      }, 500);
     }
     if (searchParams.get("purchase") === "success") {
       trackEvent("payment_completed", { payment_mode: "one_time" });
@@ -409,26 +406,61 @@ const Index = () => {
       searchParams.delete("purchase");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
-      // Scroll to results if they exist
+    }
+    // Auto-restore previous analysis ONLY on post-payment return
+    if (isPostPayment) {
+      try {
+        const saved = localStorage.getItem("signalyz_last_analysis");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.result && parsed.bullet && parsed.jd) {
+            setResult(parsed.result);
+            setBullet(parsed.bullet);
+            setJd(parsed.jd);
+          }
+        }
+      } catch {}
       setTimeout(() => {
         document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
       }, 500);
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // Check if a previous analysis exists (but don't auto-load it)
+  const [hasSavedAnalysis, setHasSavedAnalysis] = useState(false);
+  const [savedAnalysisDismissed, setSavedAnalysisDismissed] = useState(false);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
-      if (saved && !result) {
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.result && parsed.bullet && parsed.jd) {
+          // Only show banner if inputs are still clean (user hasn't started typing)
+          setHasSavedAnalysis(true);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handleRestorePreviousRun = useCallback(() => {
+    try {
+      const saved = localStorage.getItem("signalyz_last_analysis");
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
           setResult(parsed.result);
           setBullet(parsed.bullet);
           setJd(parsed.jd);
+          setHasSavedAnalysis(false);
+          setSavedAnalysisDismissed(false);
         }
       }
     } catch {}
+  }, []);
+
+  const handleDismissSavedAnalysis = useCallback(() => {
+    setSavedAnalysisDismissed(true);
   }, []);
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
@@ -1215,6 +1247,25 @@ const Index = () => {
         {/* Alignment Mode */}
         {mode === "alignment" && (
           <>
+            {/* Continue previous analysis banner */}
+            {hasSavedAnalysis && !savedAnalysisDismissed && !result && !bullet && !jd && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">You have a previous analysis</p>
+                  <p className="text-xs text-muted-foreground">Pick up where you left off, or start fresh below.</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={handleDismissSavedAnalysis}>
+                    Start Fresh
+                  </Button>
+                  <Button size="sm" onClick={handleRestorePreviousRun} className="gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Continue Last Run
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className={`grid gap-6 sm:gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
               <div className="space-y-5">
