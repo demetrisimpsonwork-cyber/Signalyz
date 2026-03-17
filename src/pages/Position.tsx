@@ -1227,8 +1227,9 @@ const Position = () => {
                       </p>
                       <Button size="sm" className="gap-1.5 text-xs h-8 px-3">
                         <Lock className="h-3 w-3" />
-                        Unlock Full Employer Intelligence
+                        See My Exact Fix
                       </Button>
+                      <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                     </div>
                   )}
                 </Section>

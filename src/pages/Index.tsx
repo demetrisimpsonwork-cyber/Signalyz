@@ -1239,13 +1239,14 @@ const Index = () => {
                       {user ? (
                         <>
                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            Upgrade to Pro for Unlimited Runs
+                            See My Exact Fix
                           </Button>
                            <p className="text-xs text-muted-foreground">
                             {hasConsumedOneTimeCredit
-                              ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
-                              : "You've used your 3 free analyses today. Upgrade to Pro for unlimited runs."}
+                              ? "Your Single Report has been used. See your exact fix for unlimited runs."
+                              : "You've used your 3 free analyses today."}
                            </p>
+                           <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                         </>
                       ) : (
                         <>
@@ -1405,7 +1406,10 @@ const Index = () => {
                       <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
                       <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
                       {!effectiveIsPro && (
-                        <p className="text-xs text-destructive/80 italic">Leaving now means applying without fixing the gaps identified here.</p>
+                        <>
+                          <p className="text-xs text-destructive/80 italic">Leaving now means applying without fixing the gaps identified here.</p>
+                          <p className="text-xs font-medium text-destructive/70">This analysis won't be saved unless you continue.</p>
+                        </>
                       )}
                     </div>
 
@@ -1446,7 +1450,7 @@ const Index = () => {
                       {displayScore < 70 && (
                         <div className="space-y-1 pt-1">
                           <p className="text-xs font-medium text-destructive/90">You're currently below the threshold where interviews typically happen.</p>
-                          <p className="text-[11px] text-muted-foreground">Most candidates at this level are filtered out before hiring manager review.</p>
+                          <p className="text-[11px] text-muted-foreground">Most candidates who get interviews score 70%+</p>
                         </div>
                       )}
 
@@ -1519,6 +1523,7 @@ const Index = () => {
                                 <p className="text-xs text-muted-foreground">
                                   Most users increase their signal score by 10–25 points after applying these fixes.
                                 </p>
+                                <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                     <span style={{ color: "inherit" }}>✦</span> See My Exact Fix
@@ -1528,7 +1533,8 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes risks being ignored.</p>
+                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                               </div>
                             )}
 
@@ -1623,27 +1629,12 @@ const Index = () => {
                             This gap is fixable — but only if you apply the right positioning.
                           </p>
 
-                          <div className="space-y-1.5">
-                            <p className="text-xs font-medium text-muted-foreground">Upgrade to Pro to see:</p>
-                            <ul className="space-y-1 text-sm text-muted-foreground pl-0">
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                The exact resume changes that close your gap
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                Calibrated bullet rewrites tailored to this role
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                A repositioned professional summary
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                Interview signals hiring managers will probe
-                              </li>
-                            </ul>
+                          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
+                            <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
+                            <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
                           </div>
+
+                          <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
@@ -1654,6 +1645,8 @@ const Index = () => {
                               <a href="/auth">Get Started Free</a>
                             </Button>
                           )}
+                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                          <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
                         </div>
                       );
                     })()}

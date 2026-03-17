@@ -46,7 +46,7 @@ export function ProGate({
                 onClick={() => initiateCheckout("subscription")}
                 className="text-primary hover:underline font-medium"
               >
-                Go Pro for unlimited full analyses — $19/mo
+                See My Exact Fix — unlimited analyses for $19/mo
               </button>
             </p>
           </div>
@@ -94,10 +94,10 @@ export function ProGate({
 
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-foreground tracking-tight">
-              {isAuthenticated ? `Unlock ${featureName}` : "Create Your Free Account"}
+              {isAuthenticated ? "3 exact changes that would move your score above 70%" : "Create Your Free Account"}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {isAuthenticated ? featureDescription : "Sign up to access this feature — 3 free analyses included."}
+              {isAuthenticated ? "You're closer than you think — but missing positioning, not experience." : "Sign up to access this feature — 3 free analyses included."}
             </p>
           </div>
 
@@ -136,8 +136,10 @@ export function ProGate({
                 variant="outline"
                 className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
-                Unlock Full Report — $9 one-time
+                See My Exact Fix — $9 one-time
               </Button>
+              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+              <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
             </div>
           ) : (
             <Button

@@ -146,10 +146,11 @@ const UpgradeModal = ({
                 initiateCheckout("subscription");
               }}
             >
-              Unlock Full Access → $19/month
+              See My Exact Fix → $19/month
             </Button>
 
-            <p className="text-xs text-destructive/70 italic text-center">Every application without this fix risks rejection.</p>
+            <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+            <p className="text-xs text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
           </div>
         </div>
 

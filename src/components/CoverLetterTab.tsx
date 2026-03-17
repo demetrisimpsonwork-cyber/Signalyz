@@ -82,7 +82,7 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
           <div className="flex flex-col gap-2 w-full max-w-xs">
             <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
               <Lock className="h-4 w-4" />
-              Go Pro — $19/month
+              See My Exact Fix
             </Button>
             <Button
               variant="outline"
@@ -91,8 +91,9 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
                 import("@/utils/stripe").then(m => m.initiateCheckout("one_time"));
               }}
             >
-              Unlock Full Report — $9
+              See My Exact Fix — $9
             </Button>
+            <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
           </div>
         ) : (
           <Button size="lg" className="gap-2" asChild>
