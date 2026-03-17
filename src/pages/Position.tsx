@@ -906,7 +906,7 @@ const Position = () => {
   const handleDownload = () => {
     if (!result) return;
     const lines: string[] = [
-      "SIGNALYZ — STRATEGIC POSITIONING ENGINE (ROLE DNA)",
+      "SIGNALYZ — SIGNAL POSITIONING REPORT",
       "===================================================",
       "",
       "1. ROLE DNA EXTRACTION",
