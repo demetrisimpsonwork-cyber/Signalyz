@@ -1038,6 +1038,7 @@ USER_PLAN: ${userPlan}`;
       })(),
       match_score: titan.match_score || { score: matchScore, label: confidenceLevel, score_rationale: [] },
       scoring_breakdown: breakdown,
+      signal_verdict: titan.signal_verdict || null,
     };
 
     const result = {
