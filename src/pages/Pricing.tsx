@@ -111,7 +111,7 @@ const Pricing = () => {
               variant="default"
               onClick={() => initiateCheckout("subscription")}
             >
-              Fix My Signal
+              See My Exact Fix
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
