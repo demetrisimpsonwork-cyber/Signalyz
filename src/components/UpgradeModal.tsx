@@ -132,6 +132,7 @@ const UpgradeModal = ({
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
+                trackEvent("cta_clicked", { cta_label: "Fix This Now → $9", source: "upgrade_modal" });
                 onClose();
                 initiateCheckout("one_time");
               }}
