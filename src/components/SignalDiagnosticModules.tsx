@@ -436,7 +436,7 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
           const deltaPct = afterPct - beforePct;
           return (
             <div key={key} className="space-y-1">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-0">
                 <p className="text-xs font-medium text-foreground">{label}</p>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground tabular-nums">{beforePct}%</span>
