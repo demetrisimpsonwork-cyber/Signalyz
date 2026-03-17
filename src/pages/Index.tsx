@@ -1239,13 +1239,14 @@ const Index = () => {
                       {user ? (
                         <>
                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            Upgrade to Pro for Unlimited Runs
+                            See My Exact Fix
                           </Button>
                            <p className="text-xs text-muted-foreground">
                             {hasConsumedOneTimeCredit
-                              ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
-                              : "You've used your 3 free analyses today. Upgrade to Pro for unlimited runs."}
+                              ? "Your Single Report has been used. See your exact fix for unlimited runs."
+                              : "You've used your 3 free analyses today."}
                            </p>
+                           <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                         </>
                       ) : (
                         <>

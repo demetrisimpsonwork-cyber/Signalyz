@@ -315,13 +315,17 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
         <Lock className="h-8 w-8 text-muted-foreground" />
         <h3 className="text-lg font-bold text-foreground">Your Calibrated Resume is ready to assemble</h3>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-          {user ? "Upgrade to Pro to auto-assemble, edit, and export your signal-optimized resume." : "Sign up to access resume assembly — 3 free analyses included."}
+          {user ? "3 exact changes that would move your score above 70%. You're closer than you think." : "Sign up to access resume assembly — 3 free analyses included."}
         </p>
         {user ? (
-          <Button onClick={onUpgrade} size="lg" className="gap-2">
-            <Lock className="h-4 w-4" />
-            Unlock Calibrated Resume
-          </Button>
+          <>
+            <Button onClick={onUpgrade} size="lg" className="gap-2">
+              <Lock className="h-4 w-4" />
+              See My Exact Fix
+            </Button>
+            <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+          </>
+        
         ) : (
           <Button size="lg" className="gap-2" asChild>
             <a href="/auth">Get Started Free</a>

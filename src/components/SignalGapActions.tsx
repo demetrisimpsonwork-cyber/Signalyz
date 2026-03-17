@@ -76,13 +76,14 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
         </div>
         <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-          <p className="text-sm font-semibold text-foreground">Unlock Signal Gap Actions — Full Signal Intelligence</p>
-          <p className="text-xs text-muted-foreground">See exactly what's reducing your match and how to fix it.</p>
+          <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
+          <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence — $19/month</Button>
+            <Button size="sm" onClick={onUpgrade}>See My Exact Fix</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
+          <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
         </div>
       </div>
     );

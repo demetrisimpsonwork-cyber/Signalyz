@@ -136,8 +136,10 @@ export function ProGate({
                 variant="outline"
                 className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
-                Unlock Full Report — $9 one-time
+                See My Exact Fix — $9 one-time
               </Button>
+              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+              <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
             </div>
           ) : (
             <Button
