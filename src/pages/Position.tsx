@@ -1300,18 +1300,18 @@ const Position = () => {
               </Section>
 
               {/* 5 — Gap Strategy */}
-              <Section title="5. Gap Strategy">
-                <div className="space-y-3">
+              <Section title="Gap Strategy">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Hard Gaps</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps</p>
                     <BulletList items={result.gap_strategy.hard_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Perception Gaps</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps</p>
                     <BulletList items={result.gap_strategy.perception_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Mitigation</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Mitigation Playbook</p>
                     <div className="space-y-2">
                       {result.gap_strategy.mitigation.map((m, i) => (
                         <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
