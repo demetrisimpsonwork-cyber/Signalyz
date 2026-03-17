@@ -1279,7 +1279,7 @@ const Position = () => {
               </Section>
 
               {/* 4 — Commercial Value */}
-              <Section title="4. Commercial Value Conversion">
+              <Section title="Commercial Value Conversion">
                 <div className="space-y-3">
                   {result.commercial_value_conversion.map((c, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
