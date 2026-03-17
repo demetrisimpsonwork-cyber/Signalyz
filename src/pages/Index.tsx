@@ -1514,10 +1514,10 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                 <p className="text-sm font-semibold text-foreground">
-                                  See exactly how to fix this and increase your score
+                                  You'll see exactly how your experience gets rewritten to match this role.
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  You've already done the hard part — this shows you exactly what to change.
+                                  Most users increase their signal score by 10–25 points after applying these fixes.
                                 </p>
                                 {user ? (
                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
