@@ -1449,7 +1449,7 @@ const Index = () => {
                       {displayScore < 70 && (
                         <div className="space-y-1 pt-1">
                           <p className="text-xs font-medium text-destructive/90">You're currently below the threshold where interviews typically happen.</p>
-                          <p className="text-[11px] text-muted-foreground">Most candidates at this level are filtered out before hiring manager review.</p>
+                          <p className="text-[11px] text-muted-foreground">Most candidates who get interviews score 70%+</p>
                         </div>
                       )}
 
