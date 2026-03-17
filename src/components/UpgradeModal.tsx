@@ -8,6 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { initiateCheckout } from "@/utils/stripe";
 import { Separator } from "@/components/ui/separator";
+import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -30,6 +32,11 @@ const UpgradeModal = ({
   isAuthenticated = true,
   hasConsumedOneTimeCredit = false,
 }: UpgradeModalProps) => {
+
+  // Track paywall view
+  useEffect(() => {
+    if (open) trackEvent("paywall_viewed");
+  }, [open]);
 
   const handleStartTrial = () => {
     onStartTrial?.();
@@ -125,6 +132,7 @@ const UpgradeModal = ({
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
+                trackEvent("cta_clicked", { cta_label: "Fix This Now → $9", source: "upgrade_modal" });
                 onClose();
                 initiateCheckout("one_time");
               }}
@@ -142,6 +150,7 @@ const UpgradeModal = ({
               variant="outline"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
+                trackEvent("cta_clicked", { cta_label: "Fix This Now → $19/month", source: "upgrade_modal" });
                 onClose();
                 initiateCheckout("subscription");
               }}
