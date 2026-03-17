@@ -357,31 +357,30 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       ) : activeLetter ? (
         <>
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5 flex-wrap">
+          <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs whitespace-nowrap">
+              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-                Regenerate
+                <span className="hidden sm:inline">Regenerate</span>
               </Button>
               <Button
                 variant={isEditing ? "default" : "outline"}
                 size="sm"
                 onClick={handleToggleEdit}
-                className="gap-1.5 text-xs whitespace-nowrap"
+                className="gap-1.5 text-xs"
               >
                 {isEditing ? <Eye className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
                 {isEditing ? "Preview" : "Edit"}
               </Button>
             </div>
-            <div className="flex items-center gap-2 flex-col w-full md:w-auto md:flex-row">
-              <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
                 {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Copied" : "Copy Letter"}
+                <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+              <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs">
                 <Download className="h-3 w-3" />
-                <span className="hidden md:inline">Export Letter (.docx)</span>
-                <span className="md:hidden">DOCX (.docx)</span>
+                <span className="hidden sm:inline">Export .docx</span>
               </Button>
             </div>
           </div>

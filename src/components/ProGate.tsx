@@ -93,17 +93,14 @@ export function ProGate({
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-lg font-bold text-foreground tracking-tight">
+           <h3 className="text-lg font-bold text-foreground tracking-tight">
                {isAuthenticated ? "3 exact changes that would move your score above 70%" : "Create Your Free Account"}
              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                {isAuthenticated ? "You're closer than you think — but missing positioning, not experience." : "Sign up to access this feature — 3 free analyses included."}
              </p>
              {isAuthenticated && (
-               <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
-             )}
-             {isAuthenticated && (
-               <p className="text-[11px] font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck</p>
+               <p className="text-[11px] font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck.</p>
              )}
           </div>
 

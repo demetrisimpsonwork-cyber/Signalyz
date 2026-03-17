@@ -283,18 +283,17 @@ const CalibratedResumeTab = ({
 
           {/* Re-run Signal Analysis with calibrated text */}
           {onRerunSignalAnalysis && (
-            <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="flex-1 space-y-0.5">
-                <p className="text-sm font-medium text-foreground">Re-score with your calibrated resume</p>
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <p className="text-sm font-medium text-foreground">See your new score</p>
                 <p className="text-xs text-muted-foreground">
                   {originalResumeBeforeCalibration
-                    ? "Run the Alignment Engine using your calibrated output to see your updated score."
+                    ? "Re-run the Alignment Engine with your calibrated resume to measure the signal improvement."
                     : "Original resume baseline not found — re-run alignment from the Alignment tab first."}
                 </p>
               </div>
               <Button
                 size="sm"
-                variant="outline"
                 className="gap-2 shrink-0"
                 disabled={!originalResumeBeforeCalibration}
                 onClick={() => {
@@ -303,7 +302,7 @@ const CalibratedResumeTab = ({
                 }}
               >
                 <RefreshCw className="h-4 w-4" />
-                Re-run Signal Analysis
+                Re-score Now
               </Button>
             </div>
           )}
