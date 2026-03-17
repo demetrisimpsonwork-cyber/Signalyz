@@ -129,7 +129,7 @@ const UpgradeModal = ({
                 initiateCheckout("one_time");
               }}
             >
-              {hasConsumedOneTimeCredit ? "Unlock My Exact Fix Again → $9" : "Unlock My Exact Fix → $9"}
+              {hasConsumedOneTimeCredit ? "Fix This Now → $9" : "Fix This Now → $9"}
             </Button>
 
             <div className="relative flex items-center justify-center">
