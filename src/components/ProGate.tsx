@@ -46,7 +46,7 @@ export function ProGate({
                 onClick={() => initiateCheckout("subscription")}
                 className="text-primary hover:underline font-medium"
               >
-                Go Pro for unlimited full analyses — $19/mo
+                See My Exact Fix — unlimited analyses for $19/mo
               </button>
             </p>
           </div>
