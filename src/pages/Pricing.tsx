@@ -111,7 +111,7 @@ const Pricing = () => {
               variant="default"
               onClick={() => initiateCheckout("subscription")}
             >
-              See My Exact Fix
+               Unlock My Exact Fix → $19/mo
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
