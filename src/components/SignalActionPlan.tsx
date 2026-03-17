@@ -81,7 +81,7 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
   if (actions.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3 min-w-0 w-full overflow-hidden">
       <div className="space-y-1.5">
         <h3 className="text-sm font-semibold tracking-tight text-foreground">
           Your Signal Action Plan
@@ -95,11 +95,11 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
       </div>
       <ol className="space-y-2 pl-0">
         {actions.map((action, i) => (
-          <li key={i} className="flex items-start gap-2.5">
+          <li key={i} className="flex items-start gap-2.5 min-w-0">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
               {i + 1}
             </span>
-            <span className="text-sm text-muted-foreground leading-relaxed">{action}</span>
+            <span className="text-sm text-muted-foreground leading-relaxed break-words min-w-0">{action}</span>
           </li>
         ))}
       </ol>

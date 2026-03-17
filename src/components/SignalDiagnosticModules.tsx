@@ -436,7 +436,7 @@ function SignalShiftVisualization({ data }: { data: NonNullable<SignalDiagnostic
           const deltaPct = afterPct - beforePct;
           return (
             <div key={key} className="space-y-1">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-0">
                 <p className="text-xs font-medium text-foreground">{label}</p>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground tabular-nums">{beforePct}%</span>
@@ -642,9 +642,9 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
             const ahead = userDisp >= medianDisp;
             return (
               <div key={i} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-foreground">{dim.dimension}</p>
-                  <div className="flex items-center gap-3 text-xs tabular-nums">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-0">
+                  <p className="text-xs font-medium text-foreground break-words min-w-0">{dim.dimension}</p>
+                  <div className="flex items-center gap-3 text-xs tabular-nums shrink-0">
                     <span className={ahead ? "font-semibold text-green-600 dark:text-green-400" : "font-semibold text-orange-600 dark:text-orange-400"}>
                       You: {userDisp}
                     </span>
@@ -662,7 +662,7 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
                   />
                 </div>
                 {dim.gap_explanation && (
-                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed">{dim.gap_explanation}</p>
+                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed break-words">{dim.gap_explanation}</p>
                 )}
               </div>
             );
@@ -726,15 +726,15 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         isPro ? (
           <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
               <div className="text-center">
                 <p className="text-[10px] text-muted-foreground">Current</p>
-                <p className="text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
+                <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
               </div>
-              <ArrowRight className="h-5 w-5 text-primary" />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
               <div className="text-center">
                 <p className="text-[10px] text-muted-foreground">After Calibration</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
+                <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
               </div>
             </div>
           </div>
