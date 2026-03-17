@@ -296,18 +296,24 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   return (
     <div className="space-y-3">
-      {/* Tone selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
-        <div className="flex gap-1 flex-wrap">
+      {/* Context + Tone selector */}
+      <div className="rounded-lg border bg-card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            Calibrating for: <span className="text-primary">{inferredRole || "Target Role"}</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Signal-aligned cover letter built from your alignment analysis</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mr-1">Tone</span>
           {TONES.map((t) => (
             <button
               key={t.value}
               onClick={() => setTone(t.value)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
                 tone === t.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-foreground/30"
               }`}
             >
               {t.label}
