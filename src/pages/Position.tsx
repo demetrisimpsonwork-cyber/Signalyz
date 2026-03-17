@@ -906,7 +906,7 @@ const Position = () => {
   const handleDownload = () => {
     if (!result) return;
     const lines: string[] = [
-      "SIGNALYZ — STRATEGIC POSITIONING ENGINE (ROLE DNA)",
+      "SIGNALYZ — SIGNAL POSITIONING REPORT",
       "===================================================",
       "",
       "1. ROLE DNA EXTRACTION",
@@ -1002,35 +1002,36 @@ const Position = () => {
 
   return (
     <div className="container max-w-6xl md:max-w-tool py-8">
-      {/* Header */}
+      {/* Header — clearly differentiated from Alignment Engine */}
       <div className="mb-8 text-center max-w-2xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-primary mb-2">Strategic Interpretation Layer</p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Strategic Positioning Engine
+          Signal Positioning Report
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Shifts perceived identity — not keyword density. Role DNA extraction, commercial value conversion, gap mitigation, calibrated bullet repositioning, and interview scripts. Zero fabrication.
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
+          The Alignment Engine scores where you stand. This report tells you <span className="font-medium text-foreground">exactly how to close the gap</span> — role identity deconstruction, commercial reframing, and strategic repositioning.
         </p>
       </div>
 
-      {/* Steps */}
+      {/* How it works — differentiates from AE */}
       <div className="mb-10 mx-auto max-w-2xl">
-        <ol className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { step: "Extract Role DNA", desc: "Identifies the 5 core identity pillars the employer is actually hiring for." },
-            { step: "Reposition Your Experience", desc: "Maps your real background into role-native commercial language — no fabrication." },
-            { step: "Get Your Full Package", desc: "Calibrated bullet repositioning, gap mitigation strategy, market position assessment, and interview intelligence." },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-4">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium text-muted-foreground">
-                {i + 1}
-              </span>
-              <div>
-                <p className="text-sm font-medium text-foreground">{item.step}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{item.desc}</p>
+            { step: "1", title: "Deconstruct", desc: "Extracts the 5 identity pillars the employer is actually hiring for — not keywords." },
+            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's commercial language with zero fabrication." },
+            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market position assessment." },
+          ].map((item) => (
+            <div key={item.step} className="rounded-lg border bg-card p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {item.step}
+                </span>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
               </div>
-            </li>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -1090,18 +1091,18 @@ const Position = () => {
           </div>
 
           {!effectiveIsPro ? (
-            <Button onClick={() => setShowUpgrade(true)} className="gap-2">
+            <Button onClick={() => setShowUpgrade(true)} className="gap-2" size="lg">
               <Lock className="h-4 w-4" />
-              Generate Positioning Package
+              Generate Positioning Report
             </Button>
           ) : (
-            <Button onClick={handleRun} disabled={loading} className="gap-2">
+            <Button onClick={handleRun} disabled={loading} className="gap-2" size="lg">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Generate Positioning Package
+              Generate Positioning Report
             </Button>
           )}
-          <p className="text-xs text-muted-foreground">
-            Takes 30–60 seconds. 11-section output. Zero fabrication.
+          <p className="text-[11px] text-muted-foreground">
+            Full 12-section strategic report · 30–60 seconds · Zero fabrication
           </p>
 
           <UpgradeModal
@@ -1115,7 +1116,7 @@ const Position = () => {
         </div>
 
         {/* Right — Results */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Three mutually exclusive display states: IDLE, RUNNING, COMPLETE */}
           {loading ? (
             /* RUNNING — generation in progress */
@@ -1127,17 +1128,28 @@ const Position = () => {
               jdLen={jd.length}
             />
           ) : !result ? (
-            /* IDLE — before Generate is clicked */
-            <div className="flex h-80 items-center justify-center rounded-lg border border-dashed bg-card">
-              <p className="text-sm text-muted-foreground">Your positioning package will appear here</p>
+            /* IDLE — premium diagnostic intro */
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] p-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your positioning report will appear here</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                This goes deeper than signal scoring — it deconstructs the role's identity requirements and rebuilds your narrative to match them.
+              </p>
             </div>
           ) : null}
 
           {/* COMPLETE — only render output when not loading and result exists */}
           {!loading && !timedOut && result && (
             <>
+              {/* ── INTELLIGENCE LAYER ── */}
+              <div className="pt-1">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Intelligence Layer — Role Deconstruction</p>
+              </div>
+
               {/* 1 — Role DNA */}
-              <Section title="1. Role DNA Extraction">
+              <Section title="Role DNA Extraction">
                 <div className="space-y-2">
                   {result.role_dna.map((p, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-1">
@@ -1157,8 +1169,8 @@ const Position = () => {
               {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (() => {
                 const calTemplate = detectCalibrationTemplate(result);
                 const sectionTitle = calTemplate === "operations_supervisor"
-                  ? "2. Operations Supervisor Hiring Calibration"
-                  : "2. PM Hiring Calibration Report";
+                  ? "Hiring Calibration — Operations Supervisor"
+                  : "Hiring Calibration Report";
                 const activeStandards = calTemplate === "operations_supervisor" ? OPS_PILLAR_STANDARDS : PILLAR_STANDARDS;
                 return (
                 <Section title={sectionTitle} proLabel>
@@ -1236,13 +1248,18 @@ const Position = () => {
                 );
               })()}
 
+              {/* ── CONVERSION LAYER ── */}
+              <div className="pt-2">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Conversion Layer — Repositioning & Reframing</p>
+              </div>
+
               {/* 3 — Repositioning Matrix */}
-              <Section title="3. Experience Repositioning Matrix">
+              <Section title="Experience Repositioning Matrix">
                 <div className="space-y-3">
                   {result.repositioning_matrix.map((m, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
                       <p className="text-xs font-semibold text-foreground">{m.pillar}</p>
-                      <div className="grid grid-cols-1 gap-1">
+                      <div className="grid grid-cols-1 gap-1.5">
                         <div>
                           <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Real Experience</span>
                           <p className="text-xs text-muted-foreground mt-0.5">{m.matching_experience}</p>
@@ -1262,7 +1279,7 @@ const Position = () => {
               </Section>
 
               {/* 4 — Commercial Value */}
-              <Section title="4. Commercial Value Conversion">
+              <Section title="Commercial Value Conversion">
                 <div className="space-y-3">
                   {result.commercial_value_conversion.map((c, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
@@ -1283,18 +1300,18 @@ const Position = () => {
               </Section>
 
               {/* 5 — Gap Strategy */}
-              <Section title="5. Gap Strategy">
-                <div className="space-y-3">
+              <Section title="Gap Strategy">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Hard Gaps</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps</p>
                     <BulletList items={result.gap_strategy.hard_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Perception Gaps</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps</p>
                     <BulletList items={result.gap_strategy.perception_gaps} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Mitigation</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Mitigation Playbook</p>
                     <div className="space-y-2">
                       {result.gap_strategy.mitigation.map((m, i) => (
                         <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
@@ -1312,12 +1329,12 @@ const Position = () => {
               </Section>
 
               {/* 6 — Optimized Summary */}
-              <Section title="6. Optimized Summary (Rebuilt Identity)" copyText={result.optimized_summary}>
+              <Section title="Optimized Summary" copyText={result.optimized_summary}>
                 <p className="text-sm leading-relaxed text-muted-foreground">{result.optimized_summary}</p>
               </Section>
 
               {/* 7 — Bullet Rewrites */}
-              <Section title="7. Calibrated Bullet Repositioning">
+              <Section title="Calibrated Bullet Repositioning">
                 <div className="space-y-3">
                   {result.bullet_rewrites.map((b, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
@@ -1335,33 +1352,46 @@ const Position = () => {
               </Section>
 
               {/* 8 — Interview Dominance Script */}
-              <Section title="8. Interview Dominance Script" copyText={result.interview_dominance_script}>
+              <Section title="Interview Dominance Script" copyText={result.interview_dominance_script}>
                 <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
                   {result.interview_dominance_script}
                 </p>
               </Section>
 
+              {/* ── AUTHORITY LAYER ── */}
+              <div className="pt-2">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Authority Layer — Strategic Assessment</p>
+              </div>
+
               {/* 9 — Match Score Forecast */}
-              <Section title="9. Match Score Forecast">
-                <div className="flex items-center gap-6">
+              <Section title="Match Score Forecast">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Before</p>
-                    <span className="text-2xl font-bold text-destructive">{result.match_score_forecast.before_percent}%</span>
+                    <span className="text-2xl font-bold text-destructive tabular-nums">{result.match_score_forecast.before_percent}%</span>
                   </div>
-                  <div className="flex-1 h-px bg-border" />
+                  <div className="flex-1 relative">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-destructive to-primary transition-all" style={{ width: `${result.match_score_forecast.after_percent}%` }} />
+                    </div>
+                    <div className="absolute top-3 left-0 right-0 flex justify-between">
+                      <span className="text-[9px] text-muted-foreground">0%</span>
+                      <span className="text-[9px] text-muted-foreground">Interview range →</span>
+                    </div>
+                  </div>
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">After</p>
-                    <span className="text-2xl font-bold text-primary">{result.match_score_forecast.after_percent}%</span>
+                    <span className="text-2xl font-bold text-primary tabular-nums">{result.match_score_forecast.after_percent}%</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1">{result.match_score_forecast.rationale}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-3">{result.match_score_forecast.rationale}</p>
               </Section>
 
               {/* ── STRATEGIC AUTHORITY LAYER ── */}
 
               {/* 10 — Market Position Assessment (always visible) */}
               {result.market_position_assessment && (
-                <Section title="10. Market Position Assessment">
+                <Section title="Market Position Assessment">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${levelColor(result.market_position_assessment.level)}`}>
@@ -1389,7 +1419,7 @@ const Position = () => {
 
               {/* 11 — Competitive Risk Signals (free: 1–2, pro: all) */}
               {result.competitive_risk_signals && result.competitive_risk_signals.length > 0 && (
-                <Section title="11. Competitive Risk Signals">
+                <Section title="Competitive Risk Signals">
                   <div className="space-y-2">
                     {(effectiveIsPro
                       ? result.competitive_risk_signals
@@ -1412,7 +1442,7 @@ const Position = () => {
               {/* 12 — Interview Trajectory (pro: full, free: locked) */}
               {result.interview_trajectory && (
                 (effectiveIsPro || subLoading) ? (
-                  <Section title="12. Interview Trajectory Preview" proLabel>
+                  <Section title="Interview Trajectory Preview" proLabel>
                     <div className="space-y-3">
                       <div>
                         <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
@@ -1439,7 +1469,7 @@ const Position = () => {
                     </div>
                   </Section>
                 ) : (
-                  <LockedSection title="12. Interview Trajectory Preview" />
+                  <LockedSection title="Interview Trajectory Preview" />
                 )
               )}
 
