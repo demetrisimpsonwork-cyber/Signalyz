@@ -129,7 +129,7 @@ const UpgradeModal = ({
                 initiateCheckout("one_time");
               }}
             >
-              {hasConsumedOneTimeCredit ? "See My Exact Fix Again → $9" : "See My Exact Fix → $9"}
+              {hasConsumedOneTimeCredit ? "Unlock My Exact Fix Again → $9" : "Unlock My Exact Fix → $9"}
             </Button>
 
             <div className="relative flex items-center justify-center">
@@ -146,7 +146,7 @@ const UpgradeModal = ({
                 initiateCheckout("subscription");
               }}
             >
-              See My Exact Fix → $19/month
+              Unlock My Exact Fix → $19/month
             </Button>
 
             <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
