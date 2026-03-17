@@ -1628,27 +1628,12 @@ const Index = () => {
                             This gap is fixable — but only if you apply the right positioning.
                           </p>
 
-                          <div className="space-y-1.5">
-                            <p className="text-xs font-medium text-muted-foreground">Upgrade to Pro to see:</p>
-                            <ul className="space-y-1 text-sm text-muted-foreground pl-0">
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                The exact resume changes that close your gap
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                Calibrated bullet rewrites tailored to this role
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                A repositioned professional summary
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                Interview signals hiring managers will probe
-                              </li>
-                            </ul>
+                          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
+                            <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
+                            <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
                           </div>
+
+                          <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
@@ -1659,6 +1644,8 @@ const Index = () => {
                               <a href="/auth">Get Started Free</a>
                             </Button>
                           )}
+                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                          <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
                         </div>
                       );
                     })()}
