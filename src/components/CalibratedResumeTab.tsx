@@ -321,7 +321,7 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
           <>
             <Button onClick={onUpgrade} size="lg" className="gap-2">
               <Lock className="h-4 w-4" />
-              Unlock My Exact Fix → $9
+              Fix This Now → $9
             </Button>
             <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
           </>

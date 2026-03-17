@@ -80,7 +80,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
           <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
           <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Unlock My Exact Fix → $9</Button>
+            <Button size="sm" onClick={onUpgrade}>Fix This Now → $9</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
