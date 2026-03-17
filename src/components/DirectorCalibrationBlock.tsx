@@ -383,10 +383,10 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
       <BlockShell label={`${roleLabel} Dimension Calibration`}>
         <div className="divide-y divide-border/50">
           {dimensions.map((dim) => (
-            <div key={dim.name} className="px-4 py-4 space-y-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold text-foreground">{dim.name}</p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${classificationStyleFor(dim.classification)}`}>
+            <div key={dim.name} className="px-3 sm:px-4 py-4 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-3">
+                <p className="text-xs font-semibold text-foreground break-words min-w-0">{dim.name}</p>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 self-start sm:self-auto whitespace-nowrap ${classificationStyleFor(dim.classification)}`}>
                   {dim.classification}
                 </span>
               </div>

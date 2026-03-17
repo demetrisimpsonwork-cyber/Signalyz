@@ -150,7 +150,7 @@ const RepositioningChangesPanel = ({
   const dimensions = analyzeDimensions(originalResume, calibratedResume);
 
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-4">
+    <div className="rounded-lg border bg-card p-4 sm:p-5 space-y-4 min-w-0 w-full overflow-hidden">
       <div className="space-y-0.5">
         <h3 className="text-sm font-semibold text-foreground">
           What Repositioning Changed
@@ -160,24 +160,24 @@ const RepositioningChangesPanel = ({
         </p>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-3 sm:space-y-2.5">
         {dimensions.map((dim) => {
           const config = directionConfig[dim.direction];
           const Icon = config.icon;
           return (
             <div
               key={dim.name}
-              className="flex items-start gap-3 text-sm"
+              className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-sm border-b border-border/30 pb-3 sm:pb-0 sm:border-0 last:border-0 last:pb-0"
             >
-              <span className="font-medium text-foreground min-w-[180px] shrink-0">
+              <span className="font-medium text-foreground sm:min-w-[180px] sm:shrink-0 break-words">
                 {dim.name}
               </span>
-              <span className={`flex items-center gap-1 shrink-0 font-medium ${config.className}`}>
+              <span className={`flex items-center gap-1 shrink-0 font-medium text-xs ${config.className}`}>
                 <Icon className="h-3.5 w-3.5" />
                 {config.label}
               </span>
-              <span className="text-muted-foreground text-xs leading-5">
-                — {dim.explanation}
+              <span className="text-muted-foreground text-xs leading-5 break-words">
+                {dim.explanation}
               </span>
             </div>
           );
