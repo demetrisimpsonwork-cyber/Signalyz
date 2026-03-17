@@ -1268,8 +1268,8 @@ const Index = () => {
 
             <div className={`grid gap-6 sm:gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
-              <div className="space-y-5">
-                <div>
+              <div className="space-y-5 min-w-0">
+                <div className="min-w-0">
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
@@ -1288,8 +1288,8 @@ const Index = () => {
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
                       onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); }}
-                      rows={4}
-                      className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
+                      rows={bullet && bullet.length > 200 ? 8 : 4}
+                      className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""} max-h-[50vh] overflow-y-auto break-words whitespace-pre-wrap`}
                     />
                     {bullet && (
                       <button
