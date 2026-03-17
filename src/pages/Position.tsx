@@ -1419,7 +1419,7 @@ const Position = () => {
 
               {/* 11 — Competitive Risk Signals (free: 1–2, pro: all) */}
               {result.competitive_risk_signals && result.competitive_risk_signals.length > 0 && (
-                <Section title="11. Competitive Risk Signals">
+                <Section title="Competitive Risk Signals">
                   <div className="space-y-2">
                     {(effectiveIsPro
                       ? result.competitive_risk_signals
