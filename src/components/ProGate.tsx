@@ -102,7 +102,6 @@ export function ProGate({
             {isAuthenticated && (
               <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
             )}
-            </p>
           </div>
 
           {isAuthenticated ? (
