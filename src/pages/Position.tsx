@@ -1469,7 +1469,7 @@ const Position = () => {
                     </div>
                   </Section>
                 ) : (
-                  <LockedSection title="12. Interview Trajectory Preview" />
+                  <LockedSection title="Interview Trajectory Preview" />
                 )
               )}
 
