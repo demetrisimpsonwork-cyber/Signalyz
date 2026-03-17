@@ -33,6 +33,11 @@ const UpgradeModal = ({
   hasConsumedOneTimeCredit = false,
 }: UpgradeModalProps) => {
 
+  // Track paywall view
+  useEffect(() => {
+    if (open) trackEvent("paywall_viewed");
+  }, [open]);
+
   const handleStartTrial = () => {
     onStartTrial?.();
     onClose();

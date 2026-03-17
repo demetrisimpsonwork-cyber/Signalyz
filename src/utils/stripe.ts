@@ -18,6 +18,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
   const cancelParam = isOneTime ? "purchase=cancelled" : "upgrade=cancelled";
 
   try {
+    trackEvent("payment_started", { payment_mode: mode });
     console.log("[Checkout] Invoking create-checkout edge function… mode:", mode);
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
