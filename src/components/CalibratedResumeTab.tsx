@@ -215,12 +215,18 @@ const CalibratedResumeTab = ({
       {loading && <ResumeAssemblyLoader currentStep={step} />}
 
       {error && !loading && (
-        <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-          <p className="text-sm text-white leading-relaxed">{error}</p>
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Assembly interrupted</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
+            </div>
+          </div>
           <Button
             onClick={() => handleAssemble()}
             variant="outline"
-            className="w-full gap-2 border-white/20 text-white hover:bg-white/10"
+            className="w-full gap-2"
           >
             <RefreshCw className="h-4 w-4" />
             Retry Assembly
