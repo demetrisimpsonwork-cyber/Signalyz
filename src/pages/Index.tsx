@@ -320,9 +320,9 @@ function DirectorModeContent({
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
         {directorError && !directorLoading && (
-          <div className="rounded-xl border bg-[#0F1C2E] p-6 space-y-4">
-            <p className="text-sm text-white leading-relaxed">{directorError}</p>
-            <Button onClick={onRunDirector} variant="outline" className="w-full gap-2 border-white/20 text-white hover:bg-white/10">
+          <div className="rounded-xl border bg-card p-6 space-y-4">
+            <p className="text-sm text-foreground leading-relaxed">{directorError}</p>
+            <Button onClick={onRunDirector} variant="outline" className="w-full gap-2">
               <RefreshCw className="h-4 w-4" />
               Retry Analysis
             </Button>
