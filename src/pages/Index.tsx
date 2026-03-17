@@ -384,6 +384,7 @@ const Index = () => {
 
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
+    const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
     if (searchParams.get("upgrade") === "success") {
       trackEvent("payment_completed", { payment_mode: "subscription" });
       toast("Your exact fix is now unlocked — scroll to see your changes", {
@@ -394,10 +395,6 @@ const Index = () => {
       searchParams.delete("upgrade");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
-      // Scroll to results if they exist
-      setTimeout(() => {
-        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
-      }, 500);
     }
     if (searchParams.get("purchase") === "success") {
       trackEvent("payment_completed", { payment_mode: "one_time" });
@@ -409,7 +406,20 @@ const Index = () => {
       searchParams.delete("purchase");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
-      // Scroll to results if they exist
+    }
+    // Auto-restore previous analysis ONLY on post-payment return
+    if (isPostPayment) {
+      try {
+        const saved = localStorage.getItem("signalyz_last_analysis");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.result && parsed.bullet && parsed.jd) {
+            setResult(parsed.result);
+            setBullet(parsed.bullet);
+            setJd(parsed.jd);
+          }
+        }
+      } catch {}
       setTimeout(() => {
         document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
       }, 500);
