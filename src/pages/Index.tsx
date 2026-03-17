@@ -1448,9 +1448,9 @@ const Index = () => {
                         )}
                       </div>
                       {displayScore < 70 && (
-                        <div className="space-y-1 pt-1">
-                          <p className="text-xs font-medium text-destructive/90">You're currently below the threshold where interviews typically happen.</p>
-                          <p className="text-[11px] text-muted-foreground">Most candidates who get interviews score 70%+</p>
+                        <div className="space-y-1.5 pt-1">
+                          <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
+                          <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
                         </div>
                       )}
 
