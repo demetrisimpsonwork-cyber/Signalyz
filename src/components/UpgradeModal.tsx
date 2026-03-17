@@ -8,6 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { initiateCheckout } from "@/utils/stripe";
 import { Separator } from "@/components/ui/separator";
+import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
 
 interface UpgradeModalProps {
   open: boolean;
