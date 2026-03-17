@@ -1248,13 +1248,18 @@ const Position = () => {
                 );
               })()}
 
+              {/* ── CONVERSION LAYER ── */}
+              <div className="pt-2">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Conversion Layer — Repositioning & Reframing</p>
+              </div>
+
               {/* 3 — Repositioning Matrix */}
-              <Section title="3. Experience Repositioning Matrix">
+              <Section title="Experience Repositioning Matrix">
                 <div className="space-y-3">
                   {result.repositioning_matrix.map((m, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-2">
                       <p className="text-xs font-semibold text-foreground">{m.pillar}</p>
-                      <div className="grid grid-cols-1 gap-1">
+                      <div className="grid grid-cols-1 gap-1.5">
                         <div>
                           <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Real Experience</span>
                           <p className="text-xs text-muted-foreground mt-0.5">{m.matching_experience}</p>
