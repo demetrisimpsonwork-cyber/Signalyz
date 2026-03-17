@@ -1237,6 +1237,25 @@ const Index = () => {
         {/* Alignment Mode */}
         {mode === "alignment" && (
           <>
+            {/* Continue previous analysis banner */}
+            {hasSavedAnalysis && !savedAnalysisDismissed && !result && !bullet && !jd && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">You have a previous analysis</p>
+                  <p className="text-xs text-muted-foreground">Pick up where you left off, or start fresh below.</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={handleDismissSavedAnalysis}>
+                    Start Fresh
+                  </Button>
+                  <Button size="sm" onClick={handleRestorePreviousRun} className="gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Continue Last Run
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className={`grid gap-6 sm:gap-8 ${loading || result || alignmentError || showSamples ? "lg:grid-cols-2" : ""}`}>
               {/* Left — Inputs */}
               <div className="space-y-5">
