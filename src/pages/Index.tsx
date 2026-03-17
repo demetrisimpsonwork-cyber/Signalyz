@@ -1076,36 +1076,34 @@ const Index = () => {
         {/* Sub-navigation tabs */}
         {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
-          {/* Mobile layout */}
-          <div className="relative lg:hidden w-full overflow-hidden">
-            <div className="flex overflow-x-auto w-full pb-1 items-center gap-0.5 [&::-webkit-scrollbar]:hidden pr-10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {/* Mobile layout — all 5 tabs visible, evenly distributed */}
+          <div className="lg:hidden w-full border-b border-border">
+            <div className="flex w-full">
               {([
-                { id: "alignment" as const, label: "Align", proOnly: false },
-                { id: "director" as const, label: "Position", proOnly: false },
+                { id: "alignment" as const, label: "Align" },
+                { id: "director" as const, label: "Signal" },
                 { id: "calibrated" as const, label: "Resume", proOnly: true },
-                { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
+                { id: "coverletter" as const, label: "Letter", proOnly: true },
                 { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
               ] as const).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => {
-                    if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                    if ((tab as any).proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
                     const scrollY = window.scrollY;
                     setMode(tab.id);
                     requestAnimationFrame(() => window.scrollTo(0, scrollY));
                   }}
-                  className={`px-2.5 py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 whitespace-nowrap shrink-0 ${
+                  className={`flex-1 py-2.5 text-[12px] font-medium transition-colors text-center border-b-2 ${
                     mode === tab.id
                       ? "text-primary border-primary"
-                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+                      : "text-muted-foreground border-transparent"
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            {/* Right-edge gradient fade for scroll affordance */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background/90 via-background/40 to-transparent" />
           </div>
 
           {/* Desktop layout */}
