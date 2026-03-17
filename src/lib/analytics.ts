@@ -78,15 +78,19 @@ function getOrCreateAnalyticsRunId(userId: string): string {
   sessionStorage.setItem(sessionKey, id);
 
   // Fire-and-forget: create a lightweight analytics run
-  supabase.from("runs").insert({
-    id,
-    user_id: userId,
-    input_hash: `analytics_${new Date().toISOString().slice(0, 10)}`,
-    status: "analytics",
-    deterministic: true,
-  } as any).then(() => {}).catch(() => {
-    // If insert fails (e.g. duplicate), that's fine
-  });
+  (async () => {
+    try {
+      await supabase.from("runs").insert({
+        id,
+        user_id: userId,
+        input_hash: `analytics_${new Date().toISOString().slice(0, 10)}`,
+        status: "analytics",
+        deterministic: true,
+      } as any);
+    } catch {
+      // If insert fails (e.g. duplicate), that's fine
+    }
+  })();
 
   return id;
 }
