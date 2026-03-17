@@ -1323,12 +1323,12 @@ const Index = () => {
                         </div>
                       </div>
                       {user ? (
-                        <Button
+                         <Button
                           size="sm"
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
                           onClick={() => initiateCheckout()}
                         >
-                          See My Exact Fix — $19/month
+                          Unlock Your Exact Fix → $9
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
