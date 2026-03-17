@@ -296,18 +296,24 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   return (
     <div className="space-y-3">
-      {/* Tone selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted-foreground font-medium">Tone:</span>
-        <div className="flex gap-1 flex-wrap">
+      {/* Context + Tone selector */}
+      <div className="rounded-lg border bg-card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            Calibrating for: <span className="text-primary">{inferredRole || "Target Role"}</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Signal-aligned cover letter built from your alignment analysis</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mr-1">Tone</span>
           {TONES.map((t) => (
             <button
               key={t.value}
               onClick={() => setTone(t.value)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
                 tone === t.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-foreground/30"
               }`}
             >
               {t.label}
@@ -351,31 +357,30 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       ) : activeLetter ? (
         <>
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5 flex-wrap">
+          <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs whitespace-nowrap">
+              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-                Regenerate
+                <span className="hidden sm:inline">Regenerate</span>
               </Button>
               <Button
                 variant={isEditing ? "default" : "outline"}
                 size="sm"
                 onClick={handleToggleEdit}
-                className="gap-1.5 text-xs whitespace-nowrap"
+                className="gap-1.5 text-xs"
               >
                 {isEditing ? <Eye className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
                 {isEditing ? "Preview" : "Edit"}
               </Button>
             </div>
-            <div className="flex items-center gap-2 flex-col w-full md:w-auto md:flex-row">
-              <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
                 {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Copied" : "Copy Letter"}
+                <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs whitespace-nowrap w-full md:w-auto">
+              <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs">
                 <Download className="h-3 w-3" />
-                <span className="hidden md:inline">Export Letter (.docx)</span>
-                <span className="md:hidden">DOCX (.docx)</span>
+                <span className="hidden sm:inline">Export .docx</span>
               </Button>
             </div>
           </div>

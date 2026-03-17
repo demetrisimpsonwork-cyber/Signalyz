@@ -97,15 +97,28 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
 
         {/* Gate remaining questions */}
         {!isPro && questions.length > 1 && (
-          <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
-            <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-            <p className="text-sm font-semibold text-foreground">These are the exact questions you'll be judged on</p>
-            <p className="text-xs text-muted-foreground">Know exactly what they'll probe — and how to answer based on your gaps.</p>
-            <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
+          <div className="rounded-lg border border-dashed bg-card p-6 text-center space-y-3">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+              <span className="text-lg text-primary">✦</span>
+            </div>
+            <h4 className="text-sm font-bold text-foreground tracking-tight">
+              {questions.length - 1} more questions they'll use to screen you out
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              Know exactly what they'll probe — and the signal angle that turns each question into proof you belong.
+            </p>
+            <p className="text-[11px] font-semibold text-destructive/80">Walking in without these answers is why most candidates stall at panel stage.</p>
             {user ? (
-              <Button size="sm" onClick={onUpgrade}>Unlock My Answers → $9</Button>
+              <div className="space-y-2 w-full max-w-xs mx-auto pt-1">
+                <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
+                  Fix This Now → $9
+                </Button>
+                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+              </div>
             ) : (
-              <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+              <Button size="lg" className="gap-2" asChild>
+                <a href="/auth">Get Started Free</a>
+              </Button>
             )}
           </div>
         )}

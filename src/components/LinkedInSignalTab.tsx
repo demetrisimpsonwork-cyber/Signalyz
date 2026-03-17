@@ -107,59 +107,58 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Context card */}
-      <div className="rounded-lg border bg-card px-4 py-3">
-        <p className="text-sm font-medium text-foreground">
-          Calibrating LinkedIn for: <span className="text-primary">{inferredRole}</span>
-        </p>
-      </div>
-
-      {/* Signal keywords */}
-      {signalKeywords.length > 0 && (
-        <div className="space-y-2">
-          <p className="section-label">Your Resume Signal Keywords</p>
-          <div className="flex flex-wrap gap-2">
-            {signalKeywords.slice(0, 5).map((kw, i) => (
-              <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+      <div className="rounded-lg border bg-card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            Calibrating LinkedIn for: <span className="text-primary">{inferredRole}</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Headline and About section will be repositioned to match this role's hiring signal.</p>
+        </div>
+        {signalKeywords.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 sm:max-w-[240px]">
+            {signalKeywords.slice(0, 4).map((kw, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
                 {kw}
               </span>
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground">Your LinkedIn will be optimized around these signals.</p>
-        </div>
-      )}
-
-      {/* Headline input */}
-      <div className="space-y-4">
-        <div>
-          <p className="section-label">LinkedIn Headline</p>
-          <p className="text-xs text-muted-foreground mt-1">Paste your current headline, or leave blank to build from scratch.</p>
-        </div>
-        <Textarea
-          placeholder="Paste your current headline here..."
-          value={headline}
-          onChange={(e) => setHeadline(e.target.value)}
-          rows={2}
-        />
+        )}
       </div>
 
-      {/* About input */}
-      <div className="space-y-4">
-        <div>
-          <p className="section-label">LinkedIn About Section</p>
-          <p className="text-xs text-muted-foreground mt-1">Paste your current About section, or leave blank.</p>
+      {/* Input sections in a tighter grid */}
+      <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Current Headline</p>
+            <p className="text-[10px] text-muted-foreground">Optional — leave blank to build from scratch</p>
+          </div>
+          <Textarea
+            placeholder="Paste your current LinkedIn headline..."
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            rows={2}
+            className="resize-none"
+          />
         </div>
-        <Textarea
-          placeholder="Paste your current About section..."
-          value={aboutSection}
-          onChange={(e) => setAboutSection(e.target.value)}
-          rows={5}
-        />
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Current About Section</p>
+            <p className="text-[10px] text-muted-foreground">Optional</p>
+          </div>
+          <Textarea
+            placeholder="Paste your current About section..."
+            value={aboutSection}
+            onChange={(e) => setAboutSection(e.target.value)}
+            rows={4}
+            className="resize-none"
+          />
+        </div>
       </div>
 
-      {/* Single CTA */}
-      <Button onClick={calibrateAll} disabled={loading} className="w-full gap-2">
+      {/* CTA */}
+      <Button onClick={calibrateAll} disabled={loading} className="w-full gap-2" size="lg">
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
         Calibrate My LinkedIn Profile
       </Button>
