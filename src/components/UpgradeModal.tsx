@@ -68,10 +68,10 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              You're Being Screened Out — Here's How to Fix It
+              You're Being Filtered Out — Here's Exactly Why
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              This role is filtering you out based on how your experience is currently positioned.
+              Your experience isn't the problem. How it's positioned is.
             </DialogDescription>
           </DialogHeader>
 
@@ -129,7 +129,7 @@ const UpgradeModal = ({
                 initiateCheckout("one_time");
               }}
             >
-              {hasConsumedOneTimeCredit ? "Unlock My Exact Fix Again → $9" : "Unlock My Exact Fix → $9"}
+              {hasConsumedOneTimeCredit ? "Fix This Now → $9" : "Fix This Now → $9"}
             </Button>
 
             <div className="relative flex items-center justify-center">
@@ -146,11 +146,11 @@ const UpgradeModal = ({
                 initiateCheckout("subscription");
               }}
             >
-              Unlock My Exact Fix → $19/month
+              Fix This Now → $19/month
             </Button>
 
             <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-            <p className="text-xs text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
+            <p className="text-xs text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
           </div>
         </div>
 

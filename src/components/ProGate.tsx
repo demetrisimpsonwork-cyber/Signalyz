@@ -127,7 +127,7 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                 Unlock My Exact Fix → $9
+                 Fix This Now → $9
                </Button>
 
               <div className="relative flex items-center justify-center">
@@ -142,10 +142,10 @@ export function ProGate({
                 variant="outline"
                 className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
-                Unlock My Exact Fix — $9 one-time
+                Fix This Now — $9 one-time
               </Button>
               <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-              <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
+              <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
             </div>
           ) : (
             <Button

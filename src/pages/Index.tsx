@@ -1239,14 +1239,14 @@ const Index = () => {
                       {user ? (
                         <>
                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            Unlock Your Exact Fix → $9
+                            Fix Your Score → $9
                           </Button>
                            <p className="text-xs text-muted-foreground">
                             {hasConsumedOneTimeCredit
                               ? "Your Single Report has been used. See your exact fix for unlimited runs."
                               : "You've used your 3 free analyses today."}
                            </p>
-                           <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+                           <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                         </>
                       ) : (
                         <>
@@ -1328,7 +1328,7 @@ const Index = () => {
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
                           onClick={() => initiateCheckout()}
                         >
-                          Unlock Your Exact Fix → $9
+                          Fix Your Score → $9
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
@@ -1385,7 +1385,7 @@ const Index = () => {
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
                             <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
                             <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock My Exact Fix → $9</Button>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Fix This Now → $9</Button>
                           </div>
                         )}
                       </>
@@ -1529,7 +1529,7 @@ const Index = () => {
                                  <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                     <span style={{ color: "inherit" }}>✦</span> Unlock My Exact Fix → $9
+                                     <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
                                    </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
@@ -1537,7 +1537,7 @@ const Index = () => {
                                   </Button>
                                 )}
                                 <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                               </div>
                             )}
 
@@ -1639,7 +1639,7 @@ const Index = () => {
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Unlock My Exact Fix → $9
+                              Fix This Now → $9
                             </Button>
                           ) : (
                             <Button size="sm" className="w-full" asChild>
@@ -1647,7 +1647,7 @@ const Index = () => {
                             </Button>
                           )}
                           <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
+                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
                         </div>
                       );
                     })()}
