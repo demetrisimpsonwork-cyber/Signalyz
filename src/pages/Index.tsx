@@ -382,20 +382,26 @@ const Index = () => {
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Post-upgrade / post-purchase success toast
+  // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
-      toast("Welcome to Pro. All features are now unlocked.", {
+      trackEvent("payment_completed", { payment_mode: "subscription" });
+      toast("Your exact fix is now unlocked — scroll to see your changes", {
         icon: "✦",
-        duration: 4000,
+        duration: 5000,
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
       });
       searchParams.delete("upgrade");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
+      // Scroll to results if they exist
+      setTimeout(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
     }
     if (searchParams.get("purchase") === "success") {
-      toast("Full Report unlocked. Run your analysis to access all features.", {
+      trackEvent("payment_completed", { payment_mode: "one_time" });
+      toast("Your exact fix is now unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
@@ -403,7 +409,26 @@ const Index = () => {
       searchParams.delete("purchase");
       setSearchParams(searchParams, { replace: true });
       refreshSub();
+      // Scroll to results if they exist
+      setTimeout(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
     }
+  }, []);
+
+  // Session persistence: restore last analysis on mount (for returning users after payment)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("signalyz_last_analysis");
+      if (saved && !result) {
+        const parsed = JSON.parse(saved);
+        if (parsed.result && parsed.bullet && parsed.jd) {
+          setResult(parsed.result);
+          setBullet(parsed.bullet);
+          setJd(parsed.jd);
+        }
+      }
+    } catch {}
   }, []);
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
