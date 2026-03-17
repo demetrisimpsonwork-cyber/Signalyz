@@ -1490,9 +1490,10 @@ const Index = () => {
                         return (
                           <div className="space-y-4">
                             {/* Primary Blocker — dominant diagnostic moment */}
-                            {primaryBlocker && (
+                             {primaryBlocker && (
                               <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
+                                <p className="text-xs font-bold text-destructive/90">This is the main reason you're not getting interviews.</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
                                   {primaryBlocker}
                                 </p>
