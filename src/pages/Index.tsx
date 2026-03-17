@@ -1647,7 +1647,7 @@ const Index = () => {
 
                           {user ? (
                             <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix My Signal
+                              See My Exact Fix
                             </Button>
                           ) : (
                             <Button size="sm" className="w-full" asChild>

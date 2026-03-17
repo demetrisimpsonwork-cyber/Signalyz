@@ -75,6 +75,11 @@ const UpgradeModal = ({
             </DialogDescription>
           </DialogHeader>
 
+          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 mt-3 space-y-1 text-center">
+            <p className="text-sm font-semibold text-foreground">You're one step away from seeing exactly what's blocking you.</p>
+            <p className="text-xs text-muted-foreground">Most candidates never get this level of clarity.</p>
+          </div>
+
           <div className="mt-5 grid grid-cols-2 gap-6">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
