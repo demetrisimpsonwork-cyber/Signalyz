@@ -1145,6 +1145,8 @@ const Index = () => {
               inferredRole={result?.inferred_role_title || ""}
               signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
               onRunAlignment={() => setMode("alignment")}
+              isPro={effectiveIsPro}
+              onUpgrade={() => setShowUpgrade(true)}
             />
           </div>
         )}
