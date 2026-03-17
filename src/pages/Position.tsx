@@ -1143,8 +1143,13 @@ const Position = () => {
           {/* COMPLETE — only render output when not loading and result exists */}
           {!loading && !timedOut && result && (
             <>
+              {/* ── INTELLIGENCE LAYER ── */}
+              <div className="pt-1">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Intelligence Layer — Role Deconstruction</p>
+              </div>
+
               {/* 1 — Role DNA */}
-              <Section title="1. Role DNA Extraction">
+              <Section title="Role DNA Extraction">
                 <div className="space-y-2">
                   {result.role_dna.map((p, i) => (
                     <div key={i} className="rounded-md border bg-background p-3 space-y-1">
