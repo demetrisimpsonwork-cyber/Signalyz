@@ -1246,7 +1246,7 @@ const Index = () => {
                               ? "Your Single Report has been used. See your exact fix for unlimited runs."
                               : "You've used your 3 free analyses today."}
                            </p>
-                           <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+                           <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                         </>
                       ) : (
                         <>
@@ -1537,7 +1537,7 @@ const Index = () => {
                                   </Button>
                                 )}
                                 <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                               </div>
                             )}
 
@@ -1647,7 +1647,7 @@ const Index = () => {
                             </Button>
                           )}
                           <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          <p className="text-[11px] text-destructive/70 italic text-center">Every application without fixing this risks being ignored.</p>
+                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
                         </div>
                       );
                     })()}

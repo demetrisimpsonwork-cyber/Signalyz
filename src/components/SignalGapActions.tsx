@@ -84,7 +84,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
-          <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
+          <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
         </div>
       </div>
     );
