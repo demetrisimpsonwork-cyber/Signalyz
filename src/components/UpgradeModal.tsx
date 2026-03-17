@@ -68,10 +68,10 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              You're Being Screened Out — Here's How to Fix It
+              You're Being Filtered Out — Here's Exactly Why
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              This role is filtering you out based on how your experience is currently positioned.
+              Your experience isn't the problem. How it's positioned is.
             </DialogDescription>
           </DialogHeader>
 
