@@ -1169,8 +1169,8 @@ const Position = () => {
               {result.employer_risk_perception && result.employer_risk_perception.length > 0 && (() => {
                 const calTemplate = detectCalibrationTemplate(result);
                 const sectionTitle = calTemplate === "operations_supervisor"
-                  ? "2. Operations Supervisor Hiring Calibration"
-                  : "2. PM Hiring Calibration Report";
+                  ? "Hiring Calibration — Operations Supervisor"
+                  : "Hiring Calibration Report";
                 const activeStandards = calTemplate === "operations_supervisor" ? OPS_PILLAR_STANDARDS : PILLAR_STANDARDS;
                 return (
                 <Section title={sectionTitle} proLabel>
