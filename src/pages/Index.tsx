@@ -1616,7 +1616,7 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                  <p className="text-sm font-bold text-foreground">
-                                   You're 3 changes away from fixing this
+                                   Do these 3 things → move above 70%
                                  </p>
                                  <p className="text-xs text-muted-foreground">
                                    You'll see exactly how your experience gets rewritten to match this role.
