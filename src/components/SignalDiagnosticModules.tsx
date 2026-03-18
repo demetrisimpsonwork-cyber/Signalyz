@@ -187,7 +187,7 @@ function ExecutiveInsight({ data, evidenceLedger }: { data: NonNullable<SignalDi
   return (
     <div className="mt-8 rounded-xl border-l-4 border-l-primary bg-card p-6 space-y-3">
       <div className="flex items-center gap-2 pb-1 border-b border-border/30 mb-1">
-        <SectionLabel>Executive Insight</SectionLabel>
+        <SectionLabel>What hiring managers actually conclude</SectionLabel>
         <span className="text-[10px] text-muted-foreground/60 tracking-wide uppercase">Final Synthesis</span>
       </div>
       <p className="text-[15px] font-semibold text-foreground leading-relaxed tracking-[-0.01em]">{firstSentence}</p>
