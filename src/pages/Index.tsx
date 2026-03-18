@@ -798,7 +798,6 @@ const Index = () => {
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
-      console.log("[DEBUG] Full response signal_model:", JSON.stringify(res.signal_model?.signal_verdict ?? "MISSING"));
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
 
@@ -1540,27 +1539,6 @@ const Index = () => {
                         <div className="space-y-1.5 pt-1">
                           <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
                           <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
-                        </div>
-                      )}
-
-                      {/* SIGNAL VERDICT — perception anchor */}
-                      {result.signal_model?.signal_verdict && (
-                        <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/70">Signal Verdict</p>
-                          <div className="space-y-2">
-                            <p className="text-[13px] text-foreground leading-relaxed">
-                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Current Positioning</span>
-                              {result.signal_model.signal_verdict.current_positioning}
-                            </p>
-                            <p className="text-[13px] text-foreground leading-relaxed">
-                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Target Expectation</span>
-                              {result.signal_model.signal_verdict.target_expectation}
-                            </p>
-                            <p className="text-[13px] text-foreground font-semibold leading-relaxed">
-                              <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">Core Gap</span>
-                              {result.signal_model.signal_verdict.core_gap}
-                            </p>
-                          </div>
                         </div>
                       )}
 

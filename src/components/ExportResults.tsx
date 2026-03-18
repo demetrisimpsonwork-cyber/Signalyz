@@ -77,17 +77,9 @@ const buildExportText = (r: ExportResultsProps["result"]): string => {
     predicted = `Current: ${sm.interview_gap_diagnosis.current_score}% → Predicted: ${sm.interview_gap_diagnosis.predicted_score}%`;
   }
 
-  const sv = sm?.signal_verdict;
   const lines: string[] = [
     `SIGNAL DIAGNOSIS: ${score}% — ${label}`,
     "",
-    ...(sv ? [
-      "SIGNAL VERDICT",
-      `Current Positioning: ${sv.current_positioning}`,
-      `Target Expectation: ${sv.target_expectation}`,
-      `Core Gap: ${sv.core_gap}`,
-      "",
-    ] : []),
     "PRIMARY BLOCKER",
     primaryBlocker,
     "",
