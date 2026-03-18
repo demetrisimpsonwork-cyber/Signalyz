@@ -29,9 +29,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<AlignmentFilter>("all");
-
-  // TODO: replace with real pro check
-  const isPro = false;
+  const { isPro } = useSubscription();
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
