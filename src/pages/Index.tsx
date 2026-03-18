@@ -838,7 +838,7 @@ const Index = () => {
 
       // Session persistence: save last analysis for returning users
       try {
-        localStorage.setItem(SESSION_KEY, JSON.stringify({
+        localStorage.setItem(getSessionKey(), JSON.stringify({
           version: SESSION_VERSION,
           result: res,
           bullet: bulletWithContext,
