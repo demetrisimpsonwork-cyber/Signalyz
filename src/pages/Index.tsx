@@ -947,6 +947,16 @@ const Index = () => {
 
   return (
     <div className="min-h-0">
+      {/* Session recovery modal */}
+      {pendingSession && (
+        <SessionRecoveryModal
+          inferredRole={pendingSession.inferredRole}
+          score={pendingSession.score}
+          onContinue={handleSessionContinue}
+          onStartFresh={handleSessionStartFresh}
+        />
+      )}
+
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
