@@ -1366,10 +1366,10 @@ const Index = () => {
                       ) : (
                         <>
                           <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" asChild>
-                            <a href="/auth">Get Started Free</a>
+                            <a href="/auth">Unlock Your Fix → Free</a>
                           </Button>
                           <p className="text-xs text-muted-foreground">
-                            Sign up to get 3 free analyses.
+                            Create a free account to unlock your signal analysis.
                           </p>
                         </>
                       )}
@@ -1506,8 +1506,9 @@ const Index = () => {
                       </>
                     ) : (
                       <div className="rounded-xl border border-primary/20 bg-card p-5 text-center space-y-3">
-                        <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
-                        <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
+                        <Lock className="h-5 w-5 text-primary mx-auto" />
+                        <p className="text-sm font-medium text-foreground">Full analysis is unlocked after account creation.</p>
+                        <Button asChild className="w-full sm:w-auto"><a href="/auth">Unlock Your Fix → Free</a></Button>
                       </div>
                     )}
                     <p className="context-text text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
@@ -1706,7 +1707,7 @@ const Index = () => {
                             </Button>
                           ) : (
                             <Button size="lg" className="w-full gap-2" asChild>
-                              <a href="/auth">Get Started Free</a>
+                              <a href="/auth">Unlock Your Fix → Free</a>
                             </Button>
                           )}
                           <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
@@ -1843,10 +1844,10 @@ const Index = () => {
                             </div>
                             <div className="space-y-2">
                               <p className="text-sm font-bold text-foreground">
-                                You're below the interview threshold — this shows you exactly how to fix it.
+                                Full analysis is unlocked after account creation.
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all locked.
+                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all inside.
                               </p>
                             </div>
                             {user ? (
@@ -1857,9 +1858,12 @@ const Index = () => {
                                 <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                               </div>
                             ) : (
-                              <Button size="lg" className="w-full gap-2" asChild>
-                                <a href="/auth">Get Started Free</a>
-                              </Button>
+                              <div className="space-y-3">
+                                <Button size="lg" className="w-full gap-2" asChild>
+                                  <a href="/auth">Unlock Your Fix → Free</a>
+                                </Button>
+                                <p className="text-[11px] text-muted-foreground">Create a free account · 3 analyses included · No credit card</p>
+                              </div>
                             )}
                           </div>
                         </div>

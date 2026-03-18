@@ -46,20 +46,26 @@ const UpgradeModal = ({
         <DialogContent className="max-w-sm">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              Create Your Free Account
+              Your signal analysis is ready to unlock
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Sign up to run your own alignment — 3 free analyses included.
+              Create your free account to unlock your full signal analysis.
             </DialogDescription>
           </DialogHeader>
-          <div className="pt-4">
+          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 mt-1">
+            <p className="text-sm text-foreground">
+              You're closer than you think — your experience just needs repositioning. Sign up to see your exact fix.
+            </p>
+          </div>
+          <div className="pt-2 space-y-3">
             <Button
               size="lg"
               className="w-full gap-2 bg-primary hover:bg-primary/90 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               asChild
             >
-              <a href="/auth">Get Started Free</a>
+              <a href="/auth">Unlock Your Fix → Free</a>
             </Button>
+            <p className="text-[11px] text-muted-foreground text-center">3 free analyses included · No credit card required</p>
           </div>
         </DialogContent>
       </Dialog>
