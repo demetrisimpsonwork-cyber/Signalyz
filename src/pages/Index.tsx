@@ -1719,9 +1719,8 @@ const Index = () => {
                       <SignalActionPlan alignmentResult={result} />
                     )}
 
-                    {effectiveIsPro && (
-                      <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
-                    )}
+
+
 
                     {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
                     <SignalDiagnosticModules
