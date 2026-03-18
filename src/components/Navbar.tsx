@@ -14,8 +14,16 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
+    // Clear auth-scoped session data to prevent stale state
+    try {
+      localStorage.removeItem("signalyz_last_analysis");
+      localStorage.removeItem("signalyz_calibrated_resume_data");
+      localStorage.removeItem("signalyz_calibrated_resume_data_edited");
+    } catch {}
     await supabase.auth.signOut();
     navigate("/");
+    // Force a clean reload to reset all in-memory state
+    window.location.href = "/";
   };
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";

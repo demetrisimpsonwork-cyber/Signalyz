@@ -418,8 +418,14 @@ const Index = () => {
   }, []);
 
   // ─── Controlled session recovery ───────────────────────────────────────
-  const SESSION_KEY = "signalyz_last_analysis";
+  const SESSION_KEY_PREFIX = "signalyz_last_analysis";
   const SESSION_VERSION = 2; // bump to invalidate stale formats
+
+  // Scope session key to user ID to prevent cross-user leaks
+  const getSessionKey = useCallback((uid?: string | null) => {
+    const id = uid || user?.id;
+    return id ? `${SESSION_KEY_PREFIX}_${id}` : SESSION_KEY_PREFIX;
+  }, [user?.id]);
 
   // Pending session data waiting for user choice
   const [pendingSession, setPendingSession] = useState<{
@@ -430,19 +436,31 @@ const Index = () => {
     score?: number;
   } | null>(null);
 
-  // On mount: detect saved session, but don't restore — ask user first
+  // Clear stale anonymous session when user signs in, and clean up unscoped key
   useEffect(() => {
+    if (!user) return;
+    // Remove unscoped (anonymous) session key — it belongs to no user
+    try { localStorage.removeItem(SESSION_KEY_PREFIX); } catch {}
+  }, [user?.id]);
+
+  // On mount: detect saved session, but don't restore — ask user first
+  // Re-run when user changes (sign-in/sign-out)
+  const sessionCheckedRef = useRef(false);
+  useEffect(() => {
+    // Only check once per mount (or auth change)
+    const sessionKey = getSessionKey();
+
     // Exception: post-payment redirects should auto-restore for seamless UX
     const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
 
     try {
-      const saved = localStorage.getItem(SESSION_KEY);
+      const saved = localStorage.getItem(sessionKey);
       if (saved && !result) {
         const parsed = JSON.parse(saved);
         // Validate version & structure
         if (parsed.version !== SESSION_VERSION || !parsed.result || !parsed.bullet || !parsed.jd) {
           // Stale or incompatible — silently clear
-          localStorage.removeItem(SESSION_KEY);
+          localStorage.removeItem(sessionKey);
           return;
         }
         if (isPostPayment) {
@@ -462,9 +480,9 @@ const Index = () => {
         }
       }
     } catch {
-      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(sessionKey);
     }
-  }, []);
+  }, [user?.id]);
 
   const handleSessionContinue = () => {
     if (pendingSession) {
@@ -476,7 +494,7 @@ const Index = () => {
   };
 
   const handleSessionStartFresh = () => {
-    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(getSessionKey());
     setPendingSession(null);
   };
 
@@ -820,7 +838,7 @@ const Index = () => {
 
       // Session persistence: save last analysis for returning users
       try {
-        localStorage.setItem(SESSION_KEY, JSON.stringify({
+        localStorage.setItem(getSessionKey(), JSON.stringify({
           version: SESSION_VERSION,
           result: res,
           bullet: bulletWithContext,
