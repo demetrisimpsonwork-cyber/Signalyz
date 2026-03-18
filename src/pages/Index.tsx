@@ -494,7 +494,7 @@ const Index = () => {
   };
 
   const handleSessionStartFresh = () => {
-    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(getSessionKey());
     setPendingSession(null);
   };
 
