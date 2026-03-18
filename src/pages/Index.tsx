@@ -1844,10 +1844,10 @@ const Index = () => {
                             </div>
                             <div className="space-y-2">
                               <p className="text-sm font-bold text-foreground">
-                                You're below the interview threshold — this shows you exactly how to fix it.
+                                Full analysis is unlocked after account creation.
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all locked.
+                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all inside.
                               </p>
                             </div>
                             {user ? (
@@ -1858,9 +1858,12 @@ const Index = () => {
                                 <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
                               </div>
                             ) : (
-                              <Button size="lg" className="w-full gap-2" asChild>
-                                <a href="/auth">Get Started Free</a>
-                              </Button>
+                              <div className="space-y-3">
+                                <Button size="lg" className="w-full gap-2" asChild>
+                                  <a href="/auth">Unlock Your Fix → Free</a>
+                                </Button>
+                                <p className="text-[11px] text-muted-foreground">Create a free account · 3 analyses included · No credit card</p>
+                              </div>
                             )}
                           </div>
                         </div>
