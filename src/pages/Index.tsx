@@ -820,7 +820,8 @@ const Index = () => {
 
       // Session persistence: save last analysis for returning users
       try {
-        localStorage.setItem("signalyz_last_analysis", JSON.stringify({
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          version: SESSION_VERSION,
           result: res,
           bullet: bulletWithContext,
           jd: normJd.text,
