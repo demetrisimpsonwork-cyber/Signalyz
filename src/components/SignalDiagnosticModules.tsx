@@ -610,8 +610,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
       <div>
-        <SectionLabel>Hiring Signal Benchmark</SectionLabel>
-        <SectionSub>How your signal compares to typical candidates for this role</SectionSub>
+        <SectionLabel>How you compare to candidates who get interviews</SectionLabel>
+        <SectionSub>This shows how your score compares to candidates getting interviews.</SectionSub>
       </div>
 
       {/* Summary scores */}
