@@ -1548,6 +1548,7 @@ const Index = () => {
                         <div className="space-y-1.5 pt-1">
                           <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
                           <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
+                          <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
                         </div>
                       )}
 
@@ -1615,7 +1616,7 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                  <p className="text-sm font-bold text-foreground">
-                                   You're 3 changes away from fixing this
+                                   Do these 3 things → move above 70%
                                  </p>
                                  <p className="text-xs text-muted-foreground">
                                    You'll see exactly how your experience gets rewritten to match this role.
@@ -1674,7 +1675,54 @@ const Index = () => {
                       })()}
                     </div>
 
-                    {/* Signal Diagnostic Modules — free sections only (Why You're Not Getting Interviews) */}
+                    {/* Signal Action Plan — moved directly under score */}
+                    {!effectiveIsPro && (() => {
+                      const liftData = result?.signal_model?.predicted_signal_lift || (result as any)?.predicted_signal_lift;
+                      const liftPoints = liftData?.predicted_score
+                        ? Math.round(liftData.predicted_score - (result?.match_score ?? 0))
+                        : null;
+                      const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
+                      return (
+                        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                              Fix your score in 3 moves
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              Do these 3 things → move above 70%
+                            </p>
+                          </div>
+
+                          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
+                            <p className="text-sm font-semibold text-foreground">Apply these → your score becomes a hire signal</p>
+                            <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
+
+                          {user ? (
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
+                              Fix This Now → $9
+                            </Button>
+                          ) : (
+                            <Button size="sm" className="w-full" asChild>
+                              <a href="/auth">Get Started Free</a>
+                            </Button>
+                          )}
+                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+                        </div>
+                      );
+                    })()}
+
+                    {effectiveIsPro && (
+                      <SignalActionPlan alignmentResult={result} />
+                    )}
+
+
+
+
+                    {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
                     <SignalDiagnosticModules
                       data={{
                         jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
@@ -1696,7 +1744,7 @@ const Index = () => {
                       matchScore={result.match_score}
                     />
 
-                    {/* Section 2: Calibrated Bullets */}
+                    {/* Calibrated Bullets */}
                     <CalibratedBulletsSection
                       bullet={bullet}
                       result={result}
@@ -1704,56 +1752,9 @@ const Index = () => {
                       onUpgrade={() => setShowUpgrade(true)}
                     />
 
-                    {/* Signal Action Plan preview + unified Pro gate for non-Pro users */}
-                    {!effectiveIsPro && (() => {
-                      const liftData = result?.signal_model?.predicted_signal_lift || (result as any)?.predicted_signal_lift;
-                      const liftPoints = liftData?.predicted_score
-                        ? Math.round(liftData.predicted_score - (result?.match_score ?? 0))
-                        : null;
-                      const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
-                      return (
-                        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                          <div className="space-y-1">
-                            <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                              Your Signal Action Plan
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              The fastest ways to improve your signal for this role.
-                            </p>
-                          </div>
-
-                          <p className="text-sm font-bold text-foreground">
-                             You're 3 changes away from fixing this
-                           </p>
-                          <p className="text-xs font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck</p>
-
-                          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
-                            <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
-                            <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
-                          </div>
-
-                          <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
-
-                          {user ? (
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix This Now → $9
-                            </Button>
-                          ) : (
-                            <Button size="sm" className="w-full" asChild>
-                              <a href="/auth">Get Started Free</a>
-                            </Button>
-                          )}
-                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
-                        </div>
-                      );
-                    })()}
-
                     {/* Pro-only sections — only render when Pro */}
                     {effectiveIsPro && (
                       <>
-                        {/* Signal Action Plan — top of Pro section */}
-                        <SignalActionPlan alignmentResult={result} />
 
                         {/* Calibrated Summary */}
                         <CalibratedSummary

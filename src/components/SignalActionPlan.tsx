@@ -84,13 +84,10 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
     <div className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3 min-w-0 w-full overflow-hidden">
       <div className="space-y-1.5">
         <h3 className="text-sm font-semibold tracking-tight text-foreground">
-          Your Signal Action Plan
+          Fix your score in {actions.length} moves
         </h3>
         <p className="text-xs text-muted-foreground">
-          This is the exact gap between you and interview-level candidates.
-        </p>
-        <p className="text-xs text-destructive/80 italic">
-          Right now, you're applying without closing it.
+          Do these {actions.length} things → move above 70%
         </p>
       </div>
       <ol className="space-y-2 pl-0">
@@ -103,6 +100,7 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
           </li>
         ))}
       </ol>
+      <p className="text-xs text-muted-foreground italic">These {actions.length} changes move you above the interview threshold.</p>
     </div>
   );
 };

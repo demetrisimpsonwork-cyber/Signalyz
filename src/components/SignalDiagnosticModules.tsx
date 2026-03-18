@@ -187,7 +187,7 @@ function ExecutiveInsight({ data, evidenceLedger }: { data: NonNullable<SignalDi
   return (
     <div className="mt-8 rounded-xl border-l-4 border-l-primary bg-card p-6 space-y-3">
       <div className="flex items-center gap-2 pb-1 border-b border-border/30 mb-1">
-        <SectionLabel>Executive Insight</SectionLabel>
+        <SectionLabel>What hiring managers actually conclude</SectionLabel>
         <span className="text-[10px] text-muted-foreground/60 tracking-wide uppercase">Final Synthesis</span>
       </div>
       <p className="text-[15px] font-semibold text-foreground leading-relaxed tracking-[-0.01em]">{firstSentence}</p>
@@ -323,8 +323,8 @@ function SignalAlignmentAnalysis({ data }: { data: AlignmentEntry[] }) {
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
-      <SectionLabel>Signal Alignment Analysis</SectionLabel>
-      <SectionSub>How your signal maps to what this role requires</SectionSub>
+      <SectionLabel>Where you're falling short</SectionLabel>
+      <SectionSub>This explains where your experience is not matching the role.</SectionSub>
       <div className="space-y-2">
         {data.map((entry, i) => (
           <div key={i} className="rounded-lg border bg-background p-3 space-y-2">
@@ -358,8 +358,8 @@ function SignalAlignmentAnalysis({ data }: { data: AlignmentEntry[] }) {
 function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
-      <SectionLabel>Hiring Pipeline Simulation</SectionLabel>
-      <SectionSub>How your resume performs at each hiring stage</SectionSub>
+      <SectionLabel>Where you're getting filtered out</SectionLabel>
+      <SectionSub>This shows where your resume is getting filtered out.</SectionSub>
       <div className="space-y-2.5">
         {data.map((stage, i) => (
           <div key={i} className={`rounded-lg border p-3 space-y-2 ${STATUS_STYLES[stage.status] || ""}`}>
@@ -610,8 +610,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
       <div>
-        <SectionLabel>Hiring Signal Benchmark</SectionLabel>
-        <SectionSub>How your signal compares to typical candidates for this role</SectionSub>
+        <SectionLabel>How you compare to candidates who get interviews</SectionLabel>
+        <SectionSub>This shows how your score compares to candidates getting interviews.</SectionSub>
       </div>
 
       {/* Summary scores */}
@@ -692,6 +692,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         data.strategic_fixes && data.strategic_fixes.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
+            <p className="text-[11px] text-muted-foreground italic">These {data.strategic_fixes?.length || 3} changes move you above the interview threshold.</p>
             <ol className="space-y-1">
               {data.strategic_fixes.slice(0, 3).map((fix, i) => {
                 const cleanedFix = fix.replace(/^\d+\.\s*/, "");
