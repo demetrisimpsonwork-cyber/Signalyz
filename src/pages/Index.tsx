@@ -912,6 +912,24 @@ const Index = () => {
       
       <OnboardingModal />
 
+      {showSessionRecovery && (
+        <SessionRecoveryModal
+          onContinue={() => {
+            const data = sessionRecoveryDataRef.current;
+            if (data) {
+              setResult(data.result);
+              setBullet(data.bullet);
+              setJd(data.jd);
+            }
+            setShowSessionRecovery(false);
+          }}
+          onStartNew={() => {
+            try { localStorage.removeItem("signalyz_last_analysis"); } catch {}
+            setShowSessionRecovery(false);
+          }}
+        />
+      )}
+
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
