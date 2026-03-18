@@ -1664,28 +1664,33 @@ const Index = () => {
                             <h3 className="text-sm font-semibold tracking-tight text-foreground">
                               Fix your score in 3 moves
                             </h3>
-                            <p className="text-xs text-muted-foreground">
-                              Do these 3 things → move above 70%
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              These are not new experiences — they are how your current experience needs to be positioned, strengthened, and aligned to what hiring managers actually evaluate.
                             </p>
                           </div>
 
+                          <p className="text-xs font-medium text-foreground">Do these 3 things → move above 70%</p>
+
                           <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
-                            <p className="text-sm font-semibold text-foreground">Apply these → your score becomes a hire signal</p>
+                            <p className="text-sm font-semibold text-foreground">Apply these → your experience reads like a hire signal</p>
                             <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
                           </div>
 
                           <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
 
+                          <div className="rounded-md border border-destructive/20 bg-destructive/[0.03] px-3 py-2.5 space-y-1.5 text-center">
+                            <p className="text-sm font-semibold text-foreground">You're below the interview threshold — this shows you exactly how to fix it.</p>
+                          </div>
+
                           {user ? (
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix This Now → $9
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]" size="lg">
+                              <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
                             </Button>
                           ) : (
-                            <Button size="sm" className="w-full" asChild>
+                            <Button size="lg" className="w-full gap-2" asChild>
                               <a href="/auth">Get Started Free</a>
                             </Button>
                           )}
-                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
                           <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
                         </div>
                       );
