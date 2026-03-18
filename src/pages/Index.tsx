@@ -1703,39 +1703,38 @@ const Index = () => {
 
 
 
-                    {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
-                    <SignalDiagnosticModules
-                      data={{
-                        jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
-                        resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
-                        signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
-                        hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
-                        executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
-                        transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
-                        signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
-                        signal_map: result.signal_model?.signal_map || (result as any).signal_map,
-                        evidence_ledger: result.signal_model?.evidence_ledger,
-                        career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
-                        hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
-                        interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
-                        predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
-                        isPro: effectiveIsPro,
-                        onUpgrade: () => setShowUpgrade(true),
-                      }}
-                      matchScore={result.match_score}
-                    />
-
-                    {/* Calibrated Bullets */}
-                    <CalibratedBulletsSection
-                      bullet={bullet}
-                      result={result}
-                      effectiveIsPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {/* Pro-only sections — only render when Pro */}
-                    {effectiveIsPro && (
+                    {/* Everything below here is Pro-only for free users */}
+                    {effectiveIsPro ? (
                       <>
+                        {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
+                        <SignalDiagnosticModules
+                          data={{
+                            jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
+                            resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
+                            signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
+                            hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
+                            executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
+                            transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
+                            signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
+                            signal_map: result.signal_model?.signal_map || (result as any).signal_map,
+                            evidence_ledger: result.signal_model?.evidence_ledger,
+                            career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
+                            hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
+                            interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
+                            predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
+                            isPro: effectiveIsPro,
+                            onUpgrade: () => setShowUpgrade(true),
+                          }}
+                          matchScore={result.match_score}
+                        />
+
+                        {/* Calibrated Bullets */}
+                        <CalibratedBulletsSection
+                          bullet={bullet}
+                          result={result}
+                          effectiveIsPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
 
                         {/* Calibrated Summary */}
                         <CalibratedSummary
@@ -1784,30 +1783,70 @@ const Index = () => {
                           />
                         )}
 
+                        {/* Interview Intelligence */}
+                        <InterviewIntelligence
+                          experience={bullet}
+                          jd={jd}
+                          alignmentResult={result as any}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        <KeywordChips keywords={result.missing_keywords} />
+
+                        {/* Export — Copy Calibration Report */}
+                        <ExportResults result={result} />
                       </>
+                    ) : (
+                      /* Free users: blurred preview of locked content */
+                      <div className="relative mt-2">
+                        <div className="pointer-events-none select-none blur-sm opacity-30">
+                          <div className="space-y-4 py-4">
+                            {[
+                              "Strategic Fixes & Repositioned Bullets",
+                              "Interview Intelligence Questions",
+                              "Signal Alignment Deep Analysis",
+                              "Hiring Pipeline Simulation",
+                              "Candidate Benchmark Comparison",
+                            ].map((label) => (
+                              <div key={label} className="rounded-lg border bg-card p-4 space-y-2">
+                                <div className="h-3 bg-muted rounded w-1/3" />
+                                <div className="h-3 bg-muted rounded w-full" />
+                                <div className="h-3 bg-muted rounded w-3/4" />
+                                <div className="h-3 bg-muted rounded w-2/3" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center space-y-4 max-w-sm px-4">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                              <Lock className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-sm font-bold text-foreground">
+                                You're below the interview threshold — this shows you exactly how to fix it.
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all locked.
+                              </p>
+                            </div>
+                            {user ? (
+                              <div className="space-y-2">
+                                <Button onClick={() => setShowUpgrade(true)} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]" size="lg">
+                                  <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
+                                </Button>
+                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                              </div>
+                            ) : (
+                              <Button size="lg" className="w-full gap-2" asChild>
+                                <a href="/auth">Get Started Free</a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     )}
-
-                    {/* Interview Intelligence — visible to all users, internally gates questions 2+ */}
-                    <InterviewIntelligence
-                      experience={bullet}
-                      jd={jd}
-                      alignmentResult={result as any}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    <KeywordChips keywords={result.missing_keywords} />
-
-                    {result.match_score < 60 && (
-                      <WeakAlignmentNudge
-                        additionalContext={additionalContext}
-                        onContextChange={setAdditionalContext}
-                        onRerun={() => handleOptimize()}
-                      />
-                    )}
-
-                    {/* Export — Copy Calibration Report */}
-                    <ExportResults result={result} />
                   </>
                 )}
               </div>
