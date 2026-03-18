@@ -28,6 +28,7 @@ import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules"
 import type { SignalModel } from "@/types/SignalModel";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
+import SessionRecoveryModal from "@/components/SessionRecoveryModal";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
