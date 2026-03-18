@@ -417,20 +417,68 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // ─── Controlled session recovery ───────────────────────────────────────
+  const SESSION_KEY = "signalyz_last_analysis";
+  const SESSION_VERSION = 2; // bump to invalidate stale formats
+
+  // Pending session data waiting for user choice
+  const [pendingSession, setPendingSession] = useState<{
+    result: OptimizationResult;
+    bullet: string;
+    jd: string;
+    inferredRole?: string;
+    score?: number;
+  } | null>(null);
+
+  // On mount: detect saved session, but don't restore — ask user first
   useEffect(() => {
+    // Exception: post-payment redirects should auto-restore for seamless UX
+    const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
+
     try {
-      const saved = localStorage.getItem("signalyz_last_analysis");
+      const saved = localStorage.getItem(SESSION_KEY);
       if (saved && !result) {
         const parsed = JSON.parse(saved);
-        if (parsed.result && parsed.bullet && parsed.jd) {
+        // Validate version & structure
+        if (parsed.version !== SESSION_VERSION || !parsed.result || !parsed.bullet || !parsed.jd) {
+          // Stale or incompatible — silently clear
+          localStorage.removeItem(SESSION_KEY);
+          return;
+        }
+        if (isPostPayment) {
+          // Auto-restore for post-payment flow
           setResult(parsed.result);
           setBullet(parsed.bullet);
           setJd(parsed.jd);
+        } else {
+          // Show recovery modal
+          setPendingSession({
+            result: parsed.result,
+            bullet: parsed.bullet,
+            jd: parsed.jd,
+            inferredRole: parsed.result?.inferred_role_title,
+            score: parsed.result?.match_score,
+          });
         }
       }
-    } catch {}
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+    }
   }, []);
+
+  const handleSessionContinue = () => {
+    if (pendingSession) {
+      setResult(pendingSession.result);
+      setBullet(pendingSession.bullet);
+      setJd(pendingSession.jd);
+      setPendingSession(null);
+    }
+  };
+
+  const handleSessionStartFresh = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setPendingSession(null);
+  };
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
   const displayScore = result?.match_score ?? 0;
