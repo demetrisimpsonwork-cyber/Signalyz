@@ -84,7 +84,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
           {user ? (
             <Button size="sm" onClick={onUpgrade}>See My Exact Fix</Button>
           ) : (
-            <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+            <Button size="sm" asChild><a href="/auth">Unlock Your Fix → Free</a></Button>
           )}
         </div>
       </div>

@@ -170,7 +170,7 @@ function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
         </Button>
       ) : (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" asChild>
-          <a href="/auth">Get Started Free</a>
+          <a href="/auth">Unlock Your Fix → Free</a>
         </Button>
       )}
     </div>

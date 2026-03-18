@@ -430,7 +430,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               </div>
             ) : (
               <Button className="w-full gap-2" size="lg" asChild>
-                <a href="/auth">Get Started Free</a>
+                <a href="/auth">Unlock Your Fix → Free</a>
               </Button>
             )}
           </div>
