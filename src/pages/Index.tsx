@@ -28,7 +28,6 @@ import type { SignalDiagnosticData } from "@/components/SignalDiagnosticModules"
 import type { SignalModel } from "@/types/SignalModel";
 import LinkedInSignalTab from "@/components/LinkedInSignalTab";
 import OnboardingModal from "@/components/OnboardingModal";
-import SessionRecoveryModal from "@/components/SessionRecoveryModal";
 import EvidenceLedger from "@/components/EvidenceLedger";
 import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
@@ -365,8 +364,6 @@ const Index = () => {
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
   const [inputTruncated, setInputTruncated] = useState(false);
-  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
-  const sessionRecoveryDataRef = useRef<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
@@ -419,24 +416,16 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: show recovery modal if previous session exists (auto-restore only for post-payment redirects)
+  // Session persistence: restore last analysis on mount (for returning users after payment)
   useEffect(() => {
-    const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
       if (saved && !result) {
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
-          if (isPostPayment) {
-            // Auto-restore for post-payment redirects
-            setResult(parsed.result);
-            setBullet(parsed.bullet);
-            setJd(parsed.jd);
-          } else {
-            // Show recovery modal for normal visits
-            sessionRecoveryDataRef.current = parsed;
-            setShowSessionRecovery(true);
-          }
+          setResult(parsed.result);
+          setBullet(parsed.bullet);
+          setJd(parsed.jd);
         }
       }
     } catch {}
@@ -911,24 +900,6 @@ const Index = () => {
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
-
-      {showSessionRecovery && (
-        <SessionRecoveryModal
-          onContinue={() => {
-            const data = sessionRecoveryDataRef.current;
-            if (data) {
-              setResult(data.result);
-              setBullet(data.bullet);
-              setJd(data.jd);
-            }
-            setShowSessionRecovery(false);
-          }}
-          onStartNew={() => {
-            try { localStorage.removeItem("signalyz_last_analysis"); } catch {}
-            setShowSessionRecovery(false);
-          }}
-        />
-      )}
 
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
