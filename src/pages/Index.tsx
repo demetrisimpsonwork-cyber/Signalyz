@@ -1366,10 +1366,10 @@ const Index = () => {
                       ) : (
                         <>
                           <Button className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]" asChild>
-                            <a href="/auth">Get Started Free</a>
+                            <a href="/auth">Unlock Your Fix → Free</a>
                           </Button>
                           <p className="text-xs text-muted-foreground">
-                            Sign up to get 3 free analyses.
+                            Create a free account to unlock your signal analysis.
                           </p>
                         </>
                       )}
