@@ -82,7 +82,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
           {user ? (
             <Button size="sm" onClick={onUpgrade}>Fix This Now → $9</Button>
           ) : (
-            <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
+            <Button size="sm" asChild><a href="/auth">Unlock Your Fix → Free</a></Button>
           )}
           <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
         </div>
