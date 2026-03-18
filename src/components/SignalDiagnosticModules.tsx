@@ -323,8 +323,8 @@ function SignalAlignmentAnalysis({ data }: { data: AlignmentEntry[] }) {
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
-      <SectionLabel>Signal Alignment Analysis</SectionLabel>
-      <SectionSub>How your signal maps to what this role requires</SectionSub>
+      <SectionLabel>Where you're falling short</SectionLabel>
+      <SectionSub>This explains where your experience is not matching the role.</SectionSub>
       <div className="space-y-2">
         {data.map((entry, i) => (
           <div key={i} className="rounded-lg border bg-background p-3 space-y-2">
