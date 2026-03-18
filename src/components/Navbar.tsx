@@ -97,8 +97,7 @@ const Navbar = () => {
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
             {!loading && !user && (
               <>
-                <Button variant="ghost" size="sm" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Sign in</Button>
-                <Button size="sm" className="w-full" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Get Started</Button>
+                <Button size="sm" className="w-full" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Unlock Your Fix → Free</Button>
               </>
             )}
             {!loading && user && (
