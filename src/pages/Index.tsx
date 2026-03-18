@@ -1612,32 +1612,8 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* Conversion CTA — after Primary Blocker, free users only */}
-                            {!effectiveIsPro && primaryBlocker && (
-                              <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                 <p className="text-sm font-bold text-foreground">
-                                   Do these 3 things → move above 70%
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   You'll see exactly how your experience gets rewritten to match this role.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   Most users increase their signal score by 10–25 points after applying these fixes.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
-                                 {user ? (
-                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                     <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
-                                   </Button>
-                                ) : (
-                                  <Button size="sm" className="gap-2" asChild>
-                                    <a href="/auth">Get Started Free</a>
-                                  </Button>
-                                )}
-                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
-                              </div>
-                            )}
+
+
 
                             {/* What This Creates — Pro only */}
                             {effectiveIsPro && whatThisCreates && (
@@ -1688,28 +1664,33 @@ const Index = () => {
                             <h3 className="text-sm font-semibold tracking-tight text-foreground">
                               Fix your score in 3 moves
                             </h3>
-                            <p className="text-xs text-muted-foreground">
-                              Do these 3 things → move above 70%
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              These are not new experiences — they are how your current experience needs to be positioned, strengthened, and aligned to what hiring managers actually evaluate.
                             </p>
                           </div>
 
+                          <p className="text-xs font-medium text-foreground">Do these 3 things → move above 70%</p>
+
                           <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
-                            <p className="text-sm font-semibold text-foreground">Apply these → your score becomes a hire signal</p>
+                            <p className="text-sm font-semibold text-foreground">Apply these → your experience reads like a hire signal</p>
                             <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
                           </div>
 
                           <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
 
+                          <div className="rounded-md border border-destructive/20 bg-destructive/[0.03] px-3 py-2.5 space-y-1.5 text-center">
+                            <p className="text-sm font-semibold text-foreground">You're below the interview threshold — this shows you exactly how to fix it.</p>
+                          </div>
+
                           {user ? (
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix This Now → $9
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]" size="lg">
+                              <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
                             </Button>
                           ) : (
-                            <Button size="sm" className="w-full" asChild>
+                            <Button size="lg" className="w-full gap-2" asChild>
                               <a href="/auth">Get Started Free</a>
                             </Button>
                           )}
-                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
                           <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
                         </div>
                       );
@@ -1722,39 +1703,38 @@ const Index = () => {
 
 
 
-                    {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
-                    <SignalDiagnosticModules
-                      data={{
-                        jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
-                        resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
-                        signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
-                        hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
-                        executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
-                        transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
-                        signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
-                        signal_map: result.signal_model?.signal_map || (result as any).signal_map,
-                        evidence_ledger: result.signal_model?.evidence_ledger,
-                        career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
-                        hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
-                        interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
-                        predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
-                        isPro: effectiveIsPro,
-                        onUpgrade: () => setShowUpgrade(true),
-                      }}
-                      matchScore={result.match_score}
-                    />
-
-                    {/* Calibrated Bullets */}
-                    <CalibratedBulletsSection
-                      bullet={bullet}
-                      result={result}
-                      effectiveIsPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    {/* Pro-only sections — only render when Pro */}
-                    {effectiveIsPro && (
+                    {/* Everything below here is Pro-only for free users */}
+                    {effectiveIsPro ? (
                       <>
+                        {/* Primary Blocker / Why You're Not Getting Interviews + Strategic Fixes + remaining diagnostic sections */}
+                        <SignalDiagnosticModules
+                          data={{
+                            jd_signal_extraction: result.signal_model?.jd_signal_extraction || (result as any).jd_signal_extraction,
+                            resume_signal_profile: result.signal_model?.resume_signal_profile || (result as any).resume_signal_profile,
+                            signal_alignment_analysis: result.signal_model?.signal_alignment_analysis || (result as any).signal_alignment_analysis,
+                            hiring_pipeline_simulation: result.signal_model?.risk_projection?.stages || (result as any).hiring_pipeline_simulation,
+                            executive_insight_summary: result.signal_model?.executive_insight_summary || (result as any).executive_insight_summary,
+                            transferable_signal_detection: result.signal_model?.transferable_signal_detection || (result as any).transferable_signal_detection,
+                            signal_shift_estimates: result.signal_model?.signal_shift_estimates || (result as any).signal_shift_estimates,
+                            signal_map: result.signal_model?.signal_map || (result as any).signal_map,
+                            evidence_ledger: result.signal_model?.evidence_ledger,
+                            career_signal_map: result.signal_model?.career_signal_map || (result as any).career_signal_map,
+                            hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
+                            interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
+                            predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
+                            isPro: effectiveIsPro,
+                            onUpgrade: () => setShowUpgrade(true),
+                          }}
+                          matchScore={result.match_score}
+                        />
+
+                        {/* Calibrated Bullets */}
+                        <CalibratedBulletsSection
+                          bullet={bullet}
+                          result={result}
+                          effectiveIsPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
 
                         {/* Calibrated Summary */}
                         <CalibratedSummary
@@ -1803,30 +1783,70 @@ const Index = () => {
                           />
                         )}
 
+                        {/* Interview Intelligence */}
+                        <InterviewIntelligence
+                          experience={bullet}
+                          jd={jd}
+                          alignmentResult={result as any}
+                          isPro={effectiveIsPro}
+                          onUpgrade={() => setShowUpgrade(true)}
+                        />
+
+                        <KeywordChips keywords={result.missing_keywords} />
+
+                        {/* Export — Copy Calibration Report */}
+                        <ExportResults result={result} />
                       </>
+                    ) : (
+                      /* Free users: blurred preview of locked content */
+                      <div className="relative mt-2">
+                        <div className="pointer-events-none select-none blur-sm opacity-30">
+                          <div className="space-y-4 py-4">
+                            {[
+                              "Strategic Fixes & Repositioned Bullets",
+                              "Interview Intelligence Questions",
+                              "Signal Alignment Deep Analysis",
+                              "Hiring Pipeline Simulation",
+                              "Candidate Benchmark Comparison",
+                            ].map((label) => (
+                              <div key={label} className="rounded-lg border bg-card p-4 space-y-2">
+                                <div className="h-3 bg-muted rounded w-1/3" />
+                                <div className="h-3 bg-muted rounded w-full" />
+                                <div className="h-3 bg-muted rounded w-3/4" />
+                                <div className="h-3 bg-muted rounded w-2/3" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center space-y-4 max-w-sm px-4">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                              <Lock className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-sm font-bold text-foreground">
+                                You're below the interview threshold — this shows you exactly how to fix it.
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Strategic fixes, calibrated bullets, interview questions, and full diagnostic — all locked.
+                              </p>
+                            </div>
+                            {user ? (
+                              <div className="space-y-2">
+                                <Button onClick={() => setShowUpgrade(true)} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]" size="lg">
+                                  <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
+                                </Button>
+                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                              </div>
+                            ) : (
+                              <Button size="lg" className="w-full gap-2" asChild>
+                                <a href="/auth">Get Started Free</a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     )}
-
-                    {/* Interview Intelligence — visible to all users, internally gates questions 2+ */}
-                    <InterviewIntelligence
-                      experience={bullet}
-                      jd={jd}
-                      alignmentResult={result as any}
-                      isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
-                    />
-
-                    <KeywordChips keywords={result.missing_keywords} />
-
-                    {result.match_score < 60 && (
-                      <WeakAlignmentNudge
-                        additionalContext={additionalContext}
-                        onContextChange={setAdditionalContext}
-                        onRerun={() => handleOptimize()}
-                      />
-                    )}
-
-                    {/* Export — Copy Calibration Report */}
-                    <ExportResults result={result} />
                   </>
                 )}
               </div>
@@ -1835,62 +1855,64 @@ const Index = () => {
         )}
       </section>
 
-      {/* FAQ */}
-      <section className="py-12 container max-w-5xl md:max-w-content">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center">
-          Frequently Asked Questions
-        </h2>
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="who-is-it-for">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Signalyz for?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Signalyz is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="fabrication">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Signalyz make things up?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Signalyz never invents experience, metrics, or achievements. All insights are derived from the information you provide.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="chatgpt">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              ChatGPT generates text. Signalyz models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Signalyz diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="ats">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              No. Signalyz calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="full-analysis">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet repositioning. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet recalibration, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="pricing">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Signalyz cost?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="data-privacy">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">What happens to my data?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Your resume and job description data are processed only to generate your analysis. We never share your data with third parties and it is never used to train AI models. You can review our full privacy practices on our Privacy Policy page.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="cancel">
-            <AccordionTrigger className="text-sm text-foreground hover:no-underline">Can I cancel my subscription?</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-              Yes. You can cancel anytime and your Pro access will remain active through the end of your billing period. No refunds are issued for partial months, but you will never be charged again after cancellation.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </section>
+      {/* FAQ — hidden during active report for free users to reduce distraction */}
+      {!(result && !effectiveIsPro) && (
+        <section className="py-12 container max-w-5xl md:max-w-content">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6 text-center">
+            Frequently Asked Questions
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="who-is-it-for">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Signalyz for?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                Signalyz is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="fabrication">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">Does Signalyz make things up?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                No. Signalyz never invents experience, metrics, or achievements. All insights are derived from the information you provide.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="chatgpt">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">How is this different from ChatGPT?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                ChatGPT generates text. Signalyz models how hiring managers interpret professional signals across the hiring pipeline. Instead of simply reframing resumes, Signalyz diagnoses perception gaps and shows how to reposition your experience without fabricating anything.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="ats">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">Is this just ATS keyword stuffing?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                No. Signalyz calibrates how your actual experience reads to a human reviewer — the recruiter scanning for ownership signal, the hiring manager assessing strategic depth. Keywords are one output. Perception is the goal.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="full-analysis">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet repositioning. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet recalibration, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="pricing">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Signalyz cost?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="data-privacy">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">What happens to my data?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                Your resume and job description data are processed only to generate your analysis. We never share your data with third parties and it is never used to train AI models. You can review our full privacy practices on our Privacy Policy page.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="cancel">
+              <AccordionTrigger className="text-sm text-foreground hover:no-underline">Can I cancel my subscription?</AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                Yes. You can cancel anytime and your Pro access will remain active through the end of your billing period. No refunds are issued for partial months, but you will never be charged again after cancellation.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+      )}
 
 
       <UpgradeModal
