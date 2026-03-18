@@ -358,8 +358,8 @@ function SignalAlignmentAnalysis({ data }: { data: AlignmentEntry[] }) {
 function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
-      <SectionLabel>Hiring Pipeline Simulation</SectionLabel>
-      <SectionSub>How your resume performs at each hiring stage</SectionSub>
+      <SectionLabel>Where you're getting filtered out</SectionLabel>
+      <SectionSub>This shows where your resume is getting filtered out.</SectionSub>
       <div className="space-y-2.5">
         {data.map((stage, i) => (
           <div key={i} className={`rounded-lg border p-3 space-y-2 ${STATUS_STYLES[stage.status] || ""}`}>
