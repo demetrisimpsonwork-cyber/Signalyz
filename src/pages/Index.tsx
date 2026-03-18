@@ -1548,6 +1548,7 @@ const Index = () => {
                         <div className="space-y-1.5 pt-1">
                           <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
                           <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
+                          <p className="text-xs text-muted-foreground italic">These 3 changes move you above the interview threshold.</p>
                         </div>
                       )}
 
