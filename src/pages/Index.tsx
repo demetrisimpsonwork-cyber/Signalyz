@@ -365,6 +365,8 @@ const Index = () => {
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
   const [inputTruncated, setInputTruncated] = useState(false);
+  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
+  const sessionRecoveryDataRef = useRef<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
