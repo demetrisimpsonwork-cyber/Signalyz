@@ -1612,32 +1612,8 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* Conversion CTA — after Primary Blocker, free users only */}
-                            {!effectiveIsPro && primaryBlocker && (
-                              <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                 <p className="text-sm font-bold text-foreground">
-                                   Do these 3 things → move above 70%
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   You'll see exactly how your experience gets rewritten to match this role.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   Most users increase their signal score by 10–25 points after applying these fixes.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
-                                 {user ? (
-                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                     <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
-                                   </Button>
-                                ) : (
-                                  <Button size="sm" className="gap-2" asChild>
-                                    <a href="/auth">Get Started Free</a>
-                                  </Button>
-                                )}
-                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
-                              </div>
-                            )}
+
+
 
                             {/* What This Creates — Pro only */}
                             {effectiveIsPro && whatThisCreates && (
