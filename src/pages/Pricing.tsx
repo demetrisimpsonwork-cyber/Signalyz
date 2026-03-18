@@ -115,7 +115,7 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
-              <a href="/auth">Get Started</a>
+              <a href="/auth">Unlock Your Fix → Free</a>
             </Button>
           )}
 
