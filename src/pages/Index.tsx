@@ -419,16 +419,24 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // Session persistence: show recovery modal if previous session exists (auto-restore only for post-payment redirects)
   useEffect(() => {
+    const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
       if (saved && !result) {
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
-          setResult(parsed.result);
-          setBullet(parsed.bullet);
-          setJd(parsed.jd);
+          if (isPostPayment) {
+            // Auto-restore for post-payment redirects
+            setResult(parsed.result);
+            setBullet(parsed.bullet);
+            setJd(parsed.jd);
+          } else {
+            // Show recovery modal for normal visits
+            sessionRecoveryDataRef.current = parsed;
+            setShowSessionRecovery(true);
+          }
         }
       }
     } catch {}
