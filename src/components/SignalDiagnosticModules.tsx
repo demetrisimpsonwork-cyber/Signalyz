@@ -692,6 +692,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         data.strategic_fixes && data.strategic_fixes.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
+            <p className="text-[11px] text-muted-foreground italic">These {data.strategic_fixes?.length || 3} changes move you above the interview threshold.</p>
             <ol className="space-y-1">
               {data.strategic_fixes.slice(0, 3).map((fix, i) => {
                 const cleanedFix = fix.replace(/^\d+\.\s*/, "");
