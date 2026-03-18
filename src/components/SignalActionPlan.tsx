@@ -100,6 +100,7 @@ const SignalActionPlan = ({ alignmentResult }: SignalActionPlanProps) => {
           </li>
         ))}
       </ol>
+      <p className="text-xs text-muted-foreground italic">These {actions.length} changes move you above the interview threshold.</p>
     </div>
   );
 };
