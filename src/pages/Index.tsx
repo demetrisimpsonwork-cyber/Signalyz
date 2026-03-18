@@ -1707,7 +1707,7 @@ const Index = () => {
                             </Button>
                           ) : (
                             <Button size="lg" className="w-full gap-2" asChild>
-                              <a href="/auth">Get Started Free</a>
+                              <a href="/auth">Unlock Your Fix → Free</a>
                             </Button>
                           )}
                           <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
