@@ -163,7 +163,7 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
-              <a href="/auth">Get Started</a>
+              <a href="/auth">Unlock Your Fix → Free</a>
             </Button>
           )}
         </div>
