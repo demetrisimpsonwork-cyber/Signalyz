@@ -1506,8 +1506,9 @@ const Index = () => {
                       </>
                     ) : (
                       <div className="rounded-xl border border-primary/20 bg-card p-5 text-center space-y-3">
-                        <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
-                        <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
+                        <Lock className="h-5 w-5 text-primary mx-auto" />
+                        <p className="text-sm font-medium text-foreground">Full analysis is unlocked after account creation.</p>
+                        <Button asChild className="w-full sm:w-auto"><a href="/auth">Unlock Your Fix → Free</a></Button>
                       </div>
                     )}
                     <p className="context-text text-center pt-2">This is a sample preview — paste your own experience to see your actual signal read.</p>
