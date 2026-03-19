@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Lock, RefreshCw, AlertTriangle, User } from "lucide-react";
+import { Sparkles, Lock, RefreshCw, AlertTriangle, User, TrendingUp, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { useResumeAssembly } from "@/hooks/useResumeAssembly";
@@ -17,6 +17,7 @@ import PdfFallbackState from "@/components/PdfFallbackState";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import { computeDeterministicScore } from "@/lib/deterministicScore";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
@@ -52,6 +53,7 @@ function resumeDataToText(r: CalibratedResumeData): string {
   }
   return lines.join("\n");
 }
+
 interface CalibratedResumeTabProps {
   isPro: boolean;
   onUpgrade: () => void;
@@ -64,8 +66,11 @@ interface CalibratedResumeTabProps {
   alignmentResult?: Record<string, unknown>;
   inputSource?: ResumeInputSource;
   onResumeTextReplaced?: (text: string) => void;
-  onRerunSignalAnalysis?: (calibratedText: string) => void;
   originalResumeBeforeCalibration?: string | null;
+  /** The score from the original alignment run */
+  originalScore?: number;
+  /** The job description text for client-side re-scoring */
+  jdText?: string;
 }
 
 const CalibratedResumeTab = ({
@@ -80,8 +85,9 @@ const CalibratedResumeTab = ({
   alignmentResult,
   inputSource = "paste",
   onResumeTextReplaced,
-  onRerunSignalAnalysis,
   originalResumeBeforeCalibration,
+  originalScore,
+  jdText,
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
@@ -93,12 +99,17 @@ const CalibratedResumeTab = ({
   const [showPdfFallback, setShowPdfFallback] = useState(false);
   const autoAssembledRef = useRef(false);
 
-  // Clear stale calibrated resume when a new alignment run starts (hasCurrentSessionAlignment resets to false)
+  // Re-score state
+  const [calibratedScore, setCalibratedScore] = useState<number | null>(null);
+  const [rescoring, setRescoring] = useState(false);
+
+  // Clear stale calibrated resume when a new alignment run starts
   const prevAlignmentRef = useRef(hasCurrentSessionAlignment);
   useEffect(() => {
     if (prevAlignmentRef.current && !hasCurrentSessionAlignment) {
       resetAssembly();
       autoAssembledRef.current = false;
+      setCalibratedScore(null);
     }
     prevAlignmentRef.current = hasCurrentSessionAlignment;
   }, [hasCurrentSessionAlignment, resetAssembly]);
@@ -122,12 +133,9 @@ const CalibratedResumeTab = ({
     assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>);
   };
 
-  // When confidence is low AND input was PDF, show fallback instead of confirm step
-  // DOCX with successfully extracted experience should auto-confirm, never trigger fallback
   useEffect(() => {
     if (pendingResume && confidence?.isLow) {
       if (inputSource === "docx" && pendingResume.experience.length > 0) {
-        // DOCX parsed successfully — skip confirmation entirely
         skipConfirmation();
         return;
       }
@@ -137,7 +145,6 @@ const CalibratedResumeTab = ({
     }
   }, [pendingResume, confidence, inputSource]);
 
-  // autoAssembledRef declared above
   useEffect(() => {
     if (isPro && hasCurrentSessionAlignment && !currentResume && !pendingResume && !loading && !error && !autoAssembledRef.current && !showPdfFallback) {
       autoAssembledRef.current = true;
@@ -160,15 +167,37 @@ const CalibratedResumeTab = ({
     setShowPdfFallback(false);
     autoAssembledRef.current = false;
     onResumeTextReplaced?.(text);
-    // Re-assemble with the clean text
     const contact = extractContactFromText(text);
     assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>);
   };
 
   const handleContinueWithEditMode = () => {
     setShowPdfFallback(false);
-    // Skip to the field confirmation step (already have pendingResume)
   };
+
+  /** Re-score the calibrated resume client-side using the deterministic engine */
+  const handleRescore = useCallback(() => {
+    if (!currentResume || !jdText) return;
+    setRescoring(true);
+    requestAnimationFrame(() => {
+      try {
+        const calibratedText = resumeDataToText(currentResume);
+        const originalResumeText = originalResumeBeforeCalibration || originalResume;
+        const detScore = computeDeterministicScore(
+          calibratedText,
+          jdText,
+          "calibrated",
+          originalResumeText,
+        );
+        setCalibratedScore(detScore.finalScore);
+      } catch (err) {
+        console.error("[Rescore] Failed:", err);
+        toast.error("Re-scoring failed. Please try again.");
+      } finally {
+        setRescoring(false);
+      }
+    });
+  }, [currentResume, jdText, originalResumeBeforeCalibration, originalResume]);
 
   if (!isPro) {
     return <CalibratedResumeGateCTA onUpgrade={onUpgrade} />;
@@ -194,7 +223,6 @@ const CalibratedResumeTab = ({
     );
   }
 
-  // PDF fallback: confidence is low, show guided options instead of contaminated output
   if (showPdfFallback && pendingResume && confidence?.isLow) {
     return (
       <PdfFallbackState
@@ -223,18 +251,13 @@ const CalibratedResumeTab = ({
               <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
             </div>
           </div>
-          <Button
-            onClick={() => handleAssemble()}
-            variant="outline"
-            className="w-full gap-2"
-          >
+          <Button onClick={() => handleAssemble()} variant="outline" className="w-full gap-2">
             <RefreshCw className="h-4 w-4" />
             Retry Assembly
           </Button>
         </div>
       )}
 
-      {/* Low-confidence confirmation step (non-PDF, or after user chose "Review & Edit") */}
       {pendingResume && !loading && !currentResume && confidence && !showPdfFallback && (
         <ResumeStructureConfirm
           resume={pendingResume}
@@ -244,10 +267,8 @@ const CalibratedResumeTab = ({
         />
       )}
 
-
       {currentResume && !loading && (
         <>
-          {/* Name prompt when extraction failed */}
           {!currentResume.header.name && <NamePrompt onSubmit={(name) => updateField("header.name", name)} />}
 
           <ResumeToolbar
@@ -260,9 +281,7 @@ const CalibratedResumeTab = ({
             saved={saved}
           />
 
-          <div
-            className="rounded-lg py-8 px-4 bg-muted"
-          >
+          <div className="rounded-lg py-8 px-4 bg-muted">
             <div id="resume-canvas">
               <ResumeCanvas
                 resume={currentResume}
@@ -280,29 +299,65 @@ const CalibratedResumeTab = ({
             calibratedResume={currentResume}
           />
 
-          {/* Re-run Signal Analysis with calibrated text */}
-          {onRerunSignalAnalysis && (
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-sm font-medium text-foreground">See your new score</p>
-                <p className="text-xs text-muted-foreground">
-                  {originalResumeBeforeCalibration
-                    ? "Re-run the Alignment Engine with your calibrated resume to measure the signal improvement."
-                    : "Original resume baseline not found — re-run alignment from the Alignment tab first."}
-                </p>
+          {/* Re-run Signal Analysis — inline client-side re-score */}
+          {jdText && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="text-sm font-semibold text-foreground">Re-run Signal Analysis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Score your calibrated resume against the same job description to measure the signal improvement.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  disabled={rescoring}
+                  onClick={handleRescore}
+                >
+                  {rescoring ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <TrendingUp className="h-4 w-4" />
+                  )}
+                  {calibratedScore !== null ? "Re-score Again" : "Re-score Now"}
+                </Button>
               </div>
-              <Button
-                size="sm"
-                className="gap-2 shrink-0"
-                disabled={!originalResumeBeforeCalibration}
-                onClick={() => {
-                  const text = resumeDataToText(currentResume);
-                  onRerunSignalAnalysis(text);
-                }}
-              >
-                <RefreshCw className="h-4 w-4" />
-                Re-score Now
-              </Button>
+
+              {/* Score comparison display */}
+              {calibratedScore !== null && originalScore !== undefined && (
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="flex-1 rounded-lg border bg-card p-3 text-center">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Original</p>
+                    <p className="text-2xl font-bold text-muted-foreground">{originalScore}<span className="text-sm font-normal text-muted-foreground">%</span></p>
+                  </div>
+
+                  <div className="shrink-0 flex flex-col items-center gap-0.5">
+                    <ArrowRight className="h-5 w-5 text-primary" />
+                    {calibratedScore > originalScore && (
+                      <span className="text-xs font-bold text-primary">
+                        +{calibratedScore - originalScore}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 rounded-lg border-2 border-primary bg-card p-3 text-center">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-primary mb-1">Calibrated</p>
+                    <p className="text-2xl font-bold text-primary">{calibratedScore}<span className="text-sm font-normal text-primary">%</span></p>
+                  </div>
+                </div>
+              )}
+
+              {calibratedScore !== null && originalScore !== undefined && calibratedScore > originalScore && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Calibration improved your signal score by <span className="font-semibold text-primary">+{calibratedScore - originalScore} points</span> — same experience, stronger positioning.
+                </p>
+              )}
+              {calibratedScore !== null && originalScore !== undefined && calibratedScore <= originalScore && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Edit bullets in the resume above to strengthen specific signals, then re-score.
+                </p>
+              )}
             </div>
           )}
         </>
