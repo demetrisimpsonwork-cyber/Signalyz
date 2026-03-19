@@ -10,6 +10,8 @@
 
 // ─── Overused AI phrases → cleaner replacements ─────────────────────────────
 
+const FORMULAIC_TAIL_RX = /,?\s*(?:improving service outcomes|reducing operational risk|aligned to (?:cross[- ]?functional|[\w\s]+) priorities|throughout the customer lifecycle|driving stronger operational outcomes|improving operational outcomes|improving operational efficiency|improving operational efficiency and team execution|reducing operational risk and strengthening compliance outcomes|improving service outcomes and stakeholder trust)\s*\.?\s*$/gi;
+
 const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   // Inflated verbs
   [/\bLeveraged\b/g, "Used"],
