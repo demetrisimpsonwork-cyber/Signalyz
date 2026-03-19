@@ -123,9 +123,7 @@ const CalibratedResumeTab = ({
     [originalResume]
   );
 
-  useEffect(() => {
-    if (!isPro) onUpgrade();
-  }, [isPro, onUpgrade]);
+  // Gate CTA is rendered inline at line 202 — no need to auto-open modal
 
   const handleAssemble = (overrideResume?: string) => {
     const resumeText = overrideResume || originalResume;
