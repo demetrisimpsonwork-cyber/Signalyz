@@ -113,7 +113,7 @@ const ACTION_VERB_SET_TITLE = new Set([
   "managed","led","developed","created","built","improved","directed",
   "established","implemented","executed","organized","analyzed","designed",
   "maintained","delivered","coordinated","supported","reduced","increased",
-  "streamlined","automated","facilitated","negotiated","spearheaded",
+  "streamlined","automated","facilitated","negotiated",
   "launched","oversaw","supervised","trained","partnered","resolved",
   "provided","reported","documented","monitored","tracked","planned",
   "produced","optimized","communicated","communicate",
