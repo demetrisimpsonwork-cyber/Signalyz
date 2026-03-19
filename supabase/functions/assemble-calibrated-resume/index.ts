@@ -1252,12 +1252,123 @@ function stripWeakLead(text: string): string {
     .trim();
 }
 
-/** Check if a word is any known action verb (strong or partial) */
+/** Check if a word is any known action verb (strong, partial, or common variant) */
 function isAnyActionVerb(word: string): boolean {
   const lower = word.toLowerCase().replace(/[^a-z]/g, "");
-  return (STRONG_SIGNAL_VERBS as readonly string[]).includes(lower) ||
-    (PARTIAL_SIGNAL_VERBS as readonly string[]).includes(lower) ||
-    ["drove","advanced","executed","owned"].includes(lower);
+  if (!lower || lower.length < 3) return false;
+  if ((STRONG_SIGNAL_VERBS as readonly string[]).includes(lower)) return true;
+  if ((PARTIAL_SIGNAL_VERBS as readonly string[]).includes(lower)) return true;
+
+  // Comprehensive set covering past-tense, present-tense, and infinitive forms
+  // that commonly appear as bullet openers in resumes
+  const EXTENDED_ACTION_VERBS = new Set([
+    // Past-tense forms already in STRONG/PARTIAL but also their base/present forms
+    "resolve","resolved","resolving",
+    "direct","directed","directing",
+    "deliver","delivered","delivering",
+    "coordinate","coordinated","coordinating",
+    "govern","governed","governing",
+    "manage","managed","managing",
+    "administer","administered","administering",
+    "develop","developed","developing",
+    "maintain","maintained","maintaining",
+    "support","supported","supporting",
+    "build","built","building",
+    "execute","executed","executing",
+    "drive","drove","driving","driven",
+    "advance","advanced","advancing",
+    "own","owned","owning",
+    "lead","led","leading",
+    "architect","architected","architecting",
+    "launch","launched","launching",
+    "scale","scaled","scaling",
+    "implement","implemented","implementing",
+    "transform","transformed","transforming",
+    "establish","established","establishing",
+    "redesign","redesigned","redesigning",
+    "devise","devised","devising",
+    "institute","instituted","instituting",
+    "restructure","restructured","restructuring",
+    "consolidate","consolidated","consolidating",
+    "accelerate","accelerated","accelerating",
+    "elevate","elevated","elevating",
+    "oversee","oversaw","overseeing",
+    "standardize","standardized","standardizing",
+    "create","created","creating",
+    "design","designed","designing",
+    "automate","automated","automating",
+    "negotiate","negotiated","negotiating",
+    "facilitate","facilitated","facilitating",
+    "optimize","optimized","optimizing",
+    "revamp","revamped","revamping",
+    "formulate","formulated","formulating",
+    "engineer","engineered","engineering",
+    "deploy","deployed","deploying",
+    "streamline","streamlined","streamlining",
+    "train","trained","training",
+    "mentor","mentored","mentoring",
+    "supervise","supervised","supervising",
+    "analyze","analyzed","analysed","analyzing","analysing",
+    "advise","advised","advising",
+    "communicate","communicated","communicating",
+    "assess","assessed","assessing",
+    "evaluate","evaluated","evaluating",
+    "identify","identified","identifying",
+    "integrate","integrated","integrating",
+    "migrate","migrated","migrating",
+    "configure","configured","configuring",
+    "troubleshoot","troubleshot","troubleshooting",
+    "prioritize","prioritized","prioritizing",
+    "collaborate","collaborated","collaborating",
+    "present","presented","presenting",
+    "audit","audited","auditing",
+    "align","aligned","aligning",
+    "define","defined","defining",
+    "reduce","reduced","reducing",
+    "increase","increased","increasing",
+    "improve","improved","improving",
+    "enhance","enhanced","enhancing",
+    "ensure","ensured","ensuring",
+    "guide","guided","guiding",
+    "steer","steered","steering",
+    "enable","enabled","enabling",
+    "initiate","initiated","initiating",
+    "complete","completed","completing",
+    "secure","secured","securing",
+    "enforce","enforced","enforcing",
+    "document","documented","documenting",
+    "report","reported","reporting",
+    "allocate","allocated","allocating",
+    "recruit","recruited","recruiting",
+    "onboard","onboarded","onboarding",
+    "consult","consulted","consulting",
+    "draft","drafted","drafting",
+    "review","reviewed","reviewing",
+    "prepare","prepared","preparing",
+    "process","processed","processing",
+    "compile","compiled","compiling",
+    "organize","organized","organizing",
+    "plan","planned","planning",
+    "conduct","conducted","conducting",
+    "perform","performed","performing",
+    "serve","served","serving",
+    "track","tracked","tracking",
+    "monitor","monitored","monitoring",
+    "handle","handled","handling",
+    "mobilize","mobilized","mobilizing",
+    "investigate","investigated","investigating",
+    "mitigate","mitigated","mitigating",
+    "arbitrate","arbitrated","arbitrating",
+    "mediate","mediated","mediating",
+    "regulate","regulated","regulating",
+    "navigate","navigated","navigating",
+    "champion", // banned but still detect to prevent doubling
+    "pioneer","pioneered",
+    "spearhead","spearheaded", // banned but detect to prevent doubling
+    "orchestrate","orchestrated", // banned but detect to prevent doubling
+  ]);
+
+  return EXTENDED_ACTION_VERBS.has(lower);
 }
 
 function eliminatePassiveLanguage(text: string): string {
