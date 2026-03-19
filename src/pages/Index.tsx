@@ -818,6 +818,7 @@ const Index = () => {
           jd: normJd.text,
           ts: Date.now(),
         }));
+        setSessionVersion();
       } catch {}
 
       // ─── Internal delta logging for calibration runs ──────────────────────
