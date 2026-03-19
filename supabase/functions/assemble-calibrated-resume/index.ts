@@ -1252,6 +1252,14 @@ function stripWeakLead(text: string): string {
     .trim();
 }
 
+/** Check if a word is any known action verb (strong or partial) */
+function isAnyActionVerb(word: string): boolean {
+  const lower = word.toLowerCase().replace(/[^a-z]/g, "");
+  return (STRONG_SIGNAL_VERBS as readonly string[]).includes(lower) ||
+    (PARTIAL_SIGNAL_VERBS as readonly string[]).includes(lower) ||
+    ["drove","advanced","executed","owned"].includes(lower);
+}
+
 function eliminatePassiveLanguage(text: string): string {
   return text
     .replace(/\bhelped(?:\s+to)?\b/gi, "drove")
