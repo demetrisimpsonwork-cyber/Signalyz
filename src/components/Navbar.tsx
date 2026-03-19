@@ -15,8 +15,9 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
+    clearSignalyzSession();
     await supabase.auth.signOut();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";

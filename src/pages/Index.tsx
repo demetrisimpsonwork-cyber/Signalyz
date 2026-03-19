@@ -417,16 +417,40 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // ─── Controlled session recovery ─────────────────────────────────────────
+  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
+  const pendingSessionRef = useRef<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+
   useEffect(() => {
+    // Post-payment redirects auto-restore silently
+    if (searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success") {
+      try {
+        const saved = localStorage.getItem("signalyz_last_analysis");
+        if (saved && !result) {
+          const parsed = JSON.parse(saved);
+          if (parsed.result && parsed.bullet && parsed.jd) {
+            setResult(parsed.result);
+            setBullet(parsed.bullet);
+            setJd(parsed.jd);
+          }
+        }
+      } catch {}
+      return;
+    }
+
+    // Normal flow: check for saved session and prompt
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
       if (saved && !result) {
+        // Reject incompatible sessions from older builds
+        if (!isSessionCompatible()) {
+          clearSignalyzSession();
+          return;
+        }
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
-          setResult(parsed.result);
-          setBullet(parsed.bullet);
-          setJd(parsed.jd);
+          pendingSessionRef.current = parsed;
+          setShowSessionRecovery(true);
         }
       }
     } catch {}
