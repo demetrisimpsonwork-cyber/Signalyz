@@ -14,30 +14,8 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
-    // Clear all auth-scoped session data to prevent stale state
-    try {
-      // Clear unscoped keys
-      localStorage.removeItem("signalyz_last_analysis");
-      localStorage.removeItem("signalyz_calibrated_resume_data");
-      localStorage.removeItem("signalyz_calibrated_resume_data_edited");
-      localStorage.removeItem("signalyz_daily_usage");
-      localStorage.removeItem("signalyz_trial_started");
-      localStorage.removeItem("signalyz_trial_runs");
-      // Clear user-scoped session keys
-      if (user?.id) {
-        localStorage.removeItem(`signalyz_last_analysis_${user.id}`);
-      }
-      // Clear any remaining scoped keys by prefix
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith("signalyz_last_analysis_")) keysToRemove.push(key);
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-    } catch {}
     await supabase.auth.signOut();
-    // Force a clean reload to reset all in-memory state
-    window.location.href = "/";
+    navigate("/");
   };
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
@@ -97,7 +75,8 @@ const Navbar = () => {
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
             {!loading && !user && (
               <>
-                <Button size="sm" className="w-full" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Unlock Your Fix → Free</Button>
+                <Button variant="ghost" size="sm" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Sign in</Button>
+                <Button size="sm" className="w-full" onClick={() => { navigate("/auth"); setMobileOpen(false); }}>Get Started</Button>
               </>
             )}
             {!loading && user && (

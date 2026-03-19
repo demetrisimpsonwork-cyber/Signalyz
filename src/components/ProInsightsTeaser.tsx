@@ -46,7 +46,7 @@ const ProInsightsTeaser = () => {
               className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
               asChild
             >
-              <a href="/auth">Unlock Your Fix → Free</a>
+              <a href="/auth">Get Started Free</a>
             </Button>
           )}
 

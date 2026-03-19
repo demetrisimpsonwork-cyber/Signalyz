@@ -152,7 +152,7 @@ export function ProGate({
               size="lg"
               asChild
             >
-              <a href="/auth">Unlock Your Fix → Free</a>
+              <a href="/auth">Get Started Free</a>
             </Button>
           )}
         </div>

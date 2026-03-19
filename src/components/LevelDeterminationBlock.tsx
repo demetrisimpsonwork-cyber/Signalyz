@@ -394,7 +394,7 @@ const LevelDeterminationBlock = ({
           {isAuthenticated ? (
             onUpgrade && <Button onClick={onUpgrade} size="sm">See My Exact Fix</Button>
           ) : (
-            <Button size="sm" asChild><a href="/auth">Unlock Your Fix → Free</a></Button>
+            <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
         </div>
       )}

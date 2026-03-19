@@ -117,7 +117,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
               </div>
             ) : (
               <Button size="lg" className="gap-2" asChild>
-                <a href="/auth">Unlock Your Fix → Free</a>
+                <a href="/auth">Get Started Free</a>
               </Button>
             )}
           </div>

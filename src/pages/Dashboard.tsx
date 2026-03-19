@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import ResultSection from "@/components/ResultSection";
@@ -29,7 +28,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<AlignmentFilter>("all");
-  const { isPro } = useSubscription();
+
+  // TODO: replace with real pro check
+  const isPro = false;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");

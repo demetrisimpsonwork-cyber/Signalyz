@@ -60,7 +60,7 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="outline" asChild>
-              <a href="/auth">Unlock Your Fix → Free</a>
+              <a href="/auth">Get started</a>
             </Button>
           )}
         </div>
@@ -115,7 +115,7 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
-              <a href="/auth">Unlock Your Fix → Free</a>
+              <a href="/auth">Get Started</a>
             </Button>
           )}
 
@@ -163,7 +163,7 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
-              <a href="/auth">Unlock Your Fix → Free</a>
+              <a href="/auth">Get Started</a>
             </Button>
           )}
         </div>
@@ -192,7 +192,7 @@ const Pricing = () => {
           </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
-            <a href="/auth">Unlock Your Fix → Free</a>
+            <a href="/auth">Get Started</a>
           </Button>
         )}
       </div>
