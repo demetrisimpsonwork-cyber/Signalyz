@@ -1357,22 +1357,11 @@ function ensureScopePreserved(original: string, bullet: string): string {
   return appendClause(bullet, `including ${snippet}`);
 }
 
-function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
-  if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
-  const minHits = aggressive ? 2 : 1;
-  if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
-
-  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
-    .filter((candidate) => !bullet.toLowerCase().includes(candidate.toLowerCase()));
-
-  if (!candidates.length) return bullet;
-
-  const selected = candidates.slice(0, aggressive ? 2 : 1);
-  const clause = selected.length === 1
-    ? `aligned to ${selected[0]} priorities`
-    : `aligned to ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} priorities`;
-
-  return appendClause(bullet, clause);
+function ensureJdAlignment(_original: string, bullet: string, _jdModel: ReturnType<typeof buildSignalJdModel>, _aggressive = false): string {
+  // Removed: was appending formulaic "aligned to X priorities" to every bullet.
+  // JD alignment is now handled solely by the AI rewrite prompt which has full context
+  // to weave keywords naturally. The deterministic tail-append created robotic output.
+  return bullet;
 }
 
 function ensureOutcomeFraming(original: string, bullet: string, aggressive = false): string {
