@@ -1220,10 +1220,10 @@ function chooseSignalVerb(original: string, bullet: string, usedVerbs: Map<strin
 
   if (/team|staff|people|reports|headcount|supervis/i.test(lower)) candidates.push("Directed", "Oversaw", "Supervised");
   if (/launch|rollout|deploy|implement|migration|release/i.test(lower)) candidates.push("Implemented", "Launched", "Deployed");
-  if (/design|build|develop|engineer|architect|create|platform|system|application/i.test(lower)) candidates.push("Built", "Developed", "Engineered", "Architected", "Designed", "Created");
+  if (/design|build|develop|engineer|architect|create|platform|system|application/i.test(lower)) candidates.push("Built", "Developed", "Engineered", "Designed", "Created");
   if (/process|workflow|efficien|optimi|streamline|automation|manual/i.test(lower)) candidates.push("Optimized", "Streamlined", "Automated", "Standardized");
   if (/complaint|issue|escalat|case|ticket|resolve|troubleshoot/i.test(lower)) candidates.push("Resolved", "Directed", "Delivered");
-  if (/client|customer|stakeholder|partner|cross-functional|cross functional/i.test(lower)) candidates.push("Facilitated", "Orchestrated", "Directed");
+  if (/client|customer|stakeholder|partner|cross-functional|cross functional/i.test(lower)) candidates.push("Facilitated", "Directed", "Coordinated");
   if (/train|coach|mentor|onboard/i.test(lower)) candidates.push("Trained", "Mentored");
   if (/compliance|policy|audit|risk|governance/i.test(lower)) candidates.push("Governed", "Established", "Standardized");
 
