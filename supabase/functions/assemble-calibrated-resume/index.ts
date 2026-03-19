@@ -113,7 +113,7 @@ const ACTION_VERB_SET_TITLE = new Set([
   "managed","led","developed","created","built","improved","directed",
   "established","implemented","executed","organized","analyzed","designed",
   "maintained","delivered","coordinated","supported","reduced","increased",
-  "streamlined","automated","facilitated","negotiated","spearheaded",
+  "streamlined","automated","facilitated","negotiated",
   "launched","oversaw","supervised","trained","partnered","resolved",
   "provided","reported","documented","monitored","tracked","planned",
   "produced","optimized","communicated","communicate",
@@ -985,7 +985,7 @@ const SIGNAL_STOP_WORDS = new Set([
 ]);
 
 const STRONG_SIGNAL_VERBS = [
-  "led","drove","owned","spearheaded","architected","orchestrated","directed","launched","built","scaled","implemented","executed","transformed","championed","governed","delivered","established","redesigned","pioneered","devised","instituted","restructured","consolidated","mobilized","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
+  "led","drove","owned","architected","directed","launched","built","scaled","implemented","executed","transformed","governed","delivered","established","redesigned","devised","instituted","restructured","consolidated","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
 ] as const;
 
 const PARTIAL_SIGNAL_VERBS = [
@@ -1220,10 +1220,10 @@ function chooseSignalVerb(original: string, bullet: string, usedVerbs: Map<strin
 
   if (/team|staff|people|reports|headcount|supervis/i.test(lower)) candidates.push("Directed", "Oversaw", "Supervised");
   if (/launch|rollout|deploy|implement|migration|release/i.test(lower)) candidates.push("Implemented", "Launched", "Deployed");
-  if (/design|build|develop|engineer|architect|create|platform|system|application/i.test(lower)) candidates.push("Built", "Developed", "Engineered", "Architected", "Designed", "Created");
+  if (/design|build|develop|engineer|architect|create|platform|system|application/i.test(lower)) candidates.push("Built", "Developed", "Engineered", "Designed", "Created");
   if (/process|workflow|efficien|optimi|streamline|automation|manual/i.test(lower)) candidates.push("Optimized", "Streamlined", "Automated", "Standardized");
   if (/complaint|issue|escalat|case|ticket|resolve|troubleshoot/i.test(lower)) candidates.push("Resolved", "Directed", "Delivered");
-  if (/client|customer|stakeholder|partner|cross-functional|cross functional/i.test(lower)) candidates.push("Facilitated", "Orchestrated", "Directed");
+  if (/client|customer|stakeholder|partner|cross-functional|cross functional/i.test(lower)) candidates.push("Facilitated", "Directed", "Coordinated");
   if (/train|coach|mentor|onboard/i.test(lower)) candidates.push("Trained", "Mentored");
   if (/compliance|policy|audit|risk|governance/i.test(lower)) candidates.push("Governed", "Established", "Standardized");
 
@@ -1252,14 +1252,26 @@ function stripWeakLead(text: string): string {
     .trim();
 }
 
+/** Check if a word is any known action verb (strong or partial) */
+function isAnyActionVerb(word: string): boolean {
+  const lower = word.toLowerCase().replace(/[^a-z]/g, "");
+  return (STRONG_SIGNAL_VERBS as readonly string[]).includes(lower) ||
+    (PARTIAL_SIGNAL_VERBS as readonly string[]).includes(lower) ||
+    ["drove","advanced","executed","owned"].includes(lower);
+}
+
 function eliminatePassiveLanguage(text: string): string {
-  return text
-    .replace(/\bhelped(?:\s+to)?\b/gi, "drove")
-    .replace(/\bassisted(?:\s+with|\s+in)?\b/gi, "executed")
-    .replace(/\bsupported\b/gi, "advanced")
-    .replace(/\bparticipated in\b/gi, "executed")
-    .replace(/\bwas involved in\b/gi, "owned")
-    .replace(/\btasked with\b/gi, "owned");
+  // Only replace passive phrases when they appear at the START of the bullet
+  // to avoid creating garbled mid-sentence text like "drove resolve"
+  let result = text.trim();
+  result = result
+    .replace(/^helped(?:\s+to)?\s+/i, "Drove ")
+    .replace(/^assisted(?:\s+with|\s+in)?\s+/i, "Executed ")
+    .replace(/^supported\s+/i, "Advanced ")
+    .replace(/^participated in\s+/i, "Executed ")
+    .replace(/^was involved in\s+/i, "Owned ")
+    .replace(/^tasked with\s+/i, "Owned ");
+  return result;
 }
 
 function extractOriginalScopeEvidence(original: string): string[] {
@@ -1284,10 +1296,24 @@ function extractEvidenceTail(original: string): string {
 
 function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<string, number>): string {
   const leadWord = getLeadWord(bullet);
-  if (STRONG_SIGNAL_VERBS.includes(leadWord as typeof STRONG_SIGNAL_VERBS[number])) return bullet;
+  // If already starts with a strong verb, keep it as-is
+  if ((STRONG_SIGNAL_VERBS as readonly string[]).includes(leadWord)) return bullet;
 
   const cleaned = stripWeakLead(bullet);
-  const remainder = cleaned ? cleaned.charAt(0).toLowerCase() + cleaned.slice(1) : extractEvidenceTail(original).toLowerCase();
+  const cleanedLead = getLeadWord(cleaned);
+
+  // After stripping weak lead, if it now starts with ANY action verb, just capitalize and return
+  // This prevents doubled verbs like "Resolved orchestrate"
+  if (isAnyActionVerb(cleanedLead)) {
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  // Strip any existing verb that would create a double
+  let remainder = cleaned;
+  if (isAnyActionVerb(getLeadWord(remainder))) {
+    remainder = remainder.replace(/^[A-Za-z]+\s+/, "");
+  }
+  remainder = remainder ? remainder.charAt(0).toLowerCase() + remainder.slice(1) : extractEvidenceTail(original).toLowerCase();
   const verb = chooseSignalVerb(original, cleaned || original, usedVerbs);
   return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
 }
@@ -1331,29 +1357,20 @@ function ensureScopePreserved(original: string, bullet: string): string {
   return appendClause(bullet, `including ${snippet}`);
 }
 
-function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
-  if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
-  const minHits = aggressive ? 2 : 1;
-  if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
-
-  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
-    .filter((candidate) => !bullet.toLowerCase().includes(candidate.toLowerCase()));
-
-  if (!candidates.length) return bullet;
-
-  const selected = candidates.slice(0, aggressive ? 2 : 1);
-  const clause = selected.length === 1
-    ? `aligned to ${selected[0]} priorities`
-    : `aligned to ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} priorities`;
-
-  return appendClause(bullet, clause);
+function ensureJdAlignment(_original: string, bullet: string, _jdModel: ReturnType<typeof buildSignalJdModel>, _aggressive = false): string {
+  // Removed: was appending formulaic "aligned to X priorities" to every bullet.
+  // JD alignment is now handled solely by the AI rewrite prompt which has full context
+  // to weave keywords naturally. The deterministic tail-append created robotic output.
+  return bullet;
 }
 
-function ensureOutcomeFraming(original: string, bullet: string, aggressive = false): string {
+function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
   const lower = bullet.toLowerCase();
   const hasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
   if (hasOutcome) return bullet;
 
+  // Only recover outcome framing that already exists in the ORIGINAL bullet text.
+  // Never append generic/formulaic outcome phrases.
   const originalLower = original.toLowerCase();
   const originalHasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(originalLower));
   if (originalHasOutcome) {
@@ -1363,17 +1380,8 @@ function ensureOutcomeFraming(original: string, bullet: string, aggressive = fal
     }
   }
 
-  const context = `${original} ${bullet}`.toLowerCase();
-  if (/compliance|audit|risk|policy|governance/.test(context)) {
-    return appendClause(bullet, aggressive ? "reducing operational risk and strengthening compliance outcomes" : "reducing operational risk");
-  }
-  if (/customer|client|service|support|case|ticket|account/.test(context)) {
-    return appendClause(bullet, aggressive ? "improving service outcomes and stakeholder trust" : "improving service outcomes");
-  }
-  if (/team|staff|training|onboard|workflow|process|system|automation|manual|efficien/.test(context)) {
-    return appendClause(bullet, aggressive ? "improving operational efficiency and team execution" : "improving operational efficiency");
-  }
-  return appendClause(bullet, aggressive ? "driving stronger operational outcomes" : "improving operational outcomes");
+  // No original outcome evidence — return bullet as-is. Do NOT append generic phrases.
+  return bullet;
 }
 
 function ensureSubstantiveLength(original: string, bullet: string): string {
@@ -1539,22 +1547,24 @@ ${jdSignals}
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
-3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
-4. Every bullet must preserve or strengthen truthfully implied outcome framing.
+3. ABSOLUTE ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, results, or any experience not present in the original bullet. Do not add claims like "binding resolution," "contract interpretation," "mobilizing stakeholders," or any other responsibility not evidenced in the source text.
+4. Every bullet must preserve or strengthen truthfully implied outcome framing FROM THE ORIGINAL TEXT ONLY.
 5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
+6. Each bullet must start with EXACTLY ONE action verb. Never produce doubled verb openings like "Resolved orchestrate" or "Directed drive".
+7. BANNED WORDS — never use any of these: spearheaded, pioneered, orchestrated, championed, catalyzed, synergized, leveraged, utilized.
 
 SIGNAL TARGETS:
-- Ownership Language Density: first word should be a strong action / ownership verb.
-- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role.
+- Ownership Language Density: first word should be a strong action / ownership verb (ONE verb only).
+- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role, but only using concepts evidenced in the original.
 - Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
-- Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
+- Outcome Framing: preserve existing metrics / scope. Do NOT append generic formulaic endings like "improving service outcomes" or "reducing operational risk" or "aligned to cross functional priorities" or "throughout the customer lifecycle". Only include outcome language that is evidenced or directly implied by the original bullet.
 - Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
 
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
 - Each bullet should stay at least as information-dense as the original and should usually be longer, not shorter.
-- Every bullet must be one clean sentence.
+- Every bullet must be one clean sentence starting with exactly one action verb.
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
