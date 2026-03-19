@@ -942,6 +942,7 @@ const Index = () => {
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
+      <SessionRecoveryModal open={showSessionRecovery} onContinue={handleSessionContinue} onStartNew={handleSessionStartNew} />
 
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
