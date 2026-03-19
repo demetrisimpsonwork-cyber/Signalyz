@@ -1261,13 +1261,17 @@ function isAnyActionVerb(word: string): boolean {
 }
 
 function eliminatePassiveLanguage(text: string): string {
-  return text
-    .replace(/\bhelped(?:\s+to)?\b/gi, "drove")
-    .replace(/\bassisted(?:\s+with|\s+in)?\b/gi, "executed")
-    .replace(/\bsupported\b/gi, "advanced")
-    .replace(/\bparticipated in\b/gi, "executed")
-    .replace(/\bwas involved in\b/gi, "owned")
-    .replace(/\btasked with\b/gi, "owned");
+  // Only replace passive phrases when they appear at the START of the bullet
+  // to avoid creating garbled mid-sentence text like "drove resolve"
+  let result = text.trim();
+  result = result
+    .replace(/^helped(?:\s+to)?\s+/i, "Drove ")
+    .replace(/^assisted(?:\s+with|\s+in)?\s+/i, "Executed ")
+    .replace(/^supported\s+/i, "Advanced ")
+    .replace(/^participated in\s+/i, "Executed ")
+    .replace(/^was involved in\s+/i, "Owned ")
+    .replace(/^tasked with\s+/i, "Owned ");
+  return result;
 }
 
 function extractOriginalScopeEvidence(original: string): string[] {
