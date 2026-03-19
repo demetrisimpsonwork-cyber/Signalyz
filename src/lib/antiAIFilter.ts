@@ -12,9 +12,9 @@
 
 const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   // Inflated verbs
-  [/\\bLeveraged\\b/g, "Used"],
-  [/\\bleveraged\\b/g, "used"],
-  [/\\bSpearheaded\\b/g, "Led"],
+  [/\bLeveraged\b/g, "Used"],
+  [/\bleveraged\b/g, "used"],
+  [/\bSpearheaded\b/g, "Led"],
   [/\\bspearheaded\\b/g, "led"],
   [/\\bPioneered\\b/g, "Built"],
   [/\\bpioneered\\b/g, "built"],
