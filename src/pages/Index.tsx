@@ -1163,21 +1163,8 @@ const Index = () => {
             inputSource={inputSource}
             onResumeTextReplaced={(text) => { setOriginalResumeBeforeCalibration(bullet); setBullet(text); setInputSource("paste"); setIsResumeFromCalibrated(true); calibratedRunPendingRef.current = true; }}
             originalResumeBeforeCalibration={originalResumeBeforeCalibration}
-            onRerunSignalAnalysis={(calibratedText) => {
-              if (!originalResumeBeforeCalibration) return;
-              // Set the calibrated text as the current resume input
-              setBullet(calibratedText);
-              calibratedRunPendingRef.current = true; // signal the next run to use calibrated path
-              setIsResumeFromCalibrated(true);
-              setInputSource("paste");
-              // Switch to alignment tab and trigger run
-              setMode("alignment");
-              // Use a microtask to ensure state is settled before triggering
-              setTimeout(() => {
-                const runBtn = document.getElementById("run-alignment-btn");
-                if (runBtn) runBtn.click();
-              }, 150);
-            }}
+            originalScore={displayScore}
+            jdText={jd}
           />
         )}
 
