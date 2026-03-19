@@ -1296,10 +1296,24 @@ function extractEvidenceTail(original: string): string {
 
 function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<string, number>): string {
   const leadWord = getLeadWord(bullet);
-  if (STRONG_SIGNAL_VERBS.includes(leadWord as typeof STRONG_SIGNAL_VERBS[number])) return bullet;
+  // If already starts with a strong verb, keep it as-is
+  if ((STRONG_SIGNAL_VERBS as readonly string[]).includes(leadWord)) return bullet;
 
   const cleaned = stripWeakLead(bullet);
-  const remainder = cleaned ? cleaned.charAt(0).toLowerCase() + cleaned.slice(1) : extractEvidenceTail(original).toLowerCase();
+  const cleanedLead = getLeadWord(cleaned);
+
+  // After stripping weak lead, if it now starts with ANY action verb, just capitalize and return
+  // This prevents doubled verbs like "Resolved orchestrate"
+  if (isAnyActionVerb(cleanedLead)) {
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  // Strip any existing verb that would create a double
+  let remainder = cleaned;
+  if (isAnyActionVerb(getLeadWord(remainder))) {
+    remainder = remainder.replace(/^[A-Za-z]+\s+/, "");
+  }
+  remainder = remainder ? remainder.charAt(0).toLowerCase() + remainder.slice(1) : extractEvidenceTail(original).toLowerCase();
   const verb = chooseSignalVerb(original, cleaned || original, usedVerbs);
   return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
 }
