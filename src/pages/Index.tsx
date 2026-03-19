@@ -34,6 +34,7 @@ import PositioningLoader from "@/components/PositioningLoader";
 import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
+import SessionRecoveryModal, { clearSignalyzSession, isSessionCompatible, setSessionVersion } from "@/components/SessionRecoveryModal";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import { computeDeterministicScore } from "@/lib/deterministicScore";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
@@ -416,22 +417,62 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // ─── Controlled session recovery ─────────────────────────────────────────
+  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
+  const pendingSessionRef = useRef<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+
   useEffect(() => {
+    // Post-payment redirects auto-restore silently
+    if (searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success") {
+      try {
+        const saved = localStorage.getItem("signalyz_last_analysis");
+        if (saved && !result) {
+          const parsed = JSON.parse(saved);
+          if (parsed.result && parsed.bullet && parsed.jd) {
+            setResult(parsed.result);
+            setBullet(parsed.bullet);
+            setJd(parsed.jd);
+          }
+        }
+      } catch {}
+      return;
+    }
+
+    // Normal flow: check for saved session and prompt
     try {
       const saved = localStorage.getItem("signalyz_last_analysis");
       if (saved && !result) {
+        // Reject incompatible sessions from older builds
+        if (!isSessionCompatible()) {
+          clearSignalyzSession();
+          return;
+        }
         const parsed = JSON.parse(saved);
         if (parsed.result && parsed.bullet && parsed.jd) {
-          setResult(parsed.result);
-          setBullet(parsed.bullet);
-          setJd(parsed.jd);
+          pendingSessionRef.current = parsed;
+          setShowSessionRecovery(true);
         }
       }
     } catch {}
   }, []);
 
-  // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
+  const handleSessionContinue = useCallback(() => {
+    const pending = pendingSessionRef.current;
+    if (pending) {
+      setResult(pending.result);
+      setBullet(pending.bullet);
+      setJd(pending.jd);
+    }
+    pendingSessionRef.current = null;
+    setShowSessionRecovery(false);
+  }, []);
+
+  const handleSessionStartNew = useCallback(() => {
+    clearSignalyzSession();
+    pendingSessionRef.current = null;
+    setShowSessionRecovery(false);
+  }, []);
+
   const displayScore = result?.match_score ?? 0;
   const displayBreakdown = result?.scoring_breakdown;
 
@@ -777,6 +818,7 @@ const Index = () => {
           jd: normJd.text,
           ts: Date.now(),
         }));
+        setSessionVersion();
       } catch {}
 
       // ─── Internal delta logging for calibration runs ──────────────────────
@@ -900,6 +942,7 @@ const Index = () => {
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
+      <SessionRecoveryModal open={showSessionRecovery} onContinue={handleSessionContinue} onStartNew={handleSessionStartNew} />
 
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">

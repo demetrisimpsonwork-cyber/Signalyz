@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { clearSignalyzSession } from "@/components/SessionRecoveryModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,8 +15,9 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
+    clearSignalyzSession();
     await supabase.auth.signOut();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
