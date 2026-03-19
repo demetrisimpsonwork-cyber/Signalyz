@@ -34,6 +34,7 @@ import PositioningLoader from "@/components/PositioningLoader";
 import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
+import SessionRecoveryModal, { clearSignalyzSession, isSessionCompatible, setSessionVersion } from "@/components/SessionRecoveryModal";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import { computeDeterministicScore } from "@/lib/deterministicScore";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
