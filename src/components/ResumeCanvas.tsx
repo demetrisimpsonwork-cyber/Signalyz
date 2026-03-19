@@ -391,7 +391,7 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                   </>
                 )}
                 {proj.bullets.length > 0 && (
-                  <div style={{ marginTop: "4px" }}>
+                  <div style={{ marginTop: "4px", fontWeight: 400, fontStyle: "normal" }}>
                     <BulletEditor
                       bullets={proj.bullets}
                       expIdx={1000 + pi}

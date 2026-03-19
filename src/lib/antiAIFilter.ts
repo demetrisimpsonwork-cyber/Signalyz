@@ -306,6 +306,9 @@ export function antiAIFilter(text: string): string {
     result = result.replace(pattern, replacement);
   }
 
+  // Step 1b: Strip formulaic tail phrases
+  result = result.replace(FORMULAIC_TAIL_RX, ".");
+
   // Step 2: Reduce excessive em dashes
   result = reduceEmDashes(result);
 

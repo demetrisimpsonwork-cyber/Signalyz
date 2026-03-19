@@ -1547,22 +1547,24 @@ ${jdSignals}
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
-3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
-4. Every bullet must preserve or strengthen truthfully implied outcome framing.
+3. ABSOLUTE ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, results, or any experience not present in the original bullet. Do not add claims like "binding resolution," "contract interpretation," "mobilizing stakeholders," or any other responsibility not evidenced in the source text.
+4. Every bullet must preserve or strengthen truthfully implied outcome framing FROM THE ORIGINAL TEXT ONLY.
 5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
+6. Each bullet must start with EXACTLY ONE action verb. Never produce doubled verb openings like "Resolved orchestrate" or "Directed drive".
+7. BANNED WORDS — never use any of these: spearheaded, pioneered, orchestrated, championed, catalyzed, synergized, leveraged, utilized.
 
 SIGNAL TARGETS:
-- Ownership Language Density: first word should be a strong action / ownership verb.
-- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role.
+- Ownership Language Density: first word should be a strong action / ownership verb (ONE verb only).
+- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role, but only using concepts evidenced in the original.
 - Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
-- Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
+- Outcome Framing: preserve existing metrics / scope. Do NOT append generic formulaic endings like "improving service outcomes" or "reducing operational risk" or "aligned to cross functional priorities" or "throughout the customer lifecycle". Only include outcome language that is evidenced or directly implied by the original bullet.
 - Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
 
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
 - Each bullet should stay at least as information-dense as the original and should usually be longer, not shorter.
-- Every bullet must be one clean sentence.
+- Every bullet must be one clean sentence starting with exactly one action verb.
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
