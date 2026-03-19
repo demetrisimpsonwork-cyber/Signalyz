@@ -456,7 +456,23 @@ const Index = () => {
     } catch {}
   }, []);
 
-  // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
+  const handleSessionContinue = useCallback(() => {
+    const pending = pendingSessionRef.current;
+    if (pending) {
+      setResult(pending.result);
+      setBullet(pending.bullet);
+      setJd(pending.jd);
+    }
+    pendingSessionRef.current = null;
+    setShowSessionRecovery(false);
+  }, []);
+
+  const handleSessionStartNew = useCallback(() => {
+    clearSignalyzSession();
+    pendingSessionRef.current = null;
+    setShowSessionRecovery(false);
+  }, []);
+
   const displayScore = result?.match_score ?? 0;
   const displayBreakdown = result?.scoring_breakdown;
 
