@@ -1364,11 +1364,13 @@ function ensureJdAlignment(_original: string, bullet: string, _jdModel: ReturnTy
   return bullet;
 }
 
-function ensureOutcomeFraming(original: string, bullet: string, aggressive = false): string {
+function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
   const lower = bullet.toLowerCase();
   const hasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
   if (hasOutcome) return bullet;
 
+  // Only recover outcome framing that already exists in the ORIGINAL bullet text.
+  // Never append generic/formulaic outcome phrases.
   const originalLower = original.toLowerCase();
   const originalHasOutcome = OUTCOME_SIGNAL_TERMS.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(originalLower));
   if (originalHasOutcome) {
@@ -1378,17 +1380,8 @@ function ensureOutcomeFraming(original: string, bullet: string, aggressive = fal
     }
   }
 
-  const context = `${original} ${bullet}`.toLowerCase();
-  if (/compliance|audit|risk|policy|governance/.test(context)) {
-    return appendClause(bullet, aggressive ? "reducing operational risk and strengthening compliance outcomes" : "reducing operational risk");
-  }
-  if (/customer|client|service|support|case|ticket|account/.test(context)) {
-    return appendClause(bullet, aggressive ? "improving service outcomes and stakeholder trust" : "improving service outcomes");
-  }
-  if (/team|staff|training|onboard|workflow|process|system|automation|manual|efficien/.test(context)) {
-    return appendClause(bullet, aggressive ? "improving operational efficiency and team execution" : "improving operational efficiency");
-  }
-  return appendClause(bullet, aggressive ? "driving stronger operational outcomes" : "improving operational outcomes");
+  // No original outcome evidence — return bullet as-is. Do NOT append generic phrases.
+  return bullet;
 }
 
 function ensureSubstantiveLength(original: string, bullet: string): string {
