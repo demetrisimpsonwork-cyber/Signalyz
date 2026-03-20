@@ -22,7 +22,8 @@ const Navbar = () => {
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
 
-  const showProBadge = !isPro && !hasOneTimeCredit;
+  const { loading: subLoading } = useSubscription();
+  const showProBadge = !subLoading && !isPro && !hasOneTimeCredit;
 
   return (
     <>
