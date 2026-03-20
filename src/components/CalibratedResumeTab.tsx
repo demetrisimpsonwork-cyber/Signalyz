@@ -79,6 +79,7 @@ const CalibratedResumeTab = ({
   onRunAlignment,
   onAssembled,
   alignmentResult,
+  jdText,
   inputSource = "paste",
   onResumeTextReplaced,
   onRerunSignalAnalysis,
