@@ -71,8 +71,12 @@ async function fetchSubscriptionData() {
 
   const runCount = isNewDay ? 0 : (profile.daily_run_count ?? 0);
   const tier = (profile.subscription_tier ?? "free") as SubscriptionTier;
+  const status = (profile as any).subscription_status as string | null;
+  const isActiveSub = status === "active" || status === "trialing";
   const isPaid =
-    tier === "pro" || (profile.subscription_tier as string) === "pinnacle";
+    (tier === "pro" || (profile.subscription_tier as string) === "pinnacle") && isActiveSub;
+
+  console.log("[SubCheck] Tier resolution — rawTier:", profile.subscription_tier, "rawStatus:", status, "isActiveSub:", isActiveSub, "isPaid:", isPaid);
 
   // Reset count in DB if new day
   if (isNewDay) {
