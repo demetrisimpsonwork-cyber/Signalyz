@@ -1009,7 +1009,7 @@ const Position = () => {
           Signal Positioning Report
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
-          The Alignment Engine scores where you stand. This report tells you <span className="font-medium text-foreground">exactly how to close the gap</span> — role identity deconstruction, commercial reframing, and strategic repositioning.
+          Deconstructs the role's identity requirements and repositions your experience to match — with zero fabrication.
         </p>
       </div>
 
