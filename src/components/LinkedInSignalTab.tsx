@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Check, Loader2, ArrowRight } from "lucide-react";
@@ -35,6 +36,8 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   const [copiedIdx, setCopiedIdx] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
+  const ctaLabel = hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9";
 
   const handleCopy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
@@ -112,7 +115,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
           {user ? (
             <div className="space-y-3 w-full max-w-xs">
               <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
-                Fix This Now → $9
+                {ctaLabel}
               </Button>
               <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
             </div>
