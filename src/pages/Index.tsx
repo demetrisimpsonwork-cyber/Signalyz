@@ -722,8 +722,10 @@ const Index = () => {
     const startTime = Date.now();
     const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
 
-    // Client-side normalization
-    const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
+    // Client-side normalization — use override ref if set (from Re-score Now)
+    const resumeSource = overrideResumeRef.current || bullet;
+    overrideResumeRef.current = null; // consume once
+    const normResume = normalizeClientInput(resumeSource.trim(), MAX_RESUME_CHARS);
     const normJd = normalizeClientInput(jd.trim(), MAX_JD_CHARS);
     if (normResume.truncated || normJd.truncated) {
       setInputTruncated(true);
