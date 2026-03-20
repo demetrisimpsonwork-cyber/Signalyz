@@ -1190,17 +1190,15 @@ const Index = () => {
             originalResumeBeforeCalibration={originalResumeBeforeCalibration}
             onRerunSignalAnalysis={(calibratedText) => {
               if (!originalResumeBeforeCalibration) return;
-              // Set the calibrated text as the current resume input
+              // Store the calibrated text in a ref so handleOptimize reads it immediately
+              overrideResumeRef.current = calibratedText;
               setBullet(calibratedText);
               calibratedRunPendingRef.current = true;
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
               // Switch to alignment tab and directly trigger the full alignment engine
               setMode("alignment");
-              // Use a microtask so React state (bullet) settles before handleOptimize reads it
-              setTimeout(() => {
-                handleOptimize();
-              }, 200);
+              handleOptimize();
             }}
           />
         )}
