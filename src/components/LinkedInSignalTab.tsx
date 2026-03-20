@@ -115,7 +115,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
           {user ? (
             <div className="space-y-3 w-full max-w-xs">
               <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
-                Fix This Now → $9
+                {ctaLabel}
               </Button>
               <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
             </div>
