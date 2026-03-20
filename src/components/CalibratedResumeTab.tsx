@@ -280,6 +280,7 @@ const CalibratedResumeTab = ({
           <RepositioningChangesPanel
             originalResume={originalResume}
             calibratedResume={currentResume}
+            jdText={jdText}
           />
 
           {/* Re-run Signal Analysis with calibrated text */}

@@ -1176,6 +1176,7 @@ const Index = () => {
             onUpgrade={() => setShowUpgrade(true)}
             directorResult={directorResult}
             originalResume={bullet}
+            jdText={jd}
             onSwitchToReport={() => setMode("director")}
             hasCurrentSessionAlignment={!!result}
             onRunAlignment={() => setMode("alignment")}
