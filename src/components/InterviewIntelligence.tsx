@@ -113,7 +113,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
             {user ? (
               <div className="space-y-2 w-full max-w-xs mx-auto pt-1">
                 <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
-                  Fix This Now → $9
+                  {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}
                 </Button>
                 <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
               </div>
