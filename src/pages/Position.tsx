@@ -735,8 +735,8 @@ const Position = () => {
 
   const isAdmin = useIsAdmin();
   const { isTrialPro, trialStarted, trialRunsUsed, trialExhausted, startTrial, TRIAL_LIMIT } = useReverseTrial();
-  const { isPro, loading: subLoading } = useSubscription();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro;
+  const { isPro, hasOneTimeCredit, hasConsumedOneTimeCredit, loading: subLoading } = useSubscription();
+  const effectiveIsPro = isPro || isAdmin || isTrialPro || hasOneTimeCredit;
 
   const clearTimers = () => {
     stepTimers.current.forEach(clearTimeout);
