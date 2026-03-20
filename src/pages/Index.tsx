@@ -779,6 +779,7 @@ const Index = () => {
       // Capture the original resume baseline on the first non-calibrated run
       if (!isCalibratedRun && !originalResumeBeforeCalibration) {
         setOriginalResumeBeforeCalibration(bulletWithContext);
+        try { localStorage.setItem("signalyz_original_resume_baseline", bulletWithContext); } catch {}
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
