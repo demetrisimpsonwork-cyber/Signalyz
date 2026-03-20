@@ -614,7 +614,7 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
         <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
           <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Signal</p>
           <p className={`text-xl sm:text-2xl font-bold tabular-nums ${scoreColor(userScore, medianScore)}`}>{userScore}</p>
-          <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Competitive signal strength</p>
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Competitive signal strength vs. candidate pool</p>
         </div>
         <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
           <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Median</p>
@@ -627,6 +627,10 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
           <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Strong candidate</p>
         </div>
       </div>
+
+      <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+        This score measures competitive signal strength relative to the candidate pool — it may differ from your Alignment Score, which measures weighted priority match against the job description.
+      </p>
 
       {/* Dimension comparison */}
       {data.dimension_comparison && data.dimension_comparison.length > 0 && (
