@@ -719,6 +719,7 @@ SCORING (5 dimensions, weights in parens):
 Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ requires top-2 JD priority match + tool match + ownership signals.
 
 BULLETS: Max 35 words, high-signal verbs, ATS-safe, no semicolons/em-dashes.
+ZERO METRIC FABRICATION: Do NOT invent percentages, dollar amounts, timeframes, accuracy rates, team sizes, or any quantitative claim not in the original resume. If the source has no metric, the calibrated bullet has no metric. Never insert placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]".
 ${userPlan === "pro" ? "3 variants: [0]Impact-Focused [1]Human-Natural [2]Keyword-Maximized" : "1 variant: primary (ATS-weighted to top JD priorities)"}
 
 PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00). List in consistent priority order based on frequency and emphasis. Same JD must always produce the same priorities in the same order.

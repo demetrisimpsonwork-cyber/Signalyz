@@ -497,7 +497,10 @@ VERSION B MANDATORY RULES (Conservative Truth):
 2. NEVER introduce placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]", or any bracketed placeholder. If the original has no metric, the B bullet has no metric.
 3. NEVER downgrade ownership level. If the original says "Handled", do NOT rewrite to "participated in", "assisted with", or "supported". Ownership level must stay equal or elevate.
 4. ONLY change framing words and context positioning — not facts, numbers, scope, or role. The B bullet describes the SAME experience with stronger signal language, not a different experience.
-5. A hiring manager reading the B bullet should recognize the same work described with clearer professional framing.`;
+5. A hiring manager reading the B bullet should recognize the same work described with clearer professional framing.
+
+BOTH VERSIONS — ZERO METRIC FABRICATION:
+Do NOT invent percentages, dollar amounts, timeframes, accuracy rates, team sizes, or any quantitative claim not explicitly stated in the original bullet. If the original has no metric, neither version has a metric. Never insert placeholder metrics.`;
 
 const REWRITE_MODULE_PROMPTS: Record<string, string> = {
   commercial_injection: `You elevate resume bullets by adding quantified commercial impact.
@@ -509,9 +512,10 @@ Version B ("Conservative Truth"): Reframe the original bullet with stronger sign
 ${B_BULLET_RULES}
 
 Rules for BOTH versions:
+- ZERO METRIC FABRICATION: Do NOT invent percentages, dollar amounts, timeframes, accuracy rates, team sizes, or any quantitative claim not explicitly stated in the original bullet. If the original has no metric, the rewritten bullet has no metric.
+- NEVER insert placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]", or any bracketed placeholder.
 - No generic phrases like "proactively identified" or "spearheaded initiatives".
-- Keep bullets metric-forward and scope-specific.
-- Version A may insert placeholder metrics if needed: [Insert % or $].
+- Keep bullets scope-specific.
 - Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
 - Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
