@@ -220,50 +220,47 @@ Return ONLY valid JSON, no markdown.`;
         const gap = gaps[0] || alignmentResult.top_missing_signal || "N/A";
         const strength = execSummary.primary_strength || "N/A";
 
-        const toneTemp = tone === "strategic" ? 0.5 : tone === "direct" ? 0.25 : 0.72;
+        const toneTemp = tone === "strategic" ? 0.4 : tone === "direct" ? 0.2 : 0.55;
 
         const toneDirective = tone === "strategic"
-          ? `Write like a senior executive briefing a board member. Commercially precise. Never casual. Imply capability rather than stating it.
-STRUCTURAL CONSTRAINT: No paragraph exceeds 3 lines. This is absolute — if a paragraph hits 4 lines, cut it. Every paragraph must open with a business outcome, market context, or organizational impact — never with "I." Sentences average 18-25 words. Use semicolons and subordinate clauses. No contractions. No exclamation marks. The letter should read like a business case, not a personal pitch. Never use "the same" to bridge between past and target roles — no "the same skills," "the same principles," "the same approach," "the same rigor." Assert what you did; never explain that one context is equivalent to another. The closing paragraph must be exactly 1 sentence — a single decisive statement that makes the reader pick up the phone. No summary of conversation topics. No meeting agendas. No "I look forward to discussing." End like a closing argument, not a calendar invite. Total length: 260-280 words.`
+          ? `TONE: Strategic. Write like a senior operator briefing someone who makes hiring decisions. Commercially precise. Frame every paragraph around business impact, organizational outcomes, or market context. Never open a sentence with "I" unless unavoidable. Sentences average 18-22 words. Use subordinate clauses. No contractions. No exclamation marks. The letter should read like a business case written by someone who understands the company's problems. No paragraph exceeds 3 lines. The close is one sentence — a decisive statement, not a meeting request. Total length: 260-280 words.`
           : tone === "direct"
-          ? `Write like a field operator. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Cut every word that doesn't prove something.
-STRUCTURAL CONSTRAINT: No paragraph exceeds 3 lines. Sentences average 8-14 words. No compound sentences joined by "and" — split them. No semicolons. Use periods. Never explain how experience "translates" or "translates directly" — just state what you did and what you will do next. The closing must be a single forward statement of intent — what you are ready to do, not why your past applies. No transferability language. The letter should feel like it was written by someone who bills by the hour. Total length: 200-220 words.`
-          : `Write like a confident peer talking to the hiring manager over coffee. Warm, direct, human. Mix sentence lengths — one short punch after a longer thought. No hedging. Show momentum and energy.
-STRUCTURAL CONSTRAINT: At least one paragraph must contain a sentence under 6 words. Use one rhetorical question or direct address to the reader. Contractions are allowed. The letter should feel like a real person wrote it in one sitting because they wanted the job. Total length: 240-260 words.`;
+          ? `TONE: Direct. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Every word must prove something or it gets cut. Sentences average 8-14 words. No compound sentences joined by "and" — split them. No semicolons. Periods only. No paragraph exceeds 3 lines. The close is one forward statement of intent. The letter should feel like it was written by someone who values the reader's time. Total length: 200-220 words.`
+          : `TONE: Confident. Write like a sharp professional who genuinely wants this specific job. Warm but not casual. Direct but not stiff. Mix sentence lengths — one short punch after a longer thought. Show momentum. Contractions are fine. At least one paragraph should contain a sentence under 6 words. The letter should feel like a real person wrote it because they wanted the job. Total length: 240-260 words.`;
 
-        const prompt = `Write a cover letter. You ARE the candidate. First person. You are applying for ${roleTitle}${companyName !== "the company" ? ` at ${companyName}` : ""}.
+        const companyRef = companyName !== "the company" ? companyName : "";
+        const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
 
-Your biggest strength: ${strength}
-Your biggest gap: ${gap}
+CONTEXT:
+- Your biggest strength for this role: ${strength}
+- Your biggest gap for this role: ${gap}
+- Resume (your ONLY source of facts — invent NOTHING): ${experience.slice(0, 2500)}
+- Job description: ${jd.slice(0, 1500)}
 
-Resume (your ONLY source of facts — invent NOTHING): ${experience.slice(0, 2500)}
-Job description: ${jd.slice(0, 1500)}
+${toneDirective}
 
-VOICE: ${toneDirective}
+STRUCTURE — exactly 5 paragraphs:
 
-MINDSET: You are making a hiring case. You are not explaining your background. You are not analyzing fit. You are telling a hiring manager why they should pick you. Every sentence must either prove you can do the job or make them want to meet you. ASSERT capability. Do not explain how past experience "transfers" or "applies" — just use it as proof.
+P1 — OPENING HOOK: Start with your single strongest credential for this specific role — a number, a system, a scope of work. Then one sentence connecting it to why ${companyRef || "this company"} or this role. No "I am writing to apply." No philosophy. Start mid-action.
 
-5 paragraphs.
+P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you solved. At least one sentence should lead with the result, not "I." Show you do the hard work this role requires.
 
-P1 — THE CLAIM: Open with your single strongest credential for this specific role. A number, a system, a scope. Then one sentence connecting it to why this role. No philosophy. No "I am writing to." Start mid-work.
+P3 — TRANSFERABLE FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Do not explain that experience "translates" — just demonstrate it through what you did.
 
-P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you fixed. At least one sentence should start with the result, not "I." Prove you do hard work.
+P4 — WHY HERE: Show you understand what ${companyRef || "this company"} does and why you want to be part of it specifically. Reference something concrete about the company or role. Then acknowledge what you haven't done yet in one short clause, immediately followed by what makes you ready to figure it out. No apology.
 
-P3 — JUDGMENT PROOF: Who you worked across, what you navigated, decisions you made. Different evidence from P2. Show you handle people and complexity.
+P5 — CLOSE: One to two sentences. Make the reader want to have the conversation. No onboarding plans. No "I look forward to discussing." End with forward motion.
 
-P4 — THE GAP: Name what you haven't done yet in one short clause. Then immediately say what you've done that makes you ready to figure it out. No apology. No "however the same principles apply."
-
-P5 — THE CLOSE: Make the reader want to schedule the meeting. State what you bring to the conversation — not what you'll do in week one or month one. No onboarding plans. No "my first priority will be." No "I will focus on." End with forward motion that pulls the reader toward a next step, not an employee memo. One sentence maximum that makes them pick up the phone.
-
-RULES:
-- Max 1 sentence per paragraph starts with "I"
-- Never explain WHY experience transfers or applies — just use it as direct proof
+WRITING RULES:
+- Max 1 sentence per paragraph may start with "I"
+- Never explain WHY experience applies — use it as direct proof
 - Never describe what the role requires — the hiring manager knows
-- ZERO fabrication
-- Do not use "this," "these," or "that" to bridge between past experience and the target role. No "this experience," "these skills," "that background." Just state what you did and what you'll do.
-- BANNED: "track record," "track record of," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "translates directly," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "the fundamentals are," "this role requires," "this position represents," "the same skills," "the same principles," "the same approach," "the same rigor," "the same discipline," "the same," "operate consistently," "directly supports," "natural next step," "what this role needs," "I learned that," "this environment developed," "customer experience lives," "this represents," "it's not about," "what matters is," "natural evolution," "became critical," "comprehensive," "my first month," "my first week," "I will focus on," "my priority will be," "I plan to," "I intend to," "I look forward to discussing"
+- ZERO fabrication — every claim must trace to the resume
+- No bridging language: avoid "this experience," "these skills," "that background"
+- BANNED PHRASES: "track record," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "natural next step," "I learned that," "comprehensive," "I am excited to," "I am thrilled," "I would love to," "I look forward to discussing," "my first priority," "I plan to," "I intend to"
+- No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
 
-Return ONLY valid JSON: {"letter": "the full letter body"}`;
+OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs separated by double newlines, no salutation or closing"}`;
 
         const raw = await callAI(prompt, 2000, toneTemp, 1);
         let cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();

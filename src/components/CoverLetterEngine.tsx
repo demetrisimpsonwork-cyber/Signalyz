@@ -151,7 +151,13 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const companyName = useMemo(() => inferCompanyName(jd), [jd]);
   const hiringManager = useMemo(() => inferHiringManager(jd), [jd]);
 
-  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Manager,";
+  const addresseeLine = useMemo(() => {
+    if (hiringManager) return hiringManager;
+    if (companyName) return `Hiring Team, ${companyName}`;
+    return "Hiring Team";
+  }, [hiringManager, companyName]);
+
+  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Team,";
 
   // The active letter content (edited or original)
   const activeLetter = editedLetter || letter;
@@ -232,11 +238,8 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("");
     parts.push(formatDate());
     parts.push("");
-    if (hiringManager || companyName) {
-      if (hiringManager) parts.push(hiringManager);
-      if (companyName) parts.push(companyName);
-      parts.push("");
-    }
+    parts.push(addresseeLine);
+    parts.push("");
     parts.push(salutation);
     parts.push("");
     const paragraphs = splitParagraphs(activeLetter);
@@ -248,7 +251,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("Sincerely,");
     if (contact.name) parts.push(contact.name);
     return parts.join("\n");
-  }, [activeLetter, contact, hiringManager, companyName, salutation]);
+  }, [activeLetter, contact, addresseeLine, salutation]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullLetterText);
@@ -408,12 +411,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 )}
               </div>
               <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
-              {(hiringManager || companyName) && (
-                <div style={{ marginBottom: "16px" }}>
-                  {hiringManager && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{hiringManager}</p>}
-                  {companyName && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{companyName}</p>}
-                </div>
-              )}
+              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{addresseeLine}</p>
               <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
 
               {/* Editable body */}
@@ -465,12 +463,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px" }}>{formatDate()}</p>
 
               {/* Recipient */}
-              {(hiringManager || companyName) && (
-                <div style={{ marginBottom: "16px" }}>
-                  {hiringManager && <p className="text-foreground" style={{ fontSize: "12px" }}>{hiringManager}</p>}
-                  {companyName && <p className="text-foreground" style={{ fontSize: "12px" }}>{companyName}</p>}
-                </div>
-              )}
+              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{addresseeLine}</p>
 
               {/* Salutation */}
               <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{salutation}</p>
