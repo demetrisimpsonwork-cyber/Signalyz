@@ -1249,7 +1249,7 @@ const Position = () => {
 
               {/* ── CONVERSION LAYER ── */}
               <div className="pt-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Conversion Layer — Repositioning & Reframing</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Repositioning & Reframing</p>
               </div>
 
               {/* 3 — Repositioning Matrix */}
