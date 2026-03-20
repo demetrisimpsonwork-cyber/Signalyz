@@ -109,7 +109,7 @@ const UpgradeModal = ({
               <ul className="space-y-2">
                 {[
                   "Exact resume changes to fix your blocker",
-                  "Rewritten bullets aligned to this role",
+                  "Repositioned bullets aligned to this role",
                   "Clear positioning strategy hiring managers respond to",
                   "Interview questions based on your gaps",
                 ].map((item) => (

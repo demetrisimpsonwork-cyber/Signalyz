@@ -688,7 +688,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                     </div>
                   ) : target.rewritten_bullet ? (
                     <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Rewritten</p>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Calibrated</p>
                       <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
                     </div>
                   ) : null}

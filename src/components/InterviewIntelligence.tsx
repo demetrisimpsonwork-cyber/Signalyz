@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface IQuestion {
   question: string;
@@ -24,6 +25,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
 
   useEffect(() => {
     if (!experience || !jd) return;
@@ -111,7 +113,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
             {user ? (
               <div className="space-y-2 w-full max-w-xs mx-auto pt-1">
                 <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
-                  Fix This Now → $9
+                  {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}
                 </Button>
                 <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
               </div>

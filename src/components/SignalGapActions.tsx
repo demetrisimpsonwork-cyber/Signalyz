@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface GapAction {
   gap_name: string;
@@ -32,6 +33,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   const [loading, setLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
 
   useEffect(() => {
     if (!experience || !jd) return;
@@ -80,7 +82,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
           <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
           <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Fix This Now → $9</Button>
+            <Button size="sm" onClick={onUpgrade}>{hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}
