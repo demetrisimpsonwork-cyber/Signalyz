@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sparkles, AlertTriangle } from "lucide-react";
@@ -25,10 +24,7 @@ const CoverLetterTab = ({
   hasCurrentSessionAlignment = false,
   onRunAlignment,
 }: CoverLetterTabProps) => {
-  // Auto-trigger upgrade modal for non-Pro users
-  useEffect(() => {
-    if (!isPro) onUpgrade();
-  }, [isPro, onUpgrade]);
+  // Gate CTA handles upgrade prompting inline — no auto-trigger modal
 
   if (!isPro) {
     return <CoverLetterGateCTA onUpgrade={onUpgrade} />;

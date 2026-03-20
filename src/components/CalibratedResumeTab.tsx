@@ -114,9 +114,7 @@ const CalibratedResumeTab = ({
     [originalResume]
   );
 
-  useEffect(() => {
-    if (!isPro) onUpgrade();
-  }, [isPro, onUpgrade]);
+  // Gate CTA handles upgrade prompting inline — no auto-trigger modal
 
   const handleAssemble = (overrideResume?: string) => {
     const resumeText = overrideResume || originalResume;
