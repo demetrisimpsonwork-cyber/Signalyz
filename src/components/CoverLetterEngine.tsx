@@ -411,12 +411,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 )}
               </div>
               <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
-              {(hiringManager || companyName) && (
-                <div style={{ marginBottom: "16px" }}>
-                  {hiringManager && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{hiringManager}</p>}
-                  {companyName && <p className="text-foreground" style={{ fontSize: "12px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{companyName}</p>}
-                </div>
-              )}
+              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{addresseeLine}</p>
               <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
 
               {/* Editable body */}
