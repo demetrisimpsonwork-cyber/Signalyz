@@ -10,7 +10,12 @@ import UpgradeModal from "@/components/UpgradeModal";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
-  const { isPro, hasOneTimeCredit, hasConsumedOneTimeCredit } = useSubscription();
+  const {
+    isPro,
+    hasOneTimeCredit,
+    hasConsumedOneTimeCredit,
+    loading: subLoading,
+  } = useSubscription();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -22,7 +27,6 @@ const Navbar = () => {
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
 
-  const { loading: subLoading } = useSubscription();
   const showProBadge = !subLoading && !isPro && !hasOneTimeCredit;
 
   return (
@@ -70,7 +74,7 @@ const Navbar = () => {
                 onClick={() => setShowUpgrade(true)}
                 className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary"
               >
-                + Pro
+                +Pro
               </button>
             )}
             <button onClick={() => setMobileOpen(!mobileOpen)}>
