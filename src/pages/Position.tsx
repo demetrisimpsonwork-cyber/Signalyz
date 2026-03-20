@@ -1112,6 +1112,8 @@ const Position = () => {
             trialRunsUsed={trialRunsUsed}
             trialLimit={TRIAL_LIMIT}
             onStartTrial={startTrial}
+            isAuthenticated={!!user}
+            hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
           />
         </div>
 

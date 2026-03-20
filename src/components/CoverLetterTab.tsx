@@ -25,10 +25,7 @@ const CoverLetterTab = ({
   hasCurrentSessionAlignment = false,
   onRunAlignment,
 }: CoverLetterTabProps) => {
-  // Auto-trigger upgrade modal for non-Pro users
-  useEffect(() => {
-    if (!isPro) onUpgrade();
-  }, [isPro, onUpgrade]);
+  // Gate CTA handles upgrade prompting inline — no auto-trigger modal
 
   if (!isPro) {
     return <CoverLetterGateCTA onUpgrade={onUpgrade} />;
