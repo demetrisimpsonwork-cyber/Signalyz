@@ -1300,16 +1300,20 @@ const Position = () => {
               {/* 5 — Gap Strategy */}
               <Section title="Gap Strategy">
                 <div className="space-y-4">
+                  {result.gap_strategy.hard_gaps.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps — Missing experience</p>
+                      <BulletList items={result.gap_strategy.hard_gaps} />
+                    </div>
+                  )}
+                  {result.gap_strategy.perception_gaps.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps — Experience exists, signal doesn't land</p>
+                      <BulletList items={result.gap_strategy.perception_gaps} />
+                    </div>
+                  )}
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps</p>
-                    <BulletList items={result.gap_strategy.hard_gaps} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps</p>
-                    <BulletList items={result.gap_strategy.perception_gaps} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Mitigation Playbook</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">How to Close Each Gap</p>
                     <div className="space-y-2">
                       {result.gap_strategy.mitigation.map((m, i) => (
                         <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
