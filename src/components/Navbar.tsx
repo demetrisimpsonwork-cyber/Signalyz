@@ -99,11 +99,6 @@ const Navbar = () => {
               )}
               {!loading && user && (
                 <>
-                  {isPro && (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "hsl(38, 92%, 50%, 0.15)", color: "hsl(38, 92%, 50%)" }}>
-                      ✦ Pro
-                    </span>
-                  )}
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
                   <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
                 </>
