@@ -59,6 +59,14 @@ const Navbar = () => {
 
         {/* Mobile toggle */}
         <div className="flex items-center gap-2 md:hidden">
+          {!isPro && !hasOneTimeCredit && (
+            <button
+              onClick={() => { navigate("/pricing"); setMobileOpen(false); }}
+              className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary"
+            >
+              + Pro
+            </button>
+          )}
           <button onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
