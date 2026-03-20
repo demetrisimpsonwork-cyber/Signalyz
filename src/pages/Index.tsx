@@ -1611,10 +1611,10 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* Secondary Risks — free: max 2, Pro: all */}
+                            {/* Screen-Out Risks — free: max 2, Pro: all */}
                             {secondaryGaps.length > 0 && (
                               <div className="space-y-1.5">
-                                <p className="section-label">Secondary Risks</p>
+                                <p className="section-label">Screen-Out Risks</p>
                                 <ul className="space-y-1">
                                   {(effectiveIsPro ? secondaryGaps : secondaryGaps.slice(0, 2)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
