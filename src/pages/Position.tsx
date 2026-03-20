@@ -395,7 +395,6 @@ const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => 
 
       {/* Threshold definition */}
       <div className="px-3 pt-3 pb-2">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">Threshold Definition</p>
         <p className="text-xs text-muted-foreground leading-relaxed">{standard.seniorThreshold}</p>
       </div>
 
@@ -1009,7 +1008,7 @@ const Position = () => {
           Signal Positioning Report
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
-          The Alignment Engine scores where you stand. This report tells you <span className="font-medium text-foreground">exactly how to close the gap</span> — role identity deconstruction, commercial reframing, and strategic repositioning.
+          Deconstructs the role's identity requirements and repositions your experience to match — with zero fabrication.
         </p>
       </div>
 
@@ -1017,9 +1016,9 @@ const Position = () => {
       <div className="mb-10 mx-auto max-w-2xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { step: "1", title: "Deconstruct", desc: "Extracts the 5 identity pillars the employer is actually hiring for — not keywords." },
-            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's commercial language with zero fabrication." },
-            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market position assessment." },
+            { step: "1", title: "Deconstruct", desc: "Extracts the identity pillars this employer is actually hiring for." },
+            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's language. Nothing invented." },
+            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market assessment." },
           ].map((item) => (
             <div key={item.step} className="rounded-lg border bg-card p-4 space-y-2">
               <div className="flex items-center gap-2">
@@ -1133,9 +1132,9 @@ const Position = () => {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your positioning report will appear here</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your report will appear here</h3>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                This goes deeper than signal scoring — it deconstructs the role's identity requirements and rebuilds your narrative to match them.
+                Paste your resume and a job description, then click Generate.
               </p>
             </div>
           ) : null}
@@ -1145,7 +1144,7 @@ const Position = () => {
             <>
               {/* ── INTELLIGENCE LAYER ── */}
               <div className="pt-1">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Intelligence Layer — Role Deconstruction</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Role Deconstruction</p>
               </div>
 
               {/* 1 — Role DNA */}
@@ -1175,7 +1174,7 @@ const Position = () => {
                 return (
                 <Section title={sectionTitle} proLabel>
                   <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed border-l-2 border-border pl-3">
-                    Structured evaluation of how each identity pillar reads across hiring stages. Grounded strictly in resume signal relative to JD weighting.
+                    How each identity pillar reads across hiring stages — grounded in resume signal vs. JD weighting.
                   </p>
                   <CalibrationLogicSummary template={calTemplate} />
                   <div className="space-y-3 mt-3">
@@ -1233,15 +1232,14 @@ const Position = () => {
                     })}
                   </div>
                   {!effectiveIsPro && (
-                    <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-3">
+                    <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-2">
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        4 calibration pillars — Context, Signal, Stability, and Commercial Impact — are restricted to Employer Intelligence™.
+                        Full calibration across all pillars available on Pro.
                       </p>
                       <Button size="sm" className="gap-1.5 text-xs h-8 px-3">
                         <Lock className="h-3 w-3" />
-                        See My Exact Fix
+                        Unlock Full Report
                       </Button>
-                      <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                     </div>
                   )}
                 </Section>
@@ -1250,7 +1248,7 @@ const Position = () => {
 
               {/* ── CONVERSION LAYER ── */}
               <div className="pt-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Conversion Layer — Repositioning & Reframing</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Repositioning & Reframing</p>
               </div>
 
               {/* 3 — Repositioning Matrix */}
@@ -1302,16 +1300,20 @@ const Position = () => {
               {/* 5 — Gap Strategy */}
               <Section title="Gap Strategy">
                 <div className="space-y-4">
+                  {result.gap_strategy.hard_gaps.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps — Missing experience</p>
+                      <BulletList items={result.gap_strategy.hard_gaps} />
+                    </div>
+                  )}
+                  {result.gap_strategy.perception_gaps.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps — Experience exists, signal doesn't land</p>
+                      <BulletList items={result.gap_strategy.perception_gaps} />
+                    </div>
+                  )}
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/70 mb-1.5">Hard Gaps</p>
-                    <BulletList items={result.gap_strategy.hard_gaps} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 dark:text-amber-400 mb-1.5">Perception Gaps</p>
-                    <BulletList items={result.gap_strategy.perception_gaps} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Mitigation Playbook</p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">How to Close Each Gap</p>
                     <div className="space-y-2">
                       {result.gap_strategy.mitigation.map((m, i) => (
                         <div key={i} className="rounded-md border bg-background p-3 space-y-1.5">
@@ -1360,7 +1362,7 @@ const Position = () => {
 
               {/* ── AUTHORITY LAYER ── */}
               <div className="pt-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Authority Layer — Strategic Assessment</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Strategic Assessment</p>
               </div>
 
               {/* 9 — Match Score Forecast */}
