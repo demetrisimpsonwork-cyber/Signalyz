@@ -10,13 +10,11 @@
 
 // ─── Overused AI phrases → cleaner replacements ─────────────────────────────
 
-const FORMULAIC_TAIL_RX = /,?\s*(?:improving service outcomes|reducing operational risk|aligned to (?:cross[- ]?functional|[\w\s]+) priorities|throughout the customer lifecycle|driving stronger operational outcomes|improving operational outcomes|improving operational efficiency|improving operational efficiency and team execution|reducing operational risk and strengthening compliance outcomes|improving service outcomes and stakeholder trust)\s*\.?\s*$/gi;
-
 const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   // Inflated verbs
-  [/\bLeveraged\b/g, "Used"],
-  [/\bleveraged\b/g, "used"],
-  [/\bSpearheaded\b/g, "Led"],
+  [/\\bLeveraged\\b/g, "Used"],
+  [/\\bleveraged\\b/g, "used"],
+  [/\\bSpearheaded\\b/g, "Led"],
   [/\\bspearheaded\\b/g, "led"],
   [/\\bPioneered\\b/g, "Built"],
   [/\\bpioneered\\b/g, "built"],
@@ -305,9 +303,6 @@ export function antiAIFilter(text: string): string {
   for (const [pattern, replacement] of PHRASE_REPLACEMENTS) {
     result = result.replace(pattern, replacement);
   }
-
-  // Step 1b: Strip formulaic tail phrases
-  result = result.replace(FORMULAIC_TAIL_RX, ".");
 
   // Step 2: Reduce excessive em dashes
   result = reduceEmDashes(result);
