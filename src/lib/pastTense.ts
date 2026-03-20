@@ -231,7 +231,7 @@ export function bulletToPastTense(bullet: string): string {
   if (!bullet) return bullet;
   const trimmed = bullet.trimStart();
   const leadingSpace = bullet.slice(0, bullet.length - trimmed.length);
-  const match = trimmed.match(/^(\S+)(.*)/s);
+  const match = trimmed.match(/^(\S+)([\s\S]*)/);
   if (!match) return bullet;
   const [, firstWord, rest] = match;
   // Strip trailing punctuation from the word for lookup, then re-attach
