@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
+import { bulletToPastTense } from "@/lib/pastTense";
 
 export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   // Preprocess certifications: strip URLs, markdown links, brackets — plain text only
