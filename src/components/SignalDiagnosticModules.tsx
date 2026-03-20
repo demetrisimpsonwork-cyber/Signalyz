@@ -612,16 +612,19 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
       {/* Summary scores */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
-          <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Score</p>
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Your Signal</p>
           <p className={`text-xl sm:text-2xl font-bold tabular-nums ${scoreColor(userScore, medianScore)}`}>{userScore}</p>
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Competitive signal strength</p>
         </div>
         <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
           <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Median</p>
           <p className="text-xl sm:text-2xl font-bold tabular-nums text-muted-foreground">{medianScore}</p>
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Typical candidate</p>
         </div>
         <div className="rounded-lg border bg-background p-2 sm:p-3 text-center space-y-1 min-w-0">
           <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Top</p>
           <p className="text-xl sm:text-2xl font-bold tabular-nums text-muted-foreground/70">{topThreshold}</p>
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 leading-tight">Strong candidate</p>
         </div>
       </div>
 
