@@ -1017,9 +1017,9 @@ const Position = () => {
       <div className="mb-10 mx-auto max-w-2xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { step: "1", title: "Deconstruct", desc: "Extracts the 5 identity pillars the employer is actually hiring for — not keywords." },
-            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's commercial language with zero fabrication." },
-            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market position assessment." },
+            { step: "1", title: "Deconstruct", desc: "Extracts the identity pillars this employer is actually hiring for." },
+            { step: "2", title: "Reposition", desc: "Maps your real experience into the role's language. Nothing invented." },
+            { step: "3", title: "Equip", desc: "Gap mitigation, calibrated bullets, interview scripts, and market assessment." },
           ].map((item) => (
             <div key={item.step} className="rounded-lg border bg-card p-4 space-y-2">
               <div className="flex items-center gap-2">
