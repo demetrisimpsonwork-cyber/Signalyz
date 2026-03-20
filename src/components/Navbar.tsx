@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
-  const { isPro } = useSubscription();
+  const { isPro, hasOneTimeCredit } = useSubscription();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
