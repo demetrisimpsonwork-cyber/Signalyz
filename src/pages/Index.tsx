@@ -1252,7 +1252,7 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
-                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null);
+                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
