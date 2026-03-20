@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "re
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { X, Plus, Check } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { bulletToPastTense } from "@/lib/pastTense";
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
