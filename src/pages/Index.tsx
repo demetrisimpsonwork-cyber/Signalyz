@@ -344,6 +344,7 @@ const Index = () => {
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
   const calibratedRunPendingRef = useRef(false);
+  const overrideResumeRef = useRef<string | null>(null);
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
