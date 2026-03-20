@@ -416,19 +416,36 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // Session recovery modal state
+  const SESSION_KEY = "signalyz_last_analysis";
+  const SESSION_VERSION = 2;
+  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+
+  // Check for saved session on mount
   useEffect(() => {
+    if (result) return; // already have results
     try {
-      const saved = localStorage.getItem("signalyz_last_analysis");
-      if (saved && !result) {
-        const parsed = JSON.parse(saved);
-        if (parsed.result && parsed.bullet && parsed.jd) {
-          setResult(parsed.result);
-          setBullet(parsed.bullet);
-          setJd(parsed.jd);
-        }
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (parsed.v !== SESSION_VERSION || !parsed.result || !parsed.bullet || !parsed.jd) {
+        localStorage.removeItem(SESSION_KEY);
+        return;
       }
-    } catch {}
+      // Post-payment redirect: auto-restore without modal
+      const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
+      if (isPostPayment) {
+        setResult(parsed.result);
+        setBullet(parsed.bullet);
+        setJd(parsed.jd);
+      } else {
+        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd });
+        setShowSessionRecovery(true);
+      }
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+    }
   }, []);
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
@@ -772,6 +789,7 @@ const Index = () => {
       // Session persistence: save last analysis for returning users
       try {
         localStorage.setItem("signalyz_last_analysis", JSON.stringify({
+          v: SESSION_VERSION,
           result: res,
           bullet: bulletWithContext,
           jd: normJd.text,
@@ -1847,6 +1865,43 @@ const Index = () => {
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
       />
+
+      {/* Session Recovery Modal */}
+      {showSessionRecovery && pendingSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card border rounded-xl shadow-xl max-w-sm w-full mx-4 p-6 space-y-4 animate-fade-in">
+            <h3 className="text-base font-semibold text-foreground">Welcome back</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              You have a previous analysis session. Would you like to continue where you left off?
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setResult(pendingSession.result);
+                  setBullet(pendingSession.bullet);
+                  setJd(pendingSession.jd);
+                  setShowSessionRecovery(false);
+                  setPendingSession(null);
+                }}
+              >
+                Continue last session
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  localStorage.removeItem(SESSION_KEY);
+                  setShowSessionRecovery(false);
+                  setPendingSession(null);
+                }}
+              >
+                Start new analysis
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
