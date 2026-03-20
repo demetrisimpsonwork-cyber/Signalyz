@@ -1273,7 +1273,7 @@ const Index = () => {
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
+                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
