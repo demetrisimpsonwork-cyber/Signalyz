@@ -387,11 +387,6 @@ function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
 
 /* ─── MODULE 7: Score Explanation ─── */
 function ScoreExplanation({ score }: { score: number }) {
-  const tier = score >= 91 ? "Exceptional signal clarity" :
-    score >= 71 ? "Strong alignment signal" :
-    score >= 41 ? "Moderate alignment signal" :
-    "Weak alignment signal";
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -400,12 +395,12 @@ function ScoreExplanation({ score }: { score: number }) {
         </button>
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="max-w-xs p-3 space-y-2">
-        <p className="text-xs font-semibold">Score: {score}% — {tier}</p>
+        <p className="text-xs font-semibold">How this score works</p>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Your signal score measures how clearly your experience communicates fit for this specific role — not how qualified you are. It reads ownership language, domain vocabulary, operational evidence, and stakeholder framing across six dimensions. The predicted score shows how much improvement is possible by repositioning your existing experience without fabricating anything new.
+          Your score measures how clearly your resume signals fit for this role — across ownership language, domain terms, operational evidence, and stakeholder framing. It doesn't judge your ability. A lower score means the signal isn't landing yet.
         </p>
         <p className="text-[10px] text-muted-foreground/70 italic">
-          Signalyz never fabricates experience. It only recalibrates how your existing experience signals value.
+          Zero fabrication. Only repositions existing experience.
         </p>
       </PopoverContent>
     </Popover>
