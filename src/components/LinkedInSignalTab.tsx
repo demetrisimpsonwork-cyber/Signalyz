@@ -36,6 +36,8 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   const [copiedIdx, setCopiedIdx] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
+  const ctaLabel = hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9";
 
   const handleCopy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
