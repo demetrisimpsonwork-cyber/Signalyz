@@ -1145,7 +1145,7 @@ const Position = () => {
             <>
               {/* ── INTELLIGENCE LAYER ── */}
               <div className="pt-1">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Intelligence Layer — Role Deconstruction</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Role Deconstruction</p>
               </div>
 
               {/* 1 — Role DNA */}
