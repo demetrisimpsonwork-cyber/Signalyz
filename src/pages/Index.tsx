@@ -1189,16 +1189,15 @@ const Index = () => {
               if (!originalResumeBeforeCalibration) return;
               // Set the calibrated text as the current resume input
               setBullet(calibratedText);
-              calibratedRunPendingRef.current = true; // signal the next run to use calibrated path
+              calibratedRunPendingRef.current = true;
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
-              // Switch to alignment tab and trigger run
+              // Switch to alignment tab and directly trigger the full alignment engine
               setMode("alignment");
-              // Use a microtask to ensure state is settled before triggering
+              // Use a microtask so React state (bullet) settles before handleOptimize reads it
               setTimeout(() => {
-                const runBtn = document.getElementById("run-alignment-btn");
-                if (runBtn) runBtn.click();
-              }, 150);
+                handleOptimize();
+              }, 200);
             }}
           />
         )}
