@@ -145,6 +145,12 @@ Missing keywords: ${(alignmentResult.missing_keywords || []).join(", ")}
 
 Each question must: (1) directly probe a specific gap or risk from the analysis — not a generic interview question, (2) be written exactly as a hiring manager would ask it in a real interview, first person, direct, (3) include a "why_asking" note in one sentence tied to the specific gap it probes, (4) include a "signal_angle" coaching note in one sentence telling the user what their answer must demonstrate to pass this question. Zero generic questions.
 
+ZERO METRIC FABRICATION in signal_angle:
+- NEVER instruct the user to provide "actual numbers", "specific metrics", "exact percentages", or quantified results they may not have.
+- For impact or outcome questions, coach the user to describe qualitative outcomes: process improvements, stakeholder responses, operational changes, risk reductions, team capability shifts, or observable business value.
+- Example good signal_angle: "Describe the operational improvement you drove and how stakeholders responded — focus on what changed, not on inventing a number."
+- Example bad signal_angle: "Give actual numbers showing revenue impact." (NEVER do this)
+
 Return a JSON array of 5 objects with: "question", "why_asking", "signal_angle"
 Return ONLY valid JSON array, no markdown.`;
         const raw = await callAI(prompt, 2000);
