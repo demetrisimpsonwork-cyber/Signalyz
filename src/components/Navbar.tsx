@@ -108,6 +108,11 @@ const Navbar = () => {
               {!loading && user && (
                 <>
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
+                  {isPro && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
+                      Pro
+                    </span>
+                  )}
                   <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
                 </>
               )}
