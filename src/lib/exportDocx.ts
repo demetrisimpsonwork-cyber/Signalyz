@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
+import { bulletToPastTense } from "@/lib/pastTense";
 
 export async function exportCalibratedDocx(resume: CalibratedResumeData) {
   // Preprocess certifications: strip URLs, markdown links, brackets — plain text only
@@ -79,7 +80,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             spacing: { before: 0, after: 0, line: 264 },
             keepNext: idx === 0 ? false : undefined,
             bullet: { level: 0 },
-            children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+            children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
           }),
       ),
     );
@@ -232,7 +233,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                       new Paragraph({
                         spacing: { after: 80, line: 276 },
                         bullet: { level: 0 },
-                        children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+                        children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
                       }),
                   ),
                 ]),

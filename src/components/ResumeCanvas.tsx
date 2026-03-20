@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "re
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { X, Plus, Check } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { bulletToPastTense } from "@/lib/pastTense";
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -185,7 +186,7 @@ const BulletEditor = ({
           style={{ fontSize: "11px", lineHeight: "1.55", marginBottom: "1px" }}
         >
           <span className="shrink-0 mt-0.5">•</span>
-          <span>{bullet}</span>
+          <span>{bulletToPastTense(bullet)}</span>
         </li>
       ))}
       {editMode && (
