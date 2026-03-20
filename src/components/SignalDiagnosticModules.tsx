@@ -830,18 +830,14 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
 
   return (
     <div className="space-y-4">
-      {/* Why You're Not Getting Interviews — visible to all users, but fixes/predictions gated */}
-      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
+      {/* Strategic Fixes + Predicted Improvement — visible to all, content gated */}
+      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue || data.interview_gap_diagnosis?.strategic_fixes?.length) && (
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
       )}
 
-      {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
+      {/* Pro diagnostic sections */}
       {isPro && (
         <>
-          {data.executive_insight_summary?.primary_insight && (
-            <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
-          )}
-
           {data.transferable_signal_detection?.detected_capability && (
             <TransferableSignal data={data.transferable_signal_detection} evidenceLedger={data.evidence_ledger} />
           )}
@@ -857,16 +853,8 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             </div>
           )}
 
-          {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
-            <CareerSignalMap data={data.career_signal_map} />
-          )}
-
           {data.signal_alignment_analysis && data.signal_alignment_analysis.length > 0 && (
             <SignalAlignmentAnalysis data={data.signal_alignment_analysis} />
-          )}
-
-          {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
-            <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
           )}
 
           {data.signal_shift_estimates && (
@@ -877,8 +865,20 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
           )}
 
+          {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+            <CareerSignalMap data={data.career_signal_map} />
+          )}
+
+          {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
+            <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
+          )}
+
           {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
             <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
+          )}
+
+          {data.executive_insight_summary?.primary_insight && (
+            <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
           )}
         </>
       )}
