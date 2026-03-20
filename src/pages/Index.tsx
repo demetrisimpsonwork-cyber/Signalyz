@@ -803,6 +803,7 @@ const Index = () => {
           result: res,
           bullet: bulletWithContext,
           jd: normJd.text,
+          originalBaseline: originalResumeBeforeCalibration ?? bulletWithContext,
           ts: Date.now(),
         }));
       } catch {}
