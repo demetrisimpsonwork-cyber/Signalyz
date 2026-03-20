@@ -1233,15 +1233,14 @@ const Position = () => {
                     })}
                   </div>
                   {!effectiveIsPro && (
-                    <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-3">
+                    <div className="mt-4 pt-4 border-t border-border/50 flex flex-col items-start gap-2">
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        4 calibration pillars — Context, Signal, Stability, and Commercial Impact — are restricted to Employer Intelligence™.
+                        Full calibration across all pillars available on Pro.
                       </p>
                       <Button size="sm" className="gap-1.5 text-xs h-8 px-3">
                         <Lock className="h-3 w-3" />
-                        See My Exact Fix
+                        Unlock Full Report
                       </Button>
-                      <p className="text-[11px] text-destructive/70 italic">Every application without fixing this risks being ignored.</p>
                     </div>
                   )}
                 </Section>
