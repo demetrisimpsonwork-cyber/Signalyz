@@ -344,6 +344,7 @@ const Index = () => {
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
   const calibratedRunPendingRef = useRef(false);
+  const overrideResumeRef = useRef<string | null>(null);
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -721,8 +722,10 @@ const Index = () => {
     const startTime = Date.now();
     const engineMode = effectiveIsPro ? "multi_bullet" : "single_bullet";
 
-    // Client-side normalization
-    const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
+    // Client-side normalization — use override ref if set (from Re-score Now)
+    const resumeSource = overrideResumeRef.current || bullet;
+    overrideResumeRef.current = null; // consume once
+    const normResume = normalizeClientInput(resumeSource.trim(), MAX_RESUME_CHARS);
     const normJd = normalizeClientInput(jd.trim(), MAX_JD_CHARS);
     if (normResume.truncated || normJd.truncated) {
       setInputTruncated(true);
@@ -1187,18 +1190,15 @@ const Index = () => {
             originalResumeBeforeCalibration={originalResumeBeforeCalibration}
             onRerunSignalAnalysis={(calibratedText) => {
               if (!originalResumeBeforeCalibration) return;
-              // Set the calibrated text as the current resume input
+              // Store the calibrated text in a ref so handleOptimize reads it immediately
+              overrideResumeRef.current = calibratedText;
               setBullet(calibratedText);
-              calibratedRunPendingRef.current = true; // signal the next run to use calibrated path
+              calibratedRunPendingRef.current = true;
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
-              // Switch to alignment tab and trigger run
+              // Switch to alignment tab and directly trigger the full alignment engine
               setMode("alignment");
-              // Use a microtask to ensure state is settled before triggering
-              setTimeout(() => {
-                const runBtn = document.getElementById("run-alignment-btn");
-                if (runBtn) runBtn.click();
-              }, 150);
+              handleOptimize();
             }}
           />
         )}
