@@ -1175,7 +1175,7 @@ const Position = () => {
                 return (
                 <Section title={sectionTitle} proLabel>
                   <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed border-l-2 border-border pl-3">
-                    Structured evaluation of how each identity pillar reads across hiring stages. Grounded strictly in resume signal relative to JD weighting.
+                    How each identity pillar reads across hiring stages — grounded in resume signal vs. JD weighting.
                   </p>
                   <CalibrationLogicSummary template={calTemplate} />
                   <div className="space-y-3 mt-3">
