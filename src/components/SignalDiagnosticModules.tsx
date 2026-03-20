@@ -387,11 +387,6 @@ function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
 
 /* ─── MODULE 7: Score Explanation ─── */
 function ScoreExplanation({ score }: { score: number }) {
-  const tier = score >= 91 ? "Exceptional signal clarity" :
-    score >= 71 ? "Strong alignment signal" :
-    score >= 41 ? "Moderate alignment signal" :
-    "Weak alignment signal";
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -400,12 +395,12 @@ function ScoreExplanation({ score }: { score: number }) {
         </button>
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="max-w-xs p-3 space-y-2">
-        <p className="text-xs font-semibold">Score: {score}% — {tier}</p>
+        <p className="text-xs font-semibold">How this score works</p>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Your signal score measures how clearly your experience communicates fit for this specific role — not how qualified you are. It reads ownership language, domain vocabulary, operational evidence, and stakeholder framing across six dimensions. The predicted score shows how much improvement is possible by repositioning your existing experience without fabricating anything new.
+          Your score measures how clearly your resume signals fit for this role — across ownership language, domain terms, operational evidence, and stakeholder framing. It doesn't judge your ability. A lower score means the signal isn't landing yet.
         </p>
         <p className="text-[10px] text-muted-foreground/70 italic">
-          Signalyz never fabricates experience. It only recalibrates how your existing experience signals value.
+          Zero fabrication. Only repositions existing experience.
         </p>
       </PopoverContent>
     </Popover>
@@ -673,26 +668,26 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
   );
 }
 
-/* ─── MODULE 11: Why You're Not Getting Interviews ─── */
+/* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
 function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScore = data.predicted_score ?? 0;
 
+  // Only render if there are strategic fixes or predicted improvement — blocker is shown inline above
+  const hasFixesContent = (isPro && data.strategic_fixes && data.strategic_fixes.length > 0) || !isPro;
+  const hasScoreProjection = currentScore > 0 && predictedScore > 0;
+
+  if (!hasFixesContent && !hasScoreProjection) return null;
+
   return (
-    <div className="rounded-xl border border-orange-500/20 bg-card p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-orange-500" />
-        <SectionLabel>Why You're Not Getting Interviews</SectionLabel>
-      </div>
-
-      {/* Primary Blocker, What Hiring Managers See, and What This Creates are shown in the Signal Diagnosis card above — not repeated here */}
-
+    <div className="rounded-xl border bg-card p-5 space-y-4">
       {/* Strategic Fixes — Pro only */}
       {isPro ? (
         data.strategic_fixes && data.strategic_fixes.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
-            <ol className="space-y-1">
+          <div className="space-y-2">
+            <SectionLabel>Strategic Fixes</SectionLabel>
+            <SectionSub>Priority changes to close signal gaps</SectionSub>
+            <ol className="space-y-1.5">
               {data.strategic_fixes.slice(0, 3).map((fix, i) => {
                 const cleanedFix = fix.replace(/^\d+\.\s*/, "");
                 return (
@@ -708,7 +703,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Strategic Fixes</p>
+            <SectionLabel>Strategic Fixes</SectionLabel>
           </div>
           <div className="space-y-1.5 pointer-events-none select-none blur-[3px] opacity-40">
             {[1, 2, 3].map(i => (
@@ -721,11 +716,11 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         </div>
       )}
 
-      {/* Predicted Signal Improvement — Pro only */}
-      {currentScore > 0 && predictedScore > 0 && (
+      {/* Predicted Signal Improvement */}
+      {hasScoreProjection && (
         isPro ? (
           <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
               <div className="text-center">
                 <p className="text-[10px] text-muted-foreground">Current</p>
@@ -733,7 +728,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
               </div>
               <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
               <div className="text-center">
-                <p className="text-[10px] text-muted-foreground">After Calibration</p>
+                <p className="text-[10px] text-muted-foreground">Projected</p>
                 <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
               </div>
             </div>
@@ -741,7 +736,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         ) : (
           <div className="rounded-lg border bg-background p-3 space-y-2 relative overflow-hidden">
             <div className="pointer-events-none select-none blur-[3px] opacity-40">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted Signal Improvement</p>
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-[10px] text-muted-foreground">Current</p>
@@ -749,7 +744,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted" />
                 <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground">After</p>
+                  <p className="text-[10px] text-muted-foreground">Projected</p>
                   <p className="text-xl font-bold text-muted tabular-nums">—</p>
                 </div>
               </div>
@@ -835,18 +830,14 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
 
   return (
     <div className="space-y-4">
-      {/* Why You're Not Getting Interviews — visible to all users, but fixes/predictions gated */}
-      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue) && (
+      {/* Strategic Fixes + Predicted Improvement — visible to all, content gated */}
+      {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue || data.interview_gap_diagnosis?.strategic_fixes?.length) && (
         <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
       )}
 
-      {/* All remaining signal diagnostic sections — Pro only, no gate card here */}
+      {/* Pro diagnostic sections */}
       {isPro && (
         <>
-          {data.executive_insight_summary?.primary_insight && (
-            <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
-          )}
-
           {data.transferable_signal_detection?.detected_capability && (
             <TransferableSignal data={data.transferable_signal_detection} evidenceLedger={data.evidence_ledger} />
           )}
@@ -862,16 +853,8 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             </div>
           )}
 
-          {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
-            <CareerSignalMap data={data.career_signal_map} />
-          )}
-
           {data.signal_alignment_analysis && data.signal_alignment_analysis.length > 0 && (
             <SignalAlignmentAnalysis data={data.signal_alignment_analysis} />
-          )}
-
-          {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
-            <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
           )}
 
           {data.signal_shift_estimates && (
@@ -882,8 +865,20 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             <HiringSignalBenchmark data={data.hiring_signal_benchmark} />
           )}
 
+          {data.career_signal_map && (data.career_signal_map.primary_alignment?.length || data.career_signal_map.secondary_alignment?.length) && (
+            <CareerSignalMap data={data.career_signal_map} />
+          )}
+
+          {data.hiring_pipeline_simulation && data.hiring_pipeline_simulation.length > 0 && (
+            <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
+          )}
+
           {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
             <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
+          )}
+
+          {data.executive_insight_summary?.primary_insight && (
+            <ExecutiveInsight data={data.executive_insight_summary} evidenceLedger={data.evidence_ledger} />
           )}
         </>
       )}

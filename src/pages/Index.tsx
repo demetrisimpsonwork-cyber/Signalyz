@@ -1480,21 +1480,18 @@ const Index = () => {
 
                     {/* Professional Signal Diagnosis headline */}
                     <div className="text-center space-y-1">
-                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Professional Signal Diagnosis</h2>
-                      <p className="text-xs text-muted-foreground">How hiring managers interpret your experience.</p>
+                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Signal Diagnosis</h2>
+                      {analysisTime > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
+                        </p>
+                      )}
                     </div>
 
-                    {/* Analysis banner */}
-                    {analysisTime > 0 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
-                      </p>
-                    )}
-
-                    {/* Section 1: Signal Diagnosis with glow */}
-                    <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
+                    {/* Section 1: Score + Primary Strength */}
+                    <div className={`rounded-xl border bg-card p-5 space-y-3 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
-                        <h3 className="section-label mt-2">Signal Diagnosis</h3>
+                        <h3 className="section-label mt-1">Score</h3>
                         <ScoreExplanation score={displayScore} />
                       </div>
                       <div className="flex items-baseline gap-3">
@@ -1513,20 +1510,17 @@ const Index = () => {
                         )}
                       </div>
                       {displayScore < 70 && (
-                        <div className="space-y-1.5 pt-1">
-                          <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
-                          <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
-                        </div>
+                        <p className="text-sm font-semibold text-destructive">You're {70 - displayScore}% below interview range (70%+)</p>
                       )}
 
-                      {/* Structured diagnosis insights from SignalModel */}
-                      <div className="space-y-2 border-t border-border/40 pt-3">
+                      {/* Primary strength */}
                       {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
+                        <div className="border-t border-border/40 pt-3">
                           <p className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {result.score_rationale && result.score_rationale.length > 0 && (() => {
                         // Classification: use AI prefix tags first, then fallback heuristics
@@ -1558,23 +1552,27 @@ const Index = () => {
                         });
                         return (
                           <div className="space-y-4">
-                            {/* Primary Blocker — dominant diagnostic moment */}
+                            {/* Primary Blocker */}
                              {primaryBlocker && (
-                              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-3">
+                              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-2.5">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
-                                <p className="text-xs font-bold text-destructive/90">This is the main reason you're not getting interviews.</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
                                   {primaryBlocker}
                                 </p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">What hiring managers see</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">How this reads to hiring managers</p>
                                     <ul className="space-y-1 pl-2.5 border-l-2 border-destructive/20">
                                       {hiringManagersSee.slice(0, effectiveIsPro ? undefined : 2).map((s, i) => (
                                         <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
                                       ))}
                                     </ul>
                                   </div>
+                                )}
+                                {effectiveIsPro && whatThisCreates && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-destructive/10">
+                                    <span className="font-medium text-foreground">Consequence:</span> {whatThisCreates}
+                                  </p>
                                 )}
                               </div>
                             )}
@@ -1583,15 +1581,11 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                  <p className="text-sm font-bold text-foreground">
-                                   You're 3 changes away from fixing this
+                                   3 changes move you above interview range
                                  </p>
                                  <p className="text-xs text-muted-foreground">
-                                   You'll see exactly how your experience gets rewritten to match this role.
+                                   See exactly how your experience gets repositioned to match this role.
                                  </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   Most users increase their signal score by 10–25 points after applying these fixes.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                      <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
@@ -1601,16 +1595,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
-                              </div>
-                            )}
-
-                            {/* What This Creates — Pro only */}
-                            {effectiveIsPro && whatThisCreates && (
-                              <div className="pl-3 border-l-2 border-border">
-                                <p className="section-label mb-1">What This Creates</p>
-                                <p className="text-xs text-muted-foreground leading-relaxed">{whatThisCreates}</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes is likely being filtered out.</p>
                               </div>
                             )}
 
@@ -1626,10 +1611,10 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* Secondary Risks — free: max 2, Pro: all */}
+                            {/* Screen-Out Risks — free: max 2, Pro: all */}
                             {secondaryGaps.length > 0 && (
                               <div className="space-y-1.5">
-                                <p className="section-label">Secondary Risks</p>
+                                <p className="section-label">Screen-Out Risks</p>
                                 <ul className="space-y-1">
                                   {(effectiveIsPro ? secondaryGaps : secondaryGaps.slice(0, 2)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
