@@ -345,7 +345,9 @@ const Index = () => {
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
-  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
+  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
+    try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
+  });
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
