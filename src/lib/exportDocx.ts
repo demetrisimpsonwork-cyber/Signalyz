@@ -233,7 +233,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
                       new Paragraph({
                         spacing: { after: 80, line: 276 },
                         bullet: { level: 0 },
-                        children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+                        children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
                       }),
                   ),
                 ]),
