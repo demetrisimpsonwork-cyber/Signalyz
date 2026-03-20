@@ -151,7 +151,13 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const companyName = useMemo(() => inferCompanyName(jd), [jd]);
   const hiringManager = useMemo(() => inferHiringManager(jd), [jd]);
 
-  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Manager,";
+  const addresseeLine = useMemo(() => {
+    if (hiringManager) return hiringManager;
+    if (companyName) return `Hiring Team, ${companyName}`;
+    return "Hiring Team";
+  }, [hiringManager, companyName]);
+
+  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Team,";
 
   // The active letter content (edited or original)
   const activeLetter = editedLetter || letter;
