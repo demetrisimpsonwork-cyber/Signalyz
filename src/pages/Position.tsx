@@ -395,7 +395,6 @@ const PillarThresholdStandard = ({ standard }: { standard: PillarStandard }) => 
 
       {/* Threshold definition */}
       <div className="px-3 pt-3 pb-2">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1.5">Threshold Definition</p>
         <p className="text-xs text-muted-foreground leading-relaxed">{standard.seniorThreshold}</p>
       </div>
 
