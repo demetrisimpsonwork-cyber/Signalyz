@@ -314,6 +314,8 @@ const CalibratedResumeTab = ({
 
 function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
+  const ctaLabel = hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9";
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
@@ -336,7 +338,7 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
         {user ? (
           <div className="space-y-3 w-full max-w-xs">
             <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
-              Fix This Now → $9
+              {ctaLabel}
             </Button>
             <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
           </div>

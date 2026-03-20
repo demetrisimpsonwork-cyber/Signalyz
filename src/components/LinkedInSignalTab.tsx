@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Check, Loader2, ArrowRight } from "lucide-react";
