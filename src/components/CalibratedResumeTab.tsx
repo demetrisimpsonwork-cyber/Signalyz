@@ -57,6 +57,7 @@ interface CalibratedResumeTabProps {
   onUpgrade: () => void;
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
+  jdText?: string;
   onSwitchToReport?: () => void;
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
