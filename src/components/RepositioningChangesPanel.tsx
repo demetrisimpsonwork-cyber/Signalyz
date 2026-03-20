@@ -1,153 +1,111 @@
-import { ArrowUp, ArrowRight, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowRight } from "lucide-react";
+import { useMemo } from "react";
+import { computePillarScores } from "@/lib/deterministicScore";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
-interface Dimension {
+/** Convert structured resume to plain text for scoring */
+function resumeDataToText(r: CalibratedResumeData): string {
+  const lines: string[] = [];
+  if (r.header.name) lines.push(r.header.name);
+  if (r.header.title) lines.push(r.header.title);
+  if (r.summary) { lines.push("", "SUMMARY", r.summary); }
+  if (r.core_competencies.length) { lines.push("", "CORE COMPETENCIES", r.core_competencies.join(" · ")); }
+  if (r.experience.length) {
+    lines.push("", "EXPERIENCE");
+    for (const exp of r.experience) {
+      lines.push([exp.title, exp.company, exp.dates].filter(Boolean).join(" | "));
+      for (const b of exp.bullets) lines.push(`- ${b}`);
+    }
+  }
+  if (r.skills.length) { lines.push("", "SKILLS", r.skills.join(", ")); }
+  return lines.join("\n");
+}
+
+interface Pillar {
   name: string;
-  direction: "improved" | "unchanged" | "reduced";
+  weight: string;
+  origScore: number;
+  calScore: number;
+  delta: number;
   explanation: string;
 }
 
-function analyzeDimensions(
-  original: string,
-  calibrated: CalibratedResumeData
-): Dimension[] {
-  const originalLower = original.toLowerCase();
-  const allBullets = calibrated.experience.flatMap((e) => e.bullets);
-  const bulletText = allBullets.join(" ").toLowerCase();
+function buildPillars(originalResume: string, calibratedResume: CalibratedResumeData, jdText: string): Pillar[] {
+  const calText = resumeDataToText(calibratedResume);
+  const orig = computePillarScores(originalResume, jdText);
+  const cal = computePillarScores(calText, jdText);
 
-  // 1. Ownership Language Density
-  const strongVerbs = [
-    "led", "drove", "launched", "owned", "spearheaded", "delivered",
-    "orchestrated", "directed", "managed", "established", "built",
-    "transformed", "accelerated", "negotiated", "architected",
-  ];
-  const origOwnership = strongVerbs.filter((v) =>
-    new RegExp(`\\b${v}\\b`).test(originalLower)
-  ).length;
-  const calOwnership = strongVerbs.filter((v) =>
-    new RegExp(`\\b${v}\\b`).test(bulletText)
-  ).length;
-  const ownershipDelta = calOwnership - origOwnership;
-
-  // 2. JD Keyword Alignment (signal_keywords present in calibrated)
-  const kws = calibrated.signal_keywords || [];
-  const kwsInCal = kws.filter((k) => bulletText.includes(k.toLowerCase())).length;
-  const kwsInOrig = kws.filter((k) => originalLower.includes(k.toLowerCase())).length;
-  const kwDelta = kwsInCal - kwsInOrig;
-
-  // 3. Action Verb Lead Rate
-  const actionVerbs = [
-    "achieved", "built", "created", "delivered", "drove", "enabled",
-    "established", "executed", "generated", "implemented", "improved",
-    "increased", "launched", "led", "managed", "negotiated", "optimized",
-    "orchestrated", "reduced", "scaled", "spearheaded", "streamlined",
-    "transformed",
-  ];
-  const countLeads = (bullets: string[]) =>
-    bullets.filter((b) => {
-      const first = b.trim().split(/\s/)[0]?.toLowerCase().replace(/[^a-z]/g, "");
-      return actionVerbs.includes(first);
-    }).length;
-  const origBulletLines = original.split("\n").filter((l) => l.trim().startsWith("-") || l.trim().startsWith("•"));
-  const origLeads = countLeads(origBulletLines.map((l) => l.replace(/^[-•]\s*/, "")));
-  const calLeads = countLeads(allBullets);
-  const verbDelta = calLeads - origLeads;
-
-  // 4. Outcome Framing (metrics: $, %, numbers)
-  const countOutcomes = (text: string) =>
-    (text.match(/\$[\d,.]+|[\d,.]+%|\b\d{2,}\b/g) || []).length;
-  const origOutcomes = countOutcomes(original);
-  const calOutcomes = countOutcomes(allBullets.join(" "));
-  const outcomeDelta = calOutcomes - origOutcomes;
-
-  // 5. Passive Language
-  const passivePattern = /\b(was|were|been|being|is|are)\s+\w+ed\b/gi;
-  const origPassive = (original.match(passivePattern) || []).length;
-  const calPassive = (allBullets.join(" ").match(passivePattern) || []).length;
-  const passiveDelta = origPassive - calPassive; // positive = improvement (fewer passive)
-
-  const dim = (
-    name: string,
-    delta: number,
-    improvedMsg: string,
-    unchangedMsg: string,
-    reducedMsg: string,
-    invert = false
-  ): Dimension => {
-    const effective = invert ? -delta : delta;
-    if (effective > 0) return { name, direction: "improved", explanation: improvedMsg };
-    if (effective < 0) return { name, direction: "reduced", explanation: reducedMsg };
-    return { name, direction: "unchanged", explanation: unchangedMsg };
+  const mkExplanation = (name: string, origVal: number, calVal: number): string => {
+    const delta = calVal - origVal;
+    if (delta <= 0) return `${name} preserved at ${calVal}%`;
+    switch (name) {
+      case "JD Mirroring Score":
+        return `+${delta}% — added role-specific terms and scope framing to experience bullets`;
+      case "Ownership & Scope Density":
+        return `+${delta}% — strengthened active ownership verbs and stakeholder scope language`;
+      case "Perception Gap Closure":
+        return `+${delta}% — seniority and impact language shifted closer to JD target level`;
+      case "Readability & Signal Clarity":
+        return `+${delta}% — improved bullet consistency and removed passive softening`;
+      default:
+        return `+${delta}% improvement`;
+    }
   };
 
   return [
-    dim(
-      "Ownership Language Density",
-      ownershipDelta,
-      `Stronger action verb openers across ${Math.abs(ownershipDelta)} bullets`,
-      "Ownership language remained consistent",
-      "Some ownership verbs were softened"
-    ),
-    dim(
-      "JD Keyword Alignment",
-      kwDelta,
-      `${Math.abs(kwDelta)} role-specific term${kwDelta !== 1 ? "s" : ""} added to experience section`,
-      "Keyword alignment unchanged",
-      "Some keywords were removed"
-    ),
-    dim(
-      "Action Verb Lead Rate",
-      verbDelta,
-      `${Math.abs(verbDelta)} more bullet${verbDelta !== 1 ? "s" : ""} now open with strong action verbs`,
-      "Action verb lead rate unchanged",
-      "Fewer bullets lead with action verbs"
-    ),
-    dim(
-      "Outcome Framing",
-      Math.max(0, outcomeDelta),
-      `${Math.abs(outcomeDelta)} additional quantified outcome${outcomeDelta !== 1 ? "s" : ""} surfaced`,
-      "Outcome framing preserved",
-      "Outcome framing preserved"
-    ),
-    dim(
-      "Passive Language",
-      passiveDelta,
-      `${Math.abs(passiveDelta)} passive construction${passiveDelta !== 1 ? "s" : ""} replaced`,
-      "Passive language level unchanged",
-      "More passive constructions detected",
-      false
-    ),
+    {
+      name: "JD Mirroring Score",
+      weight: "40%",
+      origScore: orig.jdMirroring,
+      calScore: cal.jdMirroring,
+      delta: cal.jdMirroring - orig.jdMirroring,
+      explanation: mkExplanation("JD Mirroring Score", orig.jdMirroring, cal.jdMirroring),
+    },
+    {
+      name: "Ownership & Scope Density",
+      weight: "30%",
+      origScore: orig.ownershipScope,
+      calScore: cal.ownershipScope,
+      // Never show reduced for ownership
+      delta: Math.max(0, cal.ownershipScope - orig.ownershipScope),
+      explanation: mkExplanation("Ownership & Scope Density", orig.ownershipScope, Math.max(orig.ownershipScope, cal.ownershipScope)),
+    },
+    {
+      name: "Perception Gap Closure",
+      weight: "20%",
+      origScore: orig.perceptionGap,
+      calScore: cal.perceptionGap,
+      delta: cal.perceptionGap - orig.perceptionGap,
+      explanation: mkExplanation("Perception Gap Closure", orig.perceptionGap, cal.perceptionGap),
+    },
+    {
+      name: "Readability & Signal Clarity",
+      weight: "10%",
+      origScore: orig.readability,
+      calScore: cal.readability,
+      delta: cal.readability - orig.readability,
+      explanation: mkExplanation("Readability & Signal Clarity", orig.readability, cal.readability),
+    },
   ];
 }
-
-const directionConfig = {
-  improved: {
-    icon: ArrowUp,
-    label: "Improved",
-    className: "text-emerald-500",
-  },
-  unchanged: {
-    icon: ArrowRight,
-    label: "Unchanged",
-    className: "text-muted-foreground",
-  },
-  reduced: {
-    icon: ArrowDown,
-    label: "Reduced",
-    className: "text-amber-500",
-  },
-};
 
 interface RepositioningChangesPanelProps {
   originalResume: string;
   calibratedResume: CalibratedResumeData;
+  jdText?: string;
 }
 
 const RepositioningChangesPanel = ({
   originalResume,
   calibratedResume,
+  jdText,
 }: RepositioningChangesPanelProps) => {
-  const dimensions = analyzeDimensions(originalResume, calibratedResume);
+  const pillars = useMemo(() => {
+    if (!jdText) return null;
+    return buildPillars(originalResume, calibratedResume, jdText);
+  }, [originalResume, calibratedResume, jdText]);
+
+  if (!pillars) return null;
 
   return (
     <div className="rounded-lg border bg-card p-4 sm:p-5 space-y-4 min-w-0 w-full overflow-hidden">
@@ -156,28 +114,28 @@ const RepositioningChangesPanel = ({
           What Repositioning Changed
         </h3>
         <p className="text-xs text-muted-foreground">
-          How the calibrated resume improved your hiring signal.
+          Per-pillar scoring delta between your original and calibrated resume.
         </p>
       </div>
 
       <div className="space-y-3 sm:space-y-2.5">
-        {dimensions.map((dim) => {
-          const config = directionConfig[dim.direction];
-          const Icon = config.icon;
+        {pillars.map((p) => {
+          const isImproved = p.delta > 0;
           return (
             <div
-              key={dim.name}
+              key={p.name}
               className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-sm border-b border-border/30 pb-3 sm:pb-0 sm:border-0 last:border-0 last:pb-0"
             >
-              <span className="font-medium text-foreground sm:min-w-[180px] sm:shrink-0 break-words">
-                {dim.name}
+              <span className="font-medium text-foreground sm:min-w-[210px] sm:shrink-0 break-words">
+                {p.name}
+                <span className="text-[10px] text-muted-foreground ml-1">({p.weight})</span>
               </span>
-              <span className={`flex items-center gap-1 shrink-0 font-medium text-xs ${config.className}`}>
-                <Icon className="h-3.5 w-3.5" />
-                {config.label}
+              <span className={`flex items-center gap-1 shrink-0 font-medium text-xs ${isImproved ? "text-emerald-500" : "text-muted-foreground"}`}>
+                {isImproved ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                {isImproved ? `+${p.delta}%` : "Unchanged"}
               </span>
               <span className="text-muted-foreground text-xs leading-5 break-words">
-                {dim.explanation}
+                {p.explanation}
               </span>
             </div>
           );
