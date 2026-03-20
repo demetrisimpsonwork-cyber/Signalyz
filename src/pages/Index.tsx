@@ -416,19 +416,36 @@ const Index = () => {
     }
   }, []);
 
-  // Session persistence: restore last analysis on mount (for returning users after payment)
+  // Session recovery modal state
+  const SESSION_KEY = "signalyz_last_analysis";
+  const SESSION_VERSION = 2;
+  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+
+  // Check for saved session on mount
   useEffect(() => {
+    if (result) return; // already have results
     try {
-      const saved = localStorage.getItem("signalyz_last_analysis");
-      if (saved && !result) {
-        const parsed = JSON.parse(saved);
-        if (parsed.result && parsed.bullet && parsed.jd) {
-          setResult(parsed.result);
-          setBullet(parsed.bullet);
-          setJd(parsed.jd);
-        }
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (parsed.v !== SESSION_VERSION || !parsed.result || !parsed.bullet || !parsed.jd) {
+        localStorage.removeItem(SESSION_KEY);
+        return;
       }
-    } catch {}
+      // Post-payment redirect: auto-restore without modal
+      const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
+      if (isPostPayment) {
+        setResult(parsed.result);
+        setBullet(parsed.bullet);
+        setJd(parsed.jd);
+      } else {
+        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd });
+        setShowSessionRecovery(true);
+      }
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+    }
   }, []);
 
   // Score is computed deterministically inside handleOptimize and stored on result — no reactive recomputation
