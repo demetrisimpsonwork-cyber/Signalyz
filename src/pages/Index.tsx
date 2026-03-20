@@ -1890,6 +1890,11 @@ const Index = () => {
                   setResult(pendingSession.result);
                   setBullet(pendingSession.bullet);
                   setJd(pendingSession.jd);
+                  // Restore original baseline from localStorage if available
+                  const savedBaseline = localStorage.getItem("signalyz_original_resume_baseline");
+                  if (savedBaseline && !originalResumeBeforeCalibration) {
+                    setOriginalResumeBeforeCalibration(savedBaseline);
+                  }
                   setShowSessionRecovery(false);
                   setPendingSession(null);
                 }}
