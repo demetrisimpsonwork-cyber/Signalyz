@@ -556,7 +556,7 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
-    const { bullet, jd, userId, mode = "single_bullet", sessionToken } = await req.json();
+    const { bullet, jd, userId, mode = "single_bullet", sessionToken, runType = "original" } = await req.json();
     const userPlan = mode === "multi_bullet" ? "pro" : "free";
 
     // --- Structured logging ---
@@ -617,7 +617,7 @@ serve(async (req) => {
     }
 
     // ─── Cache check ───────────────────────────────────────────────────────
-    const cacheKey = await hashInputs(cleanBullet, cleanJd, userPlan);
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, `${userPlan}:${runType}`);
     const cached = getCached(cacheKey);
     if (cached) {
       console.log("Cache HIT for", cacheKey.slice(0, 12));
