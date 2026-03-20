@@ -33,11 +33,11 @@ async function fetchSubscriptionData() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, subscription_status, subscription_id, daily_run_count, daily_run_reset_at")
+    .select("subscription_tier, subscription_status, subscription_id, subscription_period_end, daily_run_count, daily_run_reset_at")
     .eq("user_id", user.id)
     .single();
 
-  console.log("[SubCheck] DB returned:", JSON.stringify(profile), "error:", profileError?.message ?? "none");
+  console.log("[SubCheck] DB returned — tier:", profile?.subscription_tier, "status:", (profile as any)?.subscription_status, "sub_id:", (profile as any)?.subscription_id, "period_end:", (profile as any)?.subscription_period_end, "error:", profileError?.message ?? "none");
 
   if (!profile) return null;
 
