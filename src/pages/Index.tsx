@@ -1865,6 +1865,43 @@ const Index = () => {
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
       />
+
+      {/* Session Recovery Modal */}
+      {showSessionRecovery && pendingSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card border rounded-xl shadow-xl max-w-sm w-full mx-4 p-6 space-y-4 animate-fade-in">
+            <h3 className="text-base font-semibold text-foreground">Welcome back</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              You have a previous analysis session. Would you like to continue where you left off?
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setResult(pendingSession.result);
+                  setBullet(pendingSession.bullet);
+                  setJd(pendingSession.jd);
+                  setShowSessionRecovery(false);
+                  setPendingSession(null);
+                }}
+              >
+                Continue last session
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  localStorage.removeItem(SESSION_KEY);
+                  setShowSessionRecovery(false);
+                  setPendingSession(null);
+                }}
+              >
+                Start new analysis
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
