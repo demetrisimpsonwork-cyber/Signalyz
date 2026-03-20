@@ -1201,8 +1201,9 @@ const Index = () => {
               calibratedRunPendingRef.current = true;
               setIsResumeFromCalibrated(true);
               setInputSource("paste");
-              // Switch to alignment tab and directly trigger the full alignment engine
+              // Switch to alignment tab and scroll to top so user sees the rerun
               setMode("alignment");
+              window.scrollTo({ top: 0, behavior: "smooth" });
               handleOptimize();
             }}
           />
