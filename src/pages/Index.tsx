@@ -1488,10 +1488,10 @@ const Index = () => {
                       )}
                     </div>
 
-                    {/* Section 1: Signal Diagnosis with glow */}
-                    <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
+                    {/* Section 1: Score + Primary Strength */}
+                    <div className={`rounded-xl border bg-card p-5 space-y-3 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
                       <div className="flex items-center gap-2">
-                        <h3 className="section-label mt-2">Signal Diagnosis</h3>
+                        <h3 className="section-label mt-1">Score</h3>
                         <ScoreExplanation score={displayScore} />
                       </div>
                       <div className="flex items-baseline gap-3">
@@ -1510,20 +1510,17 @@ const Index = () => {
                         )}
                       </div>
                       {displayScore < 70 && (
-                        <div className="space-y-1.5 pt-1">
-                          <p className="text-sm font-semibold text-foreground">Most candidates who get interviews score 70%+</p>
-                          <p className="text-sm font-bold text-destructive">You're {70 - displayScore}% below that threshold</p>
-                        </div>
+                        <p className="text-sm font-semibold text-destructive">You're {70 - displayScore}% below interview range (70%+)</p>
                       )}
 
-                      {/* Structured diagnosis insights from SignalModel */}
-                      <div className="space-y-2 border-t border-border/40 pt-3">
+                      {/* Primary strength */}
                       {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
+                        <div className="border-t border-border/40 pt-3">
                           <p className="text-sm text-muted-foreground">
                             <span className="font-medium text-foreground">Primary strength:</span> {result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {result.score_rationale && result.score_rationale.length > 0 && (() => {
                         // Classification: use AI prefix tags first, then fallback heuristics
