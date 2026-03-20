@@ -251,7 +251,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("Sincerely,");
     if (contact.name) parts.push(contact.name);
     return parts.join("\n");
-  }, [activeLetter, contact, hiringManager, companyName, salutation]);
+  }, [activeLetter, contact, addresseeLine, salutation]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullLetterText);
