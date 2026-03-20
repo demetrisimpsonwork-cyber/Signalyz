@@ -56,6 +56,11 @@ const Navbar = () => {
                     +Pro
                   </button>
                 )}
+                {isPro && (
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
+                    Pro
+                  </span>
+                )}
                 <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
                   <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{initials}</AvatarFallback>
                 </Avatar>
