@@ -1,5 +1,4 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sparkles, AlertTriangle } from "lucide-react";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
