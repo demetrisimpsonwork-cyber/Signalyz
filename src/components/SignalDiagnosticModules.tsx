@@ -631,7 +631,6 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
       <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
         This score measures competitive signal strength relative to the candidate pool — it may differ from your Alignment Score, which measures weighted priority match against the job description.
       </p>
-      </div>
 
       {/* Dimension comparison */}
       {data.dimension_comparison && data.dimension_comparison.length > 0 && (
