@@ -33,11 +33,11 @@ async function fetchSubscriptionData() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, subscription_status, subscription_id, daily_run_count, daily_run_reset_at")
+    .select("subscription_tier, subscription_status, subscription_id, subscription_period_end, daily_run_count, daily_run_reset_at")
     .eq("user_id", user.id)
     .single();
 
-  console.log("[SubCheck] DB returned:", JSON.stringify(profile), "error:", profileError?.message ?? "none");
+  console.log("[SubCheck] DB returned — tier:", profile?.subscription_tier, "status:", (profile as any)?.subscription_status, "sub_id:", (profile as any)?.subscription_id, "period_end:", (profile as any)?.subscription_period_end, "error:", profileError?.message ?? "none");
 
   if (!profile) return null;
 
@@ -71,8 +71,12 @@ async function fetchSubscriptionData() {
 
   const runCount = isNewDay ? 0 : (profile.daily_run_count ?? 0);
   const tier = (profile.subscription_tier ?? "free") as SubscriptionTier;
+  const status = (profile as any).subscription_status as string | null;
+  const isActiveSub = status === "active" || status === "trialing";
   const isPaid =
-    tier === "pro" || (profile.subscription_tier as string) === "pinnacle";
+    (tier === "pro" || (profile.subscription_tier as string) === "pinnacle") && isActiveSub;
+
+  console.log("[SubCheck] Tier resolution — rawTier:", profile.subscription_tier, "rawStatus:", status, "isActiveSub:", isActiveSub, "isPaid:", isPaid);
 
   // Reset count in DB if new day
   if (isNewDay) {
