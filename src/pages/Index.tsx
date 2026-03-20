@@ -1552,23 +1552,27 @@ const Index = () => {
                         });
                         return (
                           <div className="space-y-4">
-                            {/* Primary Blocker — dominant diagnostic moment */}
+                            {/* Primary Blocker */}
                              {primaryBlocker && (
-                              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-3">
+                              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-2.5">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
-                                <p className="text-xs font-bold text-destructive/90">This is the main reason you're not getting interviews.</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
                                   {primaryBlocker}
                                 </p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">What hiring managers see</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">How this reads to hiring managers</p>
                                     <ul className="space-y-1 pl-2.5 border-l-2 border-destructive/20">
                                       {hiringManagersSee.slice(0, effectiveIsPro ? undefined : 2).map((s, i) => (
                                         <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
                                       ))}
                                     </ul>
                                   </div>
+                                )}
+                                {effectiveIsPro && whatThisCreates && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-destructive/10">
+                                    <span className="font-medium text-foreground">Consequence:</span> {whatThisCreates}
+                                  </p>
                                 )}
                               </div>
                             )}
@@ -1577,15 +1581,11 @@ const Index = () => {
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                  <p className="text-sm font-bold text-foreground">
-                                   You're 3 changes away from fixing this
+                                   3 changes move you above interview range
                                  </p>
                                  <p className="text-xs text-muted-foreground">
-                                   You'll see exactly how your experience gets rewritten to match this role.
+                                   See exactly how your experience gets repositioned to match this role.
                                  </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   Most users increase their signal score by 10–25 points after applying these fixes.
-                                 </p>
-                                 <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                      <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
@@ -1595,16 +1595,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-muted-foreground">Most users improve interview rates within 2–3 applications</p>
-                                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
-                              </div>
-                            )}
-
-                            {/* What This Creates — Pro only */}
-                            {effectiveIsPro && whatThisCreates && (
-                              <div className="pl-3 border-l-2 border-border">
-                                <p className="section-label mb-1">What This Creates</p>
-                                <p className="text-xs text-muted-foreground leading-relaxed">{whatThisCreates}</p>
+                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes is likely being filtered out.</p>
                               </div>
                             )}
 
