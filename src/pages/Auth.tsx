@@ -11,6 +11,11 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { isPasswordLeaked } from "@/lib/passwordCheck";
 
+const isMobileDevice = () => {
+  if (typeof window === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
+
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -27,15 +32,34 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        toast.error(error.message || "Google sign-in failed");
+      if (isMobileDevice()) {
+        // On mobile, use redirect-based OAuth to avoid popup blockers
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: {
+              prompt: "select_account",
+            },
+          },
+        });
+        if (error) {
+          toast.error(error.message || "Google sign-in failed");
+          setGoogleLoading(false);
+        }
+        // Full-page redirect happens — no need to reset loading
+      } else {
+        // On desktop, use the managed lovable popup flow
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) {
+          toast.error(error.message || "Google sign-in failed");
+        }
+        setGoogleLoading(false);
       }
     } catch (err) {
       toast.error("Google sign-in failed. Please try again.");
-    } finally {
       setGoogleLoading(false);
     }
   };
