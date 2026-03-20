@@ -617,7 +617,7 @@ serve(async (req) => {
     }
 
     // ─── Cache check ───────────────────────────────────────────────────────
-    const cacheKey = await hashInputs(cleanBullet, cleanJd, userPlan);
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, `${userPlan}:${runType}`);
     const cached = getCached(cacheKey);
     if (cached) {
       console.log("Cache HIT for", cacheKey.slice(0, 12));

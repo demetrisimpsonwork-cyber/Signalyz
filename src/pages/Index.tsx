@@ -742,11 +742,12 @@ const Index = () => {
       : normResume.text;
     const sessionToken = user ? undefined : getSessionToken();
 
+    const isCalibratedRerun = calibratedRunPendingRef.current;
     const invokeAlignment = (attempt = 1) =>
       invokeResilient(
-        attempt === 1 ? "alignment" : "alignment-retry",
+        isCalibratedRerun ? "alignment-calibrated" : (attempt === 1 ? "alignment" : "alignment-retry"),
         "optimize-bullet",
-        { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken },
+        { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken, runType: isCalibratedRerun ? "calibrated" : "original" },
         120_000, // 120s timeout to accommodate cold starts
       );
 
