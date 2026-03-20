@@ -33,6 +33,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   const [loading, setLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
+  const { hasConsumedOneTimeCredit } = useSubscription();
 
   useEffect(() => {
     if (!experience || !jd) return;
