@@ -1133,9 +1133,9 @@ const Position = () => {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your positioning report will appear here</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Your report will appear here</h3>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                This goes deeper than signal scoring — it deconstructs the role's identity requirements and rebuilds your narrative to match them.
+                Paste your resume and a job description, then click Generate.
               </p>
             </div>
           ) : null}
