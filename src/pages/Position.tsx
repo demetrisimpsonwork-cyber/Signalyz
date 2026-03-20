@@ -734,6 +734,7 @@ const Position = () => {
   const timeoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<number>(0);
 
+  const { user } = useAuth();
   const isAdmin = useIsAdmin();
   const { isTrialPro, trialStarted, trialRunsUsed, trialExhausted, startTrial, TRIAL_LIMIT } = useReverseTrial();
   const { isPro, hasOneTimeCredit, hasConsumedOneTimeCredit, loading: subLoading } = useSubscription();
