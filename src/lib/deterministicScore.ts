@@ -581,6 +581,21 @@ export interface DeterministicScoreResult {
 
 export type RunType = "original" | "calibrated";
 
+/** Compute per-pillar scores for a resume against a JD (used by RepositioningChangesPanel) */
+export function computePillarScores(resumeText: string, jdText: string) {
+  const normalizedResume = normalizeText(resumeText);
+  const sanitizedResume = sanitizeInput(normalizedResume);
+  const sections = extractSections(sanitizedResume);
+  const jdModel = buildJdSignalVocabulary(jdText);
+
+  return {
+    jdMirroring: computeJdMirroringScore(sections, jdModel, jdText),
+    ownershipScope: computeOwnershipScopeScore(sections),
+    perceptionGap: computePerceptionGapScore(sections, jdText),
+    readability: computeReadabilityScore(sections),
+  };
+}
+
 export function computeDeterministicScore(
   resumeText: string,
   jdText: string,

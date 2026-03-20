@@ -57,6 +57,7 @@ interface CalibratedResumeTabProps {
   onUpgrade: () => void;
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
+  jdText?: string;
   onSwitchToReport?: () => void;
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
@@ -78,6 +79,7 @@ const CalibratedResumeTab = ({
   onRunAlignment,
   onAssembled,
   alignmentResult,
+  jdText,
   inputSource = "paste",
   onResumeTextReplaced,
   onRerunSignalAnalysis,
@@ -278,6 +280,7 @@ const CalibratedResumeTab = ({
           <RepositioningChangesPanel
             originalResume={originalResume}
             calibratedResume={currentResume}
+            jdText={jdText}
           />
 
           {/* Re-run Signal Analysis with calibrated text */}
