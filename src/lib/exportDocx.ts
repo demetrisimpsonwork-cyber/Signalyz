@@ -80,7 +80,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
             spacing: { before: 0, after: 0, line: 264 },
             keepNext: idx === 0 ? false : undefined,
             bullet: { level: 0 },
-            children: [new TextRun({ text: b, size: 21, font: "Calibri" })],
+            children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
           }),
       ),
     );
