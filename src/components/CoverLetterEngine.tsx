@@ -238,11 +238,8 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("");
     parts.push(formatDate());
     parts.push("");
-    if (hiringManager || companyName) {
-      if (hiringManager) parts.push(hiringManager);
-      if (companyName) parts.push(companyName);
-      parts.push("");
-    }
+    parts.push(addresseeLine);
+    parts.push("");
     parts.push(salutation);
     parts.push("");
     const paragraphs = splitParagraphs(activeLetter);
