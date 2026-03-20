@@ -345,7 +345,9 @@ const Index = () => {
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
-  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(null);
+  const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
+    try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
+  });
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -440,6 +442,10 @@ const Index = () => {
         setResult(parsed.result);
         setBullet(parsed.bullet);
         setJd(parsed.jd);
+        if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
+          setOriginalResumeBeforeCalibration(parsed.originalBaseline);
+          try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
+        }
       } else {
         setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd });
         setShowSessionRecovery(true);
@@ -777,6 +783,7 @@ const Index = () => {
       // Capture the original resume baseline on the first non-calibrated run
       if (!isCalibratedRun && !originalResumeBeforeCalibration) {
         setOriginalResumeBeforeCalibration(bulletWithContext);
+        try { localStorage.setItem("signalyz_original_resume_baseline", bulletWithContext); } catch {}
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
@@ -796,6 +803,7 @@ const Index = () => {
           result: res,
           bullet: bulletWithContext,
           jd: normJd.text,
+          originalBaseline: originalResumeBeforeCalibration ?? bulletWithContext,
           ts: Date.now(),
         }));
       } catch {}
@@ -1244,7 +1252,7 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
-                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null);
+                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
@@ -1258,14 +1266,14 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
+                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
@@ -1882,6 +1890,11 @@ const Index = () => {
                   setResult(pendingSession.result);
                   setBullet(pendingSession.bullet);
                   setJd(pendingSession.jd);
+                  // Restore original baseline from localStorage if available
+                  const savedBaseline = localStorage.getItem("signalyz_original_resume_baseline");
+                  if (savedBaseline && !originalResumeBeforeCalibration) {
+                    setOriginalResumeBeforeCalibration(savedBaseline);
+                  }
                   setShowSessionRecovery(false);
                   setPendingSession(null);
                 }}
