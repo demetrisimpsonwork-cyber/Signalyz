@@ -1480,16 +1480,13 @@ const Index = () => {
 
                     {/* Professional Signal Diagnosis headline */}
                     <div className="text-center space-y-1">
-                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Professional Signal Diagnosis</h2>
-                      <p className="text-xs text-muted-foreground">How hiring managers interpret your experience.</p>
+                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Signal Diagnosis</h2>
+                      {analysisTime > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
+                        </p>
+                      )}
                     </div>
-
-                    {/* Analysis banner */}
-                    {analysisTime > 0 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
-                      </p>
-                    )}
 
                     {/* Section 1: Signal Diagnosis with glow */}
                     <div className={`rounded-xl border bg-card p-5 space-y-4 transition-shadow duration-500 ${scoreRevealed ? "" : "shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"}`}>
