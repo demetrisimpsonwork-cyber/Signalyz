@@ -84,10 +84,16 @@ Top missing signal: ${topGap}
 Missing keywords: ${gaps.join(", ")}
 Score rationale: ${scoreRationale.join("; ")}
 
+ZERO METRIC FABRICATION RULE:
+- NEVER invent, suggest, or illustrate any percentages, counts, timeframes, dollar amounts, user counts, relationship counts, scope figures, or quantitative claims that do not appear verbatim in the resume text above.
+- Do NOT provide example bullets containing fabricated numbers (e.g. "managed 12 vendor relationships" or "reduced costs by 30%") unless those exact figures exist in the resume.
+- If a metric does not exist in the resume, do not create one, suggest one, or use one as an illustration.
+- Action text must describe WHAT to reposition or reframe, not provide a finished bullet with invented data.
+
 For the top 3 signal gaps, produce a JSON array of exactly 3 objects with:
 - "gap_name": short name of the gap
 - "why_it_hurts": one sentence explaining why this gap reduces match score
-- "action": one specific resume action — a keyword to add, a bullet to reframe, or a section to restructure — written as a direct instruction the user can execute immediately. Start with a verb.
+- "action": one specific resume action — a keyword to add, a bullet to reframe, or a section to restructure — written as a direct instruction the user can execute immediately. Start with a verb. Do NOT include example metrics, percentages, or figures that are not in the resume.
 - "impact": "High", "Medium", or "Low" based on how much closing this gap would affect hiring stage outcomes
 
 Order by highest impact first. Return ONLY valid JSON array, no markdown.`;
