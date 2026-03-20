@@ -1359,7 +1359,7 @@ const Position = () => {
 
               {/* ── AUTHORITY LAYER ── */}
               <div className="pt-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Authority Layer — Strategic Assessment</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/70 mb-3">Strategic Assessment</p>
               </div>
 
               {/* 9 — Match Score Forecast */}
