@@ -80,7 +80,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
           <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
-          <p className="text-[11px] text-muted-foreground/80 italic">Most candidates miss this — that's why they stay stuck</p>
+          <p className="text-[11px] text-muted-foreground/80 italic">See the exact repositioning moves that close this gap.</p>
           {user ? (
             <Button size="sm" onClick={onUpgrade}>{hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}</Button>
           ) : (
