@@ -176,6 +176,10 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
               <EvidenceLedger entries={evidenceEntries} />
             </div>
           )}
+          {/* Variant C */}
+          {result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
+            <ResultSection title="Variant C — Strategic Depth Expansion" content={antiAIFilter(result.alt_b)} />
+          )}
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-primary/30 bg-card p-6 text-center space-y-3">
@@ -186,8 +190,6 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           )}
         </div>
       )}
-
-      {/* Variant C — visible to all users */}
 
       <p className="context-text text-center pt-1">
         Repositioned using only language from your original resume. No experience was invented.
