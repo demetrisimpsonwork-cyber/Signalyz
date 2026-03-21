@@ -1708,7 +1708,7 @@ const Index = () => {
                               <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                               {user ? (
                                 <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                                  Fix This Now → $9
+                                  Unlock Full Signal Intelligence →
                                 </Button>
                               ) : (
                                 <Button size="sm" className="w-full" asChild>
