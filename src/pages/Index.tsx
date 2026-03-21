@@ -1311,7 +1311,7 @@ const Index = () => {
                               ? "Your Single Report has been used. See your exact fix for unlimited runs."
                               : "You've used your 3 free analyses today."}
                            </p>
-                           <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                           
                         </>
                       ) : (
                         <>
