@@ -1697,7 +1697,7 @@ const Index = () => {
                             </Button>
                           )}
                           <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+                          
                         </div>
                       );
                     })()}
