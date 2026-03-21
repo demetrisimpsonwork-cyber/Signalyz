@@ -426,7 +426,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                 <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
                   Fix This Now → $9
                 </Button>
-                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                
               </div>
             ) : (
               <Button className="w-full gap-2" size="lg" asChild>

@@ -1311,7 +1311,7 @@ const Index = () => {
                               ? "Your Single Report has been used. See your exact fix for unlimited runs."
                               : "You've used your 3 free analyses today."}
                            </p>
-                           <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                           
                         </>
                       ) : (
                         <>
@@ -1595,7 +1595,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes is likely being filtered out.</p>
+                                
                               </div>
                             )}
 
@@ -1678,7 +1678,7 @@ const Index = () => {
                           <p className="text-sm font-bold text-foreground">
                              You're 3 changes away from fixing this
                            </p>
-                          <p className="text-xs font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck</p>
+                          <p className="text-xs font-semibold text-muted-foreground">See the exact repositioning moves that close this gap.</p>
 
                           <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
                             <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
@@ -1697,7 +1697,7 @@ const Index = () => {
                             </Button>
                           )}
                           <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+                          
                         </div>
                       );
                     })()}

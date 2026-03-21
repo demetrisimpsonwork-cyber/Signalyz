@@ -100,7 +100,7 @@ export function ProGate({
                {isAuthenticated ? "You're closer than you think — but missing positioning, not experience." : "Sign up to access this feature — 3 free analyses included."}
              </p>
              {isAuthenticated && (
-               <p className="text-[11px] font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck.</p>
+               <p className="text-[11px] font-semibold text-muted-foreground">See the exact repositioning moves that close this gap.</p>
              )}
           </div>
 
@@ -142,7 +142,7 @@ export function ProGate({
                 Fix This Now → $9
               </Button>
               <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-              <p className="text-[11px] text-destructive/70 italic text-center">Every application you send without fixing this is likely being ignored.</p>
+              
             </div>
           ) : (
             <Button
