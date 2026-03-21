@@ -122,28 +122,29 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         </div>
       ))}
 
-      {/* Variant A — Ownership Elevation */}
-      <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
-        <p className="section-label text-primary">Variant A — Ownership Elevation</p>
-        <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
-        <div className="pt-2 space-y-1">
-          <p className="section-label">What changed</p>
-          {(result.used_signals && result.used_signals.length > 0) ? (
-            <ul className="space-y-0.5">
-              {result.used_signals.map((s, i) => (
-                <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">Clarified ownership language and aligned terminology with hiring expectations.</p>
-          )}
-        </div>
-        <EvidenceLedger entries={evidenceEntries} />
-      </div>
-
-      {/* Bullets 3-5 + Variants B & C — Pro only */}
-      {effectiveIsPro && (
+      {/* Variants A, B + extra bullets — Pro only */}
+      {effectiveIsPro ? (
         <>
+          {/* Variant A — Ownership Elevation */}
+          <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
+            <p className="section-label text-primary">Variant A — Ownership Elevation</p>
+            <p className="text-sm text-foreground leading-relaxed">{antiAIFilter(result.optimized_bullet)}</p>
+            <div className="pt-2 space-y-1">
+              <p className="section-label">What changed</p>
+              {(result.used_signals && result.used_signals.length > 0) ? (
+                <ul className="space-y-0.5">
+                  {result.used_signals.map((s, i) => (
+                    <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5"><span>•</span>{s}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">Clarified ownership language and aligned terminology with hiring expectations.</p>
+              )}
+            </div>
+            <EvidenceLedger entries={evidenceEntries} />
+          </div>
+
+          {/* Extra bullets 3-5 */}
           {topBullets.slice(2).map((item, i) => (
             <div key={`pro-${i}`} className="rounded-xl border bg-card p-5 space-y-2">
               <div className="flex items-baseline gap-2">
@@ -159,6 +160,8 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
               <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
             </div>
           ))}
+
+          {/* Variant B */}
           {result.alt_a !== result.optimized_bullet && (
             <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-2">
               <p className="section-label text-primary">Variant B — Outcome / Impact Framing</p>
@@ -173,11 +176,18 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
               <EvidenceLedger entries={evidenceEntries} />
             </div>
           )}
-          {result.alt_b !== result.optimized_bullet && result.alt_b !== result.alt_a && (
-            <ResultSection title="Variant C — Strategic Depth Expansion" content={antiAIFilter(result.alt_b)} />
-          )}
         </>
+      ) : (
+        <div className="rounded-xl border border-dashed border-primary/30 bg-card p-6 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">Calibrated bullet variants are a Pro feature</p>
+          <p className="text-xs text-muted-foreground">Unlock repositioned bullet variants calibrated to this role's hiring signal.</p>
+          {onUpgrade && (
+            <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence</Button>
+          )}
+        </div>
       )}
+
+      {/* Variant C — visible to all users */}
 
       <p className="context-text text-center pt-1">
         Repositioned using only language from your original resume. No experience was invented.
