@@ -1588,8 +1588,8 @@ const Index = () => {
                                  </p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                     <span style={{ color: "inherit" }}>✦</span> Fix This Now → $9
-                                   </Button>
+                                      <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
+                                    </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
                                     <a href="/auth">Get Started Free</a>
@@ -1708,7 +1708,7 @@ const Index = () => {
                               <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
                               {user ? (
                                 <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                                  Fix This Now → $9
+                                  Unlock Full Signal Intelligence →
                                 </Button>
                               ) : (
                                 <Button size="sm" className="w-full" asChild>
