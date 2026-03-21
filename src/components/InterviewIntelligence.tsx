@@ -115,7 +115,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
                 <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
                   {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}
                 </Button>
-                <p className="text-[11px] text-destructive/70 italic">Every application you send without fixing this is likely being ignored.</p>
+                
               </div>
             ) : (
               <Button size="lg" className="gap-2" asChild>

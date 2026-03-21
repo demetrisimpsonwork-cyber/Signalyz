@@ -1595,7 +1595,7 @@ const Index = () => {
                                     <a href="/auth">Get Started Free</a>
                                   </Button>
                                 )}
-                                <p className="text-[11px] text-destructive/70 italic">Every application without these fixes is likely being filtered out.</p>
+                                
                               </div>
                             )}
 
