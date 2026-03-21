@@ -1678,7 +1678,7 @@ const Index = () => {
                           <p className="text-sm font-bold text-foreground">
                              You're 3 changes away from fixing this
                            </p>
-                          <p className="text-xs font-semibold text-destructive/80">Most candidates never fix this — that's why they stay stuck</p>
+                          <p className="text-xs font-semibold text-muted-foreground">See the exact repositioning moves that close this gap.</p>
 
                           <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
                             <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
