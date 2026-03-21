@@ -109,7 +109,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
               Know exactly what they'll probe — and the signal angle that turns each question into proof you belong.
             </p>
-            <p className="text-[11px] font-semibold text-destructive/80">Walking in without these answers is why most candidates stall at panel stage.</p>
+            <p className="text-[11px] font-semibold text-muted-foreground">Know exactly what they'll probe — and the signal angle for each question.</p>
             {user ? (
               <div className="space-y-2 w-full max-w-xs mx-auto pt-1">
                 <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
