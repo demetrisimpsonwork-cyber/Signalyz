@@ -185,7 +185,7 @@ const DirectorAudit = () => {
   };
 
   return (
-    <div className="container max-w-6xl md:max-w-tool py-10">
+    <div className="container max-w-6xl md:max-w-tool py-10 mx-auto">
       {/* Header */}
       <div className="mb-8">
         <p className="section-label mb-1.5">
@@ -199,7 +199,7 @@ const DirectorAudit = () => {
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.6fr]">
+      <div className={`grid gap-8 ${result && !loading ? '' : 'lg:grid-cols-[1fr_1.6fr]'}`}>
         {/* ── Left: Input Form ─────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div className="rounded-lg border bg-card overflow-hidden">
@@ -286,8 +286,8 @@ const DirectorAudit = () => {
           <DirectorQARunner />
         </div>
 
-        {/* ── Right: Results ───────────────────────────────────────────────── */}
-        <div className="space-y-4">
+        {/* ── Results ───────────────────────────────────────────────── */}
+        <div className={`space-y-4 ${result && !loading ? 'max-w-4xl mx-auto' : ''}`}>
           {loading && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-3">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
