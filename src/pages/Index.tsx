@@ -1664,40 +1664,60 @@ const Index = () => {
                         ? Math.round(liftData.predicted_score - (result?.match_score ?? 0))
                         : null;
                       const liftDisplay = liftPoints && liftPoints > 0 ? `${liftPoints}` : "15–20";
-                      return (
-                        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                          <div className="space-y-1">
-                            <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                              Your Signal Action Plan
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              The fastest ways to improve your signal for this role.
-                            </p>
+                        return (
+                        <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+                          {/* Blurred preview content */}
+                          <div className="pointer-events-none select-none blur-sm opacity-40 p-5 space-y-4">
+                            <div className="space-y-1">
+                              <h3 className="text-sm font-semibold tracking-tight text-foreground">Your Signal Action Plan</h3>
+                              <p className="text-xs text-muted-foreground">Do these 3 things → move above 70%</p>
+                            </div>
+                            <ol className="space-y-2">
+                              {[1, 2, 3].map((i) => (
+                                <li key={i} className="flex items-start gap-2.5">
+                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{i}</span>
+                                  <div className="flex-1 space-y-1.5">
+                                    <div className="h-3 bg-muted rounded w-full" />
+                                    <div className="h-3 bg-muted rounded w-3/4" />
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                            <div className="space-y-3 pt-2">
+                              <p className="text-xs font-semibold text-foreground">Signal Gap Actions</p>
+                              {[1, 2].map((i) => (
+                                <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
+                                  <div className="h-3 bg-muted rounded w-2/3" />
+                                  <div className="h-3 bg-muted rounded w-full" />
+                                  <div className="h-3 bg-muted rounded w-1/2" />
+                                </div>
+                              ))}
+                            </div>
                           </div>
 
-                          <p className="text-sm font-bold text-foreground">
-                             You're 3 changes away from fixing this
-                           </p>
-                          <p className="text-xs font-semibold text-muted-foreground">See the exact repositioning moves that close this gap.</p>
-
-                          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-1.5">
-                            <p className="text-sm font-semibold text-foreground">3 exact changes that would move your score above 70%</p>
-                            <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
+                          {/* Gate card overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-card/60 backdrop-blur-[1px]">
+                            <div className="text-center space-y-4 max-w-sm px-4">
+                              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                                <span className="text-xl text-primary">✦</span>
+                              </div>
+                              <p className="text-sm font-bold text-foreground">
+                                3 exact changes that would move your score above 70%
+                              </p>
+                              <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
+                              <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
+                              {user ? (
+                                <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
+                                  Fix This Now → $9
+                                </Button>
+                              ) : (
+                                <Button size="sm" className="w-full" asChild>
+                                  <a href="/auth">Get Started Free</a>
+                                </Button>
+                              )}
+                              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                            </div>
                           </div>
-
-                          <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
-
-                          {user ? (
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
-                              Fix This Now → $9
-                            </Button>
-                          ) : (
-                            <Button size="sm" className="w-full" asChild>
-                              <a href="/auth">Get Started Free</a>
-                            </Button>
-                          )}
-                          <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-                          
                         </div>
                       );
                     })()}
