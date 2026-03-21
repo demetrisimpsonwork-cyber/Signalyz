@@ -199,7 +199,7 @@ const DirectorAudit = () => {
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.6fr]">
+      <div className={`grid gap-8 ${result && !loading ? '' : 'lg:grid-cols-[1fr_1.6fr]'}`}>
         {/* ── Left: Input Form ─────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div className="rounded-lg border bg-card overflow-hidden">
