@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-import { Loader2, Copy, Check, Download } from "lucide-react";
+import { Loader2, Copy, Check, Download, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
@@ -218,17 +218,29 @@ const DirectorAudit = () => {
                 <p className="text-[11px] text-muted-foreground">
                   Paste a resume summary, bullet set, or leadership experience section.
                 </p>
-                <Textarea
-                  id="experience"
-                  placeholder="Paste your resume bullets, summary, or experience section..."
-                  value={experience}
-                  onChange={(e) => {
-                    setExperience(e.target.value);
-                    if (errors.experience) setErrors({});
-                  }}
-                  rows={10}
-                  className={errors.experience ? "border-destructive" : ""}
-                />
+                <div className="relative">
+                  <Textarea
+                    id="experience"
+                    placeholder="Paste your resume bullets, summary, or experience section..."
+                    value={experience}
+                    onChange={(e) => {
+                      setExperience(e.target.value);
+                      if (errors.experience) setErrors({});
+                    }}
+                    rows={10}
+                    className={errors.experience ? "border-destructive pr-8" : "pr-8"}
+                  />
+                  {experience.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { setExperience(""); setErrors({}); }}
+                      className="absolute top-2 right-2 p-0.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      aria-label="Clear experience text"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
                 {errors.experience && (
                   <p className="text-xs text-destructive">{errors.experience}</p>
                 )}
