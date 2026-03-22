@@ -151,7 +151,6 @@ const UpgradeModal = ({
               className="w-full gap-2"
               onClick={() => {
                 trackEvent("cta_clicked", { cta_label: hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9", source: "upgrade_modal" });
-                onClose();
                 initiateCheckout("one_time");
               }}
             >
