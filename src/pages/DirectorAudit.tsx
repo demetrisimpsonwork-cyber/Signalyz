@@ -185,7 +185,7 @@ const DirectorAudit = () => {
   };
 
   return (
-    <div className="container max-w-6xl md:max-w-tool py-10 mx-auto">
+    <div className="container max-w-tool py-10 mx-auto px-4 md:px-6">
       {/* Header */}
       <div className="mb-8">
         <p className="section-label mb-1.5">
