@@ -22,6 +22,7 @@ const Navbar = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleSignOut = async () => {
+    clearSessionState();
     await supabase.auth.signOut();
     navigate("/");
   };
