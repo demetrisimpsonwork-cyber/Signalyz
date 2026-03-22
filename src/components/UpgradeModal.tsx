@@ -120,9 +120,6 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground text-center leading-snug">
-              Most users increase their score by 15–25 points after applying these changes.
-            </p>
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
