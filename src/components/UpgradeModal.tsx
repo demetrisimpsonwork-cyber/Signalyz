@@ -124,12 +124,12 @@ const UpgradeModal = ({
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
-                trackEvent("cta_clicked", { cta_label: "Fix This Now → $9", source: "upgrade_modal" });
+                trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/month", source: "upgrade_modal" });
                 onClose();
-                initiateCheckout("one_time");
+                initiateCheckout("subscription");
               }}
             >
-              {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9"}
+              Unlock Full Signal Intelligence → $19/month
             </Button>
 
             <div className="relative flex items-center justify-center">
@@ -140,18 +140,16 @@ const UpgradeModal = ({
 
             <Button
               variant="outline"
+              size="sm"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
-                trackEvent("cta_clicked", { cta_label: "Fix This Now → $19/month", source: "upgrade_modal" });
+                trackEvent("cta_clicked", { cta_label: "One-time full report — $9", source: "upgrade_modal" });
                 onClose();
-                initiateCheckout("subscription");
+                initiateCheckout("one_time");
               }}
             >
-              Fix This Now → $19/month
+              {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9"}
             </Button>
-
-            <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
-            
           </div>
         </div>
 
