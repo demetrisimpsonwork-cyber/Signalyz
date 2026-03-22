@@ -74,7 +74,7 @@ const UpgradeModal = ({
       <DialogContent className="max-w-md max-h-[85vh] flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+            <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
               See exactly what's holding your signal back.
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
@@ -82,7 +82,9 @@ const UpgradeModal = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-8 grid grid-cols-2 gap-6">
+          <Separator className="my-4" />
+
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
               <ul className="space-y-2">
