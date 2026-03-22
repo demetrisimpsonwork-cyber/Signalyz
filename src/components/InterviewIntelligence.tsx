@@ -24,7 +24,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
-  const { hasConsumedOneTimeCredit } = useSubscription();
+  
 
   useEffect(() => {
     if (!experience || !jd) return;
