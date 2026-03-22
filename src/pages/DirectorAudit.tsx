@@ -287,7 +287,7 @@ const DirectorAudit = () => {
         </div>
 
         {/* ── Results ───────────────────────────────────────────────── */}
-        <div className={`space-y-4 ${result && !loading ? 'max-w-4xl mx-auto' : ''}`}>
+        <div className={`space-y-4 ${result && !loading ? 'max-w-tool mx-auto' : ''}`}>
           {loading && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[320px] gap-3">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
