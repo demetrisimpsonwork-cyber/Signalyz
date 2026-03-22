@@ -133,7 +133,6 @@ const UpgradeModal = ({
               className="w-full gap-2"
               onClick={() => {
                 trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/month", source: "upgrade_modal" });
-                onClose();
                 initiateCheckout("subscription");
               }}
             >
