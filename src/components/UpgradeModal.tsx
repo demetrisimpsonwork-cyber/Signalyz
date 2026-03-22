@@ -82,7 +82,7 @@ const UpgradeModal = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-5 grid grid-cols-2 gap-6">
+          <div className="mt-8 grid grid-cols-2 gap-6">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
               <ul className="space-y-2">
