@@ -75,17 +75,12 @@ const UpgradeModal = ({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-0">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-              You're Being Filtered Out — Here's Exactly Why
+              See exactly what's holding your signal back.
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Your experience isn't the problem. How it's positioned is.
+              Your experience isn't the problem. Your positioning is.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5 mt-3 space-y-1 text-center">
-            <p className="text-sm font-semibold text-foreground">You're one step away from seeing exactly what's blocking you.</p>
-            <p className="text-xs text-muted-foreground">Most candidates never get this level of clarity.</p>
-          </div>
 
           <div className="mt-5 grid grid-cols-2 gap-6">
             <div className="space-y-3">
