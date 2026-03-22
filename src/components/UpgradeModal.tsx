@@ -122,6 +122,12 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-3">
+            {!hasConsumedOneTimeCredit && (
+              <p className="text-xs text-center text-primary/80 font-medium">
+                You still have 1 single report available.
+              </p>
+            )}
+
             <Button
               size="lg"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
@@ -145,7 +151,7 @@ const UpgradeModal = ({
               size="sm"
               className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               onClick={() => {
-                trackEvent("cta_clicked", { cta_label: "One-time full report — $9", source: "upgrade_modal" });
+                trackEvent("cta_clicked", { cta_label: hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9", source: "upgrade_modal" });
                 onClose();
                 initiateCheckout("one_time");
               }}
