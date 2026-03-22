@@ -130,7 +130,7 @@ const UpgradeModal = ({
 
             <Button
               size="lg"
-              className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+              className="w-full gap-2"
               onClick={() => {
                 trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/month", source: "upgrade_modal" });
                 onClose();
