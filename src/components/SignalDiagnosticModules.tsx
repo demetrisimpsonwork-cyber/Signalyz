@@ -815,9 +815,10 @@ function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<Signal
 interface SignalDiagnosticModulesProps {
   data: SignalDiagnosticData;
   matchScore: number;
+  isCalibratedRun?: boolean;
 }
 
-const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesProps) => {
+const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDiagnosticModulesProps) => {
   const isPro = data.isPro ?? false;
   const onUpgrade = data.onUpgrade;
 
