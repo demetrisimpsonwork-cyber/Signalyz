@@ -1079,11 +1079,16 @@ function buildSignalJdModel(jdText: string) {
 
   const sentences = normalized.split(/[\n.;:!?]+/).map((segment) => segment.trim()).filter(Boolean);
   const bigramFreq = new Map<string, number>();
+  const trigramFreq = new Map<string, number>();
   for (const sentence of sentences) {
-    const sentenceTokens = tokenizeSignalText(sentence).filter((token) => token.length >= 4 && !SIGNAL_STOP_WORDS.has(token));
+    const sentenceTokens = tokenizeSignalText(sentence).filter((token) => token.length >= 3 && !SIGNAL_STOP_WORDS.has(token));
     for (let i = 0; i < sentenceTokens.length - 1; i++) {
       const bigram = `${sentenceTokens[i]} ${sentenceTokens[i + 1]}`;
       bigramFreq.set(bigram, (bigramFreq.get(bigram) || 0) + 1);
+    }
+    for (let i = 0; i < sentenceTokens.length - 2; i++) {
+      const trigram = `${sentenceTokens[i]} ${sentenceTokens[i + 1]} ${sentenceTokens[i + 2]}`;
+      trigramFreq.set(trigram, (trigramFreq.get(trigram) || 0) + 1);
     }
   }
 
@@ -1092,8 +1097,16 @@ function buildSignalJdModel(jdText: string) {
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 10)
+    .slice(0, 12)
     .map(([bigram]) => bigram);
+
+  const trigrams = [...trigramFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 8)
+    .map(([trigram]) => trigram);
 
   const clusterTerms = SIGNAL_SEMANTIC_CLUSTERS.map((cluster) =>
     [...cluster]
@@ -1101,7 +1114,7 @@ function buildSignalJdModel(jdText: string) {
       .sort((a, b) => b.length - a.length)
   );
 
-  return { keywords, stemmedKeywords, bigrams, clusterTerms };
+  return { keywords, stemmedKeywords, bigrams, trigrams, clusterTerms };
 }
 
 interface SignalSnapshot {
