@@ -1328,6 +1328,11 @@ function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof 
     if (parts.some((part) => lower.includes(part))) candidates.add(bigram);
   }
 
+  for (const trigram of (jdModel.trigrams || [])) {
+    const parts = trigram.split(/\s+/);
+    if (parts.filter((part) => lower.includes(part)).length >= 2) candidates.add(trigram);
+  }
+
   SIGNAL_SEMANTIC_CLUSTERS.forEach((cluster, index) => {
     if (!jdModel.clusterTerms[index]?.length) return;
     const clusterMatch = cluster.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
