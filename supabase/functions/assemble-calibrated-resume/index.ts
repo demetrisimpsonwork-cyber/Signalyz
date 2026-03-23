@@ -1309,6 +1309,32 @@ function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<st
   if (STRONG_SIGNAL_VERBS.includes(leadWord as typeof STRONG_SIGNAL_VERBS[number])) return bullet;
 
   const cleaned = stripWeakLead(bullet);
+
+  // After stripping weak leads, check if the remaining text already starts with
+  // a strong signal verb — if so, use it directly to avoid double-verb openers
+  // like "Resolved execute" or "Directed serve".
+  const cleanedLead = getLeadWord(cleaned);
+  if (STRONG_SIGNAL_VERBS.includes(cleanedLead as typeof STRONG_SIGNAL_VERBS[number])) {
+    return cleaned;
+  }
+
+  // Also guard against any verb in our candidate pools (PARTIAL_SIGNAL_VERBS,
+  // OUTCOME_SIGNAL_TERMS, and the ACTION_VERB_SET_TITLE used for contamination
+  // detection) — these are all action verbs that would cause a double-verb opener
+  // if we prepend another verb in front.
+  const allKnownVerbs = new Set<string>([
+    ...STRONG_SIGNAL_VERBS,
+    ...PARTIAL_SIGNAL_VERBS,
+    ...OUTCOME_SIGNAL_TERMS,
+    ...ACTION_VERB_SET_TITLE,
+  ]);
+  if (allKnownVerbs.has(cleanedLead)) {
+    // Replace the existing (weaker) verb with a strong signal verb
+    const afterVerb = cleaned.replace(/^\S+\s*/, "");
+    const verb = chooseSignalVerb(original, cleaned, usedVerbs);
+    return `${verb} ${afterVerb}`.replace(/\s{2,}/g, " ").trim();
+  }
+
   const remainder = cleaned ? cleaned.charAt(0).toLowerCase() + cleaned.slice(1) : extractEvidenceTail(original).toLowerCase();
   const verb = chooseSignalVerb(original, cleaned || original, usedVerbs);
   return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
