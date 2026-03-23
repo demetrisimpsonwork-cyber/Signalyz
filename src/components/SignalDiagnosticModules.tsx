@@ -678,7 +678,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 /* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
 function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
-  const predictedScore = data.predicted_score ?? 0;
+  const predictedScoreRaw = data.predicted_score ?? 0;
+  const predictedScore = Math.min(predictedScoreRaw, 89);
 
   // Only render if there are strategic fixes or predicted improvement — blocker is shown inline above
   const hasFixesContent = (isPro && data.strategic_fixes && data.strategic_fixes.length > 0) || !isPro;
@@ -766,7 +767,8 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
 /* ─── MODULE 12: Predicted Signal Lift ─── */
 function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; overrideScore?: number }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
-  const predictedScore = data.predicted_score ?? 0;
+  const predictedScoreRaw = data.predicted_score ?? 0;
+  const predictedScore = Math.min(predictedScoreRaw, 89);
   const dims = (data.dimensions ?? [])
     .slice()
     .sort((a, b) => (b.lift ?? 0) - (a.lift ?? 0))
