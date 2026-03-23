@@ -163,7 +163,7 @@ const CalibratedResumeTab = ({
     onResumeTextReplaced?.(text);
     // Re-assemble with the clean text
     const contact = extractContactFromText(text);
-    assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>);
+    assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>, jdText);
   };
 
   const handleContinueWithEditMode = () => {
