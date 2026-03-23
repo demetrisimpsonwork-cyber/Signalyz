@@ -343,6 +343,7 @@ const Index = () => {
   const [bullet, setBullet] = useState("");
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
+  const [resultRunType, setResultRunType] = useState<"original" | "calibrated">("original");
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
