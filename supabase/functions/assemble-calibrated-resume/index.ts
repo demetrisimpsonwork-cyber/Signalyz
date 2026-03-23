@@ -1225,10 +1225,9 @@ function countKeywordMatchesInBullet(bullet: string, jdModel: ReturnType<typeof 
     const rx = new RegExp(`\\b${escapeRegExp(bigram).replace(/\s+/g, "\\s+")}\\b`, "i");
     if (rx.test(lower)) hits += 1;
   }
-  for (const trigram of (jdModel.trigrams || [])) {
-    const rx = new RegExp(`\\b${escapeRegExp(trigram).replace(/\s+/g, "\\s+")}\\b`, "i");
-    if (rx.test(lower)) hits += 1;
-  }
+  // Trigrams intentionally excluded — the deterministic scoring engine
+  // (computeJdMirroringScore) does not count trigrams, so they must not
+  // satisfy the generator's alignment threshold.
   return hits;
 }
 
