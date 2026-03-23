@@ -842,7 +842,7 @@ const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDi
     <div className="space-y-4">
       {/* Strategic Fixes + Predicted Improvement — visible to all, content gated */}
       {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue || data.interview_gap_diagnosis?.strategic_fixes?.length) && (
-        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} isCalibratedRun={isCalibratedRun} />
       )}
 
       {/* Pro diagnostic sections */}
