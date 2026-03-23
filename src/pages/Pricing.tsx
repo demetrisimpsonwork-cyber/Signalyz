@@ -106,7 +106,7 @@ const Pricing = () => {
               variant="default"
               onClick={() => initiateCheckout("subscription")}
             >
-               Fix This Now → $19/mo
+               Unlock Full Signal Intelligence → $19/mo
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
