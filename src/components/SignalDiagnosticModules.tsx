@@ -678,7 +678,8 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 /* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
 function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
-  const predictedScore = data.predicted_score ?? 0;
+  const predictedScoreRaw = data.predicted_score ?? 0;
+  const predictedScore = Math.min(predictedScoreRaw, 89);
 
   // Only render if there are strategic fixes or predicted improvement — blocker is shown inline above
   const hasFixesContent = (isPro && data.strategic_fixes && data.strategic_fixes.length > 0) || !isPro;
