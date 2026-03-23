@@ -724,8 +724,8 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibr
         </div>
       )}
 
-      {/* Predicted Signal Improvement */}
-      {hasScoreProjection && (
+      {/* Predicted Signal Improvement — hidden on calibrated re-runs */}
+      {!isCalibratedRun && hasScoreProjection && (
         isPro ? (
           <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
