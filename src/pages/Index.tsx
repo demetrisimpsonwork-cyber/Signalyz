@@ -1557,9 +1557,11 @@ const Index = () => {
                             {/* Primary Blocker */}
                              {primaryBlocker && (
                               <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-2.5">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">{resultRunType === "calibrated" ? "Next-Level Constraint" : "Primary Blocker"}</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
-                                  {primaryBlocker}
+                                  {resultRunType === "calibrated" && typeof primaryBlocker === "string" && primaryBlocker.toLowerCase().startsWith("you are being screened out because")
+                                    ? primaryBlocker.replace(/^you are being screened out because/i, "At this signal level, the remaining constraint is")
+                                    : primaryBlocker}
                                 </p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
