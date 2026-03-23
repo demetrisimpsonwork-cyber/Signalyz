@@ -676,7 +676,7 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
-function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
+function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibratedRun }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void; isCalibratedRun?: boolean }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScoreRaw = data.predicted_score ?? 0;
   const predictedScore = Math.min(predictedScoreRaw, 89);
