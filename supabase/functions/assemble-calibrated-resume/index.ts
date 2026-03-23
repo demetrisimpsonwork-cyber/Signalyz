@@ -1219,6 +1219,10 @@ function countKeywordMatchesInBullet(bullet: string, jdModel: ReturnType<typeof 
     const rx = new RegExp(`\\b${escapeRegExp(bigram).replace(/\s+/g, "\\s+")}\\b`, "i");
     if (rx.test(lower)) hits += 1;
   }
+  for (const trigram of (jdModel.trigrams || [])) {
+    const rx = new RegExp(`\\b${escapeRegExp(trigram).replace(/\s+/g, "\\s+")}\\b`, "i");
+    if (rx.test(lower)) hits += 1;
+  }
   return hits;
 }
 
