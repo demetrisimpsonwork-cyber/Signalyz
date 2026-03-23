@@ -120,7 +120,7 @@ const CalibratedResumeTab = ({
   const handleAssemble = (overrideResume?: string) => {
     const resumeText = overrideResume || originalResume;
     const contact = overrideResume ? extractContactFromText(overrideResume) : preExtractedContact;
-    assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>);
+    assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>, jdText);
   };
 
   // When confidence is low AND input was PDF, show fallback instead of confirm step
