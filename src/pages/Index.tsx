@@ -1715,7 +1715,7 @@ const Index = () => {
                                   <a href="/auth">Get Started Free</a>
                                 </Button>
                               )}
-                              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                              
                             </div>
                           </div>
                         </div>

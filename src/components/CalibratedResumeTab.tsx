@@ -332,9 +332,6 @@ function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
               ? "The Calibrated Resume takes your exact experience and repositions every bullet to match the signals this role actually weights. No fabrication — just professional framing."
               : "Sign up to access the Calibrated Resume builder — repositioned from your real experience."}
           </p>
-          {user && (
-            <p className="text-[11px] font-semibold text-destructive/80">Submitting your current version means the same gaps keep filtering you out.</p>
-          )}
         </div>
         {user ? (
           <div className="space-y-3 w-full max-w-xs">

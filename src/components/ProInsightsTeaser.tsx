@@ -29,7 +29,7 @@ const ProInsightsTeaser = () => {
         </ul>
 
         <p className="text-xs text-muted-foreground/80 italic">
-          Most users get interview-ready in one session.
+          Full diagnostic and repositioning in one session.
         </p>
 
         <div className="space-y-2 pt-1">
