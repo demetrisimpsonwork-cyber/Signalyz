@@ -924,12 +924,17 @@ async function generateSummary(
   originalResume: string,
   apiKey: string,
   requestId: string,
+  rawJd?: string,
 ): Promise<string> {
   const jdSignals = extractJDSignals(directorResult);
+  const jdSource = rawJd || jdSignals;
+  const jdModel = rawJd ? buildSignalJdModel(rawJd) : null;
+  const topPhrases = jdModel ? [...jdModel.bigrams.slice(0, 6), ...jdModel.trigrams.slice(0, 4)] : [];
 
   const context = [
     `Original summary: ${originalSummary}`,
-    jdSignals ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSignals}` : "",
+    jdSource ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSource}` : "",
+    topPhrases.length > 0 ? `\nTOP JD PHRASES TO INCORPORATE:\n${topPhrases.map(p => `• ${p}`).join("\n")}` : "",
     directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
     `\nFirst 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
   ].filter(Boolean).join("\n");
