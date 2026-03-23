@@ -1641,7 +1641,7 @@ serve(async (req) => {
       );
     }
 
-    const { directorResult, originalResume, alignmentResult } = body;
+    const { directorResult, originalResume, alignmentResult, jd } = body;
 
     // Allow assembly with just alignment result (no director/positioning report required)
     const signalContext = directorResult || alignmentResult || null;
