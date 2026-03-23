@@ -1553,21 +1553,28 @@ async function rewriteExperienceBullets(
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         temperature: 0,
-        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve scoring signals without fabricating experience.
+        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
 
 TARGET JD SIGNAL CONTEXT:
 ${jdSignals}
+${jdPhraseBlock}
+
+CRITICAL JD MIRRORING RULES:
+- Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
+- Replace generic phrasing with JD-aligned vocabulary for verbs, objects, and outcomes.
+- The top JD keywords must appear multiple times across all bullets — distributed naturally, not stuffed.
+- Prioritize JD vocabulary over generic resume language in every rewrite decision.
 
 NON-NEGOTIABLE RULES:
-1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already preserve metrics, scope, and outcomes.
+1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
 3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
 4. Every bullet must preserve or strengthen truthfully implied outcome framing.
 5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
 
 SIGNAL TARGETS:
+- JD Keyword Alignment (HIGHEST PRIORITY): weave truthful target-role phrases and vocabulary directly into every bullet. Each bullet should contain at least one JD phrase or keyword.
 - Ownership Language Density: first word should be a strong action / ownership verb.
-- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role.
 - Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
 - Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
 - Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
