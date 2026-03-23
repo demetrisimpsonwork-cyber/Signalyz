@@ -343,6 +343,7 @@ const Index = () => {
   const [bullet, setBullet] = useState("");
   const [inputSource, setInputSource] = useState<"paste" | "pdf" | "docx">("paste");
   const [isResumeFromCalibrated, setIsResumeFromCalibrated] = useState(false);
+  const [resultRunType, setResultRunType] = useState<"original" | "calibrated">("original");
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
@@ -794,6 +795,7 @@ const Index = () => {
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
       setResult(res);
+      setResultRunType(runType);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
 
@@ -1555,9 +1557,11 @@ const Index = () => {
                             {/* Primary Blocker */}
                              {primaryBlocker && (
                               <div className="rounded-lg border border-destructive/20 bg-destructive/[0.04] p-4 space-y-2.5">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">Primary Blocker</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive">{resultRunType === "calibrated" ? "Next-Level Constraint" : "Primary Blocker"}</p>
                                 <p className="text-[13px] text-foreground font-semibold leading-relaxed">
-                                  {primaryBlocker}
+                                  {resultRunType === "calibrated" && typeof primaryBlocker === "string" && primaryBlocker.toLowerCase().startsWith("you are being screened out because")
+                                    ? primaryBlocker.replace(/^you are being screened out because/i, "At this signal level, the remaining constraint is")
+                                    : primaryBlocker}
                                 </p>
                                 {hiringManagersSee && hiringManagersSee.length > 0 && (
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
@@ -1647,6 +1651,7 @@ const Index = () => {
                         onUpgrade: () => setShowUpgrade(true),
                       }}
                       matchScore={result.match_score}
+                      isCalibratedRun={resultRunType === "calibrated"}
                     />
 
                     {/* Section 2: Calibrated Bullets */}

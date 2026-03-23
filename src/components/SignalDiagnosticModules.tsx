@@ -676,7 +676,7 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 }
 
 /* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
-function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void }) {
+function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibratedRun }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void; isCalibratedRun?: boolean }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScoreRaw = data.predicted_score ?? 0;
   const predictedScore = Math.min(predictedScoreRaw, 89);
@@ -724,8 +724,8 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade }: { data
         </div>
       )}
 
-      {/* Predicted Signal Improvement */}
-      {hasScoreProjection && (
+      {/* Predicted Signal Improvement — hidden on calibrated re-runs */}
+      {!isCalibratedRun && hasScoreProjection && (
         isPro ? (
           <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
@@ -815,9 +815,10 @@ function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<Signal
 interface SignalDiagnosticModulesProps {
   data: SignalDiagnosticData;
   matchScore: number;
+  isCalibratedRun?: boolean;
 }
 
-const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesProps) => {
+const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDiagnosticModulesProps) => {
   const isPro = data.isPro ?? false;
   const onUpgrade = data.onUpgrade;
 
@@ -841,7 +842,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
     <div className="space-y-4">
       {/* Strategic Fixes + Predicted Improvement — visible to all, content gated */}
       {(data.interview_gap_diagnosis?.primary_blocker || data.interview_gap_diagnosis?.primary_issue || data.interview_gap_diagnosis?.strategic_fixes?.length) && (
-        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} />
+        <InterviewGapDiagnosis data={data.interview_gap_diagnosis} overrideScore={matchScore} isPro={isPro} onUpgrade={onUpgrade} isCalibratedRun={isCalibratedRun} />
       )}
 
       {/* Pro diagnostic sections */}
@@ -882,7 +883,7 @@ const SignalDiagnosticModules = ({ data, matchScore }: SignalDiagnosticModulesPr
             <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
           )}
 
-          {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
+          {!isCalibratedRun && data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
             <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
           )}
 
