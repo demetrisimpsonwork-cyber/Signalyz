@@ -1677,13 +1677,14 @@ serve(async (req) => {
 
     // ── Phase 2: Sequential focused API calls ──
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
+    const rawJdText = typeof jd === "string" ? jd.trim() : undefined;
     const rewrittenSummary = await generateSummary(
-      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id
+      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
     );
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText
     );
 
     // ── Merge results and validate against the persisted final output ──
