@@ -1466,9 +1466,11 @@ function enforceFinalSignalDelta(
   sourceExperience: any[],
   directorResult: any,
   requestId: string,
+  rawJd?: string,
 ) {
-  const jdSignals = extractJDSignals(directorResult);
-  const jdModel = buildSignalJdModel(jdSignals);
+  // Prefer raw JD text for phrase extraction; fall back to signal labels
+  const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSource);
 
   if (!assembled?.experience?.length || (!jdModel.keywords.length && !jdModel.bigrams.length)) {
     return assembled;
