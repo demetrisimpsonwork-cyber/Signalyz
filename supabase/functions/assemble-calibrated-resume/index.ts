@@ -1356,7 +1356,7 @@ function ensureScopePreserved(original: string, bullet: string): string {
 
 function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
   if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
-  const minHits = aggressive ? 2 : 1;
+  const minHits = aggressive ? 3 : 2;
   if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
 
   const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
@@ -1364,12 +1364,16 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!candidates.length) return bullet;
 
-  const selected = candidates.slice(0, aggressive ? 2 : 1);
-  const clause = selected.length === 1
-    ? `aligned to ${selected[0]} priorities`
-    : `aligned to ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} priorities`;
-
-  return appendClause(bullet, clause);
+  const selected = candidates.slice(0, aggressive ? 3 : 2);
+  // Use more natural phrasing patterns for injection
+  const lower = bullet.toLowerCase();
+  if (selected.length === 1) {
+    if (/support|deliver|improv|manag|driv|execut/i.test(lower)) {
+      return appendClause(bullet, `supporting ${selected[0]} objectives`);
+    }
+    return appendClause(bullet, `driving ${selected[0]} outcomes`);
+  }
+  return appendClause(bullet, `driving ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} outcomes`);
 }
 
 function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
