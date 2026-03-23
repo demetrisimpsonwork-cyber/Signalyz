@@ -954,7 +954,7 @@ async function generateSummary(
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
         temperature: 0,
-        system: `Rewrite this professional summary to align with the target role's hiring criteria.
+        system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
 
 RULES:
 - Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
@@ -962,7 +962,8 @@ RULES:
 - NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
 - Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
 - Every sentence must reference verifiable experience from the original resume
-- Incorporate the target role's language architecture naturally — not keyword stuffing
+- Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
+- If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
