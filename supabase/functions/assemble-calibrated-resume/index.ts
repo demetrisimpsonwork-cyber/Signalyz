@@ -1700,6 +1700,7 @@ serve(async (req) => {
       structure.experience,
       signalContext || {},
       request_id,
+      rawJdText,
     );
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
