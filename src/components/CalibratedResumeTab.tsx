@@ -316,7 +316,7 @@ const CalibratedResumeTab = ({
 function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
   const { hasConsumedOneTimeCredit } = useSubscription();
-  const ctaLabel = hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9";
+  const ctaLabel = "Unlock Full Signal Intelligence →";
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
