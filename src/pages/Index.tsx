@@ -1651,6 +1651,7 @@ const Index = () => {
                         onUpgrade: () => setShowUpgrade(true),
                       }}
                       matchScore={result.match_score}
+                      isCalibratedRun={resultRunType === "calibrated"}
                     />
 
                     {/* Section 2: Calibrated Bullets */}
