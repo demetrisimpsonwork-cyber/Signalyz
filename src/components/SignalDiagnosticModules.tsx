@@ -883,7 +883,7 @@ const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDi
             <HiringPipelineSimulation data={data.hiring_pipeline_simulation} />
           )}
 
-          {data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
+          {!isCalibratedRun && data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
             <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
           )}
 
