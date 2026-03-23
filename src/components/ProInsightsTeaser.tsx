@@ -29,7 +29,7 @@ const ProInsightsTeaser = () => {
         </ul>
 
         <p className="text-xs text-muted-foreground/80 italic">
-          Most users get interview-ready in one session.
+          Full diagnostic and repositioning in one session.
         </p>
 
         <div className="space-y-2 pt-1">
@@ -51,7 +51,7 @@ const ProInsightsTeaser = () => {
           )}
 
           <p className="text-center text-[11px] text-muted-foreground">
-            {user ? "Less than one rejected application costs you." : "3 free analyses included."}
+            {user ? "See exactly what to reposition for this role." : "3 free analyses included."}
           </p>
         </div>
       </div>

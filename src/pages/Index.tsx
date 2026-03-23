@@ -935,11 +935,11 @@ const Index = () => {
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
         <div className="container max-w-5xl md:max-w-content text-center relative z-10">
-          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Most qualified candidates never know why they're not getting interviews.</p>
+          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Your experience speaks — but is your resume sending the right signal?</p>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
-          <p className="mt-2 text-sm font-medium text-white/50 italic">And that's exactly why you're getting filtered out.</p>
+          <p className="mt-2 text-sm font-medium text-white/50 italic">Signalyz shows you exactly how to close the gap.</p>
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
             Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
           </p>
@@ -1450,7 +1450,7 @@ const Index = () => {
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
                             <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
                             <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Fix This Now → $9</Button>
+                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence →</Button>
                           </div>
                         )}
                       </>
@@ -1715,7 +1715,7 @@ const Index = () => {
                                   <a href="/auth">Get Started Free</a>
                                 </Button>
                               )}
-                              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
+                              
                             </div>
                           </div>
                         </div>

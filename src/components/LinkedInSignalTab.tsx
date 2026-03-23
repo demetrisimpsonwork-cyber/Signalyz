@@ -37,7 +37,7 @@ const LinkedInSignalTab = ({ experience, inferredRole, signalKeywords = [], onRu
   const [step, setStep] = useState(0);
   const { user } = useAuth();
   const { hasConsumedOneTimeCredit } = useSubscription();
-  const ctaLabel = hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "Fix This Now → $9";
+  const ctaLabel = "Unlock Full Signal Intelligence →";
 
   const handleCopy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);

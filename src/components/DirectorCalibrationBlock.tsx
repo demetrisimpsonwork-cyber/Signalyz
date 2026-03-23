@@ -419,12 +419,11 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               <p className="text-sm text-muted-foreground leading-relaxed">
                 You've seen the surface-level read. The full report shows where you'll be screened out at each hiring stage — and the exact repositioning to fix it.
               </p>
-              <p className="text-[11px] font-semibold text-destructive/80">Most candidates never see this data — that's why they keep getting filtered.</p>
             </div>
             {isAuthenticated ? (
               <div className="space-y-3">
                 <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-                  Fix This Now → $9
+                  Unlock Full Signal Intelligence →
                 </Button>
                 
               </div>

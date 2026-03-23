@@ -137,11 +137,10 @@ export function ProGate({
                 onClick={() => handleUpgrade("one_time")}
                 disabled={checkoutLoading}
                 variant="outline"
-                className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+                className="w-full gap-2"
               >
-                Fix This Now → $9
+                One-time full report — $9
               </Button>
-              <p className="text-[11px] text-muted-foreground text-center">Most users improve interview rates within 2–3 applications</p>
               
             </div>
           ) : (

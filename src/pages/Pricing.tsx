@@ -99,11 +99,6 @@ const Pricing = () => {
             ))}
           </ul>
 
-          {isAuthenticated && (
-            <p className="mt-6 text-sm font-semibold text-center leading-snug text-white">
-              The average job search takes 5 months. Most candidates never know why.
-            </p>
-          )}
 
           {isAuthenticated ? (
             <Button
@@ -111,7 +106,7 @@ const Pricing = () => {
               variant="default"
               onClick={() => initiateCheckout("subscription")}
             >
-               Fix This Now → $19/mo
+               Unlock Full Signal Intelligence → $19/mo
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
@@ -119,11 +114,6 @@ const Pricing = () => {
             </Button>
           )}
 
-          {isAuthenticated && (
-            <p className="mt-2 text-xs italic text-center text-white/50">
-              Less than one rejected application costs you.
-            </p>
-          )}
         </div>
 
         {/* One-time $9 */}
@@ -159,7 +149,7 @@ const Pricing = () => {
               variant="outline"
               onClick={() => initiateCheckout("one_time")}
             >
-              Fix This Now → $9
+              One-time full report — $9
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
@@ -181,14 +171,12 @@ const Pricing = () => {
       <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
         {isAuthenticated ? (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground text-center">The average job search takes 5 months. Most candidates never know why.</p>
             <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
-              Fix This Now → $19/month
+              Unlock Full Signal Intelligence → $19/month
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
-              Fix This Now → $9
+              One-time full report — $9
             </Button>
-            <p className="text-[11px] text-muted-foreground text-center italic">Less than one rejected application costs you.</p>
           </div>
         ) : (
           <Button className="w-full" size="lg" asChild>
