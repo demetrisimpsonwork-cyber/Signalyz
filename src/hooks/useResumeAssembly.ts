@@ -46,7 +46,7 @@ interface UseResumeAssemblyReturn {
   pendingResume: CalibratedResumeData | null;
   confirmResume: (corrected: CalibratedResumeData) => void;
   skipConfirmation: () => void;
-  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
+  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => Promise<void>;
   /** Clear all assembled state — use when a new alignment run begins */
   reset: () => void;
 }
