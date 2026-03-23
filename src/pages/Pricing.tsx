@@ -99,11 +99,6 @@ const Pricing = () => {
             ))}
           </ul>
 
-          {isAuthenticated && (
-            <p className="mt-6 text-sm font-semibold text-center leading-snug text-white">
-              The average job search takes 5 months. Most candidates never know why.
-            </p>
-          )}
 
           {isAuthenticated ? (
             <Button
