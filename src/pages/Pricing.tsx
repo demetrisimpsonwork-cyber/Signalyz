@@ -114,11 +114,6 @@ const Pricing = () => {
             </Button>
           )}
 
-          {isAuthenticated && (
-            <p className="mt-2 text-xs italic text-center text-white/50">
-              Less than one rejected application costs you.
-            </p>
-          )}
         </div>
 
         {/* One-time $9 */}
