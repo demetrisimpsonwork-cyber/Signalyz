@@ -51,7 +51,7 @@ const ProInsightsTeaser = () => {
           )}
 
           <p className="text-center text-[11px] text-muted-foreground">
-            {user ? "Less than one rejected application costs you." : "3 free analyses included."}
+            {user ? "See exactly what to reposition for this role." : "3 free analyses included."}
           </p>
         </div>
       </div>
