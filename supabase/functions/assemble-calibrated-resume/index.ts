@@ -1516,11 +1516,21 @@ async function rewriteExperienceBullets(
   directorResult: any,
   apiKey: string,
   requestId: string,
+  rawJd?: string,
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
-  const jdSignals = extractJDSignals(directorResult);
-  const jdModel = buildSignalJdModel(jdSignals);
+  // Prefer raw JD text for phrase extraction; fall back to signal labels
+  const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSource);
+
+  // Extract top JD phrases for explicit injection instruction
+  const topPhrases = [...jdModel.bigrams.slice(0, 8), ...jdModel.trigrams.slice(0, 5)];
+  const topKeywords = jdModel.keywords.slice(0, 10);
+  const jdPhraseBlock = topPhrases.length > 0
+    ? `\nTOP JD PHRASES (incorporate 1-2 per bullet where semantically valid):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nTOP JD KEYWORDS (distribute across all bullets):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
+    : "";
+  const jdSignals = rawJd?.trim() || extractJDSignals(directorResult);
 
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
