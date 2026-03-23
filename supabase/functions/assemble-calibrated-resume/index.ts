@@ -924,12 +924,17 @@ async function generateSummary(
   originalResume: string,
   apiKey: string,
   requestId: string,
+  rawJd?: string,
 ): Promise<string> {
   const jdSignals = extractJDSignals(directorResult);
+  const jdSource = rawJd || jdSignals;
+  const jdModel = rawJd ? buildSignalJdModel(rawJd) : null;
+  const topPhrases = jdModel ? [...jdModel.bigrams.slice(0, 6), ...jdModel.trigrams.slice(0, 4)] : [];
 
   const context = [
     `Original summary: ${originalSummary}`,
-    jdSignals ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSignals}` : "",
+    jdSource ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSource}` : "",
+    topPhrases.length > 0 ? `\nTOP JD PHRASES TO INCORPORATE:\n${topPhrases.map(p => `• ${p}`).join("\n")}` : "",
     directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
     `\nFirst 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
   ].filter(Boolean).join("\n");
@@ -949,7 +954,7 @@ async function generateSummary(
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
         temperature: 0,
-        system: `Rewrite this professional summary to align with the target role's hiring criteria.
+        system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
 
 RULES:
 - Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
@@ -957,7 +962,8 @@ RULES:
 - NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
 - Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
 - Every sentence must reference verifiable experience from the original resume
-- Incorporate the target role's language architecture naturally — not keyword stuffing
+- Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
+- If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
@@ -1079,11 +1085,16 @@ function buildSignalJdModel(jdText: string) {
 
   const sentences = normalized.split(/[\n.;:!?]+/).map((segment) => segment.trim()).filter(Boolean);
   const bigramFreq = new Map<string, number>();
+  const trigramFreq = new Map<string, number>();
   for (const sentence of sentences) {
-    const sentenceTokens = tokenizeSignalText(sentence).filter((token) => token.length >= 4 && !SIGNAL_STOP_WORDS.has(token));
+    const sentenceTokens = tokenizeSignalText(sentence).filter((token) => token.length >= 3 && !SIGNAL_STOP_WORDS.has(token));
     for (let i = 0; i < sentenceTokens.length - 1; i++) {
       const bigram = `${sentenceTokens[i]} ${sentenceTokens[i + 1]}`;
       bigramFreq.set(bigram, (bigramFreq.get(bigram) || 0) + 1);
+    }
+    for (let i = 0; i < sentenceTokens.length - 2; i++) {
+      const trigram = `${sentenceTokens[i]} ${sentenceTokens[i + 1]} ${sentenceTokens[i + 2]}`;
+      trigramFreq.set(trigram, (trigramFreq.get(trigram) || 0) + 1);
     }
   }
 
@@ -1092,8 +1103,16 @@ function buildSignalJdModel(jdText: string) {
       if (b[1] !== a[1]) return b[1] - a[1];
       return b[0].length - a[0].length;
     })
-    .slice(0, 10)
+    .slice(0, 12)
     .map(([bigram]) => bigram);
+
+  const trigrams = [...trigramFreq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 8)
+    .map(([trigram]) => trigram);
 
   const clusterTerms = SIGNAL_SEMANTIC_CLUSTERS.map((cluster) =>
     [...cluster]
@@ -1101,7 +1120,7 @@ function buildSignalJdModel(jdText: string) {
       .sort((a, b) => b.length - a.length)
   );
 
-  return { keywords, stemmedKeywords, bigrams, clusterTerms };
+  return { keywords, stemmedKeywords, bigrams, trigrams, clusterTerms };
 }
 
 interface SignalSnapshot {
@@ -1206,6 +1225,10 @@ function countKeywordMatchesInBullet(bullet: string, jdModel: ReturnType<typeof 
     const rx = new RegExp(`\\b${escapeRegExp(bigram).replace(/\s+/g, "\\s+")}\\b`, "i");
     if (rx.test(lower)) hits += 1;
   }
+  for (const trigram of (jdModel.trigrams || [])) {
+    const rx = new RegExp(`\\b${escapeRegExp(trigram).replace(/\s+/g, "\\s+")}\\b`, "i");
+    if (rx.test(lower)) hits += 1;
+  }
   return hits;
 }
 
@@ -1305,6 +1328,11 @@ function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof 
     if (parts.some((part) => lower.includes(part))) candidates.add(bigram);
   }
 
+  for (const trigram of (jdModel.trigrams || [])) {
+    const parts = trigram.split(/\s+/);
+    if (parts.filter((part) => lower.includes(part)).length >= 2) candidates.add(trigram);
+  }
+
   SIGNAL_SEMANTIC_CLUSTERS.forEach((cluster, index) => {
     if (!jdModel.clusterTerms[index]?.length) return;
     const clusterMatch = cluster.some((term) => new RegExp(`\\b${escapeRegExp(term).replace(/\s+/g, "\\s+")}\\b`, "i").test(lower));
@@ -1333,7 +1361,7 @@ function ensureScopePreserved(original: string, bullet: string): string {
 
 function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
   if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
-  const minHits = aggressive ? 2 : 1;
+  const minHits = aggressive ? 3 : 2;
   if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
 
   const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
@@ -1341,12 +1369,16 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!candidates.length) return bullet;
 
-  const selected = candidates.slice(0, aggressive ? 2 : 1);
-  const clause = selected.length === 1
-    ? `aligned to ${selected[0]} priorities`
-    : `aligned to ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} priorities`;
-
-  return appendClause(bullet, clause);
+  const selected = candidates.slice(0, aggressive ? 3 : 2);
+  // Use more natural phrasing patterns for injection
+  const lower = bullet.toLowerCase();
+  if (selected.length === 1) {
+    if (/support|deliver|improv|manag|driv|execut/i.test(lower)) {
+      return appendClause(bullet, `supporting ${selected[0]} objectives`);
+    }
+    return appendClause(bullet, `driving ${selected[0]} outcomes`);
+  }
+  return appendClause(bullet, `driving ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} outcomes`);
 }
 
 function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
@@ -1449,9 +1481,11 @@ function enforceFinalSignalDelta(
   sourceExperience: any[],
   directorResult: any,
   requestId: string,
+  rawJd?: string,
 ) {
-  const jdSignals = extractJDSignals(directorResult);
-  const jdModel = buildSignalJdModel(jdSignals);
+  // Prefer raw JD text for phrase extraction; fall back to signal labels
+  const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSource);
 
   if (!assembled?.experience?.length || (!jdModel.keywords.length && !jdModel.bigrams.length)) {
     return assembled;
@@ -1497,11 +1531,21 @@ async function rewriteExperienceBullets(
   directorResult: any,
   apiKey: string,
   requestId: string,
+  rawJd?: string,
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
-  const jdSignals = extractJDSignals(directorResult);
-  const jdModel = buildSignalJdModel(jdSignals);
+  // Prefer raw JD text for phrase extraction; fall back to signal labels
+  const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
+  const jdModel = buildSignalJdModel(jdSource);
+
+  // Extract top JD phrases for explicit injection instruction
+  const topPhrases = [...jdModel.bigrams.slice(0, 8), ...jdModel.trigrams.slice(0, 5)];
+  const topKeywords = jdModel.keywords.slice(0, 10);
+  const jdPhraseBlock = topPhrases.length > 0
+    ? `\nTOP JD PHRASES (incorporate 1-2 per bullet where semantically valid):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nTOP JD KEYWORDS (distribute across all bullets):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
+    : "";
+  const jdSignals = rawJd?.trim() || extractJDSignals(directorResult);
 
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
@@ -1524,21 +1568,28 @@ async function rewriteExperienceBullets(
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         temperature: 0,
-        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve scoring signals without fabricating experience.
+        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
 
 TARGET JD SIGNAL CONTEXT:
 ${jdSignals}
+${jdPhraseBlock}
+
+CRITICAL JD MIRRORING RULES:
+- Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
+- Replace generic phrasing with JD-aligned vocabulary for verbs, objects, and outcomes.
+- The top JD keywords must appear multiple times across all bullets — distributed naturally, not stuffed.
+- Prioritize JD vocabulary over generic resume language in every rewrite decision.
 
 NON-NEGOTIABLE RULES:
-1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already preserve metrics, scope, and outcomes.
+1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
 3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
 4. Every bullet must preserve or strengthen truthfully implied outcome framing.
 5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
 
 SIGNAL TARGETS:
+- JD Keyword Alignment (HIGHEST PRIORITY): weave truthful target-role phrases and vocabulary directly into every bullet. Each bullet should contain at least one JD phrase or keyword.
 - Ownership Language Density: first word should be a strong action / ownership verb.
-- JD Keyword Alignment: weave truthful target-role language directly into multiple bullets per role.
 - Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
 - Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
 - Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
@@ -1605,7 +1656,7 @@ serve(async (req) => {
       );
     }
 
-    const { directorResult, originalResume, alignmentResult } = body;
+    const { directorResult, originalResume, alignmentResult, jd } = body;
 
     // Allow assembly with just alignment result (no director/positioning report required)
     const signalContext = directorResult || alignmentResult || null;
@@ -1641,13 +1692,14 @@ serve(async (req) => {
 
     // ── Phase 2: Sequential focused API calls ──
     console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
+    const rawJdText = typeof jd === "string" ? jd.trim() : undefined;
     const rewrittenSummary = await generateSummary(
-      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id
+      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
     );
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText
     );
 
     // ── Merge results and validate against the persisted final output ──
@@ -1663,6 +1715,7 @@ serve(async (req) => {
       structure.experience,
       signalContext || {},
       request_id,
+      rawJdText,
     );
 
     console.log(`[assemble] [${request_id}] Assembly complete`);

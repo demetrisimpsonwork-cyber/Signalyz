@@ -46,7 +46,7 @@ interface UseResumeAssemblyReturn {
   pendingResume: CalibratedResumeData | null;
   confirmResume: (corrected: CalibratedResumeData) => void;
   skipConfirmation: () => void;
-  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => Promise<void>;
+  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => Promise<void>;
   /** Clear all assembled state — use when a new alignment run begins */
   reset: () => void;
 }
@@ -95,7 +95,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setStep(0);
   }, []);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>) => {
+  const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => {
     setAssembledResume(null);
     setLoading(true);
     setError(null);
@@ -118,7 +118,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         data = await invokeResilient(
           "assembly",
           "assemble-calibrated-resume",
-          { directorResult: directorResult || undefined, originalResume, alignmentResult: alignmentResult || undefined },
+          { directorResult: directorResult || undefined, originalResume, alignmentResult: alignmentResult || undefined, jd: jdText || undefined },
           120_000,
         );
         break;
