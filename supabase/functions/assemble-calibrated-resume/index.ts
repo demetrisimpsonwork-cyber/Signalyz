@@ -1261,7 +1261,7 @@ function chooseSignalVerb(original: string, bullet: string, usedVerbs: Map<strin
 
   let chosen = safeCandidates[0];
   let chosenCount = Number.POSITIVE_INFINITY;
-  for (const candidate of candidates) {
+  for (const candidate of safeCandidates) {
     const count = usedVerbs.get(candidate.toLowerCase()) || 0;
     if (count < chosenCount) {
       chosen = candidate;
