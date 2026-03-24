@@ -1255,7 +1255,11 @@ function chooseSignalVerb(original: string, bullet: string, usedVerbs: Map<strin
 
   candidates.push("Led", "Owned", "Delivered", "Executed", "Established");
 
-  let chosen = candidates[0];
+  // Filter out banned verbs
+  const safeCandidates = candidates.filter(c => !BANNED_SIGNAL_VERBS.has(c.toLowerCase()));
+  if (safeCandidates.length === 0) safeCandidates.push("Led", "Delivered", "Executed");
+
+  let chosen = safeCandidates[0];
   let chosenCount = Number.POSITIVE_INFINITY;
   for (const candidate of candidates) {
     const count = usedVerbs.get(candidate.toLowerCase()) || 0;
