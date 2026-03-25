@@ -994,6 +994,43 @@ const BANNED_SIGNAL_VERBS = new Set([
   "leveraged","spearheaded","championed","pioneered","mobilized","orchestrated",
 ]);
 
+// Domain / industry / company-type nouns that must NEVER be injected into
+// bullets or summaries unless they already appear in the candidate's original
+// resume.  Injecting these fabricates WHERE the candidate worked.
+const DOMAIN_INDUSTRY_TERMS = new Set([
+  "manufacturing","distribution","warehouse","warehousing","logistics",
+  "pharmaceutical","healthcare","hospitality","automotive","aerospace",
+  "telecommunications","insurance","banking","fintech","biotech",
+  "agriculture","mining","construction","real estate","retail",
+  "e-commerce","ecommerce","saas","energy","oil","gas","chemical",
+  "textile","food service","foodservice","transportation","shipping",
+  "freight","supply chain","procurement","wholesale","fulfillment",
+]);
+
+/**
+ * Returns true when `candidate` contains a domain / industry term that does
+ * NOT appear anywhere in the candidate's original resume.  Injecting such a
+ * term would fabricate the candidate's work environment.
+ */
+function isDomainFabrication(candidate: string, originalResumeText: string): boolean {
+  const resumeLower = originalResumeText.toLowerCase();
+  const candidateLower = candidate.toLowerCase();
+
+  // Check single-word domain terms
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
+  // Check multi-word domain terms
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const STRONG_SIGNAL_VERBS = [
   "led","drove","owned","architected","directed","launched","built","scaled","implemented","executed","transformed","governed","delivered","established","redesigned","devised","instituted","restructured","consolidated","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
 ] as const;
