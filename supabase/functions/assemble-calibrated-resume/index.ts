@@ -1720,7 +1720,7 @@ Return ONLY valid JSON array:
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
-    return strengthenFinalExperience(experience, experience, jdModel, false);
+    return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
   }
 }
 
