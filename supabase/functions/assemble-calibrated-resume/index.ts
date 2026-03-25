@@ -1487,6 +1487,7 @@ function repairSignalBullet(
   jdModel: ReturnType<typeof buildSignalJdModel>,
   usedVerbs: Map<string, number>,
   aggressive = false,
+  originalResumeText = "",
 ): string {
   let bullet = (candidate || original || "").trim();
   if (!bullet) return bullet;
@@ -1495,7 +1496,7 @@ function repairSignalBullet(
   bullet = ensureOwnershipLead(original, bullet, usedVerbs);
   bullet = ensureSubstantiveLength(original, bullet);
   bullet = ensureScopePreserved(original, bullet);
-  bullet = ensureJdAlignment(original, bullet, jdModel, aggressive);
+  bullet = ensureJdAlignment(original, bullet, jdModel, aggressive, originalResumeText);
   bullet = ensureOutcomeFraming(original, bullet, aggressive);
 
   return bullet
