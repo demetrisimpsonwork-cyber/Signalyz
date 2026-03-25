@@ -965,6 +965,7 @@ RULES:
 - Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
 - If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
+- DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
         messages: [{ role: "user", content: context }],
@@ -993,6 +994,43 @@ const SIGNAL_STOP_WORDS = new Set([
 const BANNED_SIGNAL_VERBS = new Set([
   "leveraged","spearheaded","championed","pioneered","mobilized","orchestrated",
 ]);
+
+// Domain / industry / company-type nouns that must NEVER be injected into
+// bullets or summaries unless they already appear in the candidate's original
+// resume.  Injecting these fabricates WHERE the candidate worked.
+const DOMAIN_INDUSTRY_TERMS = new Set([
+  "manufacturing","distribution","warehouse","warehousing","logistics",
+  "pharmaceutical","healthcare","hospitality","automotive","aerospace",
+  "telecommunications","insurance","banking","fintech","biotech",
+  "agriculture","mining","construction","real estate","retail",
+  "e-commerce","ecommerce","saas","energy","oil","gas","chemical",
+  "textile","food service","foodservice","transportation","shipping",
+  "freight","supply chain","procurement","wholesale","fulfillment",
+]);
+
+/**
+ * Returns true when `candidate` contains a domain / industry term that does
+ * NOT appear anywhere in the candidate's original resume.  Injecting such a
+ * term would fabricate the candidate's work environment.
+ */
+function isDomainFabrication(candidate: string, originalResumeText: string): boolean {
+  const resumeLower = originalResumeText.toLowerCase();
+  const candidateLower = candidate.toLowerCase();
+
+  // Check single-word domain terms
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
+  // Check multi-word domain terms
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 const STRONG_SIGNAL_VERBS = [
   "led","drove","owned","architected","directed","launched","built","scaled","implemented","executed","transformed","governed","delivered","established","redesigned","devised","instituted","restructured","consolidated","accelerated","elevated","oversaw","administered","standardized","created","developed","designed","automated","negotiated","facilitated","optimized","revamped","formulated","engineered","deployed","maintained","resolved","streamlined","trained","mentored","supervised",
@@ -1348,7 +1386,7 @@ function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<st
   return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
 }
 
-function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof buildSignalJdModel>): string[] {
+function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof buildSignalJdModel>, originalResumeText = ""): string[] {
   const lower = text.toLowerCase();
   const candidates = new Set<string>();
 
@@ -1372,7 +1410,9 @@ function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof 
     if (clusterMatch) candidates.add(jdModel.clusterTerms[index][0]);
   });
 
-  return [...candidates].sort((a, b) => b.length - a.length);
+  // Filter out candidates that would fabricate the candidate's industry/domain
+  const filtered = [...candidates].filter((c) => !isDomainFabrication(c, originalResumeText || text));
+  return filtered.sort((a, b) => b.length - a.length);
 }
 
 function ensureScopePreserved(original: string, bullet: string): string {
@@ -1392,12 +1432,12 @@ function ensureScopePreserved(original: string, bullet: string): string {
   return appendClause(bullet, `including ${snippet}`);
 }
 
-function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
+function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false, originalResumeText = ""): string {
   if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
   const minHits = aggressive ? 3 : 2;
   if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
 
-  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
+  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel, originalResumeText)
     .filter((candidate) => !bullet.toLowerCase().includes(candidate.toLowerCase()));
 
   if (!candidates.length) return bullet;
@@ -1447,6 +1487,7 @@ function repairSignalBullet(
   jdModel: ReturnType<typeof buildSignalJdModel>,
   usedVerbs: Map<string, number>,
   aggressive = false,
+  originalResumeText = "",
 ): string {
   let bullet = (candidate || original || "").trim();
   if (!bullet) return bullet;
@@ -1455,7 +1496,7 @@ function repairSignalBullet(
   bullet = ensureOwnershipLead(original, bullet, usedVerbs);
   bullet = ensureSubstantiveLength(original, bullet);
   bullet = ensureScopePreserved(original, bullet);
-  bullet = ensureJdAlignment(original, bullet, jdModel, aggressive);
+  bullet = ensureJdAlignment(original, bullet, jdModel, aggressive, originalResumeText);
   bullet = ensureOutcomeFraming(original, bullet, aggressive);
 
   return bullet
@@ -1471,6 +1512,7 @@ function strengthenFinalExperience(
   sourceExperience: any[],
   jdModel: ReturnType<typeof buildSignalJdModel>,
   aggressive = false,
+  originalResumeText = "",
 ): any[] {
   const usedVerbs = new Map<string, number>();
 
@@ -1482,7 +1524,7 @@ function strengthenFinalExperience(
     const candidateBullets = Array.isArray(role?.bullets) ? role.bullets : [];
 
     const repairedBullets = sourceBullets.map((originalBullet: string, bulletIndex: number) =>
-      repairSignalBullet(originalBullet, candidateBullets[bulletIndex] || originalBullet, jdModel, usedVerbs, aggressive)
+      repairSignalBullet(originalBullet, candidateBullets[bulletIndex] || originalBullet, jdModel, usedVerbs, aggressive, originalResumeText)
     );
 
     return {
@@ -1526,7 +1568,7 @@ function enforceFinalSignalDelta(
 
   let finalized = {
     ...assembled,
-    experience: strengthenFinalExperience(assembled.experience, sourceExperience, jdModel, false),
+    experience: strengthenFinalExperience(assembled.experience, sourceExperience, jdModel, false, originalResumeText),
   };
 
   let delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
@@ -1543,7 +1585,7 @@ function enforceFinalSignalDelta(
 
     finalized = {
       ...finalized,
-      experience: strengthenFinalExperience(finalized.experience, sourceExperience, jdModel, true),
+      experience: strengthenFinalExperience(finalized.experience, sourceExperience, jdModel, true, originalResumeText),
     };
 
     delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
@@ -1565,6 +1607,7 @@ async function rewriteExperienceBullets(
   apiKey: string,
   requestId: string,
   rawJd?: string,
+  originalResumeText = "",
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
@@ -1613,6 +1656,16 @@ CRITICAL JD MIRRORING RULES:
 - The top JD keywords must appear multiple times across all bullets — distributed naturally, not stuffed.
 - Prioritize JD vocabulary over generic resume language in every rewrite decision.
 
+DOMAIN PRESERVATION (NON-NEGOTIABLE):
+- NEVER insert industry, sector, or company-type language from the JD into bullets unless that exact language already appears in the candidate's original bullet.
+- Examples of forbidden injection: adding "manufacturing," "distribution," "healthcare," "logistics," "warehouse" to describe a role that was NOT in that industry.
+- JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
+- The candidate's actual employer context must be preserved exactly.
+
+VERB RULES:
+- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
+- If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
+
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
@@ -1644,7 +1697,7 @@ Return ONLY valid JSON array:
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
-      return strengthenFinalExperience(experience, experience, jdModel, false);
+      return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
     }
 
     const data = await response.json();
@@ -1663,11 +1716,11 @@ Return ONLY valid JSON array:
       };
     });
 
-    return strengthenFinalExperience(merged, experience, jdModel, false);
+    return strengthenFinalExperience(merged, experience, jdModel, false, originalResumeText);
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
-    return strengthenFinalExperience(experience, experience, jdModel, false);
+    return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
   }
 }
 
@@ -1732,7 +1785,7 @@ serve(async (req) => {
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || ""
     );
 
     // ── Merge results and validate against the persisted final output ──
