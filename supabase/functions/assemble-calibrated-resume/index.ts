@@ -1716,7 +1716,7 @@ Return ONLY valid JSON array:
       };
     });
 
-    return strengthenFinalExperience(merged, experience, jdModel, false);
+    return strengthenFinalExperience(merged, experience, jdModel, false, originalResumeText);
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
