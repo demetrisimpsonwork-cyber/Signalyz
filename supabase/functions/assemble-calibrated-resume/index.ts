@@ -1568,7 +1568,7 @@ function enforceFinalSignalDelta(
 
   let finalized = {
     ...assembled,
-    experience: strengthenFinalExperience(assembled.experience, sourceExperience, jdModel, false),
+    experience: strengthenFinalExperience(assembled.experience, sourceExperience, jdModel, false, originalResumeText),
   };
 
   let delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
@@ -1585,7 +1585,7 @@ function enforceFinalSignalDelta(
 
     finalized = {
       ...finalized,
-      experience: strengthenFinalExperience(finalized.experience, sourceExperience, jdModel, true),
+      experience: strengthenFinalExperience(finalized.experience, sourceExperience, jdModel, true, originalResumeText),
     };
 
     delta = countImprovedDimensions(originalResumeText, structuredResumeToText(finalized), jdModel);
