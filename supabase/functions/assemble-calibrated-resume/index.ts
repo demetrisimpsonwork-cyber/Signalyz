@@ -1785,7 +1785,7 @@ serve(async (req) => {
 
     console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
     const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText
+      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || ""
     );
 
     // ── Merge results and validate against the persisted final output ──
