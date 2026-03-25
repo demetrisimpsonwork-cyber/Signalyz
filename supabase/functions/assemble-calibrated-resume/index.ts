@@ -1386,7 +1386,7 @@ function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<st
   return `${verb} ${remainder}`.replace(/\s{2,}/g, " ").trim();
 }
 
-function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof buildSignalJdModel>): string[] {
+function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof buildSignalJdModel>, originalResumeText = ""): string[] {
   const lower = text.toLowerCase();
   const candidates = new Set<string>();
 
@@ -1410,7 +1410,9 @@ function buildAllowedKeywordCandidates(text: string, jdModel: ReturnType<typeof 
     if (clusterMatch) candidates.add(jdModel.clusterTerms[index][0]);
   });
 
-  return [...candidates].sort((a, b) => b.length - a.length);
+  // Filter out candidates that would fabricate the candidate's industry/domain
+  const filtered = [...candidates].filter((c) => !isDomainFabrication(c, originalResumeText || text));
+  return filtered.sort((a, b) => b.length - a.length);
 }
 
 function ensureScopePreserved(original: string, bullet: string): string {
