@@ -1512,6 +1512,7 @@ function strengthenFinalExperience(
   sourceExperience: any[],
   jdModel: ReturnType<typeof buildSignalJdModel>,
   aggressive = false,
+  originalResumeText = "",
 ): any[] {
   const usedVerbs = new Map<string, number>();
 
@@ -1523,7 +1524,7 @@ function strengthenFinalExperience(
     const candidateBullets = Array.isArray(role?.bullets) ? role.bullets : [];
 
     const repairedBullets = sourceBullets.map((originalBullet: string, bulletIndex: number) =>
-      repairSignalBullet(originalBullet, candidateBullets[bulletIndex] || originalBullet, jdModel, usedVerbs, aggressive)
+      repairSignalBullet(originalBullet, candidateBullets[bulletIndex] || originalBullet, jdModel, usedVerbs, aggressive, originalResumeText)
     );
 
     return {
