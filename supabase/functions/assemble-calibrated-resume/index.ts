@@ -1697,7 +1697,7 @@ Return ONLY valid JSON array:
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
-      return strengthenFinalExperience(experience, experience, jdModel, false);
+      return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
     }
 
     const data = await response.json();
