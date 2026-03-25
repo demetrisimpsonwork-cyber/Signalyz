@@ -1607,6 +1607,7 @@ async function rewriteExperienceBullets(
   apiKey: string,
   requestId: string,
   rawJd?: string,
+  originalResumeText = "",
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
