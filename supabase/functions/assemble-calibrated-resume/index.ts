@@ -1432,12 +1432,12 @@ function ensureScopePreserved(original: string, bullet: string): string {
   return appendClause(bullet, `including ${snippet}`);
 }
 
-function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false): string {
+function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType<typeof buildSignalJdModel>, aggressive = false, originalResumeText = ""): string {
   if (!jdModel.keywords.length && !jdModel.bigrams.length) return bullet;
   const minHits = aggressive ? 3 : 2;
   if (countKeywordMatchesInBullet(bullet, jdModel) >= minHits) return bullet;
 
-  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel)
+  const candidates = buildAllowedKeywordCandidates(`${original} ${bullet}`, jdModel, originalResumeText)
     .filter((candidate) => !bullet.toLowerCase().includes(candidate.toLowerCase()));
 
   if (!candidates.length) return bullet;
