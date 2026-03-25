@@ -1656,6 +1656,16 @@ CRITICAL JD MIRRORING RULES:
 - The top JD keywords must appear multiple times across all bullets — distributed naturally, not stuffed.
 - Prioritize JD vocabulary over generic resume language in every rewrite decision.
 
+DOMAIN PRESERVATION (NON-NEGOTIABLE):
+- NEVER insert industry, sector, or company-type language from the JD into bullets unless that exact language already appears in the candidate's original bullet.
+- Examples of forbidden injection: adding "manufacturing," "distribution," "healthcare," "logistics," "warehouse" to describe a role that was NOT in that industry.
+- JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
+- The candidate's actual employer context must be preserved exactly.
+
+VERB RULES:
+- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
+- If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
+
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
