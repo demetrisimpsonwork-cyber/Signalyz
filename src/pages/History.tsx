@@ -118,15 +118,23 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
   }
 }
 
-/* ── color helpers ── */
+/* ── label + color helpers ── */
+const getStrengthLabel = (score: number): string => {
+  if (score >= 70) return "Interview Range";
+  if (score >= 60) return "Strong";
+  if (score >= 40) return "Moderate";
+  return "Low Signal";
+};
 const scoreColor = (s: number) =>
-  s >= 75 ? "text-green-600 dark:text-green-400" : s >= 60 ? "text-amber-500" : "text-destructive";
+  s >= 70 ? "text-green-600 dark:text-green-400" : s >= 60 ? "text-amber-500" : s >= 40 ? "text-orange-500" : "text-destructive";
 const scoreBadgeClasses = (s: number) =>
-  s >= 75
+  s >= 70
     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
     : s >= 60
       ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
+      : s >= 40
+        ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
 const scoreDotColor = (s: number) => (s >= 75 ? "#22c55e" : s >= 60 ? "#f59e0b" : "#ef4444");
 
 /* ── grouping helper ── */
@@ -155,26 +163,28 @@ function groupEntries(entries: HistoryEntry[]): HistoryGroup[] {
 
 /* ── mock data for non-pro preview ── */
 const MOCK_ENTRIES: HistoryEntry[] = [
-  { id: "m1", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), inferred_role: "Senior Product Manager", score: 82, strength_label: "Strong", top_gap: "Strategic planning signals", resume_built: true },
-  { id: "m2", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), inferred_role: "Senior Product Manager", score: 76, strength_label: "Moderate", top_gap: "Stakeholder management depth", resume_built: false },
-  { id: "m3", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), inferred_role: "Marketing Director", score: 68, strength_label: "Moderate", top_gap: "Revenue impact framing", resume_built: true },
-  { id: "m4", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), inferred_role: "Operations Lead", score: 54, strength_label: "Weak", top_gap: "Process optimization evidence", resume_built: false },
-  { id: "m5", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), inferred_role: "Marketing Director", score: 71, strength_label: "Moderate", top_gap: "Brand strategy signals", resume_built: true },
-  { id: "m6", created_at: new Date().toISOString(), inferred_role: "Senior Product Manager", score: 88, strength_label: "Strong", top_gap: null, resume_built: true },
+  { id: "m1", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), inferred_role: "Senior Product Manager", score: 82, strength_label: "Interview Range", top_gap: "Strategic planning signals", resume_built: true },
+  { id: "m2", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), inferred_role: "Senior Product Manager", score: 76, strength_label: "Interview Range", top_gap: "Stakeholder management depth", resume_built: false },
+  { id: "m3", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), inferred_role: "Marketing Director", score: 68, strength_label: "Strong", top_gap: "Revenue impact framing", resume_built: true },
+  { id: "m4", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), inferred_role: "Operations Lead", score: 54, strength_label: "Moderate", top_gap: "Process optimization evidence", resume_built: false },
+  { id: "m5", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), inferred_role: "Marketing Director", score: 71, strength_label: "Interview Range", top_gap: "Brand strategy signals", resume_built: true },
+  { id: "m6", created_at: new Date().toISOString(), inferred_role: "Senior Product Manager", score: 88, strength_label: "Interview Range", top_gap: null, resume_built: true },
 ];
 
-type FilterKey = "all" | "high" | "moderate" | "weak";
+type FilterKey = "all" | "interview" | "strong" | "moderate" | "low";
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "high", label: "High" },
+  { key: "interview", label: "Interview Range" },
+  { key: "strong", label: "Strong" },
   { key: "moderate", label: "Moderate" },
-  { key: "weak", label: "Needs Strengthening" },
+  { key: "low", label: "Low Signal" },
 ];
 function filterMatch(score: number, filter: FilterKey) {
   if (filter === "all") return true;
-  if (filter === "high") return score >= 75;
-  if (filter === "moderate") return score >= 60 && score < 75;
-  return score < 60;
+  if (filter === "interview") return score >= 70;
+  if (filter === "strong") return score >= 60 && score < 70;
+  if (filter === "moderate") return score >= 40 && score < 60;
+  return score < 40;
 }
 
 /* ── expanded section component ── */
@@ -426,7 +436,7 @@ const History = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{group.role || "Alignment Run"}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(latest.created_at), "MMM d, yyyy · h:mm a")} · {latest.strength_label}
+                      {format(new Date(latest.created_at), "MMM d, yyyy · h:mm a")} · {getStrengthLabel(latest.score)}
                     </p>
                     {latest.top_gap && <p className="text-xs text-muted-foreground truncate mt-0.5">Top gap: {latest.top_gap}</p>}
                     {isMulti && (
@@ -474,7 +484,7 @@ const History = () => {
                       <div className="rounded-lg border bg-card p-3 flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(entry.created_at), "MMM d, yyyy · h:mm a")} · {entry.strength_label}
+                            {format(new Date(entry.created_at), "MMM d, yyyy · h:mm a")} · {getStrengthLabel(entry.score)}
                           </p>
                           {entry.top_gap && <p className="text-[10px] text-muted-foreground truncate mt-0.5">Top gap: {entry.top_gap}</p>}
                         </div>
