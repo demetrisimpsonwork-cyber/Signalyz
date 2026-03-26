@@ -1008,6 +1008,11 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "freight","supply chain","procurement","wholesale","fulfillment",
   "factory","plant operations","assembly line","production floor",
   "clinical","medical","patient care","nursing","pharmacy",
+  "patient","patient-focused","patient scheduling","patient accounts",
+  "ehr","electronic health records","health records","hipaa",
+  "medical billing","medical office","credentialing","licensing",
+  "prior authorization","insurance verification","cpt","icd-10",
+  "epic","cerner","clinic","hospital","physician","dental",
   "hotel","restaurant","food and beverage","catering",
   "dealership","showroom","sales floor",
   "call center","contact center","help desk",
@@ -1021,6 +1026,8 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "distribution company","manufacturing company","sales support",
   "warehouse environment","manufacturing environment",
   "distribution center","fulfillment center",
+  "production line","shop floor","lean manufacturing",
+  "osha","safety standards",
 ]);
 
 /**
@@ -1050,32 +1057,65 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
 /**
  * Strip domain-fabricated language from an AI-generated bullet.
  * This catches cases where the AI model itself injected industry/domain
- * terms despite prompt instructions.
+ * terms despite prompt instructions — including hyphenated compounds
+ * like "patient-focused" and phrases like "patient record management".
  */
 function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
   const resumeLower = originalResumeText.toLowerCase();
   let cleaned = bullet;
 
-  // Check each domain term — if it appears in the bullet but NOT in the resume, remove it
-  for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (!resumeLower.includes(term)) {
-      // Use word-boundary-aware replacement to remove the fabricated term
-      const escaped = escapeRegExp(term).replace(/\s+/g, "\\s+");
-      const rx = new RegExp(`\\b${escaped}\\b`, "gi");
-      if (rx.test(cleaned)) {
-        // Remove the term and clean up surrounding artifacts
-        cleaned = cleaned.replace(rx, "").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
-      }
+  // Sort terms longest-first so multi-word terms are removed before their
+  // single-word components (avoids partial removal artifacts)
+  const sortedTerms = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+
+  for (const term of sortedTerms) {
+    if (resumeLower.includes(term)) continue; // Term exists in resume — not fabrication
+
+    // Match the term even when hyphenated or used as a compound modifier
+    // e.g. "patient" matches "patient-focused", "patient record", etc.
+    const escaped = escapeRegExp(term).replace(/\s+/g, "[\\s-]+");
+    // Use a looser boundary: allow hyphen-adjacent matches
+    const rx = new RegExp(`(?:^|[\\s,;:(]|-)${escaped}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`, "gi");
+    const beforeLen = cleaned.length;
+    cleaned = cleaned.replace(rx, (match) => {
+      // Preserve leading whitespace/punctuation
+      const leadChar = match.match(/^[\s,;:(.-]/)?.[0] || "";
+      return leadChar;
+    });
+    if (cleaned.length !== beforeLen) {
+      cleaned = cleaned.replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
     }
   }
 
-  // Clean up orphaned prepositions/articles left after removal
+  // Remove garbled injection artifacts:
+  // "driving X outcomes", "driving X and Y outcomes", "aligned with X priorities"
+  // where X/Y contain only generic filler after domain term removal
   cleaned = cleaned
+    // Remove "driving [empty/filler] outcomes" patterns
+    .replace(/,?\s*driving\s+(?:and\s+)?(?:including\s+)?(?:\w{0,3}\s*)*outcomes\b\.?/gi, "")
+    // Remove "aligned with [empty/filler] priorities" patterns  
+    .replace(/,?\s*aligned\s+with\s+(?:\w{0,3}\s*)*priorities\b\.?/gi, "")
+    // Remove "supporting [empty/filler] objectives" patterns
+    .replace(/,?\s*supporting\s+(?:\w{0,3}\s*)*objectives\b\.?/gi, "")
+    // Clean up orphaned prepositions/articles/conjunctions after term removal
     .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
+    // "utilizing and protocols" → "utilizing protocols"
+    .replace(/\b(and|or)\s+(and|or)\b/gi, "$1")
+    .replace(/(\w+ing)\s+and\s+(\w+s\b)/gi, (match, verb, noun) => {
+      // Check if this looks like "utilizing and protocols" (verb + orphaned conjunction + noun)
+      if (/^[a-z]+ing$/i.test(verb) && !/^[a-z]+ing$/i.test(noun)) return `${verb} ${noun}`;
+      return match;
+    })
     .replace(/\s{2,}/g, " ")
     .replace(/,\s*,/g, ",")
     .replace(/\s+\./g, ".")
+    .replace(/,\s*$/, "")
     .trim();
+
+  // Ensure bullet still ends with a period
+  if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
+    cleaned += ".";
+  }
 
   return cleaned;
 }
@@ -1523,16 +1563,30 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!candidates.length) return bullet;
 
-  const selected = candidates.slice(0, aggressive ? 3 : 2);
-  // Use more natural phrasing patterns for injection
-  const lower = bullet.toLowerCase();
-  if (selected.length === 1) {
-    if (/support|deliver|improv|manag|driv|execut/i.test(lower)) {
-      return appendClause(bullet, `supporting ${selected[0]} objectives`);
-    }
-    return appendClause(bullet, `driving ${selected[0]} outcomes`);
+  // Select candidates: deduplicate overlapping phrases, skip raw verbs/short words
+  // that produce garbled injection like "aligned with coordinate priorities"
+  const selected: string[] = [];
+  const usedWords = new Set<string>();
+  const SKIP_RAW_VERBS = new Set(["coordinate","manage","track","report","process","support","ensure","maintain","prepare","handle","provide","review","monitor","schedule","operate","oversee","develop","create","build","drive","lead","serve"]);
+  for (const c of candidates) {
+    if (selected.length >= (aggressive ? 3 : 2)) break;
+    // Skip single-word candidates that are just verbs — they produce unreadable injections
+    if (!c.includes(" ") && SKIP_RAW_VERBS.has(c.toLowerCase())) continue;
+    const words = c.toLowerCase().split(/\s+/);
+    const hasOverlap = words.some(w => w.length >= 4 && usedWords.has(w));
+    if (hasOverlap) continue;
+    selected.push(c);
+    words.forEach(w => usedWords.add(w));
   }
-  return appendClause(bullet, `driving ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} outcomes`);
+
+  if (!selected.length) return bullet;
+
+  // Use natural phrasing — inject as contextual framing, not as "driving X outcomes"
+  // which produces garbled output when X is already a multi-word phrase
+  if (selected.length === 1) {
+    return appendClause(bullet, `aligned with ${selected[0]} priorities`);
+  }
+  return appendClause(bullet, `aligned with ${selected.join(" and ")} priorities`);
 }
 
 function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
@@ -1586,12 +1640,20 @@ function repairSignalBullet(
   bullet = ensureJdAlignment(original, bullet, jdModel, aggressive, originalResumeText);
   bullet = ensureOutcomeFraming(original, bullet, aggressive);
 
-  return bullet
+  // Final cleanup: remove redundant phrase doubling and garbled artifacts
+  bullet = bullet
     .replace(/\s{2,}/g, " ")
     .replace(/\s+,/g, ",")
     .replace(/,\s*,/g, ",")
     .replace(/\s+\./g, ".")
+    // Remove duplicated multi-word phrases (e.g., "improvement methodologies and improvement methodologies")
+    .replace(/\b(\w{4,}\s+\w{4,})\b(?:.*?\b\1\b)/gi, "$1")
+    // Capitalize first letter of bullet if lowercase
     .trim();
+  if (bullet.length > 0 && /^[a-z]/.test(bullet)) {
+    bullet = bullet.charAt(0).toUpperCase() + bullet.slice(1);
+  }
+  return bullet;
 }
 
 function strengthenFinalExperience(
@@ -1797,10 +1859,11 @@ Return ONLY valid JSON array:
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
         // Always preserve the candidate's ORIGINAL company/title/dates — never
-        // allow the AI to substitute industry or employer context from the JD
-        company: role.company || aiRole?.company || "",
-        title: role.title || aiRole?.title || "",
-        dates: role.dates || aiRole?.dates || "",
+        // allow the AI to substitute industry or employer context from the JD.
+        // Use explicit undefined check (not falsy) since empty string is valid original data.
+        company: role.company !== undefined && role.company !== null ? role.company : (aiRole?.company || ""),
+        title: role.title !== undefined && role.title !== null ? role.title : (aiRole?.title || ""),
+        dates: role.dates !== undefined && role.dates !== null ? role.dates : (aiRole?.dates || ""),
         bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
           let aiBullet = aiBullets[bulletIndex] || originalBullet;
           // Strip any domain/industry terms the AI fabricated
