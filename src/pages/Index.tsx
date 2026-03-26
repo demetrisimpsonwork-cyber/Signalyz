@@ -785,13 +785,18 @@ const Index = () => {
       const isCalibratedRun = calibratedRunPendingRef.current;
       calibratedRunPendingRef.current = false; // consume immediately — one-shot
       setIsResumeFromCalibrated(false); // reset state as well
-      // Capture the original resume baseline on the first non-calibrated run
+      // Capture the original resume baseline and its score on the first non-calibrated run
       if (!isCalibratedRun && !originalResumeBeforeCalibration) {
         setOriginalResumeBeforeCalibration(bulletWithContext);
         try { localStorage.setItem("signalyz_original_resume_baseline", bulletWithContext); } catch {}
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
+      // Persist baseline score on first original run
+      if (!isCalibratedRun && originalBaselineScore === null) {
+        setOriginalBaselineScore(detScore.finalScore);
+        try { localStorage.setItem("signalyz_original_baseline_score", String(detScore.finalScore)); } catch {}
+      }
       // Clear previous state now that we have a successful new result
       setDirectorResult(null);
       setSessionResumeAssembled(false);
