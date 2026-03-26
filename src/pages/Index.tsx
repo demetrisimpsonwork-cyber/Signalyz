@@ -386,6 +386,16 @@ const Index = () => {
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Handle ?tab= query param for deep-linking (e.g. /position redirect)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "director" || tabParam === "alignment" || tabParam === "calibrated" || tabParam === "coverletter" || tabParam === "linkedin") {
+      setMode(tabParam);
+      searchParams.delete("tab");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
+
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
