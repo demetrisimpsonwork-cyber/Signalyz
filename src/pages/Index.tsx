@@ -471,7 +471,7 @@ const Index = () => {
           try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
         }
       } else {
-        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd });
+        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd, runType: parsed.runType || "original" });
         setShowSessionRecovery(true);
       }
     } catch {
