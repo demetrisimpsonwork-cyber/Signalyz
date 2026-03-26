@@ -361,6 +361,10 @@ const Index = () => {
   const [additionalContext, setAdditionalContext] = useState("");
   const [scoreRevealed, setScoreRevealed] = useState(false);
   const [analysisTime, setAnalysisTime] = useState(0);
+  const [paymentActivating, setPaymentActivating] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("upgrade") === "success" || params.get("purchase") === "success";
+  });
 
   // Executive Audit state
   const [directorExperience, setDirectorExperience] = useState("");
@@ -422,6 +426,20 @@ const Index = () => {
       }, 500);
     }
   }, []);
+
+  // Clear payment activating state once subscription resolves or after max timeout
+  useEffect(() => {
+    if (!paymentActivating) return;
+    if (isPro || hasOneTimeCredit) {
+      setPaymentActivating(false);
+      setTimeout(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+      return;
+    }
+    const timeout = setTimeout(() => setPaymentActivating(false), 15000);
+    return () => clearTimeout(timeout);
+  }, [paymentActivating, isPro, hasOneTimeCredit]);
 
   // Session recovery modal state
   const SESSION_KEY = "signalyz_last_analysis";
@@ -941,6 +959,16 @@ const Index = () => {
       {/* DebugPanel removed — debug info logged to console only */}
       
       <OnboardingModal />
+
+      {paymentActivating && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="text-center space-y-4 px-6">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-primary border-t-transparent" />
+            <p className="text-lg font-semibold text-foreground">Activating your access...</p>
+            <p className="text-sm text-muted-foreground">This usually takes just a few seconds.</p>
+          </div>
+        </div>
+      )}
 
       {/* Hero — deep navy */}
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
