@@ -465,6 +465,7 @@ const Index = () => {
         setResult(parsed.result);
         setBullet(parsed.bullet);
         setJd(parsed.jd);
+        if (parsed.runType === "calibrated") setResultRunType("calibrated");
         if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
           setOriginalResumeBeforeCalibration(parsed.originalBaseline);
           try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
