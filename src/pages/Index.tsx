@@ -427,6 +427,20 @@ const Index = () => {
     }
   }, []);
 
+  // Clear payment activating state once subscription resolves or after max timeout
+  useEffect(() => {
+    if (!paymentActivating) return;
+    if (isPro || hasOneTimeCredit) {
+      setPaymentActivating(false);
+      setTimeout(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+      return;
+    }
+    const timeout = setTimeout(() => setPaymentActivating(false), 15000);
+    return () => clearTimeout(timeout);
+  }, [paymentActivating, isPro, hasOneTimeCredit]);
+
   // Session recovery modal state
   const SESSION_KEY = "signalyz_last_analysis";
   const SESSION_VERSION = 2;
