@@ -1015,18 +1015,18 @@ const Index = () => {
         <div className="space-y-4">
           {[
             {
-              was: "Executed complaint routing and escalation triage across a high-volume state-managed caseload — managing 40-70 concurrent cases with 8-15 resolved daily under strict SLA requirements.",
-              now: "Managed 40–70 concurrent cases with 8–15 daily resolutions under strict SLA requirements — owning triage decisions and handoff accountability across a state-managed caseload.",
-              signal: "Ownership language + SLA accountability framing",
+              was: "Managed customer inquiries and helped resolve issues for business clients while maintaining documentation.",
+              now: "Owned resolution for 40–70 concurrent B2B cases under strict SLA requirements — managing escalation triage, documentation, and client follow-through across business and institutional accounts.",
+              signal: "Ownership language + accountability framing",
             },
             {
               was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
-              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution rates.",
-              signal: "Process ownership + outcome clarity",
+              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution.",
+              signal: "Process ownership + measurable outcome",
             },
             {
               was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
-              now: "Guided executive and institutional clients through complex procedural and regulatory questions — translating requirements into clear, actionable next steps.",
+              now: "Guided executive and institutional clients through complex procedural and regulatory questions — providing clear next steps based on case-specific requirements.",
               signal: "Client seniority + advisory framing",
             },
           ].map((card, i) => (
