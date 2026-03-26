@@ -30,7 +30,7 @@ const getStrengthLabel = (score: number): string => {
 const buildExportText = (r: ExportResultsProps["result"]): string => {
   const sm = r.signal_model;
   const score = r.match_score;
-  const label = r.alignment_confidence_level || getStrengthLabel(score);
+  const label = getStrengthLabel(score);
 
   // Classify score_rationale into strengths and gaps
   const strengths: string[] = [];

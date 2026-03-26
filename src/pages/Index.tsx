@@ -1785,7 +1785,7 @@ const Index = () => {
                             score={result.match_score}
                             alignmentNotes={result.alignment_notes}
                             gapSuggestions={result.gap_suggestions}
-                            confidenceLevel={result.alignment_confidence_level}
+                            confidenceLevel={getStrengthLabel(result.match_score)}
                             inferredRoleTitle={result.inferred_role_title}
                             isPro={effectiveIsPro}
                             isAuthenticated={!!user}
