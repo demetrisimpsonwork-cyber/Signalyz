@@ -78,9 +78,9 @@ const UpgradeModal = ({
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
               <ul className="space-y-2">
                 {[
-                  "Surface-level score",
+                  "Your signal score and primary blocker",
                   "High-level blocker",
-                  "Partial insights",
+                  "Your diagnosis summary",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
