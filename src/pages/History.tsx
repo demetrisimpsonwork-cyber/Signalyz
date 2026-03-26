@@ -482,7 +482,7 @@ const History = () => {
                       <div className="rounded-lg border bg-card p-3 flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(entry.created_at), "MMM d, yyyy · h:mm a")} · {entry.strength_label}
+                            {format(new Date(entry.created_at), "MMM d, yyyy · h:mm a")} · {getStrengthLabel(entry.score)}
                           </p>
                           {entry.top_gap && <p className="text-[10px] text-muted-foreground truncate mt-0.5">Top gap: {entry.top_gap}</p>}
                         </div>
