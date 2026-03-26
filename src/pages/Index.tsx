@@ -1399,13 +1399,13 @@ const Index = () => {
                           </p>
                         </div>
                       </div>
-                      {user ? (
+                       {user ? (
                          <Button
                           size="sm"
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-                          onClick={() => initiateCheckout()}
+                          onClick={() => setShowUpgrade(true)}
                         >
-                          Fix Your Score → $9
+                          Unlock Full Signal Intelligence →
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
