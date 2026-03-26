@@ -128,11 +128,13 @@ const getStrengthLabel = (score: number): string => {
 const scoreColor = (s: number) =>
   s >= 70 ? "text-green-600 dark:text-green-400" : s >= 60 ? "text-amber-500" : s >= 40 ? "text-orange-500" : "text-destructive";
 const scoreBadgeClasses = (s: number) =>
-  s >= 75
+  s >= 70
     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
     : s >= 60
       ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
+      : s >= 40
+        ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
 const scoreDotColor = (s: number) => (s >= 75 ? "#22c55e" : s >= 60 ? "#f59e0b" : "#ef4444");
 
 /* ── grouping helper ── */
