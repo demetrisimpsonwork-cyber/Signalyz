@@ -454,28 +454,11 @@ CRITICAL:
           }
         }
 
-        // REPAIR 4: Outcome term presence — append outcome framing if missing
-        const bulletLc = bullet.toLowerCase();
-        const hasOutcome = [...OUTCOME_TERMS].some(t => bulletLc.includes(t));
-        if (!hasOutcome) {
-          // Add contextual outcome suffix
-          if (/\d/.test(bullet)) {
-            bullet = bullet.replace(/\.?\s*$/, ", driving measurable operational improvement.");
-          } else {
-            bullet = bullet.replace(/\.?\s*$/, ", resulting in improved efficiency and stakeholder outcomes.");
-          }
-          repairCount++;
-        }
+        // REPAIR 4: Outcome term presence — leave bullet unchanged if no real outcome can be inferred
+        // (Previously appended generic filler; now we trust the AI's output or leave as-is)
 
-        // REPAIR 5: JD keyword injection — if bullet has < 1 JD keyword, append relevant context
-        const bulletWords = new Set(bullet.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/));
-        const matchedJdKw = topJdKeywords.filter(kw => bulletWords.has(kw));
-        if (matchedJdKw.length === 0 && topJdKeywords.length > 0) {
-          // Pick 1-2 relevant JD keywords to weave in
-          const kwToAdd = topJdKeywords.slice(0, 2).join(" and ");
-          bullet = bullet.replace(/\.?\s*$/, `, aligned with ${kwToAdd} objectives.`);
-          repairCount++;
-        }
+        // REPAIR 5: JD keyword presence — leave bullet unchanged if keywords aren't naturally present
+        // (Previously appended hollow "aligned with X objectives" suffix; removed to prevent detectable keyword stuffing)
 
         calBullets[bi] = bullet;
       }

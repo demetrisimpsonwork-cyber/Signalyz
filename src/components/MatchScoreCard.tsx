@@ -31,13 +31,14 @@ const getScoreConfig = (score: number) => {
   return { label: "Below Threshold", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
-/** Map the 5-field backward-compat breakdown to the real 4-component rubric */
+/** Display the actual 5 deterministic scoring dimensions with real weights */
 function toRealBreakdown(b: ScoringBreakdown) {
   return [
-    { label: "JD Keyword Alignment", value: b.tools_and_workflow_alignment, weight: "40%" },
-    { label: "Ownership & Scope Density", value: b.role_outcomes_alignment, weight: "30%" },
-    { label: "Perception Gap Closure", value: b.domain_and_context_alignment, weight: "20%" },
-    { label: "Readability & Signal Clarity", value: Math.floor((b.context_and_scale_alignment + b.communication_and_leadership_alignment) / 2), weight: "10%" },
+    { label: "Role Outcomes Alignment", value: b.role_outcomes_alignment, weight: "30%" },
+    { label: "Tools & Workflow Alignment", value: b.tools_and_workflow_alignment, weight: "20%" },
+    { label: "Domain & Context Alignment", value: b.domain_and_context_alignment, weight: "20%" },
+    { label: "Context & Scale Alignment", value: b.context_and_scale_alignment, weight: "15%" },
+    { label: "Communication & Leadership", value: b.communication_and_leadership_alignment, weight: "15%" },
   ];
 }
 
