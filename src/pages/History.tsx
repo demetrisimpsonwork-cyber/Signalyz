@@ -169,18 +169,20 @@ const MOCK_ENTRIES: HistoryEntry[] = [
   { id: "m6", created_at: new Date().toISOString(), inferred_role: "Senior Product Manager", score: 88, strength_label: "Interview Range", top_gap: null, resume_built: true },
 ];
 
-type FilterKey = "all" | "high" | "moderate" | "weak";
+type FilterKey = "all" | "interview" | "strong" | "moderate" | "low";
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "high", label: "High" },
+  { key: "interview", label: "Interview Range" },
+  { key: "strong", label: "Strong" },
   { key: "moderate", label: "Moderate" },
-  { key: "weak", label: "Needs Strengthening" },
+  { key: "low", label: "Low Signal" },
 ];
 function filterMatch(score: number, filter: FilterKey) {
   if (filter === "all") return true;
-  if (filter === "high") return score >= 75;
-  if (filter === "moderate") return score >= 60 && score < 75;
-  return score < 60;
+  if (filter === "interview") return score >= 70;
+  if (filter === "strong") return score >= 60 && score < 70;
+  if (filter === "moderate") return score >= 40 && score < 60;
+  return score < 40;
 }
 
 /* ── expanded section component ── */
