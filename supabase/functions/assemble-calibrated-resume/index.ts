@@ -191,15 +191,30 @@ function parseRoleHeaderLine(line: string): { title: string; company: string; da
   const trimmed = line.trim();
   const dateMatch = trimmed.match(DATE_RX);
   const dates = dateMatch ? dateMatch[0] : (trimmed.match(YEAR_RX)?.[0] || "");
-  let remainder = trimmed.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·]\s*$/, "").replace(/^\s*[|—–,·]\s*/, "").trim();
+  let remainder = trimmed.replace(DATE_RX, "").replace(/\b(19|20)\d{2}\b/, "").replace(/[|—–,·/]\s*$/, "").replace(/^\s*[|—–,·/]\s*/, "").trim();
 
+  // Preserve raw remainder for fallback
+  const rawRemainder = remainder;
   let title = remainder;
   let company = "";
 
-  if (remainder.includes("|")) {
-    const parts = remainder.split("|").map(s => s.trim()).filter(Boolean);
+  // Try splitting on common delimiters: | — – /
+  const delimiterOrder = ["|", "—", "–", "/"];
+  let splitDone = false;
+
+  for (const delim of delimiterOrder) {
+    if (!remainder.includes(delim)) continue;
+    // For "/" only split if it looks structural (not part of "and/or")
+    if (delim === "/" && /\b\w+\/\w+\b/.test(remainder) && remainder.split("/").length === 2) {
+      const parts = remainder.split("/").map(s => s.trim());
+      // Only split on / if one part is clearly company or title
+      if (!COMPANY_SUFFIXES.test(parts[0]) && !COMPANY_SUFFIXES.test(parts[1]) &&
+          !ROLE_TITLE_RX.test(parts[0]) && !ROLE_TITLE_RX.test(parts[1])) {
+        continue; // skip — "/" is probably part of a phrase like "Sales/Marketing"
+      }
+    }
+    const parts = remainder.split(delim).map(s => s.trim()).filter(Boolean);
     if (parts.length >= 2) {
-      // Heuristic: part with company suffix is company; part with role title keyword is title
       const compIdx = parts.findIndex(p => COMPANY_SUFFIXES.test(p));
       const titleIdx = parts.findIndex(p => ROLE_TITLE_RX.test(p));
       if (compIdx >= 0 && titleIdx >= 0 && compIdx !== titleIdx) {
@@ -207,32 +222,22 @@ function parseRoleHeaderLine(line: string): { title: string; company: string; da
         title = parts[titleIdx];
       } else if (compIdx >= 0) {
         company = parts[compIdx];
-        title = parts.filter((_, i) => i !== compIdx).join(" | ");
+        title = parts.filter((_, i) => i !== compIdx).join(` ${delim} `);
       } else if (titleIdx >= 0) {
         title = parts[titleIdx];
-        company = parts.filter((_, i) => i !== titleIdx).join(" | ");
+        company = parts.filter((_, i) => i !== titleIdx).join(` ${delim} `);
       } else {
-        // Default: first part = company, rest = title (common resume format)
+        // Default: first part = company, second = title
         company = parts[0];
-        title = parts.slice(1).join(" | ");
+        title = parts.slice(1).join(` ${delim} `);
       }
+      splitDone = true;
+      break;
     }
-  } else if (remainder.includes("—") || remainder.includes("–")) {
-    const sep = remainder.includes("—") ? "—" : "–";
-    const parts = remainder.split(sep).map(s => s.trim());
-    if (COMPANY_SUFFIXES.test(parts[1] || "")) {
-      title = parts[0]; company = parts[1];
-    } else if (COMPANY_SUFFIXES.test(parts[0] || "")) {
-      company = parts[0]; title = parts[1] || "";
-    } else if (ROLE_TITLE_RX.test(parts[0]) && !ROLE_TITLE_RX.test(parts[1] || "")) {
-      title = parts[0]; company = parts[1] || "";
-    } else if (ROLE_TITLE_RX.test(parts[1] || "") && !ROLE_TITLE_RX.test(parts[0])) {
-      company = parts[0]; title = parts[1] || "";
-    } else {
-      title = parts[0]; company = parts[1] || "";
-    }
-  } else if (remainder.includes(",")) {
-    // Try comma-separated: "Company Name, Job Title"
+  }
+
+  // Try comma-separated if no other delimiter worked
+  if (!splitDone && remainder.includes(",")) {
     const parts = remainder.split(",").map(s => s.trim()).filter(Boolean);
     if (parts.length >= 2) {
       if (ROLE_TITLE_RX.test(parts[parts.length - 1])) {
@@ -251,6 +256,19 @@ function parseRoleHeaderLine(line: string): { title: string; company: string; da
   // Sanitize: if title looks like location/education/bullet, blank it
   title = sanitizeTitle(title);
   company = sanitizeCompany(company);
+
+  // HARD REQUIREMENT: never return blank title — preserve raw header as fallback
+  if (!title && !company) {
+    title = rawRemainder;
+  } else if (!title && company) {
+    // If company was found but title is blank, check if company is actually a title
+    if (ROLE_TITLE_RX.test(company) && !COMPANY_SUFFIXES.test(company)) {
+      title = company;
+      company = "";
+    } else {
+      title = rawRemainder; // preserve full raw as title
+    }
+  }
 
   return { title, company, dates };
 }
