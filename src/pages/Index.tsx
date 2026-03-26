@@ -1393,7 +1393,7 @@ const Index = () => {
                             {user
                               ? hasConsumedOneTimeCredit
                                 ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
-                                : "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments."
+                                : "You've used your 3 free analyses. Upgrade to continue with unlimited alignments."
                               : "Sign up to get 3 free analyses."}
                           </p>
                         </div>
