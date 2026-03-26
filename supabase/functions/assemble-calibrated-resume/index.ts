@@ -1757,6 +1757,7 @@ function cleanBulletArtifacts(bullet: string): string {
   }
 
   return bullet;
+}
 
 function strengthenFinalExperience(
   experience: any[],
