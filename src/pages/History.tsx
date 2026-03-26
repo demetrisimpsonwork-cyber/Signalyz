@@ -118,9 +118,15 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
   }
 }
 
-/* ── color helpers ── */
+/* ── label + color helpers ── */
+const getStrengthLabel = (score: number): string => {
+  if (score >= 70) return "Interview Range";
+  if (score >= 60) return "Strong";
+  if (score >= 40) return "Moderate";
+  return "Low Signal";
+};
 const scoreColor = (s: number) =>
-  s >= 75 ? "text-green-600 dark:text-green-400" : s >= 60 ? "text-amber-500" : "text-destructive";
+  s >= 70 ? "text-green-600 dark:text-green-400" : s >= 60 ? "text-amber-500" : s >= 40 ? "text-orange-500" : "text-destructive";
 const scoreBadgeClasses = (s: number) =>
   s >= 75
     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
