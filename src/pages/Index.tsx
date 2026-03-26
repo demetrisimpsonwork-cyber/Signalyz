@@ -1882,12 +1882,9 @@ const Index = () => {
       <UpgradeModal
         open={showUpgrade}
         onClose={() => setShowUpgrade(false)}
-        trialStarted={trialStarted}
-        trialRunsUsed={trialRunsUsed}
-        trialLimit={TRIAL_LIMIT}
-        onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
+        hasOneTimeCredit={hasOneTimeCredit}
       />
 
       {/* Session Recovery Modal */}
