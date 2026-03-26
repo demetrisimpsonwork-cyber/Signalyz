@@ -899,5 +899,5 @@ const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDi
   );
 };
 
-export { ScoreExplanation };
+
 export default SignalDiagnosticModules;
