@@ -1083,9 +1083,8 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
   const resumeLower = originalResumeText.toLowerCase();
   let cleaned = bullet;
 
-  // Sort terms longest-first so multi-word terms are removed before their
-  // single-word components (avoids partial removal artifacts)
-  const sortedTerms = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+  // Use module-level pre-sorted array (longest-first)
+  const sortedTerms = SORTED_DOMAIN_TERMS;
 
   for (const term of sortedTerms) {
     if (resumeLower.includes(term)) continue; // Term exists in resume — not fabrication
