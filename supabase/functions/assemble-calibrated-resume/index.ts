@@ -1540,6 +1540,12 @@ function repairSignalBullet(
   let bullet = (candidate || original || "").trim();
   if (!bullet) return bullet;
 
+  // Strip domain fabrication FIRST — before any other repairs that might
+  // re-inject or anchor around fabricated industry language
+  if (originalResumeText) {
+    bullet = stripDomainFabricationFromBullet(bullet, originalResumeText);
+  }
+
   bullet = eliminatePassiveLanguage(bullet);
   bullet = ensureOwnershipLead(original, bullet, usedVerbs);
   bullet = ensureSubstantiveLength(original, bullet);
