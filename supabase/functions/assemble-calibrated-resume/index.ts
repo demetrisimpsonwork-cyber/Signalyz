@@ -1006,6 +1006,21 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "e-commerce","ecommerce","saas","energy","oil","gas","chemical",
   "textile","food service","foodservice","transportation","shipping",
   "freight","supply chain","procurement","wholesale","fulfillment",
+  "factory","plant operations","assembly line","production floor",
+  "clinical","medical","patient care","nursing","pharmacy",
+  "hotel","restaurant","food and beverage","catering",
+  "dealership","showroom","sales floor",
+  "call center","contact center","help desk",
+  "law firm","legal practice","law office",
+  "accounting firm","cpa firm",
+  "staffing agency","recruitment agency","temp agency",
+  "nonprofit","non-profit","ngo",
+  "government","federal","municipal","public sector",
+  "military","defense","armed forces",
+  "startup","venture","incubator",
+  "distribution company","manufacturing company","sales support",
+  "warehouse environment","manufacturing environment",
+  "distribution center","fulfillment center",
 ]);
 
 /**
@@ -1017,19 +1032,52 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
   const resumeLower = originalResumeText.toLowerCase();
   const candidateLower = candidate.toLowerCase();
 
+  // Check multi-word domain terms first (longer matches take priority)
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
   // Check single-word domain terms
   for (const term of DOMAIN_INDUSTRY_TERMS) {
     if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
-  // Check multi-word domain terms
+  return false;
+}
+
+/**
+ * Strip domain-fabricated language from an AI-generated bullet.
+ * This catches cases where the AI model itself injected industry/domain
+ * terms despite prompt instructions.
+ */
+function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
+  const resumeLower = originalResumeText.toLowerCase();
+  let cleaned = bullet;
+
+  // Check each domain term — if it appears in the bullet but NOT in the resume, remove it
   for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
-      return true;
+    if (!resumeLower.includes(term)) {
+      // Use word-boundary-aware replacement to remove the fabricated term
+      const escaped = escapeRegExp(term).replace(/\s+/g, "\\s+");
+      const rx = new RegExp(`\\b${escaped}\\b`, "gi");
+      if (rx.test(cleaned)) {
+        // Remove the term and clean up surrounding artifacts
+        cleaned = cleaned.replace(rx, "").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
+      }
     }
   }
-  return false;
+
+  // Clean up orphaned prepositions/articles left after removal
+  cleaned = cleaned
+    .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+\./g, ".")
+    .trim();
+
+  return cleaned;
 }
 
 const STRONG_SIGNAL_VERBS = [
