@@ -1967,43 +1967,20 @@ serve(async (req) => {
       ),
     ]);
 
-    // ── Single post-processing pass with pre-built jdModel ──
+    // ── Lightweight post-processing (CPU-safe) ──
     const cleanedSummary = originalResume
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
 
-    const normalizedResult = normalizeResult({
+    const result = normalizeResult({
       ...structure,
       summary: cleanedSummary,
       experience: rewrittenExperience,
     });
 
-    // Single strengthening pass using the pre-built jdModel
-    const strengthened = {
-      ...normalizedResult,
-      experience: strengthenFinalExperience(normalizedResult.experience, structure.experience, jdModel, false, originalResume || ""),
-    };
-
-    const delta = countImprovedDimensions(
-      originalResume || structuredResumeToText({ summary: structure.summary, experience: structure.experience }),
-      structuredResumeToText(strengthened),
-      jdModel,
-    );
-
-    let result = strengthened;
-    if (delta.improvementCount <= 1 && countRepairOpportunities(structure.experience, jdModel) >= 2) {
-      result = {
-        ...strengthened,
-        experience: strengthenFinalExperience(strengthened.experience, structure.experience, jdModel, true, originalResume || ""),
-      };
-    }
-
-    console.log(JSON.stringify({
-      request_id: request_id,
-      post_processing: "final_signal_delta_validated",
-      improvement_count: delta.improvementCount,
-      improved_dimensions: delta.flags,
-    }));
+    // NOTE: strengthenFinalExperience passes removed — the AI rewrite in Phase 2
+    // already applies ownership verbs, JD alignment, and outcome framing.
+    // The local regex-heavy repair was redundant and exceeded the 2s CPU budget.
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
