@@ -1702,11 +1702,11 @@ const Index = () => {
                               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                                 <span className="text-xl text-primary">✦</span>
                               </div>
-                              <p className="text-sm font-bold text-foreground">
-                                3 exact changes that would move your score above 70%
-                              </p>
-                              <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
-                              <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
+                               <p className="text-sm font-bold text-foreground">
+                                 See exactly what's holding your signal back
+                               </p>
+                               <p className="text-xs text-muted-foreground">You're closer than you think — the gap is positioning, not experience.</p>
+                               <p className="text-xs text-muted-foreground italic">Your full action plan shows exactly what to change and why.</p>
                               {user ? (
                                 <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
                                   Unlock Full Signal Intelligence →
