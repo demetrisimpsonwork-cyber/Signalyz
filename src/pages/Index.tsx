@@ -1188,6 +1188,11 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  // Consume one-time credit on first Pro-gated tab access
+                  if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
+                    creditConsumedRef.current = true;
+                    consumeOneTimeCredit().catch(() => {});
+                  }
                   const scrollY = window.scrollY;
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
