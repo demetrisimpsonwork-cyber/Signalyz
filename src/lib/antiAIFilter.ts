@@ -85,7 +85,10 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bI am eager to\\b/gi, "I am ready to"],
   [/\\bI am excited to\\b/gi, "I am ready to"],
 
-  // Engine-language / transfer-chain patterns
+  // Generic outcome filler — remove trailing filler phrases that add no specificity
+  [/,?\s*(?:improving|enhancing|ensuring|driving|boosting|achieving|delivering)\s+(?:overall\s+)?(?:efficiency|productivity|performance|success|excellence|value|outcomes|results|operations)\s*\.?$/gi, "."],
+  [/,?\s*optimizing\s+(?:overall\s+)?(?:workflows?|operations|processes)\s*\.?$/gi, "."],
+
   [/\\bThis translates to\\b/gi, ""],
   [/\\bwhich translates to\\b/gi, "—"],
   [/\\bThis mirrors\\b/gi, ""],
