@@ -1057,32 +1057,58 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
 /**
  * Strip domain-fabricated language from an AI-generated bullet.
  * This catches cases where the AI model itself injected industry/domain
- * terms despite prompt instructions.
+ * terms despite prompt instructions — including hyphenated compounds
+ * like "patient-focused" and phrases like "patient record management".
  */
 function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
   const resumeLower = originalResumeText.toLowerCase();
   let cleaned = bullet;
 
-  // Check each domain term — if it appears in the bullet but NOT in the resume, remove it
-  for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (!resumeLower.includes(term)) {
-      // Use word-boundary-aware replacement to remove the fabricated term
-      const escaped = escapeRegExp(term).replace(/\s+/g, "\\s+");
-      const rx = new RegExp(`\\b${escaped}\\b`, "gi");
-      if (rx.test(cleaned)) {
-        // Remove the term and clean up surrounding artifacts
-        cleaned = cleaned.replace(rx, "").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
-      }
+  // Sort terms longest-first so multi-word terms are removed before their
+  // single-word components (avoids partial removal artifacts)
+  const sortedTerms = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+
+  for (const term of sortedTerms) {
+    if (resumeLower.includes(term)) continue; // Term exists in resume — not fabrication
+
+    // Match the term even when hyphenated or used as a compound modifier
+    // e.g. "patient" matches "patient-focused", "patient record", etc.
+    const escaped = escapeRegExp(term).replace(/\s+/g, "[\\s-]+");
+    // Use a looser boundary: allow hyphen-adjacent matches
+    const rx = new RegExp(`(?:^|[\\s,;:(]|-)${escaped}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`, "gi");
+    const beforeLen = cleaned.length;
+    cleaned = cleaned.replace(rx, (match) => {
+      // Preserve leading whitespace/punctuation
+      const leadChar = match.match(/^[\s,;:(.-]/)?.[0] || "";
+      return leadChar;
+    });
+    if (cleaned.length !== beforeLen) {
+      cleaned = cleaned.replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
     }
   }
 
-  // Clean up orphaned prepositions/articles left after removal
+  // Remove garbled injection artifacts:
+  // "driving X outcomes", "driving X and Y outcomes", "aligned with X priorities"
+  // where X/Y contain only generic filler after domain term removal
   cleaned = cleaned
+    // Remove "driving [empty/filler] outcomes" patterns
+    .replace(/,?\s*driving\s+(?:and\s+)?(?:including\s+)?(?:\w{0,3}\s*)*outcomes\b\.?/gi, "")
+    // Remove "aligned with [empty/filler] priorities" patterns  
+    .replace(/,?\s*aligned\s+with\s+(?:\w{0,3}\s*)*priorities\b\.?/gi, "")
+    // Remove "supporting [empty/filler] objectives" patterns
+    .replace(/,?\s*supporting\s+(?:\w{0,3}\s*)*objectives\b\.?/gi, "")
+    // Clean up orphaned prepositions/articles
     .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
     .replace(/\s{2,}/g, " ")
     .replace(/,\s*,/g, ",")
     .replace(/\s+\./g, ".")
+    .replace(/,\s*$/, "")
     .trim();
+
+  // Ensure bullet still ends with a period
+  if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
+    cleaned += ".";
+  }
 
   return cleaned;
 }
