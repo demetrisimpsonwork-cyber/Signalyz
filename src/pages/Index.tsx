@@ -231,9 +231,10 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 function getStrengthLabel(score: number): string {
-  if (score >= 70) return "Strong";
-  if (score >= 50) return "Solid";
-  return "Weak";
+  if (score >= 70) return "Interview Range";
+  if (score >= 60) return "Strong";
+  if (score >= 40) return "Moderate";
+  return "Low Signal";
 }
 
 // ─── Director Mode Content (hard-gated) ──────────────────────────────────────
