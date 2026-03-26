@@ -5,10 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
+interface IAnswerFramework {
+  situation: string;
+  action: string;
+  result: string;
+}
+
 interface IQuestion {
   question: string;
   why_asking: string;
   signal_angle: string;
+  answer_framework?: IAnswerFramework;
 }
 
 interface InterviewIntelligenceProps {
@@ -19,12 +26,51 @@ interface InterviewIntelligenceProps {
   onUpgrade: () => void;
 }
 
+const QuestionCard = ({ q, idx, copiedIdx, onCopy }: { q: IQuestion; idx: number; copiedIdx: number | null; onCopy: (q: IQuestion, idx: number) => void }) => (
+  <div className="rounded-lg border bg-card p-5 space-y-3">
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-3">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{idx + 1}</span>
+        <p className="text-sm font-semibold text-foreground leading-snug">{q.question}</p>
+      </div>
+      <button onClick={() => onCopy(q, idx)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
+        {copiedIdx === idx ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+      </button>
+    </div>
+    <div className="pl-9 space-y-2">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Why They're Asking This</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{q.why_asking}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Angle to Hit</p>
+        <p className="text-xs font-medium text-foreground mt-0.5">{q.signal_angle}</p>
+      </div>
+      {q.answer_framework && (
+        <div className="mt-2 rounded-md bg-muted/50 border border-border/50 p-3 space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Answer Framework</p>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">S:</span> {q.answer_framework.situation}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">A:</span> {q.answer_framework.action}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">R:</span> {q.answer_framework.result}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgrade }: InterviewIntelligenceProps) => {
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const { user } = useAuth();
-  
 
   useEffect(() => {
     if (!experience || !jd) return;
@@ -42,7 +88,9 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   }, [experience, jd]);
 
   const handleCopy = async (q: IQuestion, idx: number) => {
-    const text = `QUESTION: ${q.question}\nWHY THEY'RE ASKING THIS: ${q.why_asking}\nSIGNAL ANGLE TO HIT: ${q.signal_angle}`;
+    const fw = q.answer_framework;
+    const fwText = fw ? `\nANSWER FRAMEWORK:\n  S: ${fw.situation}\n  A: ${fw.action}\n  R: ${fw.result}` : "";
+    const text = `QUESTION: ${q.question}\nWHY THEY'RE ASKING THIS: ${q.why_asking}\nSIGNAL ANGLE TO HIT: ${q.signal_angle}${fwText}`;
     await navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     toast.success("Copied to clipboard");
@@ -69,34 +117,10 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         <p className="text-xs font-medium text-foreground mt-1">These are the exact questions you'll be judged on based on your current gaps</p>
       </div>
       <div className="space-y-4">
-        {/* Show first question to all users */}
         {questions.slice(0, 1).map((q, i) => (
-          <div key={i}>
-            <div className="rounded-lg border bg-card p-5 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
-                  <p className="text-sm font-semibold text-foreground leading-snug">{q.question}</p>
-                </div>
-                <button onClick={() => handleCopy(q, i)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
-                  {copiedIdx === i ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-                </button>
-              </div>
-              <div className="pl-9 space-y-2">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Why They're Asking This</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{q.why_asking}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Angle to Hit</p>
-                  <p className="text-xs font-medium text-foreground mt-0.5">{q.signal_angle}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <QuestionCard key={i} q={q} idx={i} copiedIdx={copiedIdx} onCopy={handleCopy} />
         ))}
 
-        {/* Gate remaining questions */}
         {!isPro && questions.length > 1 && (
           <div className="rounded-lg border border-dashed bg-card p-6 text-center space-y-3">
             <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
@@ -123,31 +147,8 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
           </div>
         )}
 
-        {/* Pro users see all questions */}
         {isPro && questions.slice(1).map((q, i) => (
-          <div key={i + 1}>
-            <div className="rounded-lg border bg-card p-5 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 2}</span>
-                  <p className="text-sm font-semibold text-foreground leading-snug">{q.question}</p>
-                </div>
-                <button onClick={() => handleCopy(q, i + 1)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
-                  {copiedIdx === i + 1 ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-                </button>
-              </div>
-              <div className="pl-9 space-y-2">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Why They're Asking This</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{q.why_asking}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Angle to Hit</p>
-                  <p className="text-xs font-medium text-foreground mt-0.5">{q.signal_angle}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <QuestionCard key={i + 1} q={q} idx={i + 1} copiedIdx={copiedIdx} onCopy={handleCopy} />
         ))}
       </div>
     </div>
