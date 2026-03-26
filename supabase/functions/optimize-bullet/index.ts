@@ -832,7 +832,29 @@ For each numeric field: classify match quality, apply quality weights, use scori
 
 STRATEGIC FIXES COUNT (CRITICAL):
 interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. Each fix must be a SPECIFIC resume edit instruction — not general advice. State what to reframe, where to reframe it, and why it matters.
-ZERO FABRICATION IN STRATEGIC FIXES: NEVER suggest adding metrics, percentages, dollar amounts, team sizes, or any quantitative claim not already present in the resume. NEVER use phrases like "even an estimate", "include cost savings", "add efficiency gains", or "quantify your impact." Fixes must ONLY reframe, reposition, or restructure language the candidate already has. Good example: "Reframe your operations bullet to lead with the outcome — 'Drove vendor consolidation that cut redundant contracts' instead of 'Worked with vendors on contract management.'" Bad example: "Add a dollar figure like 'saved $50K annually'" — this is fabrication and is banned.
+
+ABSOLUTE ZERO FABRICATION IN STRATEGIC FIXES — HIGHEST PRIORITY CONSTRAINT:
+Every strategic fix must ONLY reframe, reposition, or restructure language the candidate ALREADY HAS in their resume. You are a positioning engine, not a content generator.
+
+BANNED patterns — if your fix contains ANY of these phrases or patterns, it VIOLATES this rule:
+- "include [any metric type]" — BANNED
+- "add [metrics/numbers/data/figures]" — BANNED
+- "even estimates like..." — BANNED
+- "quantify your impact" — BANNED
+- "include cost savings" — BANNED
+- "efficiency gains" — BANNED
+- "customer satisfaction metrics" — BANNED
+- "reduced [X] by [Y]%" — BANNED (unless that exact stat is in the resume)
+- "saved $[amount]" — BANNED (unless that exact figure is in the resume)
+- "team of [number]" — BANNED (unless that exact team size is in the resume)
+- Any suggestion to add, estimate, approximate, or invent ANY number, percentage, dollar amount, team size, or scope figure NOT already in the resume text — BANNED
+
+CORRECT pattern — every fix must follow this structure:
+"Reframe [specific existing bullet or phrase from the resume] to lead with [the positioning angle] — change '[current weak phrasing]' to '[repositioned version using only their existing language].'"
+
+Good: "Reframe your process improvement bullet to lead with the operational outcome you already described — 'Drove vendor consolidation that cut redundant contracts' instead of 'Worked with vendors on contract management.'"
+Bad: "Include cost savings, efficiency gains, or customer satisfaction metrics to strengthen this bullet."
+Bad: "Even estimates like 'reduced processing time by 30%' would strengthen this section."
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
