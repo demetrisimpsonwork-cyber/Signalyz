@@ -151,6 +151,12 @@ ZERO METRIC FABRICATION in signal_angle or answer_framework:
 - Example good signal_angle: "Describe the operational improvement you drove and how stakeholders responded — focus on what changed, not on inventing a number."
 - Example bad signal_angle: "Give actual numbers showing revenue impact." (NEVER do this)
 
+ZERO BRACKETED PLACEHOLDERS:
+- NEVER use bracket notation like [specific CRM platform], [your project], [Insert X], [specific tool], or any [text] pattern in any output field.
+- If a specific tool, platform, project, or detail cannot be identified from the resume, use safe generic phrasing instead.
+- Example: Instead of "[specific CRM platform]", write "the CRM systems you've used". Instead of "[your project]", write "a relevant project or initiative". Instead of "[specific metric]", write "a concrete outcome you observed".
+- This applies to ALL fields: question, why_asking, signal_angle, situation, action, and result.
+
 Return a JSON array of 5 objects with: "question", "why_asking", "signal_angle", "answer_framework" (object with "situation", "action", "result" strings)
 Return ONLY valid JSON array, no markdown.`;
         const raw = await callAI(prompt, 2000);
