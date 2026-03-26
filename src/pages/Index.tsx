@@ -1070,7 +1070,7 @@ const Index = () => {
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { title: "Multi-Layer Signal Engine", sub: "Diagnosis across every stage of the hiring pipeline.", icon: Layers },
-            { title: "Risk Projection", sub: "Where you'll face friction — recruiter through panel.", icon: Shield },
+            { title: "Hiring Pipeline Simulation", sub: "See where your resume gets filtered — at the recruiter screen, hiring manager review, and panel stage.", icon: Shield },
             { title: "Zero Fabrication", sub: "Your experience, repositioned. Never invented.", icon: LockKeyhole },
           ].map((card) => (
             <div key={card.title} className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
