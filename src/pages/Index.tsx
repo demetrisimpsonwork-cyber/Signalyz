@@ -851,7 +851,7 @@ const Index = () => {
         }));
       } catch {}
       increment();
-      if (isTrialPro) incrementTrialRun();
+      // Trial system removed — dead code purged
       // Consume one-time credit on successful alignment if applicable
       if (hasOneTimeCredit && !isPro && !isAdmin) {
         try { await consumeOneTimeCredit(); } catch {}
