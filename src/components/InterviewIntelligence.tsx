@@ -122,6 +122,15 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         ))}
 
         {!isPro && questions.length > 1 && (
+          <button
+            onClick={onUpgrade}
+            className="w-full text-center text-sm font-medium py-2.5 rounded-lg transition-colors"
+            style={{ color: "hsl(174, 62%, 47%)", backgroundColor: "hsl(174, 62%, 47%, 0.08)" }}
+          >
+            See all 5 interview questions tailored to your gaps → Unlock Full Signal Intelligence
+          </button>
+        )}
+        {!isPro && questions.length > 1 && (
           <div className="rounded-lg border border-dashed bg-card p-6 text-center space-y-3">
             <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
               <span className="text-lg text-primary">✦</span>
