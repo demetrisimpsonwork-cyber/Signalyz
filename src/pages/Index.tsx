@@ -1671,7 +1671,7 @@ const Index = () => {
                           <div className="pointer-events-none select-none blur-sm opacity-40 p-5 space-y-4">
                             <div className="space-y-1">
                               <h3 className="text-sm font-semibold tracking-tight text-foreground">Your Signal Action Plan</h3>
-                              <p className="text-xs text-muted-foreground">Do these 3 things → move above 70%</p>
+                              <p className="text-xs text-muted-foreground">Prioritized actions to strengthen your signal</p>
                             </div>
                             <ol className="space-y-2">
                               {[1, 2, 3].map((i) => (
