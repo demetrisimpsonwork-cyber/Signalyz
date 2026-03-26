@@ -1661,21 +1661,102 @@ function repairSignalBullet(
   bullet = ensureJdAlignment(original, bullet, jdModel, aggressive, originalResumeText);
   bullet = ensureOutcomeFraming(original, bullet, aggressive);
 
-  // Final cleanup: remove redundant phrase doubling and garbled artifacts
-  bullet = bullet
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+,/g, ",")
-    .replace(/,\s*,/g, ",")
-    .replace(/\s+\./g, ".")
-    // Remove duplicated multi-word phrases (e.g., "improvement methodologies and improvement methodologies")
-    .replace(/\b(\w{4,}\s+\w{4,})\b(?:.*?\b\1\b)/gi, "$1")
-    // Capitalize first letter of bullet if lowercase
-    .trim();
+  // Final cleanup: deduplication, fragment removal, sentence integrity
+  bullet = cleanBulletArtifacts(bullet);
+
   if (bullet.length > 0 && /^[a-z]/.test(bullet)) {
     bullet = bullet.charAt(0).toUpperCase() + bullet.slice(1);
   }
   return bullet;
 }
+
+/**
+ * Post-generation bullet cleanup:
+ * 1. Remove repeated phrase segments
+ * 2. Remove truncated/incomplete trailing words
+ * 3. Enforce sentence boundary integrity
+ */
+function cleanBulletArtifacts(bullet: string): string {
+  if (!bullet || bullet.length < 10) return bullet;
+
+  // ── 1. Remove duplicated sentence fragments ──
+  // Catches "managed vendor contracts, managed vendor contracts"
+  // and "driving operational outcomes driving operational outcomes"
+  // Match any 4+ word sequence that repeats (with optional punctuation between)
+  bullet = bullet.replace(
+    /\b((?:\w+\s+){3,}\w+)[,;.\s]+\1\b/gi,
+    "$1"
+  );
+
+  // Catch duplicated 2-3 word phrases: "cost savings and cost savings"
+  bullet = bullet.replace(
+    /\b((?:\w{4,}\s+){1,2}\w{4,})\b(?:[,\s]+(?:and|or|while|,)\s+)\1\b/gi,
+    "$1"
+  );
+
+  // ── 2. Remove truncated trailing words ──
+  // Detect words that look cut off: end without vowel pattern or are very short
+  // fragments after the last period/comma
+  // e.g. "...improving translati" → "...improving"
+  const trailingFragment = bullet.match(/\s+([a-zA-Z]{2,})\s*$/);
+  if (trailingFragment && !/[.!?]$/.test(bullet)) {
+    const lastWord = trailingFragment[1].toLowerCase();
+    // Check if it looks truncated: no common English ending and no vowel in last 2 chars
+    const looksComplete = /(?:ing|tion|ment|ness|ance|ence|ity|ous|ive|ble|ful|less|ly|ed|er|es|al|ry|ty|cy|or|on|an|en|ar|ts|ds|ms|ns|ps|rs|ss|ws|ks|gs|bs|is|us|as|ay|ey|ow|ew|aw)$/i.test(lastWord);
+    if (!looksComplete && lastWord.length <= 8) {
+      bullet = bullet.slice(0, bullet.length - trailingFragment[0].length);
+    }
+  }
+
+  // ── 3. Enforce sentence boundary on excessive length ──
+  // If bullet > 400 chars, truncate at nearest sentence/clause boundary
+  const MAX_BULLET_LENGTH = 400;
+  if (bullet.length > MAX_BULLET_LENGTH) {
+    // Find last sentence boundary (. ! ?) before the limit
+    let cutIdx = -1;
+    for (let i = MAX_BULLET_LENGTH; i >= MAX_BULLET_LENGTH * 0.6; i--) {
+      if (bullet[i] === "." || bullet[i] === "!" || bullet[i] === "?") {
+        cutIdx = i;
+        break;
+      }
+    }
+    // Fallback: find last clause boundary (, ; —) before the limit
+    if (cutIdx === -1) {
+      for (let i = MAX_BULLET_LENGTH; i >= MAX_BULLET_LENGTH * 0.6; i--) {
+        if (bullet[i] === "," || bullet[i] === ";" || bullet[i] === "—") {
+          cutIdx = i;
+          break;
+        }
+      }
+    }
+    if (cutIdx > 0) {
+      bullet = bullet.slice(0, cutIdx + 1).trim();
+    } else {
+      // Hard cut at last complete word before limit
+      const hardCut = bullet.slice(0, MAX_BULLET_LENGTH);
+      const lastSpace = hardCut.lastIndexOf(" ");
+      if (lastSpace > MAX_BULLET_LENGTH * 0.6) {
+        bullet = hardCut.slice(0, lastSpace).trim();
+      }
+    }
+  }
+
+  // ── 4. General whitespace/punctuation cleanup ──
+  bullet = bullet
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+\./g, ".")
+    .replace(/\.\./g, ".")
+    .replace(/,\s*$/, "")
+    .trim();
+
+  // Ensure ends with period
+  if (bullet.length > 0 && !/[.!?]$/.test(bullet)) {
+    bullet += ".";
+  }
+
+  return bullet;
 
 function strengthenFinalExperience(
   experience: any[],
