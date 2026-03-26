@@ -217,14 +217,15 @@ You MUST integrate JD-specific vocabulary into at least 4 bullets PER ROLE. This
 - Example: If JD says "drive operational efficiency" and the original bullet says "Improved processes to reduce wait times" → calibrate to "Drove operational efficiency by redesigning queue management processes, reducing average wait times by 30% across all service channels."
 - The mirrored vocabulary must feel organic, not forced. Integrate it as context, scope, or outcome framing.
 
-RULE 3 — OUTCOME/IMPACT MANDATE:
-Every single calibrated bullet MUST contain at least one outcome term from Signal 3 above. No bullet may end with just an action description.
+RULE 3 — OUTCOME/IMPACT HANDLING:
+Bullets SHOULD contain outcome framing when possible, but NEVER use generic filler phrases.
 - If the original has a metric → preserve it verbatim and ADD outcome framing context (e.g., "15% reduction" → "reduced resolution time by 15%, directly improving customer retention metrics").
-- If the original lacks a metric → add the closest HONEST scope/outcome signal:
-  * Scale: team size, number of accounts, volume of transactions, geographic scope
-  * Stakeholders: who benefited (internal teams, clients, executives, end users)
-  * Operational effect: "reducing manual effort", "enabling the team to handle increased volume", "eliminating compliance gaps"
-  * Business framing: "driving department-wide cost savings", "improving quarterly performance", "achieving consistent SLA compliance"
+- If the original lacks a metric → infer a CONTEXT-AWARE outcome that logically follows from the action described:
+  * "Reviewed monthly reports" → "Reviewed monthly reports to ensure accuracy and completeness"
+  * "Coordinated with vendors" → "Coordinated with vendors to align delivery timelines with project milestones"
+  * The outcome MUST be logically derivable from the bullet content — not a generic phrase bolted on.
+- NEVER append these generic filler phrases: "improved efficiency", "enhanced productivity", "streamlined operations", "driving results", "boosting performance", "ensuring success", "optimizing workflows", "delivering value", "achieving operational excellence".
+- If NO context-aware outcome can be honestly inferred from the bullet, LEAVE THE BULLET UNCHANGED rather than appending filler.
 - NEVER fabricate specific numbers. Use honest contextual framing: "across multiple departments", "for a portfolio of enterprise accounts", "within a high-volume operational environment".
 
 RULE 4 — PASSIVE ELIMINATION (MANDATORY):
