@@ -1513,9 +1513,7 @@ const Index = () => {
                         >
                           {animatedScore}%
                         </span>
-                        {result.alignment_confidence_level && (
-                          <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
-                        )}
+                        <span className="text-sm font-medium text-muted-foreground">{getStrengthLabel(displayScore)}</span>
                         {resultRunType === "calibrated" && originalBaselineScore !== null && originalBaselineScore !== displayScore && (
                           <span className="text-sm font-semibold tabular-nums">
                             <span className="text-muted-foreground">{originalBaselineScore}% → {displayScore}%</span>
@@ -1787,7 +1785,7 @@ const Index = () => {
                             score={result.match_score}
                             alignmentNotes={result.alignment_notes}
                             gapSuggestions={result.gap_suggestions}
-                            confidenceLevel={result.alignment_confidence_level}
+                            confidenceLevel={getStrengthLabel(result.match_score)}
                             inferredRoleTitle={result.inferred_role_title}
                             isPro={effectiveIsPro}
                             isAuthenticated={!!user}

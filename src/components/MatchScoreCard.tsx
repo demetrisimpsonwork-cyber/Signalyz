@@ -49,7 +49,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
   const hasRealBreakdown = !!scoringBreakdown;
 
   const handleCopy = async () => {
-    const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
+    const text = `Match Score: ${score}% — ${config.label}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success("Copied to clipboard");
@@ -124,7 +124,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
       </div>
 
       <p className={`mt-1 text-xs font-medium ${config.accent}`}>
-        {confidenceLevel || config.label}
+        {config.label}
       </p>
       <p className="mt-0.5 text-xs text-muted-foreground">Weighted employer priority alignment</p>
     </div>
