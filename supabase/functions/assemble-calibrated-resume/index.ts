@@ -1049,6 +1049,9 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "osha","safety standards",
 ]);
 
+// Pre-sorted longest-first for efficient domain fabrication stripping
+const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+
 /**
  * Returns true when `candidate` contains a domain / industry term that does
  * NOT appear anywhere in the candidate's original resume.  Injecting such a
@@ -1083,9 +1086,8 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
   const resumeLower = originalResumeText.toLowerCase();
   let cleaned = bullet;
 
-  // Sort terms longest-first so multi-word terms are removed before their
-  // single-word components (avoids partial removal artifacts)
-  const sortedTerms = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+  // Use module-level pre-sorted array (longest-first)
+  const sortedTerms = SORTED_DOMAIN_TERMS;
 
   for (const term of sortedTerms) {
     if (resumeLower.includes(term)) continue; // Term exists in resume — not fabrication
@@ -1776,12 +1778,13 @@ async function rewriteExperienceBullets(
   requestId: string,
   rawJd?: string,
   originalResumeText = "",
+  prebuiltJdModel?: ReturnType<typeof buildSignalJdModel>,
 ): Promise<any[]> {
   if (experience.length === 0) return experience;
 
-  // Prefer raw JD text for phrase extraction; fall back to signal labels
+  // Reuse pre-built model if available
   const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
-  const jdModel = buildSignalJdModel(jdSource);
+  const jdModel = prebuiltJdModel || buildSignalJdModel(jdSource);
 
   // Extract top JD phrases for explicit injection instruction
   const topPhrases = [...jdModel.bigrams.slice(0, 8), ...jdModel.trigrams.slice(0, 5)];
@@ -1865,7 +1868,7 @@ Return ONLY valid JSON array:
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
-      return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
+      return experience; // Skip post-processing — caller handles it
     }
 
     const data = await response.json();
@@ -1873,19 +1876,15 @@ Return ONLY valid JSON array:
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
 
-    const merged = experience.map((role: any, roleIndex: number) => {
+    return experience.map((role: any, roleIndex: number) => {
       const aiRole = Array.isArray(parsed) ? parsed[roleIndex] || {} : {};
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
-        // Always preserve the candidate's ORIGINAL company/title/dates — never
-        // allow the AI to substitute industry or employer context from the JD.
-        // Use explicit undefined check (not falsy) since empty string is valid original data.
         company: role.company !== undefined && role.company !== null ? role.company : (aiRole?.company || ""),
         title: role.title !== undefined && role.title !== null ? role.title : (aiRole?.title || ""),
         dates: role.dates !== undefined && role.dates !== null ? role.dates : (aiRole?.dates || ""),
         bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
           let aiBullet = aiBullets[bulletIndex] || originalBullet;
-          // Strip any domain/industry terms the AI fabricated
           if (originalResumeText) {
             aiBullet = stripDomainFabricationFromBullet(aiBullet, originalResumeText);
           }
@@ -1893,12 +1892,10 @@ Return ONLY valid JSON array:
         }),
       };
     });
-
-    return strengthenFinalExperience(merged, experience, jdModel, false, originalResumeText);
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
-    return strengthenFinalExperience(experience, experience, jdModel, false, originalResumeText);
+    return experience; // Skip post-processing — caller handles it
   }
 }
 
@@ -1954,20 +1951,23 @@ serve(async (req) => {
     }
     console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars, ${structure.core_competencies.length} competencies`);
 
-    // ── Phase 2: Sequential focused API calls ──
-    console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
+    // ── Build JD model ONCE for reuse across all phases ──
     const rawJdText = typeof jd === "string" ? jd.trim() : undefined;
-    const rewrittenSummary = await generateSummary(
-      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
-    );
+    const jdSource = rawJdText || extractJDSignals(signalContext || {});
+    const jdModel = buildSignalJdModel(jdSource);
 
-    console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
-    const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || ""
-    );
+    // ── Phase 2: PARALLEL focused API calls ──
+    console.log(`[assemble] [${request_id}] Phase 2: Rewriting summary + experience (parallel)`);
+    const [rewrittenSummary, rewrittenExperience] = await Promise.all([
+      generateSummary(
+        structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
+      ),
+      rewriteExperienceBullets(
+        structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || "", jdModel
+      ),
+    ]);
 
-    // ── Merge results and validate against the persisted final output ──
-    // Strip domain fabrication from the AI-generated summary
+    // ── Single post-processing pass with pre-built jdModel ──
     const cleanedSummary = originalResume
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
@@ -1978,14 +1978,32 @@ serve(async (req) => {
       experience: rewrittenExperience,
     });
 
-    const result = enforceFinalSignalDelta(
-      normalizedResult,
+    // Single strengthening pass using the pre-built jdModel
+    const strengthened = {
+      ...normalizedResult,
+      experience: strengthenFinalExperience(normalizedResult.experience, structure.experience, jdModel, false, originalResume || ""),
+    };
+
+    const delta = countImprovedDimensions(
       originalResume || structuredResumeToText({ summary: structure.summary, experience: structure.experience }),
-      structure.experience,
-      signalContext || {},
-      request_id,
-      rawJdText,
+      structuredResumeToText(strengthened),
+      jdModel,
     );
+
+    let result = strengthened;
+    if (delta.improvementCount <= 1 && countRepairOpportunities(structure.experience, jdModel) >= 2) {
+      result = {
+        ...strengthened,
+        experience: strengthenFinalExperience(strengthened.experience, structure.experience, jdModel, true, originalResume || ""),
+      };
+    }
+
+    console.log(JSON.stringify({
+      request_id: request_id,
+      post_processing: "final_signal_delta_validated",
+      improvement_count: delta.improvementCount,
+      improved_dimensions: delta.flags,
+    }));
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
