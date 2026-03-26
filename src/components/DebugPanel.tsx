@@ -162,10 +162,10 @@ function DailyLimitCard() {
       {user ? (
         <Button
           size="sm"
-          className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-          onClick={() => initiateCheckout()}
+          className="w-full gap-2"
+          asChild
         >
-          See My Exact Fix — $19/month
+          <a href="/pricing">Unlock Full Signal Intelligence →</a>
         </Button>
       ) : (
         <Button size="sm" className="w-full gap-2" asChild>

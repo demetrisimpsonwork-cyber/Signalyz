@@ -128,6 +128,7 @@ const Navbar = () => {
         onClose={() => setShowUpgrade(false)}
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
+        hasOneTimeCredit={hasOneTimeCredit}
       />
     </>
   );

@@ -163,24 +163,4 @@ const UpgradeModal = ({
   );
 };
 
-const TrialProgress = ({ used, limit }: { used: number; limit: number }) => {
-  const pct = Math.min((used / limit) * 100, 100);
-  return (
-    <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2.5 space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Pro Trial</span>
-        <span className="text-xs text-muted-foreground">
-          {used} of {limit} runs used
-        </span>
-      </div>
-      <div className="h-0.5 w-full rounded-full bg-border overflow-hidden">
-        <div
-          className="h-full rounded-full bg-primary/60 transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
 export default UpgradeModal;
