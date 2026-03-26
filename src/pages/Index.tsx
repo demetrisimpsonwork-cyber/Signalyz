@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
-import { initiateCheckout } from "@/utils/stripe";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
@@ -43,7 +42,6 @@ import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
@@ -373,18 +371,19 @@ const Index = () => {
   const { user } = useAuth();
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
-  const {
-    trialStarted,
-    trialRunsUsed,
-    trialExhausted,
-    isTrialPro,
-    startTrial,
-    incrementTrialRun,
-    TRIAL_LIMIT,
-  } = useReverseTrial();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro || hasOneTimeCredit;
+  const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle ?tab= query param for deep-linking (e.g. /position redirect)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "director" || tabParam === "alignment" || tabParam === "calibrated" || tabParam === "coverletter" || tabParam === "linkedin") {
+      setMode(tabParam);
+      searchParams.delete("tab");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
@@ -852,7 +851,7 @@ const Index = () => {
         }));
       } catch {}
       increment();
-      if (isTrialPro) incrementTrialRun();
+      // Trial system removed — dead code purged
       // Consume one-time credit on successful alignment if applicable
       if (hasOneTimeCredit && !isPro && !isAdmin) {
         try { await consumeOneTimeCredit(); } catch {}
@@ -1022,13 +1021,13 @@ const Index = () => {
             },
             {
               was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
-              now: "Architected procedural enhancements — intake guides and clarification protocols — that optimized client issue routing, significantly reducing repeat inquiries and elevating first-contact resolution efficiency.",
-              signal: "Strategic authorship + measurable outcome framing",
+              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution rates.",
+              signal: "Process ownership + outcome clarity",
             },
             {
               was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
-              now: "Advised executive and institutional clientele on complex procedural and regulatory matters, distilling intricate information into actionable guidance that upheld brand standards and compliance.",
-              signal: "Client elevation + brand alignment",
+              now: "Guided executive and institutional clients through complex procedural and regulatory questions — translating requirements into clear, actionable next steps.",
+              signal: "Client seniority + advisory framing",
             },
           ].map((card, i) => (
             <div key={i} className="rounded-xl border bg-card p-4 space-y-3 shadow-sm" style={{ borderRadius: "12px" }}>
@@ -1273,7 +1272,7 @@ const Index = () => {
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); }}
+                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
@@ -1305,14 +1304,14 @@ const Index = () => {
                     <div className="w-full space-y-2">
                       {user ? (
                         <>
-                          <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            Fix Your Score → $9
-                          </Button>
-                           <p className="text-xs text-muted-foreground">
-                            {hasConsumedOneTimeCredit
-                              ? "Your Single Report has been used. See your exact fix for unlimited runs."
-                              : "You've used your 3 free analyses today."}
-                           </p>
+                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                             Unlock Full Signal Intelligence →
+                           </Button>
+                            <p className="text-xs text-muted-foreground">
+                             {hasConsumedOneTimeCredit
+                               ? "Your Single Report has been used. Upgrade for unlimited analyses."
+                               : "You've used your 3 free analyses today."}
+                            </p>
                            
                         </>
                       ) : (
@@ -1389,13 +1388,13 @@ const Index = () => {
                           </p>
                         </div>
                       </div>
-                      {user ? (
+                       {user ? (
                          <Button
                           size="sm"
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-                          onClick={() => initiateCheckout()}
+                          onClick={() => setShowUpgrade(true)}
                         >
-                          Fix Your Score → $9
+                          Unlock Full Signal Intelligence →
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
@@ -1472,12 +1471,9 @@ const Index = () => {
                     <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
                       <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
                       <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
-                      {!effectiveIsPro && (
-                        <>
-                          <p className="text-xs text-destructive/80 italic">Leaving now means applying without fixing the gaps identified here.</p>
-                          <p className="text-xs font-medium text-destructive/70">This analysis won't be saved unless you continue.</p>
-                        </>
-                      )}
+                       {!effectiveIsPro && (
+                         <p className="text-xs text-muted-foreground">Upgrade to save and access your full signal analysis anytime.</p>
+                       )}
                     </div>
 
                     {/* Professional Signal Diagnosis headline */}
@@ -1875,12 +1871,9 @@ const Index = () => {
       <UpgradeModal
         open={showUpgrade}
         onClose={() => setShowUpgrade(false)}
-        trialStarted={trialStarted}
-        trialRunsUsed={trialRunsUsed}
-        trialLimit={TRIAL_LIMIT}
-        onStartTrial={!trialStarted && !trialExhausted ? startTrial : undefined}
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
+        hasOneTimeCredit={hasOneTimeCredit}
       />
 
       {/* Session Recovery Modal */}

@@ -14,34 +14,23 @@ import { useEffect } from "react";
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
-  trialStarted?: boolean;
-  trialRunsUsed?: number;
-  trialLimit?: number;
-  onStartTrial?: () => void;
   isAuthenticated?: boolean;
   hasConsumedOneTimeCredit?: boolean;
+  hasOneTimeCredit?: boolean;
 }
 
 const UpgradeModal = ({
   open,
   onClose,
-  trialStarted = false,
-  trialRunsUsed = 0,
-  trialLimit = 3,
-  onStartTrial,
   isAuthenticated = true,
   hasConsumedOneTimeCredit = false,
+  hasOneTimeCredit = false,
 }: UpgradeModalProps) => {
 
   // Track paywall view
   useEffect(() => {
     if (open) trackEvent("paywall_viewed");
   }, [open]);
-
-  const handleStartTrial = () => {
-    onStartTrial?.();
-    onClose();
-  };
 
   if (!isAuthenticated) {
     return (
@@ -122,9 +111,9 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-3">
-            {!hasConsumedOneTimeCredit && (
+            {hasOneTimeCredit && !hasConsumedOneTimeCredit && (
               <p className="text-xs text-center text-primary/80 font-medium">
-                You still have 1 single report available.
+                You have 1 unused report credit available.
               </p>
             )}
 
@@ -171,26 +160,6 @@ const UpgradeModal = ({
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
-
-const TrialProgress = ({ used, limit }: { used: number; limit: number }) => {
-  const pct = Math.min((used / limit) * 100, 100);
-  return (
-    <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2.5 space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Pro Trial</span>
-        <span className="text-xs text-muted-foreground">
-          {used} of {limit} runs used
-        </span>
-      </div>
-      <div className="h-0.5 w-full rounded-full bg-border overflow-hidden">
-        <div
-          className="h-full rounded-full bg-primary/60 transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
   );
 };
 

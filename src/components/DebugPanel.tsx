@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Bug, Copy, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { initiateCheckout } from "@/utils/stripe";
+
 import { useAuth } from "@/hooks/useAuth";
 
 export interface DebugInfo {
@@ -162,10 +162,10 @@ function DailyLimitCard() {
       {user ? (
         <Button
           size="sm"
-          className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-          onClick={() => initiateCheckout()}
+          className="w-full gap-2"
+          asChild
         >
-          See My Exact Fix — $19/month
+          <a href="/pricing">Unlock Full Signal Intelligence →</a>
         </Button>
       ) : (
         <Button size="sm" className="w-full gap-2" asChild>
