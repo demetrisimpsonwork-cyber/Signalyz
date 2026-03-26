@@ -348,6 +348,9 @@ const Index = () => {
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
     try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
   });
+  const [originalBaselineScore, setOriginalBaselineScore] = useState<number | null>(() => {
+    try { const v = localStorage.getItem("signalyz_original_baseline_score"); return v ? Number(v) : null; } catch { return null; }
+  });
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -782,13 +785,18 @@ const Index = () => {
       const isCalibratedRun = calibratedRunPendingRef.current;
       calibratedRunPendingRef.current = false; // consume immediately — one-shot
       setIsResumeFromCalibrated(false); // reset state as well
-      // Capture the original resume baseline on the first non-calibrated run
+      // Capture the original resume baseline and its score on the first non-calibrated run
       if (!isCalibratedRun && !originalResumeBeforeCalibration) {
         setOriginalResumeBeforeCalibration(bulletWithContext);
         try { localStorage.setItem("signalyz_original_resume_baseline", bulletWithContext); } catch {}
       }
       const runType = isCalibratedRun ? "calibrated" as const : "original" as const;
       const detScore = computeDeterministicScore(bulletWithContext, normJd.text, runType, isCalibratedRun ? (originalResumeBeforeCalibration ?? undefined) : undefined);
+      // Persist baseline score on first original run
+      if (!isCalibratedRun && originalBaselineScore === null) {
+        setOriginalBaselineScore(detScore.finalScore);
+        try { localStorage.setItem("signalyz_original_baseline_score", String(detScore.finalScore)); } catch {}
+      }
       // Clear previous state now that we have a successful new result
       setDirectorResult(null);
       setSessionResumeAssembled(false);
@@ -1253,7 +1261,7 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
-                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {}
+                      setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
@@ -1267,14 +1275,14 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
+                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
@@ -1507,6 +1515,15 @@ const Index = () => {
                         </span>
                         {result.alignment_confidence_level && (
                           <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
+                        )}
+                        {resultRunType === "calibrated" && originalBaselineScore !== null && originalBaselineScore !== displayScore && (
+                          <span className="text-sm font-semibold tabular-nums">
+                            <span className="text-muted-foreground">{originalBaselineScore}% → {displayScore}%</span>
+                            {" "}
+                            <span className={displayScore > originalBaselineScore ? "text-green-600 dark:text-green-400" : "text-destructive"}>
+                              ({displayScore > originalBaselineScore ? "+" : ""}{displayScore - originalBaselineScore})
+                            </span>
+                          </span>
                         )}
                       </div>
                       {displayScore < 70 && (
