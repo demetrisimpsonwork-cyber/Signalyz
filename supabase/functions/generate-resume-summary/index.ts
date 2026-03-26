@@ -351,14 +351,20 @@ CRITICAL:
     // ═══ POST-PROCESSING: Signal-Aware Bullet Validation & Repair ═══
 
     const OWNERSHIP_VERBS = new Set([
-      "led","drove","owned","spearheaded","architected","orchestrated","directed","launched",
-      "built","scaled","implemented","executed","transformed","championed","governed","delivered",
-      "established","redesigned","pioneered","devised","instituted","restructured","consolidated",
-      "mobilized","accelerated","elevated","oversaw","administered","standardized","created",
+      "led","drove","owned","architected","directed","launched",
+      "built","scaled","implemented","executed","transformed","governed","delivered",
+      "established","redesigned","devised","instituted","restructured","consolidated",
+      "accelerated","elevated","oversaw","administered","standardized","created",
       "developed","designed","automated","negotiated","facilitated","optimized","revamped",
       "formulated","engineered","deployed","maintained","resolved","streamlined","trained",
       "mentored","supervised",
     ]);
+
+    const BANNED_VERBS_SET = new Set(["leveraged","spearheaded","championed","pioneered","mobilized","orchestrated"]);
+    const BANNED_VERB_REPLACEMENTS: Record<string,string> = {
+      "leveraged":"used", "spearheaded":"led", "championed":"drove",
+      "pioneered":"built", "mobilized":"coordinated", "orchestrated":"coordinated",
+    };
 
     const OUTCOME_TERMS = new Set([
       "increased","reduced","improved","grew","saved","delivered","achieved","exceeded",
