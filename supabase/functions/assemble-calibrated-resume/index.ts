@@ -1008,6 +1008,11 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "freight","supply chain","procurement","wholesale","fulfillment",
   "factory","plant operations","assembly line","production floor",
   "clinical","medical","patient care","nursing","pharmacy",
+  "patient","patient-focused","patient scheduling","patient accounts",
+  "ehr","electronic health records","health records","hipaa",
+  "medical billing","medical office","credentialing","licensing",
+  "prior authorization","insurance verification","cpt","icd-10",
+  "epic","cerner","clinic","hospital","physician","dental",
   "hotel","restaurant","food and beverage","catering",
   "dealership","showroom","sales floor",
   "call center","contact center","help desk",
@@ -1021,6 +1026,8 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "distribution company","manufacturing company","sales support",
   "warehouse environment","manufacturing environment",
   "distribution center","fulfillment center",
+  "production line","shop floor","lean manufacturing",
+  "osha","safety standards",
 ]);
 
 /**
