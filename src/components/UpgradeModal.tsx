@@ -14,12 +14,9 @@ import { useEffect } from "react";
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
-  trialStarted?: boolean;
-  trialRunsUsed?: number;
-  trialLimit?: number;
-  onStartTrial?: () => void;
   isAuthenticated?: boolean;
   hasConsumedOneTimeCredit?: boolean;
+  hasOneTimeCredit?: boolean;
 }
 
 const UpgradeModal = ({
