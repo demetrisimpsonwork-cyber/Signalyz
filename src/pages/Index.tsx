@@ -1516,6 +1516,15 @@ const Index = () => {
                         {result.alignment_confidence_level && (
                           <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
                         )}
+                        {resultRunType === "calibrated" && originalBaselineScore !== null && originalBaselineScore !== displayScore && (
+                          <span className="text-sm font-semibold tabular-nums">
+                            <span className="text-muted-foreground">{originalBaselineScore}% → {displayScore}%</span>
+                            {" "}
+                            <span className={displayScore > originalBaselineScore ? "text-green-600 dark:text-green-400" : "text-destructive"}>
+                              ({displayScore > originalBaselineScore ? "+" : ""}{displayScore - originalBaselineScore})
+                            </span>
+                          </span>
+                        )}
                       </div>
                       {displayScore < 70 && (
                         <p className="text-sm font-semibold text-destructive">Your current signal is below typical interview range (70%+)</p>
