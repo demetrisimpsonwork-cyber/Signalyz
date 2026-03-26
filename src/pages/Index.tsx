@@ -1513,9 +1513,7 @@ const Index = () => {
                         >
                           {animatedScore}%
                         </span>
-                        {result.alignment_confidence_level && (
-                          <span className="text-sm font-medium text-muted-foreground">{result.alignment_confidence_level}</span>
-                        )}
+                        <span className="text-sm font-medium text-muted-foreground">{getStrengthLabel(displayScore)}</span>
                         {resultRunType === "calibrated" && originalBaselineScore !== null && originalBaselineScore !== displayScore && (
                           <span className="text-sm font-semibold tabular-nums">
                             <span className="text-muted-foreground">{originalBaselineScore}% → {displayScore}%</span>
