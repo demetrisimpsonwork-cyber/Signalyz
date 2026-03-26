@@ -2086,12 +2086,25 @@ serve(async (req) => {
 
 // Post-process: remove placeholders and enforce bullet caps
 function cleanBullet(bullet: string): string {
-  return bullet
+  let b = bullet
     .replace(/\[Insert\s+[^\]]*\]/gi, "")
-    .replace(/\s{2,}/g, " ")
-    .replace(/,\s*,/g, ",")
-    .replace(/\s+\./g, ".")
+    .replace(/\[[^\]]{1,60}\]/g, "")        // strip any remaining bracketed placeholders
+    .replace(/\s{2,}/g, " ")                 // collapse double+ spaces
+    .replace(/,\s*,+/g, ",")                // collapse double+ commas
+    .replace(/\.\s*,/g, ".")                // fix ". ," -> "."
+    .replace(/,\s*\./g, ".")                // fix ", ." -> "."
+    .replace(/\s+\./g, ".")                 // fix " ." -> "."
+    .replace(/\s+,/g, ",")                  // fix " ," -> ","
+    .replace(/—\s*,/g, "—")                // fix "— ," -> "—"
+    .replace(/,\s*—/g, " —")              // fix ", —" -> " —"
+    .replace(/—\s*\./g, ".")               // fix "— ." -> "."
+    .replace(/^\s*[,.\-—]+\s*/g, "")        // strip leading punctuation artifacts
+    .replace(/\s*[,\-—]+\s*$/g, "")         // strip trailing comma/dash artifacts
+    .replace(/\s{2,}/g, " ")                 // final double-space pass
     .trim();
+  // Ensure ends with period if non-empty
+  if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
+  return b;
 }
 
 function normalizeResult(assembled: any) {
