@@ -375,7 +375,7 @@ const Index = () => {
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
   const [inputTruncated, setInputTruncated] = useState(false);
   const creditConsumedRef = useRef(false);
-  const lastClickRef2 = useRef(0); // renamed to avoid conflict below
+  const lastClickRef = useRef(0);
 
   const { user } = useAuth();
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
