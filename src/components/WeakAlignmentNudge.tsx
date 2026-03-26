@@ -27,7 +27,7 @@ const WeakAlignmentNudge = ({ additionalContext, onContextChange, onRerun }: Wea
       {expanded && (
         <div className="space-y-2 mt-2">
           <Textarea
-            placeholder="e.g. Used Jira for sprint planning, improved velocity by 20%, led 8-person team..."
+            placeholder="e.g. Used Salesforce for case tracking, led onboarding for new team members, managed vendor relationships across multiple departments..."
             value={additionalContext}
             onChange={(e) => onContextChange(e.target.value)}
             rows={3}
