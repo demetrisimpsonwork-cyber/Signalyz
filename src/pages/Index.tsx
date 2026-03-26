@@ -374,6 +374,7 @@ const Index = () => {
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
   const [inputTruncated, setInputTruncated] = useState(false);
+  const creditConsumedRef = useRef(false);
   const lastClickRef = useRef(0);
 
   const { user } = useAuth();
@@ -878,11 +879,7 @@ const Index = () => {
         }));
       } catch {}
       increment();
-      // Trial system removed — dead code purged
-      // Consume one-time credit on successful alignment if applicable
-      if (hasOneTimeCredit && !isPro && !isAdmin) {
-        try { await consumeOneTimeCredit(); } catch {}
-      }
+      // One-time credit consumption moved to Pro-gated tab access
       if (user) {
         try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
@@ -1158,6 +1155,11 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  // Consume one-time credit on first Pro-gated tab access
+                  if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
+                    creditConsumedRef.current = true;
+                    consumeOneTimeCredit().catch(() => {});
+                  }
                   const scrollY = window.scrollY;
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
@@ -1186,6 +1188,11 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  // Consume one-time credit on first Pro-gated tab access
+                  if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
+                    creditConsumedRef.current = true;
+                    consumeOneTimeCredit().catch(() => {});
+                  }
                   const scrollY = window.scrollY;
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
