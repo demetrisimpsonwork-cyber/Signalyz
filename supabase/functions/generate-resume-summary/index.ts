@@ -407,23 +407,39 @@ CRITICAL:
           }
           // Also strip "Responsible for", "Utilized", "Leveraged", "Ensured", "Focused on", "Served as"
           cleaned = cleaned.replace(/^(responsible\s+for|utilized|leveraged|ensured|focused\s+on|served\s+as|contributed\s+to|worked\s+on|played\s+a\s+role\s+in)\s*/i, "");
-          // Pick a contextual verb based on bullet content
-          const lc = cleaned.toLowerCase();
-          let verb = "Executed";
-          if (/team|staff|report|direct/i.test(lc)) verb = "Directed";
-          else if (/develop|build|creat|design/i.test(lc)) verb = "Developed";
-          else if (/improv|optimi|efficien|reduc/i.test(lc)) verb = "Optimized";
-          else if (/manag|oversee|supervis|coordinat/i.test(lc)) verb = "Managed";
-          else if (/implement|deploy|launch|roll/i.test(lc)) verb = "Implemented";
-          else if (/analy|assess|evaluat|review/i.test(lc)) verb = "Analyzed";
-          else if (/establish|set up|initiat|found/i.test(lc)) verb = "Established";
-          else if (/train|mentor|coach|onboard/i.test(lc)) verb = "Trained";
-          else if (/automat|script|program|integrat/i.test(lc)) verb = "Automated";
-          else if (/resolv|troubleshoot|fix|debug/i.test(lc)) verb = "Resolved";
-          // Capitalize first letter of remaining text
-          const remainder = cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
-          bullet = `${verb} ${remainder}`;
-          repairCount++;
+
+          // Check if cleaned text already starts with an ownership verb — use it directly
+          const cleanedFirst = cleaned.split(/\s/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+          if (OWNERSHIP_VERBS.has(cleanedFirst)) {
+            bullet = cleaned;
+            repairCount++;
+          } else {
+            // Check if cleaned starts with ANY common verb — replace it instead of prepending
+            const isVerbLike = /^[a-z]+(ed|ing|ate|ize|ify|ise)$/i.test(cleanedFirst) && cleanedFirst.length >= 4;
+            const COMMON_VERBS = new Set(["execute","serve","handle","engage","provide","ensure","focus","utilize","leverage","apply","address","assess","manage","coordinate","monitor","track","plan","produce","communicate","oversee","participate","perform","present","identify","evaluate","operate","report","document","prepare","process","compile","organize","conduct","review"]);
+            if (isVerbLike || COMMON_VERBS.has(cleanedFirst)) {
+              // Replace the existing verb with a contextual ownership verb
+              cleaned = cleaned.replace(/^\S+\s*/, "");
+            }
+
+            // Pick a contextual verb based on bullet content
+            const lc = cleaned.toLowerCase();
+            let verb = "Executed";
+            if (/team|staff|report|direct/i.test(lc)) verb = "Directed";
+            else if (/develop|build|creat|design/i.test(lc)) verb = "Developed";
+            else if (/improv|optimi|efficien|reduc/i.test(lc)) verb = "Optimized";
+            else if (/manag|oversee|supervis|coordinat/i.test(lc)) verb = "Managed";
+            else if (/implement|deploy|launch|roll/i.test(lc)) verb = "Implemented";
+            else if (/analy|assess|evaluat|review/i.test(lc)) verb = "Analyzed";
+            else if (/establish|set up|initiat|found/i.test(lc)) verb = "Established";
+            else if (/train|mentor|coach|onboard/i.test(lc)) verb = "Trained";
+            else if (/automat|script|program|integrat/i.test(lc)) verb = "Automated";
+            else if (/resolv|troubleshoot|fix|debug/i.test(lc)) verb = "Resolved";
+            // Capitalize first letter of remaining text
+            const remainder = cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+            bullet = `${verb} ${remainder}`;
+            repairCount++;
+          }
         }
 
         // REPAIR 3: Passive language removal
