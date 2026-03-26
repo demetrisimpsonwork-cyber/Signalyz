@@ -1885,9 +1885,14 @@ serve(async (req) => {
     );
 
     // ── Merge results and validate against the persisted final output ──
+    // Strip domain fabrication from the AI-generated summary
+    const cleanedSummary = originalResume
+      ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
+      : rewrittenSummary;
+
     const normalizedResult = normalizeResult({
       ...structure,
-      summary: rewrittenSummary,
+      summary: cleanedSummary,
       experience: rewrittenExperience,
     });
 
