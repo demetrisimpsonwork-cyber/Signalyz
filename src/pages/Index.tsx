@@ -1069,7 +1069,7 @@ const Index = () => {
       <section className="py-12 container max-w-5xl md:max-w-tool" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { title: "Multi-Layer Signal Engine", sub: "Diagnosis across every stage of the hiring pipeline.", icon: Layers },
+            { title: "Signal Calibration Engine", sub: "Diagnosis across every stage of the hiring pipeline.", icon: Layers },
             { title: "Hiring Pipeline Simulation", sub: "See where your resume gets filtered — at the recruiter screen, hiring manager review, and panel stage.", icon: Shield },
             { title: "Zero Fabrication", sub: "Your experience, repositioned. Never invented.", icon: LockKeyhole },
           ].map((card) => (
