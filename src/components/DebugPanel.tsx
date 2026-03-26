@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Bug, Copy, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { initiateCheckout } from "@/utils/stripe";
+
 import { useAuth } from "@/hooks/useAuth";
 
 export interface DebugInfo {
