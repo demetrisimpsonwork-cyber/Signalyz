@@ -31,17 +31,21 @@ const getScoreConfig = (score: number) => {
   return { label: "Below Threshold", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
+/** Map the 5-field backward-compat breakdown to the real 4-component rubric */
+function toRealBreakdown(b: ScoringBreakdown) {
+  return [
+    { label: "JD Keyword Alignment", value: b.tools_and_workflow_alignment, weight: "40%" },
+    { label: "Ownership & Scope Density", value: b.role_outcomes_alignment, weight: "30%" },
+    { label: "Perception Gap Closure", value: b.domain_and_context_alignment, weight: "20%" },
+    { label: "Readability & Signal Clarity", value: Math.floor((b.context_and_scale_alignment + b.communication_and_leadership_alignment) / 2), weight: "10%" },
+  ];
+}
+
 const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSignal, scoreRationale, scoringBreakdown }: MatchScoreCardProps) => {
   const [copied, setCopied] = useState(false);
   const config = getScoreConfig(score);
 
-  const breakdown = scoringBreakdown || {
-    role_outcomes_alignment: score,
-    tools_and_workflow_alignment: score,
-    domain_and_context_alignment: score,
-    context_and_scale_alignment: score,
-    communication_and_leadership_alignment: score,
-  };
+  const hasRealBreakdown = !!scoringBreakdown;
 
   const handleCopy = async () => {
     const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
@@ -80,28 +84,28 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
               Signal Diagnosis measures how clearly your current experience aligns with the target role as written.
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              It does not judge your ability or invent qualifications. A lower score simply means the signal from your resume is not landing clearly yet with hiring systems and managers.
+              It does not judge your ability or invent qualifications. A lower score means the signal from your resume is not landing clearly yet with hiring systems and managers.
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Signalyz analyzes where that signal breaks and shows how to reposition your real experience so it reads the way it was meant to be understood.
             </p>
-            <div className="border-t pt-3">
-              <p className="text-xs font-medium text-foreground mb-2">Score Breakdown</p>
-              <div className="space-y-2">
-                {[
-                  { label: "Role & Outcomes", value: breakdown.role_outcomes_alignment },
-                  { label: "Tools & Workflow", value: breakdown.tools_and_workflow_alignment },
-                  { label: "Domain & Context", value: breakdown.domain_and_context_alignment },
-                  { label: "Context & Scale", value: breakdown.context_and_scale_alignment },
-                  { label: "Communication & Leadership", value: breakdown.communication_and_leadership_alignment },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{item.label}</span>
-                    <span className="text-xs font-medium text-foreground">{item.value}%</span>
-                  </div>
-                ))}
+            {hasRealBreakdown ? (
+              <div className="border-t pt-3">
+                <p className="text-xs font-medium text-foreground mb-2">Score Components</p>
+                <div className="space-y-2">
+                  {toRealBreakdown(scoringBreakdown!).map((item) => (
+                    <div key={item.label} className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{item.label} <span className="text-muted-foreground/50">({item.weight})</span></span>
+                      <span className="text-xs font-medium text-foreground">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="border-t pt-3">
+                <p className="text-xs text-muted-foreground italic">Component breakdown unavailable for this run.</p>
+              </div>
+            )}
             {topMatchedSignal && (
               <div>
                 <p className="text-xs font-medium text-foreground">✓ Matched Signal</p>
