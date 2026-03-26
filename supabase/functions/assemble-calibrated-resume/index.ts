@@ -1422,8 +1422,41 @@ function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<st
     ...OUTCOME_SIGNAL_TERMS,
     ...ACTION_VERB_SET_TITLE,
   ]);
-  if (allKnownVerbs.has(cleanedLead)) {
+
+  // Expanded set of common verbs that would cause double-verb openers
+  // (e.g., "Directed serve", "Resolved execute", "Oversaw handle")
+  const COMMON_VERB_FORMS = new Set([
+    "execute","serve","handle","engage","provide","ensure","focus",
+    "utilize","leverage","apply","address","assess","allocate",
+    "assign","communicate","comply","complete","configure","connect",
+    "consult","convert","define","delegate","demonstrate","determine",
+    "diagnose","document","draft","enable","enforce","enhance",
+    "evaluate","examine","expand","expedite","explore","forecast",
+    "formalize","generate","guide","identify","inform","initiate",
+    "inspect","integrate","interpret","investigate","issue","liaise",
+    "locate","map","market","measure","mediate","mitigate","modify",
+    "navigate","notify","obtain","onboard","operate","orchestrate",
+    "outline","oversee","own","participate","perform","present",
+    "prioritize","program","promote","propose","qualify","recommend",
+    "recruit","reduce","refine","register","regulate","reinforce",
+    "remediate","remove","report","represent","research","restructure",
+    "retain","satisfy","secure","select","simplify","solicit",
+    "source","specify","sponsor","stabilize","strengthen","structure",
+    "submit","succeed","summarize","sustain","tailor","target",
+    "test","transfer","translate","troubleshoot","unify","update",
+    "upgrade","validate","verify","volunteer","write",
+  ]);
+
+  if (allKnownVerbs.has(cleanedLead) || COMMON_VERB_FORMS.has(cleanedLead)) {
     // Replace the existing (weaker) verb with a strong signal verb
+    const afterVerb = cleaned.replace(/^\S+\s*/, "");
+    const verb = chooseSignalVerb(original, cleaned, usedVerbs);
+    return `${verb} ${afterVerb}`.replace(/\s{2,}/g, " ").trim();
+  }
+
+  // Final catch-all: if cleaned lead looks like a verb (ends in common verb
+  // suffixes like -ed, -ing, -ate, -ize, -ify), treat as verb and replace
+  if (/^[a-z]+(ed|ing|ate|ize|ify|ise)$/i.test(cleanedLead) && cleanedLead.length >= 4) {
     const afterVerb = cleaned.replace(/^\S+\s*/, "");
     const verb = chooseSignalVerb(original, cleaned, usedVerbs);
     return `${verb} ${afterVerb}`.replace(/\s{2,}/g, " ").trim();
