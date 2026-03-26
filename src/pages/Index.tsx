@@ -446,7 +446,7 @@ const Index = () => {
   const SESSION_KEY = "signalyz_last_analysis";
   const SESSION_VERSION = 2;
   const [showSessionRecovery, setShowSessionRecovery] = useState(false);
-  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string; runType?: "original" | "calibrated" } | null>(null);
 
   // Check for saved session on mount
   useEffect(() => {
@@ -465,12 +465,13 @@ const Index = () => {
         setResult(parsed.result);
         setBullet(parsed.bullet);
         setJd(parsed.jd);
+        if (parsed.runType === "calibrated") setResultRunType("calibrated");
         if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
           setOriginalResumeBeforeCalibration(parsed.originalBaseline);
           try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
         }
       } else {
-        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd });
+        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd, runType: parsed.runType || "original" });
         setShowSessionRecovery(true);
       }
     } catch {
@@ -834,6 +835,7 @@ const Index = () => {
           bullet: bulletWithContext,
           jd: normJd.text,
           originalBaseline: originalResumeBeforeCalibration ?? bulletWithContext,
+          runType,
           ts: Date.now(),
         }));
       } catch {}
@@ -1967,6 +1969,7 @@ const Index = () => {
                   setResult(pendingSession.result);
                   setBullet(pendingSession.bullet);
                   setJd(pendingSession.jd);
+                  if (pendingSession.runType === "calibrated") setResultRunType("calibrated");
                   // Restore original baseline from localStorage if available
                   const savedBaseline = localStorage.getItem("signalyz_original_resume_baseline");
                   if (savedBaseline && !originalResumeBeforeCalibration) {
