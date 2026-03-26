@@ -372,16 +372,7 @@ const Index = () => {
   const { user } = useAuth();
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
-  const {
-    trialStarted,
-    trialRunsUsed,
-    trialExhausted,
-    isTrialPro,
-    startTrial,
-    incrementTrialRun,
-    TRIAL_LIMIT,
-  } = useReverseTrial();
-  const effectiveIsPro = isPro || isAdmin || isTrialPro || hasOneTimeCredit;
+  const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
 
