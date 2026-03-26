@@ -1815,10 +1815,11 @@ Return ONLY valid JSON array:
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
         // Always preserve the candidate's ORIGINAL company/title/dates — never
-        // allow the AI to substitute industry or employer context from the JD
-        company: role.company || aiRole?.company || "",
-        title: role.title || aiRole?.title || "",
-        dates: role.dates || aiRole?.dates || "",
+        // allow the AI to substitute industry or employer context from the JD.
+        // Use explicit undefined check (not falsy) since empty string is valid original data.
+        company: role.company !== undefined && role.company !== null ? role.company : (aiRole?.company || ""),
+        title: role.title !== undefined && role.title !== null ? role.title : (aiRole?.title || ""),
+        dates: role.dates !== undefined && role.dates !== null ? role.dates : (aiRole?.dates || ""),
         bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
           let aiBullet = aiBullets[bulletIndex] || originalBullet;
           // Strip any domain/industry terms the AI fabricated
