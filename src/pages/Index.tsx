@@ -834,6 +834,7 @@ const Index = () => {
           bullet: bulletWithContext,
           jd: normJd.text,
           originalBaseline: originalResumeBeforeCalibration ?? bulletWithContext,
+          runType,
           ts: Date.now(),
         }));
       } catch {}
