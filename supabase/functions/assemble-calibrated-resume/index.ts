@@ -1604,12 +1604,20 @@ function repairSignalBullet(
   bullet = ensureJdAlignment(original, bullet, jdModel, aggressive, originalResumeText);
   bullet = ensureOutcomeFraming(original, bullet, aggressive);
 
-  return bullet
+  // Final cleanup: remove redundant phrase doubling and garbled artifacts
+  bullet = bullet
     .replace(/\s{2,}/g, " ")
     .replace(/\s+,/g, ",")
     .replace(/,\s*,/g, ",")
     .replace(/\s+\./g, ".")
+    // Remove duplicated multi-word phrases (e.g., "improvement methodologies and improvement methodologies")
+    .replace(/\b(\w{4,}\s+\w{4,})\b(?:.*?\b\1\b)/gi, "$1")
+    // Capitalize first letter of bullet if lowercase
     .trim();
+  if (bullet.length > 0 && /^[a-z]/.test(bullet)) {
+    bullet = bullet.charAt(0).toUpperCase() + bullet.slice(1);
+  }
+  return bullet;
 }
 
 function strengthenFinalExperience(
