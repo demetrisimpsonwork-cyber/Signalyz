@@ -878,11 +878,7 @@ const Index = () => {
         }));
       } catch {}
       increment();
-      // Trial system removed — dead code purged
-      // Consume one-time credit on successful alignment if applicable
-      if (hasOneTimeCredit && !isPro && !isAdmin) {
-        try { await consumeOneTimeCredit(); } catch {}
-      }
+      // One-time credit consumption moved to Pro-gated tab access
       if (user) {
         try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
