@@ -1069,8 +1069,8 @@ const Index = () => {
       <section className="py-12 container max-w-5xl md:max-w-tool" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
-            { title: "5-Stage Risk Projection", sub: "From recruiter filter to executive review.", icon: Shield },
+            { title: "Multi-Layer Signal Engine", sub: "Diagnosis across every stage of the hiring pipeline.", icon: Layers },
+            { title: "Risk Projection", sub: "Where you'll face friction — recruiter through panel.", icon: Shield },
             { title: "Zero Fabrication", sub: "Your experience, repositioned. Never invented.", icon: LockKeyhole },
           ].map((card) => (
             <div key={card.title} className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
