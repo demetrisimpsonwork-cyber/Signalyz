@@ -361,6 +361,10 @@ const Index = () => {
   const [additionalContext, setAdditionalContext] = useState("");
   const [scoreRevealed, setScoreRevealed] = useState(false);
   const [analysisTime, setAnalysisTime] = useState(0);
+  const [paymentActivating, setPaymentActivating] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("upgrade") === "success" || params.get("purchase") === "success";
+  });
 
   // Executive Audit state
   const [directorExperience, setDirectorExperience] = useState("");
