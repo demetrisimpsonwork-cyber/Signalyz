@@ -468,6 +468,22 @@ CRITICAL:
         // REPAIR 5: JD keyword presence — leave bullet unchanged if keywords aren't naturally present
         // (Previously appended hollow "aligned with X objectives" suffix; removed to prevent detectable keyword stuffing)
 
+        // REPAIR 6: Banned verb replacement — catch any banned verbs that slipped through
+        const bulletFirstWord = bullet.split(/\s/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+        if (BANNED_VERBS_SET.has(bulletFirstWord)) {
+          const replacement = BANNED_VERB_REPLACEMENTS[bulletFirstWord] || "led";
+          bullet = replacement.charAt(0).toUpperCase() + replacement.slice(1) + bullet.slice(bullet.indexOf(" "));
+          repairCount++;
+        }
+        // Also catch banned verbs mid-sentence
+        for (const [banned, safe] of Object.entries(BANNED_VERB_REPLACEMENTS)) {
+          const re = new RegExp(`\\b${banned}\\b`, "gi");
+          if (re.test(bullet)) {
+            bullet = bullet.replace(re, safe);
+            repairCount++;
+          }
+        }
+
         calBullets[bi] = bullet;
       }
     }
