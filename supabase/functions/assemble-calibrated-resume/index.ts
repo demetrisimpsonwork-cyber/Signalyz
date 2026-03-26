@@ -1049,6 +1049,9 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "osha","safety standards",
 ]);
 
+// Pre-sorted longest-first for efficient domain fabrication stripping
+const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+
 /**
  * Returns true when `candidate` contains a domain / industry term that does
  * NOT appear anywhere in the candidate's original resume.  Injecting such a
