@@ -1315,14 +1315,14 @@ const Index = () => {
                     <div className="w-full space-y-2">
                       {user ? (
                         <>
-                          <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            Fix Your Score → $9
-                          </Button>
-                           <p className="text-xs text-muted-foreground">
-                            {hasConsumedOneTimeCredit
-                              ? "Your Single Report has been used. See your exact fix for unlimited runs."
-                              : "You've used your 3 free analyses today."}
-                           </p>
+                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                             Unlock Full Signal Intelligence →
+                           </Button>
+                            <p className="text-xs text-muted-foreground">
+                             {hasConsumedOneTimeCredit
+                               ? "Your Single Report has been used. Upgrade for unlimited analyses."
+                               : "You've used your 3 free analyses today."}
+                            </p>
                            
                         </>
                       ) : (
