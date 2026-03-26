@@ -446,7 +446,7 @@ const Index = () => {
   const SESSION_KEY = "signalyz_last_analysis";
   const SESSION_VERSION = 2;
   const [showSessionRecovery, setShowSessionRecovery] = useState(false);
-  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string } | null>(null);
+  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string; runType?: "original" | "calibrated" } | null>(null);
 
   // Check for saved session on mount
   useEffect(() => {
