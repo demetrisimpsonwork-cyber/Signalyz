@@ -231,9 +231,10 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 function getStrengthLabel(score: number): string {
-  if (score >= 70) return "Strong";
-  if (score >= 50) return "Solid";
-  return "Weak";
+  if (score >= 70) return "Interview Range";
+  if (score >= 60) return "Strong";
+  if (score >= 40) return "Moderate";
+  return "Low Signal";
 }
 
 // ─── Director Mode Content (hard-gated) ──────────────────────────────────────
@@ -865,7 +866,8 @@ const Index = () => {
         toast("Save your results and track your progress", {
           description: "Create a free account to keep your alignment history.",
           action: { label: "Sign up", onClick: () => { window.location.href = "/auth"; } },
-          duration: 8000,
+          duration: 5000,
+          position: "top-center",
         });
       }
     };
@@ -1508,7 +1510,7 @@ const Index = () => {
                         )}
                       </div>
                       {displayScore < 70 && (
-                        <p className="text-sm font-semibold text-destructive">You're {70 - displayScore}% below interview range (70%+)</p>
+                        <p className="text-sm font-semibold text-destructive">Your current signal is below typical interview range (70%+)</p>
                       )}
 
                       {/* Primary strength */}

@@ -25,10 +25,10 @@ interface MatchScoreCardProps {
 }
 
 const getScoreConfig = (score: number) => {
-  if (score >= 80) return { label: "Above Threshold", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
-  if (score >= 70) return { label: "At Threshold", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
-  if (score >= 55) return { label: "Approaching Threshold", accent: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" };
-  return { label: "Below Threshold", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
+  if (score >= 70) return { label: "Interview Range", accent: "text-green-700", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" };
+  if (score >= 60) return { label: "Strong", accent: "text-amber-500", bg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800" };
+  if (score >= 40) return { label: "Moderate", accent: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" };
+  return { label: "Low Signal", accent: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" };
 };
 
 /** Display the actual 5 deterministic scoring dimensions with real weights */
