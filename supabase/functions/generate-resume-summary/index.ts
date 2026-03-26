@@ -188,7 +188,8 @@ YOUR TASK:
 ═══ SCORING SYSTEM AWARENESS ═══
 The calibrated output will be scored by an automated signal engine that measures EXACT dimensions. Your calibration MUST target these specific measurable signals:
 
-SIGNAL 1 — OWNERSHIP DENSITY: The scorer counts these EXACT verbs at the START of each bullet: led, drove, owned, spearheaded, architected, orchestrated, directed, launched, built, scaled, implemented, executed, transformed, championed, governed, delivered, established, redesigned, pioneered, devised, instituted, restructured, consolidated, mobilized, accelerated, elevated, oversaw, administered, standardized, created, developed, designed, automated, negotiated, facilitated, optimized, revamped, formulated, engineered, deployed, maintained, resolved, streamlined, trained, mentored, supervised. EVERY bullet MUST start with one of these EXACT verbs. The scorer gives ZERO credit for bullets starting with any other word.
+SIGNAL 1 — OWNERSHIP DENSITY: The scorer counts these EXACT verbs at the START of each bullet: led, drove, owned, architected, directed, launched, built, scaled, implemented, executed, transformed, governed, delivered, established, redesigned, devised, instituted, restructured, consolidated, accelerated, elevated, oversaw, administered, standardized, created, developed, designed, automated, negotiated, facilitated, optimized, revamped, formulated, engineered, deployed, maintained, resolved, streamlined, trained, mentored, supervised. EVERY bullet MUST start with one of these EXACT verbs. The scorer gives ZERO credit for bullets starting with any other word.
+BANNED VERBS (NEVER USE ANYWHERE): leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated AI signal language. Use direct alternatives: led, directed, built, drove, managed, coordinated.
 
 SIGNAL 2 — JD KEYWORD COVERAGE: The scorer extracts the top 15 most frequent 4+ letter non-stop-words from the JD and checks if they appear IN THE BULLET TEXT (not in skills or headers). You MUST embed as many of these JD-specific terms as possible DIRECTLY INTO bullet sentences. Generic words don't count — only distinctive JD vocabulary matters.
 
@@ -350,14 +351,20 @@ CRITICAL:
     // ═══ POST-PROCESSING: Signal-Aware Bullet Validation & Repair ═══
 
     const OWNERSHIP_VERBS = new Set([
-      "led","drove","owned","spearheaded","architected","orchestrated","directed","launched",
-      "built","scaled","implemented","executed","transformed","championed","governed","delivered",
-      "established","redesigned","pioneered","devised","instituted","restructured","consolidated",
-      "mobilized","accelerated","elevated","oversaw","administered","standardized","created",
+      "led","drove","owned","architected","directed","launched",
+      "built","scaled","implemented","executed","transformed","governed","delivered",
+      "established","redesigned","devised","instituted","restructured","consolidated",
+      "accelerated","elevated","oversaw","administered","standardized","created",
       "developed","designed","automated","negotiated","facilitated","optimized","revamped",
       "formulated","engineered","deployed","maintained","resolved","streamlined","trained",
       "mentored","supervised",
     ]);
+
+    const BANNED_VERBS_SET = new Set(["leveraged","spearheaded","championed","pioneered","mobilized","orchestrated"]);
+    const BANNED_VERB_REPLACEMENTS: Record<string,string> = {
+      "leveraged":"used", "spearheaded":"led", "championed":"drove",
+      "pioneered":"built", "mobilized":"coordinated", "orchestrated":"coordinated",
+    };
 
     const OUTCOME_TERMS = new Set([
       "increased","reduced","improved","grew","saved","delivered","achieved","exceeded",
@@ -460,6 +467,22 @@ CRITICAL:
 
         // REPAIR 5: JD keyword presence — leave bullet unchanged if keywords aren't naturally present
         // (Previously appended hollow "aligned with X objectives" suffix; removed to prevent detectable keyword stuffing)
+
+        // REPAIR 6: Banned verb replacement — catch any banned verbs that slipped through
+        const bulletFirstWord = bullet.split(/\s/)[0]?.toLowerCase().replace(/[^a-z]/g, "") || "";
+        if (BANNED_VERBS_SET.has(bulletFirstWord)) {
+          const replacement = BANNED_VERB_REPLACEMENTS[bulletFirstWord] || "led";
+          bullet = replacement.charAt(0).toUpperCase() + replacement.slice(1) + bullet.slice(bullet.indexOf(" "));
+          repairCount++;
+        }
+        // Also catch banned verbs mid-sentence
+        for (const [banned, safe] of Object.entries(BANNED_VERB_REPLACEMENTS)) {
+          const re = new RegExp(`\\b${banned}\\b`, "gi");
+          if (re.test(bullet)) {
+            bullet = bullet.replace(re, safe);
+            repairCount++;
+          }
+        }
 
         calBullets[bi] = bullet;
       }

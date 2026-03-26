@@ -168,7 +168,7 @@ const STOP_WORDS = new Set([
 ]);
 
 const OWNERSHIP_STRONG_PHRASES = [
-  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered", "established", "redesigned", "pioneered", "devised", "instituted", "restructured", "consolidated", "mobilized", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
+  "led", "drove", "owned", "architected", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "governed", "delivered", "established", "redesigned", "devised", "instituted", "restructured", "consolidated", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
 ];
 
 const OWNERSHIP_PARTIAL_PHRASES = [
@@ -699,7 +699,7 @@ DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
 Step 1: JD SIGNAL EXTRACTION — Scan the job description from top to bottom. Extract priority signals in the order they appear. For each signal, count how many times it is referenced (frequency) and where it appears (title, first paragraph = high emphasis; later paragraphs = lower). Rank by frequency × emphasis. This extraction must be identical every time for the same JD text.
 
 Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, classify the match into one of three quality tiers:
-  - FULL MATCH (weight 1.0): The resume uses the JD's exact terminology, role-native vocabulary, ownership verbs ("led", "drove", "owned", "architected", "spearheaded"), or quantified impact statements that directly mirror JD language. Example: JD says "stakeholder management" and resume says "stakeholder engagement across cross-functional teams" = FULL MATCH.
+  - FULL MATCH (weight 1.0): The resume uses the JD's exact terminology, role-native vocabulary, ownership verbs ("led", "drove", "owned", "architected", "directed"), or quantified impact statements that directly mirror JD language. Example: JD says "stakeholder management" and resume says "stakeholder engagement across cross-functional teams" = FULL MATCH.
   - PARTIAL MATCH (weight 0.5): The resume describes the same capability but uses generic, passive, or non-role-aligned language. Example: JD says "stakeholder management" and resume says "worked with different teams" = PARTIAL MATCH. Also applies when the resume uses "helped", "assisted", "supported", "participated in" instead of ownership language.
   - NO MATCH (weight 0.0): The signal is absent from the resume entirely.
 This quality classification is CRITICAL. A calibrated resume that repositions "helped coordinate meetings" into "drove cross-functional alignment across 4 departments" upgrades that signal from PARTIAL to FULL — the same underlying experience produces a higher-quality match because the language maps more clearly to the JD's priority signals. This extraction must be identical every time for the same resume text.

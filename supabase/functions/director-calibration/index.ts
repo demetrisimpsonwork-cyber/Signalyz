@@ -514,8 +514,9 @@ ${B_BULLET_RULES}
 Rules for BOTH versions:
 - ZERO METRIC FABRICATION: Do NOT invent percentages, dollar amounts, timeframes, accuracy rates, team sizes, or any quantitative claim not explicitly stated in the original bullet. If the original has no metric, the rewritten bullet has no metric.
 - NEVER insert placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]", or any bracketed placeholder.
-- No generic phrases like "proactively identified" or "spearheaded initiatives".
+- No generic phrases like "proactively identified" or "led initiatives".
 - Keep bullets scope-specific.
+- BANNED VERBS (NEVER USE): leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. Use direct alternatives: led, directed, built, drove, managed, coordinated.
 - Never use: "results-driven", "leveraging synergies", "passionate about", "thrilled to", "dynamic environment", "fast-paced team", "cross-functional alignment", or any generic job application phrasing.
 - Never write symmetrical bullet structures — vary sentence length and cadence deliberately.
 - Lead with evidence before claims — numbers, systems, ownership, outcomes first.
@@ -579,7 +580,7 @@ Return JSON:
   cross_functional_leadership: `You reframe resume bullets to surface cross-functional leadership scope.
 
 Produce TWO versions:
-Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Mobilized stakeholders. Shared accountability.
+Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Coordinated stakeholders. Shared accountability.
 Version B ("Conservative Truth"): Reframe the original bullet with stronger cross-functional signal while preserving every original fact, metric, and ownership claim exactly.
 
 ${B_BULLET_RULES}
