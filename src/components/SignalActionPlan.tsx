@@ -2,7 +2,7 @@ interface SignalActionPlanProps {
   alignmentResult: any;
 }
 
-function deriveActions(result: any): string[] {
+export function deriveActions(result: any): string[] {
   const actions: string[] = [];
   const seen = new Set<string>();
 

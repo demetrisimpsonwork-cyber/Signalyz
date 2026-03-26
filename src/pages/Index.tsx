@@ -1670,8 +1670,10 @@ const Index = () => {
                                   </Button>
                                 )}
                                 
-                              </div>
-                            )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             {/* What's Landing — free: 1 item, Pro: all */}
                             {strengths.length > 0 && (
