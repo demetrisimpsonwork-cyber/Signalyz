@@ -162,6 +162,32 @@ Return ONLY valid JSON array, no markdown.`;
         const raw = await callAI(prompt, 2000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
+        // Post-generation: strip any bracketed placeholders that slipped through
+        const stripBrackets = (s: string) => s.replace(/\[([^\]]{1,60})\]/g, (_m, inner) => {
+          const lower = inner.toLowerCase();
+          if (lower.includes('crm') || lower.includes('platform') || lower.includes('tool') || lower.includes('system') || lower.includes('software')) return 'the tools you\'ve used';
+          if (lower.includes('project') || lower.includes('initiative')) return 'a relevant project or initiative';
+          if (lower.includes('metric') || lower.includes('number') || lower.includes('percentage')) return 'a concrete outcome you observed';
+          if (lower.includes('company') || lower.includes('organization')) return 'your organization';
+          if (lower.includes('team') || lower.includes('department')) return 'your team';
+          return inner; // fallback: use the inner text without brackets
+        });
+        if (Array.isArray(result)) {
+          result = result.map((q: Record<string, unknown>) => {
+            const cleaned: Record<string, unknown> = { ...q };
+            for (const key of ['question', 'why_asking', 'signal_angle']) {
+              if (typeof cleaned[key] === 'string') cleaned[key] = stripBrackets(cleaned[key] as string);
+            }
+            if (cleaned.answer_framework && typeof cleaned.answer_framework === 'object') {
+              const af = { ...(cleaned.answer_framework as Record<string, string>) };
+              for (const key of ['situation', 'action', 'result']) {
+                if (typeof af[key] === 'string') af[key] = stripBrackets(af[key]);
+              }
+              cleaned.answer_framework = af;
+            }
+            return cleaned;
+          });
+        }
         break;
       }
 
