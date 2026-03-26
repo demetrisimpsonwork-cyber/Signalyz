@@ -1556,12 +1556,15 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!candidates.length) return bullet;
 
-  // Select candidates and deduplicate — avoid injecting phrases that overlap
-  // (e.g. "continuous improvement" and "improvement methodologies" share "improvement")
+  // Select candidates: deduplicate overlapping phrases, skip raw verbs/short words
+  // that produce garbled injection like "aligned with coordinate priorities"
   const selected: string[] = [];
   const usedWords = new Set<string>();
+  const SKIP_RAW_VERBS = new Set(["coordinate","manage","track","report","process","support","ensure","maintain","prepare","handle","provide","review","monitor","schedule","operate","oversee","develop","create","build","drive","lead","serve"]);
   for (const c of candidates) {
     if (selected.length >= (aggressive ? 3 : 2)) break;
+    // Skip single-word candidates that are just verbs — they produce unreadable injections
+    if (!c.includes(" ") && SKIP_RAW_VERBS.has(c.toLowerCase())) continue;
     const words = c.toLowerCase().split(/\s+/);
     const hasOverlap = words.some(w => w.length >= 4 && usedWords.has(w));
     if (hasOverlap) continue;
