@@ -579,7 +579,7 @@ Return JSON:
   cross_functional_leadership: `You reframe resume bullets to surface cross-functional leadership scope.
 
 Produce TWO versions:
-Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Mobilized stakeholders. Shared accountability.
+Version A ("Upper-bound Truth"): Led alignment across engineering, design, data, legal, finance, ops. Coordinated stakeholders. Shared accountability.
 Version B ("Conservative Truth"): Reframe the original bullet with stronger cross-functional signal while preserving every original fact, metric, and ownership claim exactly.
 
 ${B_BULLET_RULES}
