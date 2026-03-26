@@ -49,7 +49,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
   const hasRealBreakdown = !!scoringBreakdown;
 
   const handleCopy = async () => {
-    const text = `Match Score: ${score}% — ${confidenceLevel || config.label}`;
+    const text = `Match Score: ${score}% — ${config.label}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success("Copied to clipboard");
