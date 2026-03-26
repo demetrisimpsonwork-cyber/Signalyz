@@ -775,6 +775,27 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
         </BlockShell>
       )}
 
+      {/* Conversion CTA / Pro confirmation */}
+      {!isPro ? (
+        <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-6 text-center space-y-3">
+          <h3 className="text-sm font-bold text-foreground">Your diagnosis is complete. Now reposition.</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Your calibrated resume, repositioned bullets, and cover letter are built from this exact analysis.
+          </p>
+          <button
+            onClick={() => onUpgrade?.()}
+            className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-[0.97]"
+            style={{ backgroundColor: "hsl(174, 62%, 47%)" }}
+          >
+            <span>✦</span> Unlock Full Signal Intelligence →
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground text-center">
+          Your calibrated assets are ready in the Resume and Letter tabs.
+        </p>
+      )}
+
       <div className="flex justify-end">
         <button
           onClick={handleCopy}
