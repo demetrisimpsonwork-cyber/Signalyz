@@ -168,7 +168,7 @@ const STOP_WORDS = new Set([
 ]);
 
 const OWNERSHIP_STRONG_PHRASES = [
-  "led", "drove", "owned", "spearheaded", "architected", "orchestrated", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "championed", "governed", "delivered", "established", "redesigned", "pioneered", "devised", "instituted", "restructured", "consolidated", "mobilized", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
+  "led", "drove", "owned", "architected", "directed", "launched", "built", "scaled", "implemented", "executed", "transformed", "governed", "delivered", "established", "redesigned", "devised", "instituted", "restructured", "consolidated", "accelerated", "elevated", "oversaw", "administered", "standardized", "created", "developed", "designed", "automated", "negotiated", "facilitated", "optimized", "revamped", "formulated", "engineered", "deployed", "maintained", "resolved", "streamlined", "trained", "mentored", "supervised",
 ];
 
 const OWNERSHIP_PARTIAL_PHRASES = [
