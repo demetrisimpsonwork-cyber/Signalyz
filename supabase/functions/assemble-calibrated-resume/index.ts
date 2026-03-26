@@ -1949,20 +1949,23 @@ serve(async (req) => {
     }
     console.log(`[assemble] [${request_id}] Phase 1 complete: ${structure.experience.length} roles, summary ${structure.summary.length} chars, ${structure.core_competencies.length} competencies`);
 
-    // ── Phase 2: Sequential focused API calls ──
-    console.log(`[assemble] [${request_id}] Phase 2a: Rewriting summary`);
+    // ── Build JD model ONCE for reuse across all phases ──
     const rawJdText = typeof jd === "string" ? jd.trim() : undefined;
-    const rewrittenSummary = await generateSummary(
-      structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
-    );
+    const jdSource = rawJdText || extractJDSignals(signalContext || {});
+    const jdModel = buildSignalJdModel(jdSource);
 
-    console.log(`[assemble] [${request_id}] Phase 2b: Rewriting experience bullets`);
-    const rewrittenExperience = await rewriteExperienceBullets(
-      structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || ""
-    );
+    // ── Phase 2: PARALLEL focused API calls ──
+    console.log(`[assemble] [${request_id}] Phase 2: Rewriting summary + experience (parallel)`);
+    const [rewrittenSummary, rewrittenExperience] = await Promise.all([
+      generateSummary(
+        structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
+      ),
+      rewriteExperienceBullets(
+        structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || "", jdModel
+      ),
+    ]);
 
-    // ── Merge results and validate against the persisted final output ──
-    // Strip domain fabrication from the AI-generated summary
+    // ── Single post-processing pass with pre-built jdModel ──
     const cleanedSummary = originalResume
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
@@ -1973,14 +1976,32 @@ serve(async (req) => {
       experience: rewrittenExperience,
     });
 
-    const result = enforceFinalSignalDelta(
-      normalizedResult,
+    // Single strengthening pass using the pre-built jdModel
+    const strengthened = {
+      ...normalizedResult,
+      experience: strengthenFinalExperience(normalizedResult.experience, structure.experience, jdModel, false, originalResume || ""),
+    };
+
+    const delta = countImprovedDimensions(
       originalResume || structuredResumeToText({ summary: structure.summary, experience: structure.experience }),
-      structure.experience,
-      signalContext || {},
-      request_id,
-      rawJdText,
+      structuredResumeToText(strengthened),
+      jdModel,
     );
+
+    let result = strengthened;
+    if (delta.improvementCount <= 1 && countRepairOpportunities(structure.experience, jdModel) >= 2) {
+      result = {
+        ...strengthened,
+        experience: strengthenFinalExperience(strengthened.experience, structure.experience, jdModel, true, originalResume || ""),
+      };
+    }
+
+    console.log(JSON.stringify({
+      request_id: request_id,
+      post_processing: "final_signal_delta_validated",
+      improvement_count: delta.improvementCount,
+      improved_dimensions: delta.flags,
+    }));
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
