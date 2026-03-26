@@ -22,12 +22,9 @@ interface UpgradeModalProps {
 const UpgradeModal = ({
   open,
   onClose,
-  trialStarted = false,
-  trialRunsUsed = 0,
-  trialLimit = 3,
-  onStartTrial,
   isAuthenticated = true,
   hasConsumedOneTimeCredit = false,
+  hasOneTimeCredit = false,
 }: UpgradeModalProps) => {
 
   // Track paywall view
