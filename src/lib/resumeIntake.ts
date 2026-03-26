@@ -481,12 +481,36 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         role_title = "";
       }
 
-      // Check next line for company if only title detected
+      // Check next line for company or title if missing
       if (role_title && !company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine)) {
-          company = nextLine;
-          i++;
+        if (nextLine && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine) && nextLine.length < 60) {
+          // Next line is likely a company name
+          if (COMPANY_SUFFIXES.test(nextLine) || (!ROLE_TITLES.test(nextLine) && !startsWithVerb(nextLine) && nextLine.length < 50)) {
+            company = nextLine;
+            i++;
+          }
+        }
+      } else if (company && !role_title && i + 1 < lines.length) {
+        // Have company but no title — check next line for title
+        const nextLine = lines[i + 1].trim();
+        if (nextLine && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine) && nextLine.length < 60) {
+          if (ROLE_TITLES.test(nextLine) || (!COMPANY_SUFFIXES.test(nextLine) && !startsWithVerb(nextLine))) {
+            role_title = nextLine;
+            i++;
+          }
+        }
+      }
+      // HARD REQUIREMENT: never output blank title — preserve raw header as fallback
+      if (!role_title && !company) {
+        role_title = withoutDate || line;
+      } else if (!role_title && company) {
+        // If we only found a company, swap if it looks more like a title
+        if (ROLE_TITLES.test(company) && !COMPANY_SUFFIXES.test(company)) {
+          role_title = company;
+          company = "";
+        } else {
+          role_title = withoutDate || line; // preserve raw as title fallback
         }
       }
 
