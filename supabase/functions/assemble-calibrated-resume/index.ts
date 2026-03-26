@@ -984,6 +984,7 @@ RULES:
 - If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
 - DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
+- BANNED VERBS: NEVER use these verbs anywhere in the summary: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated signal language. Use direct alternatives instead (e.g., "led", "directed", "built", "drove", "managed").
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
         messages: [{ role: "user", content: context }],
