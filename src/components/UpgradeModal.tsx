@@ -122,9 +122,9 @@ const UpgradeModal = ({
           <Separator className="my-5" />
 
           <div className="space-y-3">
-            {!hasConsumedOneTimeCredit && (
+            {hasOneTimeCredit && !hasConsumedOneTimeCredit && (
               <p className="text-xs text-center text-primary/80 font-medium">
-                You still have 1 single report available.
+                You have 1 unused report credit available.
               </p>
             )}
 
