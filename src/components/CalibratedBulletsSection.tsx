@@ -162,21 +162,42 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
       <h3 className="section-label section-header">Calibrated Bullets</h3>
 
       {/* Individual parsed bullets — first 2 visible to all, 3-5 behind Pro gate */}
-      {topBullets.slice(0, 2).map((item, i) => (
-        <div key={i} className="rounded-xl border bg-card p-5 space-y-2">
-          <div className="flex items-baseline gap-2">
-             <p className="section-label">
-              Original Bullet {topBullets.length > 1 ? `${i + 1}` : ""}
-            </p>
-            {(item.role || item.company) && (
-              <span className="text-[10px] text-muted-foreground/60">
-                {[item.role, item.company].filter(Boolean).join(" · ")}
-              </span>
+      {topBullets.slice(0, 2).map((item, i) => {
+        const calibratedText = i === 0 ? antiAIFilter(result.optimized_bullet) : (i === 1 && result.alt_a ? antiAIFilter(result.alt_a) : null);
+        const impacts = calibratedText ? detectSignalImpact(item.bullet, calibratedText) : [];
+        return (
+          <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
+            <div className="flex items-baseline gap-2">
+              <p className="section-label">
+                Original Bullet {topBullets.length > 1 ? `${i + 1}` : ""}
+              </p>
+              {(item.role || item.company) && (
+                <span className="text-[10px] text-muted-foreground/60">
+                  {[item.role, item.company].filter(Boolean).join(" · ")}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
+            {calibratedText && item.bullet !== FALLBACK_BULLET && (
+              <>
+                <div className="border-t border-border/40 pt-3">
+                  <p className="section-label text-primary mb-1.5">Calibrated</p>
+                  <p className="text-sm text-foreground leading-relaxed">{calibratedText}</p>
+                </div>
+                {impacts.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {impacts.map((impact, j) => (
+                      <Badge key={j} variant="secondary" className="text-[10px] font-medium px-2 py-0.5">
+                        {impact}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Variants A, B + extra bullets — Pro only */}
       {effectiveIsPro ? (
