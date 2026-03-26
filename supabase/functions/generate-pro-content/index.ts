@@ -151,11 +151,43 @@ ZERO METRIC FABRICATION in signal_angle or answer_framework:
 - Example good signal_angle: "Describe the operational improvement you drove and how stakeholders responded — focus on what changed, not on inventing a number."
 - Example bad signal_angle: "Give actual numbers showing revenue impact." (NEVER do this)
 
+ZERO BRACKETED PLACEHOLDERS:
+- NEVER use bracket notation like [specific CRM platform], [your project], [Insert X], [specific tool], or any [text] pattern in any output field.
+- If a specific tool, platform, project, or detail cannot be identified from the resume, use safe generic phrasing instead.
+- Example: Instead of "[specific CRM platform]", write "the CRM systems you've used". Instead of "[your project]", write "a relevant project or initiative". Instead of "[specific metric]", write "a concrete outcome you observed".
+- This applies to ALL fields: question, why_asking, signal_angle, situation, action, and result.
+
 Return a JSON array of 5 objects with: "question", "why_asking", "signal_angle", "answer_framework" (object with "situation", "action", "result" strings)
 Return ONLY valid JSON array, no markdown.`;
         const raw = await callAI(prompt, 2000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
+        // Post-generation: strip any bracketed placeholders that slipped through
+        const stripBrackets = (s: string) => s.replace(/\[([^\]]{1,60})\]/g, (_m, inner) => {
+          const lower = inner.toLowerCase();
+          if (lower.includes('crm') || lower.includes('platform') || lower.includes('tool') || lower.includes('system') || lower.includes('software')) return 'the tools you\'ve used';
+          if (lower.includes('project') || lower.includes('initiative')) return 'a relevant project or initiative';
+          if (lower.includes('metric') || lower.includes('number') || lower.includes('percentage')) return 'a concrete outcome you observed';
+          if (lower.includes('company') || lower.includes('organization')) return 'your organization';
+          if (lower.includes('team') || lower.includes('department')) return 'your team';
+          return inner; // fallback: use the inner text without brackets
+        });
+        if (Array.isArray(result)) {
+          result = result.map((q: Record<string, unknown>) => {
+            const cleaned: Record<string, unknown> = { ...q };
+            for (const key of ['question', 'why_asking', 'signal_angle']) {
+              if (typeof cleaned[key] === 'string') cleaned[key] = stripBrackets(cleaned[key] as string);
+            }
+            if (cleaned.answer_framework && typeof cleaned.answer_framework === 'object') {
+              const af = { ...(cleaned.answer_framework as Record<string, string>) };
+              for (const key of ['situation', 'action', 'result']) {
+                if (typeof af[key] === 'string') af[key] = stripBrackets(af[key]);
+              }
+              cleaned.answer_framework = af;
+            }
+            return cleaned;
+          });
+        }
         break;
       }
 
