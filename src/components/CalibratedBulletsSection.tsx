@@ -3,7 +3,63 @@ import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake"
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { antiAIFilter } from "@/lib/antiAIFilter";
+
+/**
+ * Directional signal impact analysis — compares original vs calibrated text
+ * to identify WHICH dimension improved. No fabricated numbers.
+ */
+function detectSignalImpact(original: string, calibrated: string): string[] {
+  const impacts: string[] = [];
+  const origLower = original.toLowerCase();
+  const calLower = calibrated.toLowerCase();
+
+  // Ownership: action verbs at start
+  const ownershipVerbs = /^(led|managed|owned|built|drove|spearheaded|directed|oversaw|orchestrated|championed|architected|launched)/i;
+  if (ownershipVerbs.test(calibrated.trim()) && !ownershipVerbs.test(original.trim())) {
+    impacts.push("Strengthens ownership signal");
+  }
+
+  // Outcome framing
+  const outcomePatterns = /\b(resulting in|which led to|saving|achieving|improving|reducing|increasing|generating|delivering|driving|growing|cutting|boosting)\b/i;
+  const calOutcomes = (calLower.match(outcomePatterns) || []).length;
+  const origOutcomes = (origLower.match(outcomePatterns) || []).length;
+  if (calOutcomes > origOutcomes) {
+    impacts.push("Improves outcome framing");
+  }
+
+  // Metrics / quantification
+  const calMetrics = (calibrated.match(/\d+[%$+x]|\$[\d,.]+|\b\d{2,}\b/g) || []).length;
+  const origMetrics = (original.match(/\d+[%$+x]|\$[\d,.]+|\b\d{2,}\b/g) || []).length;
+  if (calMetrics > origMetrics) {
+    impacts.push("Adds quantified impact");
+  }
+
+  // Keyword alignment — new domain/technical terms
+  const calWords = new Set(calLower.match(/\b[a-z]{4,}\b/g) || []);
+  const origWords = new Set(origLower.match(/\b[a-z]{4,}\b/g) || []);
+  let newTerms = 0;
+  calWords.forEach(w => { if (!origWords.has(w)) newTerms++; });
+  if (newTerms >= 3) {
+    impacts.push("Improves keyword alignment");
+  }
+
+  // Passive → active voice
+  const passivePattern = /\b(was|were|been|being)\s+(asked|given|told|assigned|responsible|involved|tasked)\b/gi;
+  const origPassive = (original.match(passivePattern) || []).length;
+  const calPassive = (calibrated.match(passivePattern) || []).length;
+  if (origPassive > 0 && calPassive < origPassive) {
+    impacts.push("Removes passive voice");
+  }
+
+  // Fallback if nothing detected
+  if (impacts.length === 0) {
+    impacts.push("Clarifies role signal");
+  }
+
+  return impacts.slice(0, 2);
+}
 
 interface CalibratedBulletsSectionProps {
   bullet: string;
@@ -106,21 +162,42 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
       <h3 className="section-label section-header">Calibrated Bullets</h3>
 
       {/* Individual parsed bullets — first 2 visible to all, 3-5 behind Pro gate */}
-      {topBullets.slice(0, 2).map((item, i) => (
-        <div key={i} className="rounded-xl border bg-card p-5 space-y-2">
-          <div className="flex items-baseline gap-2">
-             <p className="section-label">
-              Original Bullet {topBullets.length > 1 ? `${i + 1}` : ""}
-            </p>
-            {(item.role || item.company) && (
-              <span className="text-[10px] text-muted-foreground/60">
-                {[item.role, item.company].filter(Boolean).join(" · ")}
-              </span>
+      {topBullets.slice(0, 2).map((item, i) => {
+        const calibratedText = i === 0 ? antiAIFilter(result.optimized_bullet) : (i === 1 && result.alt_a ? antiAIFilter(result.alt_a) : null);
+        const impacts = calibratedText ? detectSignalImpact(item.bullet, calibratedText) : [];
+        return (
+          <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
+            <div className="flex items-baseline gap-2">
+              <p className="section-label">
+                Original Bullet {topBullets.length > 1 ? `${i + 1}` : ""}
+              </p>
+              {(item.role || item.company) && (
+                <span className="text-[10px] text-muted-foreground/60">
+                  {[item.role, item.company].filter(Boolean).join(" · ")}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
+            {calibratedText && item.bullet !== FALLBACK_BULLET && (
+              <>
+                <div className="border-t border-border/40 pt-3">
+                  <p className="section-label text-primary mb-1.5">Calibrated</p>
+                  <p className="text-sm text-foreground leading-relaxed">{calibratedText}</p>
+                </div>
+                {impacts.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {impacts.map((impact, j) => (
+                      <Badge key={j} variant="secondary" className="text-[10px] font-medium px-2 py-0.5">
+                        {impact}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{item.bullet}</p>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Variants A, B + extra bullets — Pro only */}
       {effectiveIsPro ? (
