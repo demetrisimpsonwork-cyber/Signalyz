@@ -53,7 +53,7 @@ const Navbar = () => {
                 {showProBadge && (
                   <button
                     onClick={() => setShowUpgrade(true)}
-                    className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary"
+                    className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-[#f59e0b]/15 text-[#f59e0b]"
                   >
                     +Pro
                   </button>
@@ -82,7 +82,7 @@ const Navbar = () => {
             {showProBadge && (
               <button
                 onClick={() => setShowUpgrade(true)}
-                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary"
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-[#f59e0b]/15 text-[#f59e0b]"
               >
                 +Pro
               </button>
