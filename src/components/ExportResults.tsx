@@ -21,8 +21,8 @@ interface ExportResultsProps {
 }
 
 const getStrengthLabel = (score: number): string => {
-  if (score >= 80) return "Strong Alignment";
-  if (score >= 70) return "Solid Alignment";
+  if (score >= 70) return "Interview Range";
+  if (score >= 60) return "Strong";
   if (score >= 55) return "Moderate Alignment";
   if (score >= 40) return "Weak Alignment";
   return "Critical Misalignment";

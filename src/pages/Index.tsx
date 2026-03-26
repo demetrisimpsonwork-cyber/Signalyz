@@ -866,7 +866,8 @@ const Index = () => {
         toast("Save your results and track your progress", {
           description: "Create a free account to keep your alignment history.",
           action: { label: "Sign up", onClick: () => { window.location.href = "/auth"; } },
-          duration: 8000,
+          duration: 5000,
+          position: "top-center",
         });
       }
     };
