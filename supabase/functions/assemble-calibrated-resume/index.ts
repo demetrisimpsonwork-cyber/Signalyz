@@ -1097,8 +1097,15 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
     .replace(/,?\s*aligned\s+with\s+(?:\w{0,3}\s*)*priorities\b\.?/gi, "")
     // Remove "supporting [empty/filler] objectives" patterns
     .replace(/,?\s*supporting\s+(?:\w{0,3}\s*)*objectives\b\.?/gi, "")
-    // Clean up orphaned prepositions/articles
+    // Clean up orphaned prepositions/articles/conjunctions after term removal
     .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
+    // "utilizing and protocols" → "utilizing protocols"
+    .replace(/\b(and|or)\s+(and|or)\b/gi, "$1")
+    .replace(/(\w+ing)\s+and\s+(\w+s\b)/gi, (match, verb, noun) => {
+      // Check if this looks like "utilizing and protocols" (verb + orphaned conjunction + noun)
+      if (/^[a-z]+ing$/i.test(verb) && !/^[a-z]+ing$/i.test(noun)) return `${verb} ${noun}`;
+      return match;
+    })
     .replace(/\s{2,}/g, " ")
     .replace(/,\s*,/g, ",")
     .replace(/\s+\./g, ".")
