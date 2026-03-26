@@ -386,7 +386,7 @@ function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
 }
 
 /* ─── MODULE 7: Score Explanation ─── */
-function ScoreExplanation({ score }: { score: number }) {
+export function ScoreExplanation({ score }: { score: number }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -397,10 +397,13 @@ function ScoreExplanation({ score }: { score: number }) {
       <PopoverContent side="bottom" align="start" className="max-w-xs p-3 space-y-2">
         <p className="text-xs font-semibold">How this score works</p>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Your score measures how clearly your resume signals fit for this role — across ownership language, domain terms, operational evidence, and stakeholder framing. It doesn't judge your ability. A lower score means the signal isn't landing yet.
+          Your score is computed from four weighted components: JD keyword alignment (40%), ownership and scope density (30%), perception gap closure (20%), and readability (10%). Each component is measured deterministically from your resume text against the job description.
+        </p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          It doesn't judge your ability. A lower score means the signal isn't landing clearly yet.
         </p>
         <p className="text-[10px] text-muted-foreground/70 italic">
-          Zero fabrication. Only repositions existing experience.
+          70%+ is interview range. Zero fabrication.
         </p>
       </PopoverContent>
     </Popover>
