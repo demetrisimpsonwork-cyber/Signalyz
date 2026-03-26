@@ -348,6 +348,9 @@ const Index = () => {
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
     try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
   });
+  const [originalBaselineScore, setOriginalBaselineScore] = useState<number | null>(() => {
+    try { const v = localStorage.getItem("signalyz_original_baseline_score"); return v ? Number(v) : null; } catch { return null; }
+  });
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
