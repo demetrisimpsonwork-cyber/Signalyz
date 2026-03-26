@@ -80,8 +80,8 @@ const SAMPLE_ROLES: SampleRole[] = [
     label: "Customer Success Manager",
     bullet: `Experience\n\nCustomer Success Manager | Acme SaaS Inc | 2022 - Present\n- Managed a portfolio of 45 SMB accounts — handling onboarding, renewal conversations, and escalation resolution for SaaS customers across e-commerce and retail verticals.\n- Led quarterly business reviews with key accounts, identifying expansion opportunities and flagging churn risk before renewal cycles.\n- Built internal playbooks for common escalation scenarios that reduced time-to-resolution by standardizing the first response protocol.\n- Collaborated with product and support teams to route recurring customer complaints into the roadmap feedback process.`,
     jd: `We are looking for a Customer Success Manager to own a portfolio of 50-75 mid-market accounts. You will drive retention, lead QBRs, identify expansion opportunities, and serve as the primary relationship owner. Required: CRM experience, proven renewal track record, strong written communication.`,
-    sampleA: "Owned post-sale relationships across 45 mid-market accounts ($3.2M ARR), driving product adoption through structured onboarding sequences and quarterly business reviews that surfaced expansion opportunities.",
-    sampleB: "Managed a portfolio of mid-market accounts, coordinating onboarding, renewal conversations, and escalation resolution while maintaining 92% gross retention across two renewal cycles.",
+    sampleA: "Owned onboarding and renewal outcomes across 45 SMB accounts — running quarterly business reviews, flagging churn risk before renewal cycles, and identifying expansion opportunities tied to product adoption gaps.",
+    sampleB: "Managed a portfolio of SMB accounts across onboarding, renewal, and escalation workflows — building internal playbooks that standardized first-response protocols and reduced time-to-resolution.",
     perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Moderate" },
     roleWeightsMost: ["Portfolio ownership with renewal and expansion accountability", "Proactive adoption driving — not reactive support", "QBR facilitation and executive-facing communication", "Churn reduction as a measurable outcome"],
     perceptionInsights: ['"Managed a portfolio of 45 SMB accounts" signals administrative assignment — this role expects portfolio ownership with revenue accountability.', '"Led quarterly business reviews" reads as facilitation, not strategic ownership.', '"Collaborated with product and support teams" positions you as a participant.'],
@@ -90,8 +90,8 @@ const SAMPLE_ROLES: SampleRole[] = [
     label: "Operations Lead",
     bullet: `Experience\n\nOperations Lead | Vertex Solutions LLC | 2021 - Present\n- Oversaw daily operations for a 12-person remote support team — managing scheduling, workflow distribution, and SLA compliance across three product lines.\n- Redesigned the ticket routing process to reduce misassignment rate and improve first-contact resolution.\n- Maintained vendor relationships with three external service partners, negotiating SLAs and reviewing monthly performance against agreed benchmarks.\n- Reported weekly operational metrics to senior leadership and flagged process gaps with proposed solutions.`,
     jd: `Seeking an Operations Lead to manage day-to-day team workflows, own vendor relationships, and drive process improvement across our support infrastructure. Must be comfortable with data reporting, cross-functional coordination, and managing remote teams.`,
-    sampleA: "Built and owned end-to-end fulfillment workflows across 3 distribution channels, reducing cycle time by 28% through process redesign and vendor SLA renegotiation.",
-    sampleB: "Coordinated logistics and fulfillment operations across multiple vendor relationships, implementing process improvements that reduced order-to-delivery time.",
+    sampleA: "Owned daily workflow distribution and SLA compliance for a 12-person remote support team — redesigning the ticket routing process to reduce misassignment and improve first-contact resolution.",
+    sampleB: "Managed vendor SLA negotiations and monthly performance reviews across three external service partners while reporting operational metrics and process gaps to senior leadership.",
     perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Low" },
     roleWeightsMost: ["Process ownership and scalable system design", "Measurable efficiency outcomes tied to KPIs", "Vendor management with negotiation accountability", "Operational reporting to senior leadership"],
     perceptionInsights: ['"Oversaw daily operations" signals supervision rather than system ownership.', '"Redesigned the ticket routing process" lacks measurable outcomes.', '"Reported weekly operational metrics" reads as compliance, not leadership.'],
@@ -100,8 +100,8 @@ const SAMPLE_ROLES: SampleRole[] = [
     label: "Marketing Manager",
     bullet: `Experience\n\nMarketing Manager | BrightPath Corp | 2021 - Present\n- Led integrated campaigns across email, paid social, and organic channels for a B2B SaaS company targeting HR and finance decision-makers.\n- Managed a $120K quarterly campaign budget and reported ROI to VP of Marketing monthly.\n- Built and maintained the content calendar, coordinating with design, product, and sales to align messaging.\n- Tracked funnel performance in HubSpot — identifying drop-off points and testing variations to improve conversion rates.`,
     jd: `Looking for a Marketing Manager to own demand generation strategy across digital channels. Plan and execute integrated campaigns, manage budget allocation, analyze funnel performance, partner with sales to optimize lead quality. Required: B2B demand gen, HubSpot/Marketo, budget ownership, funnel analytics.`,
-    sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget, building integrated campaign frameworks that generated 340 MQLs per month.",
-    sampleB: "Planned and executed multi-channel marketing campaigns across email, social, and paid digital, coordinating with sales on lead handoff processes.",
+    sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget — tracking funnel performance in HubSpot and testing variations to improve conversion rates at each stage.",
+    sampleB: "Planned and executed integrated B2B campaigns targeting HR and finance decision-makers, coordinating with design, product, and sales to align messaging and improve lead quality.",
     perceptionSnapshot: { "Strategic Ownership Signal": "Moderate", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Moderate", "Seniority Weight": "Low" },
     roleWeightsMost: ["Demand generation strategy ownership", "Budget accountability with ROI measurement", "Funnel analytics and conversion optimization", "Sales partnership on lead quality"],
     perceptionInsights: ['"Led integrated campaigns" signals execution ownership but needs strategic framing.', '"Managed a $120K quarterly campaign budget" is strong but needs outcome attribution.', '"Tracked funnel performance in HubSpot" is reporting, not analytics ownership.'],
@@ -998,7 +998,7 @@ const Index = () => {
           <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY SIGNALYZ</p>
             <p className="text-sm text-foreground leading-relaxed">
-              Served as primary resolution contact for 40-70 concurrent B2B cases under strict SLA requirements — translating compliance and procedural complexity into clear, actionable guidance for business owners and HR administrators.
+              Owned resolution for 40–70 concurrent B2B cases under strict SLA requirements — managing escalation triage, documentation, and client follow-through across business and institutional accounts.
             </p>
           </div>
         </div>
@@ -1015,18 +1015,18 @@ const Index = () => {
         <div className="space-y-4">
           {[
             {
-              was: "Executed complaint routing and escalation triage across a high-volume state-managed caseload — managing 40-70 concurrent cases with 8-15 resolved daily under strict SLA requirements.",
-              now: "Managed 40–70 concurrent cases with 8–15 daily resolutions under strict SLA requirements — owning triage decisions and handoff accountability across a state-managed caseload.",
-              signal: "Ownership language + SLA accountability framing",
+              was: "Managed customer inquiries and helped resolve issues for business clients while maintaining documentation.",
+              now: "Owned resolution for 40–70 concurrent B2B cases under strict SLA requirements — managing escalation triage, documentation, and client follow-through across business and institutional accounts.",
+              signal: "Ownership language + accountability framing",
             },
             {
               was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
-              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution rates.",
-              signal: "Process ownership + outcome clarity",
+              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution.",
+              signal: "Process ownership + measurable outcome",
             },
             {
               was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
-              now: "Guided executive and institutional clients through complex procedural and regulatory questions — translating requirements into clear, actionable next steps.",
+              now: "Guided executive and institutional clients through complex procedural and regulatory questions — providing clear next steps based on case-specific requirements.",
               signal: "Client seniority + advisory framing",
             },
           ].map((card, i) => (
@@ -1069,8 +1069,8 @@ const Index = () => {
       <section className="py-12 container max-w-5xl md:max-w-tool" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { title: "7-Layer Signal Engine", sub: "Intent capture through artifact generation.", icon: Layers },
-            { title: "5-Stage Risk Projection", sub: "From recruiter filter to executive review.", icon: Shield },
+            { title: "Multi-Layer Signal Engine", sub: "Diagnosis across every stage of the hiring pipeline.", icon: Layers },
+            { title: "Risk Projection", sub: "Where you'll face friction — recruiter through panel.", icon: Shield },
             { title: "Zero Fabrication", sub: "Your experience, repositioned. Never invented.", icon: LockKeyhole },
           ].map((card) => (
             <div key={card.title} className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
@@ -1580,12 +1580,12 @@ const Index = () => {
                             {/* Conversion CTA — after Primary Blocker, free users only */}
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                 <p className="text-sm font-bold text-foreground">
-                                   3 changes move you above interview range
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   See exactly how your experience gets repositioned to match this role.
-                                 </p>
+                                   <p className="text-sm font-bold text-foreground">
+                                   Your positioning gaps are fixable
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    See exactly how your experience gets repositioned to match this role.
+                                  </p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                       <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
@@ -1671,7 +1671,7 @@ const Index = () => {
                           <div className="pointer-events-none select-none blur-sm opacity-40 p-5 space-y-4">
                             <div className="space-y-1">
                               <h3 className="text-sm font-semibold tracking-tight text-foreground">Your Signal Action Plan</h3>
-                              <p className="text-xs text-muted-foreground">Do these 3 things → move above 70%</p>
+                              <p className="text-xs text-muted-foreground">Prioritized actions to strengthen your signal</p>
                             </div>
                             <ol className="space-y-2">
                               {[1, 2, 3].map((i) => (
@@ -1702,11 +1702,11 @@ const Index = () => {
                               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                                 <span className="text-xl text-primary">✦</span>
                               </div>
-                              <p className="text-sm font-bold text-foreground">
-                                3 exact changes that would move your score above 70%
-                              </p>
-                              <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
-                              <p className="text-xs text-muted-foreground italic">You've already done the hard part — this shows you exactly what to change.</p>
+                               <p className="text-sm font-bold text-foreground">
+                                 See exactly what's holding your signal back
+                               </p>
+                               <p className="text-xs text-muted-foreground">You're closer than you think — the gap is positioning, not experience.</p>
+                               <p className="text-xs text-muted-foreground italic">Your full action plan shows exactly what to change and why.</p>
                               {user ? (
                                 <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
                                   Unlock Full Signal Intelligence →
