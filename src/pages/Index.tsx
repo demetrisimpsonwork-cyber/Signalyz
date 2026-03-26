@@ -43,7 +43,6 @@ import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { useReverseTrial } from "@/hooks/useReverseTrial";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
