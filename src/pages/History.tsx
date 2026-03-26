@@ -434,7 +434,7 @@ const History = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{group.role || "Alignment Run"}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(latest.created_at), "MMM d, yyyy · h:mm a")} · {latest.strength_label}
+                      {format(new Date(latest.created_at), "MMM d, yyyy · h:mm a")} · {getStrengthLabel(latest.score)}
                     </p>
                     {latest.top_gap && <p className="text-xs text-muted-foreground truncate mt-0.5">Top gap: {latest.top_gap}</p>}
                     {isMulti && (
