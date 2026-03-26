@@ -1530,16 +1530,27 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!candidates.length) return bullet;
 
-  const selected = candidates.slice(0, aggressive ? 3 : 2);
-  // Use more natural phrasing patterns for injection
-  const lower = bullet.toLowerCase();
-  if (selected.length === 1) {
-    if (/support|deliver|improv|manag|driv|execut/i.test(lower)) {
-      return appendClause(bullet, `supporting ${selected[0]} objectives`);
-    }
-    return appendClause(bullet, `driving ${selected[0]} outcomes`);
+  // Select candidates and deduplicate — avoid injecting phrases that overlap
+  // (e.g. "continuous improvement" and "improvement methodologies" share "improvement")
+  const selected: string[] = [];
+  const usedWords = new Set<string>();
+  for (const c of candidates) {
+    if (selected.length >= (aggressive ? 3 : 2)) break;
+    const words = c.toLowerCase().split(/\s+/);
+    const hasOverlap = words.some(w => w.length >= 4 && usedWords.has(w));
+    if (hasOverlap) continue;
+    selected.push(c);
+    words.forEach(w => usedWords.add(w));
   }
-  return appendClause(bullet, `driving ${selected.slice(0, -1).join(", ")} and ${selected[selected.length - 1]} outcomes`);
+
+  if (!selected.length) return bullet;
+
+  // Use natural phrasing — inject as contextual framing, not as "driving X outcomes"
+  // which produces garbled output when X is already a multi-word phrase
+  if (selected.length === 1) {
+    return appendClause(bullet, `aligned with ${selected[0]} priorities`);
+  }
+  return appendClause(bullet, `aligned with ${selected.join(" and ")} priorities`);
 }
 
 function ensureOutcomeFraming(original: string, bullet: string, _aggressive = false): string {
