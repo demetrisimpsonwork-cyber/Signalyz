@@ -32,11 +32,6 @@ const UpgradeModal = ({
     if (open) trackEvent("paywall_viewed");
   }, [open]);
 
-  const handleStartTrial = () => {
-    onStartTrial?.();
-    onClose();
-  };
-
   if (!isAuthenticated) {
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
