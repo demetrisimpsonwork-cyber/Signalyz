@@ -24,7 +24,8 @@ type AlignmentFilter = "all" | "high" | "moderate" | "weak";
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isPro } = useSubscription();
+  const { isPro: subIsPro, hasOneTimeCredit } = useSubscription();
+  const isPro = subIsPro || hasOneTimeCredit;
   const navigate = useNavigate();
   const [optimizations, setOptimizations] = useState<Optimization[]>([]);
   const [loading, setLoading] = useState(true);
