@@ -3,7 +3,63 @@ import { parseResumeIntake, type ExtractedExperience } from "@/lib/resumeIntake"
 import EvidenceLedger from "@/components/EvidenceLedger";
 import ResultSection from "@/components/ResultSection";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { antiAIFilter } from "@/lib/antiAIFilter";
+
+/**
+ * Directional signal impact analysis — compares original vs calibrated text
+ * to identify WHICH dimension improved. No fabricated numbers.
+ */
+function detectSignalImpact(original: string, calibrated: string): string[] {
+  const impacts: string[] = [];
+  const origLower = original.toLowerCase();
+  const calLower = calibrated.toLowerCase();
+
+  // Ownership: action verbs at start
+  const ownershipVerbs = /^(led|managed|owned|built|drove|spearheaded|directed|oversaw|orchestrated|championed|architected|launched)/i;
+  if (ownershipVerbs.test(calibrated.trim()) && !ownershipVerbs.test(original.trim())) {
+    impacts.push("Strengthens ownership signal");
+  }
+
+  // Outcome framing
+  const outcomePatterns = /\b(resulting in|which led to|saving|achieving|improving|reducing|increasing|generating|delivering|driving|growing|cutting|boosting)\b/i;
+  const calOutcomes = (calLower.match(outcomePatterns) || []).length;
+  const origOutcomes = (origLower.match(outcomePatterns) || []).length;
+  if (calOutcomes > origOutcomes) {
+    impacts.push("Improves outcome framing");
+  }
+
+  // Metrics / quantification
+  const calMetrics = (calibrated.match(/\d+[%$+x]|\$[\d,.]+|\b\d{2,}\b/g) || []).length;
+  const origMetrics = (original.match(/\d+[%$+x]|\$[\d,.]+|\b\d{2,}\b/g) || []).length;
+  if (calMetrics > origMetrics) {
+    impacts.push("Adds quantified impact");
+  }
+
+  // Keyword alignment — new domain/technical terms
+  const calWords = new Set(calLower.match(/\b[a-z]{4,}\b/g) || []);
+  const origWords = new Set(origLower.match(/\b[a-z]{4,}\b/g) || []);
+  let newTerms = 0;
+  calWords.forEach(w => { if (!origWords.has(w)) newTerms++; });
+  if (newTerms >= 3) {
+    impacts.push("Improves keyword alignment");
+  }
+
+  // Passive → active voice
+  const passivePattern = /\b(was|were|been|being)\s+(asked|given|told|assigned|responsible|involved|tasked)\b/gi;
+  const origPassive = (original.match(passivePattern) || []).length;
+  const calPassive = (calibrated.match(passivePattern) || []).length;
+  if (origPassive > 0 && calPassive < origPassive) {
+    impacts.push("Removes passive voice");
+  }
+
+  // Fallback if nothing detected
+  if (impacts.length === 0) {
+    impacts.push("Clarifies role signal");
+  }
+
+  return impacts.slice(0, 2);
+}
 
 interface CalibratedBulletsSectionProps {
   bullet: string;
