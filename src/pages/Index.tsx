@@ -1580,12 +1580,12 @@ const Index = () => {
                             {/* Conversion CTA — after Primary Blocker, free users only */}
                             {!effectiveIsPro && primaryBlocker && (
                               <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
-                                 <p className="text-sm font-bold text-foreground">
-                                   3 changes move you above interview range
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   See exactly how your experience gets repositioned to match this role.
-                                 </p>
+                                   <p className="text-sm font-bold text-foreground">
+                                   Your positioning gaps are fixable
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    See exactly how your experience gets repositioned to match this role.
+                                  </p>
                                  {user ? (
                                    <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                       <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
