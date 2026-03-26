@@ -28,6 +28,8 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
   [/\\bfacilitated\\b/g, "ran"],
   [/\\bSynergized\\b/g, "Combined"],
   [/\\bsynergized\\b/g, "combined"],
+  [/\\bMobilized\\b/g, "Coordinated"],
+  [/\\bmobilized\\b/g, "coordinated"],
   [/\\bUtilized\\b/g, "Used"],
   [/\\butilized\\b/g, "used"],
   [/\\bsynergy\\b/gi, "coordination"],
