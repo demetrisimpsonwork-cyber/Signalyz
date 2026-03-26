@@ -1629,9 +1629,31 @@ const Index = () => {
                               </div>
                             )}
 
-                            {/* Conversion CTA — after Primary Blocker, free users only */}
-                            {!effectiveIsPro && primaryBlocker && (
-                              <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
+                            {/* Repositioning Preview — after Primary Blocker, free users only */}
+                            {!effectiveIsPro && primaryBlocker && (() => {
+                              const previewActions = deriveActions(result);
+                              const topMove = previewActions.length > 0 ? previewActions[0] : null;
+                              if (!topMove) return null;
+                              return (
+                                <div className="space-y-3">
+                                  <div className="rounded-lg border border-accent/30 bg-accent/[0.06] p-4 space-y-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent-foreground/70">Your top repositioning move</p>
+                                    <p className="text-[13px] text-foreground leading-relaxed">{topMove}</p>
+                                    <button
+                                      onClick={() => user ? setShowUpgrade(true) : undefined}
+                                      {...(!user ? { } : {})}
+                                      className="text-xs text-primary hover:underline cursor-pointer mt-1 text-left"
+                                    >
+                                      {user ? (
+                                        <>4 more moves like this in your full Signal Action Plan →</>
+                                      ) : (
+                                        <a href="/auth" className="text-primary hover:underline">4 more moves like this in your full Signal Action Plan →</a>
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  {/* Conversion CTA */}
+                                  <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-center space-y-2.5">
                                    <p className="text-sm font-bold text-foreground">
                                    Your positioning gaps are fixable
                                   </p>
