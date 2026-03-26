@@ -1509,7 +1509,7 @@ const Index = () => {
                         )}
                       </div>
                       {displayScore < 70 && (
-                        <p className="text-sm font-semibold text-destructive">You're {70 - displayScore}% below interview range (70%+)</p>
+                        <p className="text-sm font-semibold text-destructive">Your current signal is below typical interview range (70%+)</p>
                       )}
 
                       {/* Primary strength */}
