@@ -1032,13 +1032,13 @@ const Index = () => {
             },
             {
               was: "Built internal intake guides and complaint clarification protocols that standardized the routing decision process.",
-              now: "Architected procedural enhancements — intake guides and clarification protocols — that optimized client issue routing, significantly reducing repeat inquiries and elevating first-contact resolution efficiency.",
-              signal: "Strategic authorship + measurable outcome framing",
+              now: "Created intake guides and clarification protocols that standardized routing decisions — reducing repeat inquiries and improving first-contact resolution rates.",
+              signal: "Process ownership + outcome clarity",
             },
             {
               was: "Supported executive-level clients and institutional account managers through complex procedural questions.",
-              now: "Advised executive and institutional clientele on complex procedural and regulatory matters, distilling intricate information into actionable guidance that upheld brand standards and compliance.",
-              signal: "Client elevation + brand alignment",
+              now: "Guided executive and institutional clients through complex procedural and regulatory questions — translating requirements into clear, actionable next steps.",
+              signal: "Client seniority + advisory framing",
             },
           ].map((card, i) => (
             <div key={i} className="rounded-xl border bg-card p-4 space-y-3 shadow-sm" style={{ borderRadius: "12px" }}>
