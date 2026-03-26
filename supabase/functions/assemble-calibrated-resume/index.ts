@@ -1763,10 +1763,19 @@ Return ONLY valid JSON array:
       const aiRole = Array.isArray(parsed) ? parsed[roleIndex] || {} : {};
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
-        company: aiRole?.company || role.company || "",
-        title: aiRole?.title || role.title || "",
-        dates: aiRole?.dates || role.dates || "",
-        bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => aiBullets[bulletIndex] || originalBullet),
+        // Always preserve the candidate's ORIGINAL company/title/dates — never
+        // allow the AI to substitute industry or employer context from the JD
+        company: role.company || aiRole?.company || "",
+        title: role.title || aiRole?.title || "",
+        dates: role.dates || aiRole?.dates || "",
+        bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
+          let aiBullet = aiBullets[bulletIndex] || originalBullet;
+          // Strip any domain/industry terms the AI fabricated
+          if (originalResumeText) {
+            aiBullet = stripDomainFabricationFromBullet(aiBullet, originalResumeText);
+          }
+          return aiBullet;
+        }),
       };
     });
 
