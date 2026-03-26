@@ -432,26 +432,43 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         end_date = dateMatch[2] || "";
       }
 
-      const withoutDate = line.replace(DATE_PATTERN, "").replace(/[()]/g, "").trim().replace(/[\s|—–\-]+$/, "").trim();
-      const parts = withoutDate.split(/\s*[|—–,]\s*/);
+      const withoutDate = line.replace(DATE_PATTERN, "").replace(/[()]/g, "").trim().replace(/[\s|—–\-/]+$/, "").trim();
+      // Split on common delimiters: | — – , /
+      const parts = withoutDate.split(/\s*[|—–]\s*|\s*\/\s*(?![a-z])|\s*,\s*/).filter(Boolean);
 
       if (parts.length >= 2) {
-        // Detect which is company vs title
-        if (ROLE_TITLES.test(parts[0]) && !ROLE_TITLES.test(parts[1])) {
-          role_title = parts[0].trim();
-          company = parts[1].trim();
-        } else if (COMPANY_SUFFIXES.test(parts[0]) && !COMPANY_SUFFIXES.test(parts[1])) {
-          company = parts[0].trim();
-          role_title = parts[1].trim();
+        // Score each part for company-ness and title-ness
+        const scores = parts.map((p, idx) => ({
+          idx, text: p.trim(),
+          hasTitle: ROLE_TITLES.test(p),
+          hasCompany: COMPANY_SUFFIXES.test(p),
+        }));
+        const compPart = scores.find(s => s.hasCompany && !s.hasTitle);
+        const titlePart = scores.find(s => s.hasTitle && !s.hasCompany);
+        if (compPart && titlePart) {
+          company = compPart.text;
+          role_title = titlePart.text;
+        } else if (compPart) {
+          company = compPart.text;
+          role_title = scores.filter(s => s.idx !== compPart.idx).map(s => s.text).join(" ").trim();
+        } else if (titlePart) {
+          role_title = titlePart.text;
+          company = scores.filter(s => s.idx !== titlePart.idx).map(s => s.text).join(" ").trim();
         } else {
-          // Role/company swapping heuristic: if line has title keywords first
+          // Neither regex matched — use positional heuristic:
+          // If first part is shorter and proper-cased, treat as company
           role_title = parts[0].trim();
           company = parts[1].trim();
         }
-      if (parts.length >= 3 && LOCATION_PATTERN.test(parts[2]?.trim()) && isValidLocationString(parts[2].trim())) {
-          location = parts[2].trim();
+        // Check for location in remaining parts
+        for (let p = 2; p < parts.length; p++) {
+          if (LOCATION_PATTERN.test(parts[p]?.trim()) && isValidLocationString(parts[p].trim())) {
+            location = parts[p].trim();
+            break;
+          }
         }
       } else {
+        // Single segment — preserve as title (best effort)
         role_title = withoutDate;
       }
 
@@ -464,12 +481,36 @@ function extractExperienceBlocks(lines: string[], isProjects: boolean): Extracte
         role_title = "";
       }
 
-      // Check next line for company if only title detected
+      // Check next line for company or title if missing
       if (role_title && !company && i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        if (COMPANY_SUFFIXES.test(nextLine) && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine)) {
-          company = nextLine;
-          i++;
+        if (nextLine && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine) && nextLine.length < 60) {
+          // Next line is likely a company name
+          if (COMPANY_SUFFIXES.test(nextLine) || (!ROLE_TITLES.test(nextLine) && !startsWithVerb(nextLine) && nextLine.length < 50)) {
+            company = nextLine;
+            i++;
+          }
+        }
+      } else if (company && !role_title && i + 1 < lines.length) {
+        // Have company but no title — check next line for title
+        const nextLine = lines[i + 1].trim();
+        if (nextLine && !DATE_PATTERN.test(nextLine) && !/^-/.test(nextLine) && !isContactInfoLine(nextLine) && nextLine.length < 60) {
+          if (ROLE_TITLES.test(nextLine) || (!COMPANY_SUFFIXES.test(nextLine) && !startsWithVerb(nextLine))) {
+            role_title = nextLine;
+            i++;
+          }
+        }
+      }
+      // HARD REQUIREMENT: never output blank title — preserve raw header as fallback
+      if (!role_title && !company) {
+        role_title = withoutDate || line;
+      } else if (!role_title && company) {
+        // If we only found a company, swap if it looks more like a title
+        if (ROLE_TITLES.test(company) && !COMPANY_SUFFIXES.test(company)) {
+          role_title = company;
+          company = "";
+        } else {
+          role_title = withoutDate || line; // preserve raw as title fallback
         }
       }
 
