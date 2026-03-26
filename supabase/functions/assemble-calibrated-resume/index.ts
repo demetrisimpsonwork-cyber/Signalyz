@@ -1006,6 +1006,21 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "e-commerce","ecommerce","saas","energy","oil","gas","chemical",
   "textile","food service","foodservice","transportation","shipping",
   "freight","supply chain","procurement","wholesale","fulfillment",
+  "factory","plant operations","assembly line","production floor",
+  "clinical","medical","patient care","nursing","pharmacy",
+  "hotel","restaurant","food and beverage","catering",
+  "dealership","showroom","sales floor",
+  "call center","contact center","help desk",
+  "law firm","legal practice","law office",
+  "accounting firm","cpa firm",
+  "staffing agency","recruitment agency","temp agency",
+  "nonprofit","non-profit","ngo",
+  "government","federal","municipal","public sector",
+  "military","defense","armed forces",
+  "startup","venture","incubator",
+  "distribution company","manufacturing company","sales support",
+  "warehouse environment","manufacturing environment",
+  "distribution center","fulfillment center",
 ]);
 
 /**
@@ -1017,19 +1032,52 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
   const resumeLower = originalResumeText.toLowerCase();
   const candidateLower = candidate.toLowerCase();
 
+  // Check multi-word domain terms first (longer matches take priority)
+  for (const term of DOMAIN_INDUSTRY_TERMS) {
+    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+      return true;
+    }
+  }
   // Check single-word domain terms
   for (const term of DOMAIN_INDUSTRY_TERMS) {
     if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
-  // Check multi-word domain terms
+  return false;
+}
+
+/**
+ * Strip domain-fabricated language from an AI-generated bullet.
+ * This catches cases where the AI model itself injected industry/domain
+ * terms despite prompt instructions.
+ */
+function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
+  const resumeLower = originalResumeText.toLowerCase();
+  let cleaned = bullet;
+
+  // Check each domain term — if it appears in the bullet but NOT in the resume, remove it
   for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
-      return true;
+    if (!resumeLower.includes(term)) {
+      // Use word-boundary-aware replacement to remove the fabricated term
+      const escaped = escapeRegExp(term).replace(/\s+/g, "\\s+");
+      const rx = new RegExp(`\\b${escaped}\\b`, "gi");
+      if (rx.test(cleaned)) {
+        // Remove the term and clean up surrounding artifacts
+        cleaned = cleaned.replace(rx, "").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/\s+,/g, ",").replace(/,\s*\./g, ".").trim();
+      }
     }
   }
-  return false;
+
+  // Clean up orphaned prepositions/articles left after removal
+  cleaned = cleaned
+    .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+\./g, ".")
+    .trim();
+
+  return cleaned;
 }
 
 const STRONG_SIGNAL_VERBS = [
@@ -1374,8 +1422,41 @@ function ensureOwnershipLead(original: string, bullet: string, usedVerbs: Map<st
     ...OUTCOME_SIGNAL_TERMS,
     ...ACTION_VERB_SET_TITLE,
   ]);
-  if (allKnownVerbs.has(cleanedLead)) {
+
+  // Expanded set of common verbs that would cause double-verb openers
+  // (e.g., "Directed serve", "Resolved execute", "Oversaw handle")
+  const COMMON_VERB_FORMS = new Set([
+    "execute","serve","handle","engage","provide","ensure","focus",
+    "utilize","leverage","apply","address","assess","allocate",
+    "assign","communicate","comply","complete","configure","connect",
+    "consult","convert","define","delegate","demonstrate","determine",
+    "diagnose","document","draft","enable","enforce","enhance",
+    "evaluate","examine","expand","expedite","explore","forecast",
+    "formalize","generate","guide","identify","inform","initiate",
+    "inspect","integrate","interpret","investigate","issue","liaise",
+    "locate","map","market","measure","mediate","mitigate","modify",
+    "navigate","notify","obtain","onboard","operate","orchestrate",
+    "outline","oversee","own","participate","perform","present",
+    "prioritize","program","promote","propose","qualify","recommend",
+    "recruit","reduce","refine","register","regulate","reinforce",
+    "remediate","remove","report","represent","research","restructure",
+    "retain","satisfy","secure","select","simplify","solicit",
+    "source","specify","sponsor","stabilize","strengthen","structure",
+    "submit","succeed","summarize","sustain","tailor","target",
+    "test","transfer","translate","troubleshoot","unify","update",
+    "upgrade","validate","verify","volunteer","write",
+  ]);
+
+  if (allKnownVerbs.has(cleanedLead) || COMMON_VERB_FORMS.has(cleanedLead)) {
     // Replace the existing (weaker) verb with a strong signal verb
+    const afterVerb = cleaned.replace(/^\S+\s*/, "");
+    const verb = chooseSignalVerb(original, cleaned, usedVerbs);
+    return `${verb} ${afterVerb}`.replace(/\s{2,}/g, " ").trim();
+  }
+
+  // Final catch-all: if cleaned lead looks like a verb (ends in common verb
+  // suffixes like -ed, -ing, -ate, -ize, -ify), treat as verb and replace
+  if (/^[a-z]+(ed|ing|ate|ize|ify|ise)$/i.test(cleanedLead) && cleanedLead.length >= 4) {
     const afterVerb = cleaned.replace(/^\S+\s*/, "");
     const verb = chooseSignalVerb(original, cleaned, usedVerbs);
     return `${verb} ${afterVerb}`.replace(/\s{2,}/g, " ").trim();
@@ -1491,6 +1572,12 @@ function repairSignalBullet(
 ): string {
   let bullet = (candidate || original || "").trim();
   if (!bullet) return bullet;
+
+  // Strip domain fabrication FIRST — before any other repairs that might
+  // re-inject or anchor around fabricated industry language
+  if (originalResumeText) {
+    bullet = stripDomainFabricationFromBullet(bullet, originalResumeText);
+  }
 
   bullet = eliminatePassiveLanguage(bullet);
   bullet = ensureOwnershipLead(original, bullet, usedVerbs);
@@ -1709,10 +1796,19 @@ Return ONLY valid JSON array:
       const aiRole = Array.isArray(parsed) ? parsed[roleIndex] || {} : {};
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
-        company: aiRole?.company || role.company || "",
-        title: aiRole?.title || role.title || "",
-        dates: aiRole?.dates || role.dates || "",
-        bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => aiBullets[bulletIndex] || originalBullet),
+        // Always preserve the candidate's ORIGINAL company/title/dates — never
+        // allow the AI to substitute industry or employer context from the JD
+        company: role.company || aiRole?.company || "",
+        title: role.title || aiRole?.title || "",
+        dates: role.dates || aiRole?.dates || "",
+        bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
+          let aiBullet = aiBullets[bulletIndex] || originalBullet;
+          // Strip any domain/industry terms the AI fabricated
+          if (originalResumeText) {
+            aiBullet = stripDomainFabricationFromBullet(aiBullet, originalResumeText);
+          }
+          return aiBullet;
+        }),
       };
     });
 
@@ -1789,9 +1885,14 @@ serve(async (req) => {
     );
 
     // ── Merge results and validate against the persisted final output ──
+    // Strip domain fabrication from the AI-generated summary
+    const cleanedSummary = originalResume
+      ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
+      : rewrittenSummary;
+
     const normalizedResult = normalizeResult({
       ...structure,
-      summary: rewrittenSummary,
+      summary: cleanedSummary,
       experience: rewrittenExperience,
     });
 
