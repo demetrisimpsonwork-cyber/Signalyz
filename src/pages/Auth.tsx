@@ -26,7 +26,11 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/");
+    if (user) {
+      // If there's a saved analysis session, redirect to alignment tab for auto-restore
+      const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
+      navigate(hasSavedSession ? "/?tab=alignment" : "/");
+    }
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
