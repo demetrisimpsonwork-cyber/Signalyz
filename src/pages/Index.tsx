@@ -1688,7 +1688,7 @@ const Index = () => {
                               <div className="space-y-1.5">
                                 <p className="section-label">What's Landing</p>
                                 <ul className="space-y-1">
-                                  {(effectiveIsPro ? strengths : strengths.slice(0, 1)).map((r, i) => (
+                                  {(effectiveIsPro ? strengths : strengths.slice(0, 2)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
