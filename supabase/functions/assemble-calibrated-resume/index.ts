@@ -1052,6 +1052,15 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
 // Pre-sorted longest-first for efficient domain fabrication stripping
 const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
 
+// Pre-compiled regex patterns for domain terms — avoids creating 1600+ regexes per request
+const DOMAIN_TERM_COMPILED = SORTED_DOMAIN_TERMS.map(term => ({
+  term,
+  rx: new RegExp(
+    `(?:^|[\\s,;:(]|-)${escapeRegExp(term).replace(/\s+/g, "[\\s-]+")}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`,
+    "gi"
+  ),
+}));
+
 /**
  * Returns true when `candidate` contains a domain / industry term that does
  * NOT appear anywhere in the candidate's original resume.  Injecting such a
@@ -1084,22 +1093,19 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
  */
 function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
   const resumeLower = originalResumeText.toLowerCase();
+  const bulletLower = bullet.toLowerCase();
   let cleaned = bullet;
 
-  // Use module-level pre-sorted array (longest-first)
-  const sortedTerms = SORTED_DOMAIN_TERMS;
-
-  for (const term of sortedTerms) {
+  // Use pre-compiled regexes with fast includes() gate
+  for (const { term, rx } of DOMAIN_TERM_COMPILED) {
     if (resumeLower.includes(term)) continue; // Term exists in resume — not fabrication
+    // Fast gate: skip regex if term root isn't even in the bullet
+    const checkWord = term.includes(" ") ? term.split(" ")[0] : term;
+    if (!bulletLower.includes(checkWord)) continue;
 
-    // Match the term even when hyphenated or used as a compound modifier
-    // e.g. "patient" matches "patient-focused", "patient record", etc.
-    const escaped = escapeRegExp(term).replace(/\s+/g, "[\\s-]+");
-    // Use a looser boundary: allow hyphen-adjacent matches
-    const rx = new RegExp(`(?:^|[\\s,;:(]|-)${escaped}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`, "gi");
+    rx.lastIndex = 0; // Reset stateful regex
     const beforeLen = cleaned.length;
     cleaned = cleaned.replace(rx, (match) => {
-      // Preserve leading whitespace/punctuation
       const leadChar = match.match(/^[\s,;:(.-]/)?.[0] || "";
       return leadChar;
     });
@@ -1108,22 +1114,14 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
     }
   }
 
-  // Remove garbled injection artifacts:
-  // "driving X outcomes", "driving X and Y outcomes", "aligned with X priorities"
-  // where X/Y contain only generic filler after domain term removal
+  // Remove garbled injection artifacts
   cleaned = cleaned
-    // Remove "driving [empty/filler] outcomes" patterns
     .replace(/,?\s*driving\s+(?:and\s+)?(?:including\s+)?(?:\w{0,3}\s*)*outcomes\b\.?/gi, "")
-    // Remove "aligned with [empty/filler] priorities" patterns  
     .replace(/,?\s*aligned\s+with\s+(?:\w{0,3}\s*)*priorities\b\.?/gi, "")
-    // Remove "supporting [empty/filler] objectives" patterns
     .replace(/,?\s*supporting\s+(?:\w{0,3}\s*)*objectives\b\.?/gi, "")
-    // Clean up orphaned prepositions/articles/conjunctions after term removal
     .replace(/\b(in|at|for|within|across|of|the|a|an)\s+(in|at|for|within|across|of|the|a|an)\b/gi, "$1")
-    // "utilizing and protocols" → "utilizing protocols"
     .replace(/\b(and|or)\s+(and|or)\b/gi, "$1")
     .replace(/(\w+ing)\s+and\s+(\w+s\b)/gi, (match, verb, noun) => {
-      // Check if this looks like "utilizing and protocols" (verb + orphaned conjunction + noun)
       if (/^[a-z]+ing$/i.test(verb) && !/^[a-z]+ing$/i.test(noun)) return `${verb} ${noun}`;
       return match;
     })
@@ -1133,7 +1131,6 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
     .replace(/,\s*$/, "")
     .trim();
 
-  // Ensure bullet still ends with a period
   if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
     cleaned += ".";
   }
