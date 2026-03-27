@@ -1052,6 +1052,15 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
 // Pre-sorted longest-first for efficient domain fabrication stripping
 const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
 
+// Pre-compiled regex patterns for domain terms — avoids creating 1600+ regexes per request
+const DOMAIN_TERM_COMPILED = SORTED_DOMAIN_TERMS.map(term => ({
+  term,
+  rx: new RegExp(
+    `(?:^|[\\s,;:(]|-)${escapeRegExp(term).replace(/\s+/g, "[\\s-]+")}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`,
+    "gi"
+  ),
+}));
+
 /**
  * Returns true when `candidate` contains a domain / industry term that does
  * NOT appear anywhere in the candidate's original resume.  Injecting such a
