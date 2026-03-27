@@ -445,8 +445,7 @@ const Index = () => {
   // Session recovery modal state
   const SESSION_KEY = "signalyz_last_analysis";
   const SESSION_VERSION = 2;
-  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
-  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string; runType?: "original" | "calibrated" } | null>(null);
+  // Session recovery modal state removed — sessions now auto-restore silently
 
   // Check for saved session on mount — always auto-restore silently
   useEffect(() => {
