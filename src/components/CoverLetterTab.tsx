@@ -66,7 +66,7 @@ const CoverLetterTab = ({
 
 function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
-  const { } = useSubscription();
+  
   const ctaLabel = "Unlock Full Signal Intelligence →";
   return (
     <div className="max-w-3xl mx-auto">
