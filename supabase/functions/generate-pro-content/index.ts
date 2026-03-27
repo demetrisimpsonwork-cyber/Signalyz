@@ -213,28 +213,113 @@ Return ONLY valid JSON, no markdown.`;
       }
 
       case "linkedin_headline": {
-        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+        const signalModel = alignmentResult.signal_model || {};
+        const primaryStrength = signalModel.executive_insight_summary?.primary_strength || alignmentResult.top_matched_signal || "";
+        const missingKws = (alignmentResult.missing_keywords || []).slice(0, 8).join(", ");
+        const gaps = Array.isArray(signalModel.gaps) ? signalModel.gaps.slice(0, 5).map((g: unknown) => typeof g === "string" ? g : (g as any)?.name || g).join(", ") : "";
 
-Generate 3 LinkedIn headline variants for this candidate targeting roles similar to ${inferredRole}. 
+        const prompt = `You are a LinkedIn positioning specialist. Generate ONE repositioned LinkedIn headline for a candidate targeting ${inferredRole}.
 
 Resume: ${experience.slice(0, 3000)}
 Current headline: ${currentHeadline || "(none)"}
+Primary strength from alignment: ${primaryStrength}
+Signal gaps: ${gaps}
+Missing keywords: ${missingKws}
 
-Each variant must: signal the specific role they are targeting, use language a recruiter scanning for this role type would pattern-match on, be under 220 characters, and take a meaningfully different strategic angle:
+RULES:
+- Under 220 characters
+- Lead with the candidate's strongest signal for this specific role
+- Use language a recruiter scanning for ${inferredRole} would pattern-match on
+- Active framing only — no passive constructions
+- No buzzwords: "passionate," "results-driven," "dynamic," "innovative," "seasoned," "dedicated"
+- ZERO FABRICATION: every word must be traceable to the resume. Do NOT invent tools, industries, scope, metrics, employer names, certifications, or domain claims not present in the resume.
+- Do NOT add metrics, percentages, team sizes, or quantified claims not verbatim in the resume.
 
-Variant A — lead with role title and domain
-Variant B — lead with the outcome or value delivered
-Variant C — lead with the specific capability that differentiates this candidate
+Return a JSON object with: "headline" (the repositioned headline text), "signal_basis" (one sentence explaining which resume evidence this headline is based on)
+Return ONLY valid JSON, no markdown.`;
+        const raw = await callAI(prompt, 500);
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+        result = JSON.parse(cleaned);
+        break;
+      }
 
-Return a JSON array of 3 objects with: "label", "text" (the headline)
+      case "linkedin_about_guidance": {
+        const signalModel = alignmentResult.signal_model || {};
+        const primaryStrength = signalModel.executive_insight_summary?.primary_strength || "";
+        const gaps = Array.isArray(signalModel.gaps) ? signalModel.gaps.slice(0, 5).map((g: unknown) => typeof g === "string" ? g : (g as any)?.name || g).join(", ") : "";
+        const missingKws = (alignmentResult.missing_keywords || []).slice(0, 8).join(", ");
+        const strengths = Array.isArray(signalModel.strengths) ? signalModel.strengths.slice(0, 5).join(", ") : "";
+
+        const prompt = `You are a LinkedIn positioning specialist. Generate exactly 3 specific, actionable suggestions for repositioning this candidate's LinkedIn About section to align with ${inferredRole}.
+
+Resume: ${experience.slice(0, 3000)}
+Current About section: ${currentAbout || "(none)"}
+Primary strength: ${primaryStrength}
+Detected strengths: ${strengths}
+Signal gaps from alignment: ${gaps}
+Missing keywords: ${missingKws}
+
+Each suggestion must:
+1. Address a specific signal gap identified in the alignment analysis
+2. Reference real experience from the resume that can be repositioned
+3. Explain exactly what to change and why it matters for recruiter perception
+4. Be actionable — tell the user what to write, not vague advice
+
+RULES:
+- No generic LinkedIn advice ("tell your story," "add a hook," "show personality")
+- ZERO FABRICATION: every suggestion must reference only experience, tools, outcomes, or language that exists in the resume. Never instruct the user to add, estimate, or invent metrics, percentages, scope figures, tools, industries, certifications, or domain claims not in their resume.
+- Do NOT use outcome-implying verbs ("improved," "increased," "reduced," "enhanced," "boosted," "optimized") unless that exact verb+outcome pair appears verbatim in the resume.
+- Each suggestion should strengthen a different signal dimension
+
+Return a JSON array of exactly 3 objects with:
+- "gap_addressed": the signal gap this suggestion fixes (from alignment)
+- "suggestion": the specific actionable instruction (2-3 sentences)
+- "resume_evidence": the specific resume content this suggestion is based on (quote or paraphrase)
 Return ONLY valid JSON array, no markdown.`;
-        const raw = await callAI(prompt, 1000);
+        const raw = await callAI(prompt, 1500);
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+        result = JSON.parse(cleaned);
+        break;
+      }
+
+      case "linkedin_experience_notes": {
+        const signalModel = alignmentResult.signal_model || {};
+        const gaps = Array.isArray(signalModel.gaps) ? signalModel.gaps.slice(0, 5).map((g: unknown) => typeof g === "string" ? g : (g as any)?.name || g).join(", ") : "";
+        const missingKws = (alignmentResult.missing_keywords || []).slice(0, 8).join(", ");
+
+        const prompt = `You are a LinkedIn positioning specialist. For each role listed in this resume, generate ONE specific note explaining how the LinkedIn experience entry should differ from the resume version.
+
+Resume: ${experience.slice(0, 4000)}
+Target role: ${inferredRole}
+Signal gaps from alignment: ${gaps}
+Missing keywords: ${missingKws}
+
+Each note must:
+1. Identify the specific role/company from the resume
+2. Explain what to change on LinkedIn vs. the resume version
+3. Optimize for recruiter search patterns and LinkedIn discoverability for ${inferredRole}
+4. Preserve zero-fabrication — only reframe language already present
+
+RULES:
+- ZERO FABRICATION: Never instruct the user to add, estimate, or invent metrics, percentages, scope figures, tools, industries, certifications, or domain claims not in the resume.
+- Do NOT recharacterize employer context or industry — use only what the resume states.
+- Do NOT use outcome-implying verbs ("improved," "increased," "reduced," "enhanced") unless that exact verb+outcome pair appears verbatim in the resume.
+- LinkedIn entries should emphasize searchable keywords, ownership language, and role-native terminology.
+- Each note should be 2-3 sentences of specific repositioning guidance.
+
+Return a JSON array of objects with:
+- "role_title": the role title as it appears in the resume
+- "company": the company name as it appears in the resume
+- "note": the specific repositioning guidance for this LinkedIn entry
+Return ONLY valid JSON array, no markdown.`;
+        const raw = await callAI(prompt, 2000);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         result = JSON.parse(cleaned);
         break;
       }
 
       case "linkedin_summary": {
+        // Legacy — kept for backward compatibility but no longer primary path
         const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
 
 Rewrite this LinkedIn About section for a candidate targeting ${inferredRole}. Use only experience from the resume — zero fabrication.

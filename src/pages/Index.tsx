@@ -1217,10 +1217,17 @@ const Index = () => {
             <LinkedInSignalTab
               experience={bullet}
               inferredRole={result?.inferred_role_title || ""}
-              signalKeywords={result?.missing_keywords || result?.signal_model?.gaps || []}
+              signalKeywords={
+                (result?.missing_keywords as string[] || []).length > 0
+                  ? (result?.missing_keywords as string[])
+                  : Array.isArray(result?.signal_model?.gaps)
+                    ? (result.signal_model.gaps as unknown[]).map((g: unknown) => typeof g === "string" ? g : (g as any)?.name || "").filter(Boolean)
+                    : []
+              }
               onRunAlignment={() => setMode("alignment")}
               isPro={effectiveIsPro}
               onUpgrade={() => setShowUpgrade(true)}
+              alignmentResult={result as unknown as Record<string, unknown> || {}}
             />
           </div>
         )}
