@@ -1987,14 +1987,17 @@ serve(async (req) => {
 
   try {
     let body;
+    let currentStep = "input_received";
     try {
       body = await req.json();
     } catch {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "BAD_REQUEST", message: "Invalid request body." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ status: "error", request_id, error_code: "BAD_REQUEST", message: "Invalid request body.", debug: { step: "input_received", details: "Could not parse JSON body" } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    console.log(`[assemble] [${request_id}] Input received: resume=${!!body.originalResume}, director=${!!body.directorResult}, alignment=${!!body.alignmentResult}, jd=${!!body.jd}`);
 
     const { directorResult, originalResume, alignmentResult, jd } = body;
 
@@ -2003,20 +2006,21 @@ serve(async (req) => {
 
     if (!originalResume && !signalContext) {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Resume text or alignment data is required." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ status: "error", request_id, error_code: "MISSING_INPUT", message: "Resume text or alignment data is required.", debug: { step: "input_received", details: "Neither originalResume nor signalContext provided" } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "CONFIG_ERROR", message: "AI gateway not configured." }),
+        JSON.stringify({ status: "error", request_id, error_code: "CONFIG_ERROR", message: "AI gateway not configured.", debug: { step: "input_received", details: "ANTHROPIC_API_KEY not set" } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     // ── Phase 1: Instant structure from existing signal data ──
+    currentStep = "parsing_roles";
     console.log(`[assemble] [${request_id}] Phase 1: Building structure`);
     let structure;
     try {
@@ -2024,7 +2028,7 @@ serve(async (req) => {
     } catch (err: any) {
       console.error(`[assemble] [${request_id}] Phase 1 failed:`, err.message);
       return new Response(
-        JSON.stringify({ status: "error", request_id, error_code: "PHASE1_ERROR", message: "Failed to assemble resume structure." }),
+        JSON.stringify({ status: "error", request_id, error_code: "PHASE1_ERROR", message: "Failed to parse resume structure.", debug: { step: "parsing_roles", details: err.message } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -2036,30 +2040,42 @@ serve(async (req) => {
     const jdModel = buildSignalJdModel(jdSource);
 
     // ── Phase 2: PARALLEL focused API calls ──
+    currentStep = "bullet_generation";
     console.log(`[assemble] [${request_id}] Phase 2: Rewriting summary + experience (parallel)`);
-    const [rewrittenSummary, rewrittenExperience] = await Promise.all([
-      generateSummary(
-        structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
-      ),
-      rewriteExperienceBullets(
-        structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || "", jdModel
-      ),
-    ]);
+    let rewrittenSummary: string;
+    let rewrittenExperience: any[];
+    try {
+      [rewrittenSummary, rewrittenExperience] = await Promise.all([
+        generateSummary(
+          structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
+        ),
+        rewriteExperienceBullets(
+          structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || "", jdModel
+        ),
+      ]);
+    } catch (err: any) {
+      console.error(`[assemble] [${request_id}] Phase 2 failed:`, err.message);
+      return new Response(
+        JSON.stringify({ status: "error", request_id, error_code: "PHASE2_ERROR", message: "AI rewrite failed.", debug: { step: "bullet_generation", details: err.message } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    console.log(`[assemble] [${request_id}] Phase 2 complete`);
 
     // ── Lightweight post-processing (CPU-safe) ──
+    currentStep = "cleanup_stage";
+    console.log(`[assemble] [${request_id}] Cleanup stage`);
     const cleanedSummary = originalResume
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
 
+    currentStep = "final_assembly";
+    console.log(`[assemble] [${request_id}] Final assembly`);
     const result = normalizeResult({
       ...structure,
       summary: cleanedSummary,
       experience: rewrittenExperience,
     });
-
-    // NOTE: strengthenFinalExperience passes removed — the AI rewrite in Phase 2
-    // already applies ownership verbs, JD alignment, and outcome framing.
-    // The local regex-heavy repair was redundant and exceeded the 2s CPU budget.
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
     return new Response(
@@ -2075,6 +2091,7 @@ serve(async (req) => {
         request_id,
         error_code: "INTERNAL_ERROR",
         message: err instanceof Error ? err.message : "Unknown error",
+        debug: { step: "unknown", details: err instanceof Error ? err.stack?.slice(0, 500) : String(err) },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
