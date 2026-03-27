@@ -82,10 +82,18 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   }, [finalizeResume]);
 
   const skipConfirmation = useCallback(() => {
-    if (pendingResume) {
-      finalizeResume(pendingResume);
+    if (err.message === FRIENDLY_FAIL_MSG) {
+      // For WORKER_LIMIT / CPU timeout: the runtime killed the function before our catch could run
+      throw new Error("Resume assembly timed out (WORKER_LIMIT). The function exceeded its CPU budget. Try again — if this persists, the resume may be too complex for single-pass assembly.");
     }
-  }, [pendingResume, finalizeResume]);
+    throw coerce(err);
+  }
+  if (data?.status === "error") {
+    const debugStep = data.debug?.step ? ` [step: ${data.debug.step}]` : "";
+    const debugDetails = data.debug?.details ? ` — ${data.debug.details}` : "";
+    throw new Error(`${data.error_code || "ERROR"}: ${data.message || "Unknown error"}${debugStep}${debugDetails}`);
+  }
+  return data;
 
   const reset = useCallback(() => {
     setAssembledResume(null);
