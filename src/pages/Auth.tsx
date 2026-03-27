@@ -26,7 +26,11 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/");
+    if (user) {
+      // If there's a saved analysis session, redirect to alignment tab for auto-restore
+      const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
+      navigate(hasSavedSession ? "/?tab=alignment" : "/");
+    }
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
@@ -37,7 +41,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/?tab=alignment`,
             queryParams: {
               prompt: "select_account",
             },
@@ -51,7 +55,7 @@ const Auth = () => {
       } else {
         // On desktop, use the managed lovable popup flow
         const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
+          redirect_uri: `${window.location.origin}/?tab=alignment`,
         });
         if (error) {
           toast.error(error.message || "Google sign-in failed");
@@ -91,7 +95,8 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        navigate("/");
+        const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
+        navigate(hasSavedSession ? "/?tab=alignment" : "/");
       }
     }
     setLoading(false);

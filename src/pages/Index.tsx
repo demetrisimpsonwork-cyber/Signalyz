@@ -459,9 +459,10 @@ const Index = () => {
         localStorage.removeItem(SESSION_KEY);
         return;
       }
-      // Post-payment redirect: auto-restore without modal
+      // Auto-restore without modal: post-payment OR post-auth redirect (tab=alignment in URL)
       const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
-      if (isPostPayment) {
+      const isPostAuth = searchParams.get("tab") === "alignment";
+      if (isPostPayment || isPostAuth) {
         setResult(parsed.result);
         setBullet(parsed.bullet);
         setJd(parsed.jd);
@@ -469,6 +470,12 @@ const Index = () => {
         if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
           setOriginalResumeBeforeCalibration(parsed.originalBaseline);
           try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
+        }
+        // Scroll to results after restore
+        if (isPostAuth && !isPostPayment) {
+          setTimeout(() => {
+            document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+          }, 400);
         }
       } else {
         setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd, runType: parsed.runType || "original" });
