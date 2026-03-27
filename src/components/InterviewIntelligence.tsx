@@ -136,7 +136,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
               <span className="text-lg text-primary">✦</span>
             </div>
             <h4 className="text-sm font-bold text-foreground tracking-tight">
-              {questions.length - 1} more questions they'll use to screen you out
+              {questions.length - 1} more questions tied to your current signal gaps
             </h4>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
               Know exactly what they'll probe — and the signal angle that turns each question into proof you belong.
