@@ -38,6 +38,19 @@ function isTabSwitchError(err: any): boolean {
 export const FRIENDLY_FAIL_MSG =
   "Generation took longer than expected. Tap to retry.";
 
+/** Structured error from edge function with debug info */
+export class StructuredEdgeError extends Error {
+  error_code: string;
+  debug?: { step?: string; details?: string };
+  constructor(payload: { error_code?: string; message?: string; debug?: { step?: string; details?: string } }) {
+    const step = payload.debug?.step ? ` [step: ${payload.debug.step}]` : "";
+    const details = payload.debug?.details ? ` — ${payload.debug.details}` : "";
+    super(`${payload.error_code || "ERROR"}: ${payload.message || "Unknown error"}${step}${details}`);
+    this.error_code = payload.error_code || "UNKNOWN";
+    this.debug = payload.debug;
+  }
+}
+
 /**
  * Invoke an edge function resiliently.
  *
