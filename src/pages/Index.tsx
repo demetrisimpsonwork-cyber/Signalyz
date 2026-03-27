@@ -1527,9 +1527,6 @@ const Index = () => {
                     <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
                       <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
                       <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
-                       {!effectiveIsPro && (
-                         <p className="text-xs text-muted-foreground">Upgrade to save and access your full signal analysis anytime.</p>
-                       )}
                     </div>
 
                     {/* Professional Signal Diagnosis headline */}
