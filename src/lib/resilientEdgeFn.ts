@@ -77,7 +77,7 @@ export async function invokeResilient(
       inFlight.delete(key);
       if (error) throw coerce(error);
       if (data?.status === "error")
-        throw new Error(data.message || data.error || FRIENDLY_FAIL_MSG);
+        throw new StructuredEdgeError(data);
       return data;
     }
     // Stale — remove and start fresh
