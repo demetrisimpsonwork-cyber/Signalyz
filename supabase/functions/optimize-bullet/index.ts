@@ -849,12 +849,20 @@ BANNED patterns — if your fix contains ANY of these phrases or patterns, it VI
 - "team of [number]" — BANNED (unless that exact team size is in the resume)
 - Any suggestion to add, estimate, approximate, or invent ANY number, percentage, dollar amount, team size, or scope figure NOT already in the resume text — BANNED
 
+OUTCOME-IMPLYING LANGUAGE BAN — CRITICAL:
+The words "improved," "increased," "reduced," "decreased," "enhanced," "boosted," "accelerated," "optimized," "streamlined," "maximized," and "minimized" must NEVER appear in a fix UNLESS that exact word + outcome pair appears VERBATIM in the candidate's source resume. These words imply a measurable result. You cannot claim a result the candidate did not explicitly state.
+- BANNED: "improved customer response times" (unless the resume literally says "improved customer response times")
+- BANNED: "reduced onboarding friction" (unless the resume literally says that)
+- BANNED: "enhanced team productivity" (unless the resume literally says that)
+Instead, describe the REPOSITIONING ACTION: "Reframe X to lead with Y" / "Restructure X to foreground Y" / "Move X into the lead position so Y reads as the focus."
+
 CORRECT pattern — every fix must follow this structure:
 "Reframe [specific existing bullet or phrase from the resume] to lead with [the positioning angle] — change '[current weak phrasing]' to '[repositioned version using only their existing language].'"
 
 Good: "Reframe your process improvement bullet to lead with the operational outcome you already described — 'Drove vendor consolidation that cut redundant contracts' instead of 'Worked with vendors on contract management.'"
 Bad: "Include cost savings, efficiency gains, or customer satisfaction metrics to strengthen this bullet."
 Bad: "Even estimates like 'reduced processing time by 30%' would strengthen this section."
+Bad: "Improved customer response times by restructuring the support workflow." (claims an outcome not in the resume)
 
 STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
 
