@@ -41,7 +41,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-        redirectTo: `${window.location.origin}/?tab=alignment`,
+        redirectTo: window.location.origin,
             queryParams: {
               prompt: "select_account",
             },
@@ -55,7 +55,7 @@ const Auth = () => {
       } else {
         // On desktop, use the managed lovable popup flow
         const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: `${window.location.origin}/?tab=alignment`,
+          redirect_uri: window.location.origin,
         });
         if (error) {
           toast.error(error.message || "Google sign-in failed");

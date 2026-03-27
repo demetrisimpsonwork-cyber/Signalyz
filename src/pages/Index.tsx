@@ -445,10 +445,9 @@ const Index = () => {
   // Session recovery modal state
   const SESSION_KEY = "signalyz_last_analysis";
   const SESSION_VERSION = 2;
-  const [showSessionRecovery, setShowSessionRecovery] = useState(false);
-  const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string; runType?: "original" | "calibrated" } | null>(null);
+  // Session recovery modal state removed — sessions now auto-restore silently
 
-  // Check for saved session on mount
+  // Check for saved session on mount — always auto-restore silently
   useEffect(() => {
     if (result) return; // already have results
     try {
@@ -459,27 +458,21 @@ const Index = () => {
         localStorage.removeItem(SESSION_KEY);
         return;
       }
-      // Auto-restore without modal: post-payment OR post-auth redirect (tab=alignment in URL)
+      // Always auto-restore: no modal, no conditions
+      setResult(parsed.result);
+      setBullet(parsed.bullet);
+      setJd(parsed.jd);
+      if (parsed.runType === "calibrated") setResultRunType("calibrated");
+      if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
+        setOriginalResumeBeforeCalibration(parsed.originalBaseline);
+        try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
+      }
+      // Scroll to results after restore (skip if post-payment overlay is active)
       const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
-      const isPostAuth = searchParams.get("tab") === "alignment";
-      if (isPostPayment || isPostAuth) {
-        setResult(parsed.result);
-        setBullet(parsed.bullet);
-        setJd(parsed.jd);
-        if (parsed.runType === "calibrated") setResultRunType("calibrated");
-        if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
-          setOriginalResumeBeforeCalibration(parsed.originalBaseline);
-          try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
-        }
-        // Scroll to results after restore
-        if (isPostAuth && !isPostPayment) {
-          setTimeout(() => {
-            document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
-          }, 400);
-        }
-      } else {
-        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd, runType: parsed.runType || "original" });
-        setShowSessionRecovery(true);
+      if (!isPostPayment) {
+        setTimeout(() => {
+          document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+        }, 400);
       }
     } catch {
       localStorage.removeItem(SESSION_KEY);
@@ -1970,48 +1963,6 @@ const Index = () => {
         hasOneTimeCredit={hasOneTimeCredit}
       />
 
-      {/* Session Recovery Modal */}
-      {showSessionRecovery && pendingSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-xl shadow-xl max-w-sm w-full mx-4 p-6 space-y-4 animate-fade-in">
-            <h3 className="text-base font-semibold text-foreground">Welcome back</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              You have a previous analysis session. Would you like to continue where you left off?
-            </p>
-            <div className="flex flex-col gap-2">
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setResult(pendingSession.result);
-                  setBullet(pendingSession.bullet);
-                  setJd(pendingSession.jd);
-                  if (pendingSession.runType === "calibrated") setResultRunType("calibrated");
-                  // Restore original baseline from localStorage if available
-                  const savedBaseline = localStorage.getItem("signalyz_original_resume_baseline");
-                  if (savedBaseline && !originalResumeBeforeCalibration) {
-                    setOriginalResumeBeforeCalibration(savedBaseline);
-                  }
-                  setShowSessionRecovery(false);
-                  setPendingSession(null);
-                }}
-              >
-                Continue last session
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  localStorage.removeItem(SESSION_KEY);
-                  setShowSessionRecovery(false);
-                  setPendingSession(null);
-                }}
-              >
-                Start new analysis
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
