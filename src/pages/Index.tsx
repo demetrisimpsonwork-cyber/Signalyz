@@ -1875,6 +1875,31 @@ const Index = () => {
                       onUpgrade={() => setShowUpgrade(true)}
                     />
 
+                    {/* Terminal Conversion Block — free users only */}
+                    {!effectiveIsPro && (
+                      <div className="rounded-xl border border-primary/20 bg-card p-6 text-center space-y-3">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-lg font-bold text-foreground tracking-tight">Your diagnosis is complete.</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                          Your signal gaps are mapped. Now see the exact repositioning moves that close them.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Unlock the full Signal Action Plan, calibrated bullets, and role-specific positioning.
+                        </p>
+                        {user ? (
+                          <Button onClick={() => setShowUpgrade(true)} size="lg" className="gap-2 w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                            <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
+                          </Button>
+                        ) : (
+                          <Button size="lg" className="gap-2" asChild>
+                            <a href="/auth">Get Started Free</a>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
                     <KeywordChips keywords={result.missing_keywords} />
 
                     {result.match_score < 60 && (
