@@ -95,7 +95,8 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        navigate("/");
+        const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
+        navigate(hasSavedSession ? "/?tab=alignment" : "/");
       }
     }
     setLoading(false);
