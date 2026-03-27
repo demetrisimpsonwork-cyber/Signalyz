@@ -745,21 +745,20 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibr
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border bg-background p-3 space-y-2 relative overflow-hidden">
-            <div className="pointer-events-none select-none blur-[3px] opacity-40">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground">Current</p>
-                  <p className="text-xl font-bold text-muted tabular-nums">—</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted" />
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground">Projected</p>
-                  <p className="text-xl font-bold text-muted tabular-nums">—</p>
-                </div>
+          <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground">Current</p>
+                <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
+              </div>
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground">Projected</p>
+                <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
               </div>
             </div>
+            <p className="text-[10px] text-muted-foreground/70 italic">Unlock Full Signal Intelligence to see the exact changes.</p>
           </div>
         )
       )}

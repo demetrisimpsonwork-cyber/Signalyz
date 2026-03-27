@@ -1527,9 +1527,6 @@ const Index = () => {
                     <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
                       <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
                       <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
-                       {!effectiveIsPro && (
-                         <p className="text-xs text-muted-foreground">Upgrade to save and access your full signal analysis anytime.</p>
-                       )}
                     </div>
 
                     {/* Professional Signal Diagnosis headline */}
@@ -1691,7 +1688,7 @@ const Index = () => {
                               <div className="space-y-1.5">
                                 <p className="section-label">What's Landing</p>
                                 <ul className="space-y-1">
-                                  {(effectiveIsPro ? strengths : strengths.slice(0, 1)).map((r, i) => (
+                                  {(effectiveIsPro ? strengths : strengths.slice(0, 2)).map((r, i) => (
                                     <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {r}</li>
                                   ))}
                                 </ul>
@@ -1874,6 +1871,31 @@ const Index = () => {
                       isPro={effectiveIsPro}
                       onUpgrade={() => setShowUpgrade(true)}
                     />
+
+                    {/* Terminal Conversion Block — free users only */}
+                    {!effectiveIsPro && (
+                      <div className="rounded-xl border border-primary/20 bg-card p-6 text-center space-y-3">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-lg font-bold text-foreground tracking-tight">Your diagnosis is complete.</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                          Your signal gaps are mapped. Now see the exact repositioning moves that close them.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Unlock the full Signal Action Plan, calibrated bullets, and role-specific positioning.
+                        </p>
+                        {user ? (
+                          <Button onClick={() => setShowUpgrade(true)} size="lg" className="gap-2 w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                            <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
+                          </Button>
+                        ) : (
+                          <Button size="lg" className="gap-2" asChild>
+                            <a href="/auth">Get Started Free</a>
+                          </Button>
+                        )}
+                      </div>
+                    )}
 
                     <KeywordChips keywords={result.missing_keywords} />
 
