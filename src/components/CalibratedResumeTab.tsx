@@ -221,7 +221,7 @@ const CalibratedResumeTab = ({
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Assembly interrupted</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{error}</p>
             </div>
           </div>
           <Button
