@@ -448,7 +448,7 @@ const Index = () => {
   const [showSessionRecovery, setShowSessionRecovery] = useState(false);
   const [pendingSession, setPendingSession] = useState<{ result: OptimizationResult; bullet: string; jd: string; runType?: "original" | "calibrated" } | null>(null);
 
-  // Check for saved session on mount
+  // Check for saved session on mount — always auto-restore silently
   useEffect(() => {
     if (result) return; // already have results
     try {
@@ -459,27 +459,21 @@ const Index = () => {
         localStorage.removeItem(SESSION_KEY);
         return;
       }
-      // Auto-restore without modal: post-payment OR post-auth redirect (tab=alignment in URL)
+      // Always auto-restore: no modal, no conditions
+      setResult(parsed.result);
+      setBullet(parsed.bullet);
+      setJd(parsed.jd);
+      if (parsed.runType === "calibrated") setResultRunType("calibrated");
+      if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
+        setOriginalResumeBeforeCalibration(parsed.originalBaseline);
+        try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
+      }
+      // Scroll to results after restore (skip if post-payment overlay is active)
       const isPostPayment = searchParams.get("upgrade") === "success" || searchParams.get("purchase") === "success";
-      const isPostAuth = searchParams.get("tab") === "alignment";
-      if (isPostPayment || isPostAuth) {
-        setResult(parsed.result);
-        setBullet(parsed.bullet);
-        setJd(parsed.jd);
-        if (parsed.runType === "calibrated") setResultRunType("calibrated");
-        if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
-          setOriginalResumeBeforeCalibration(parsed.originalBaseline);
-          try { localStorage.setItem("signalyz_original_resume_baseline", parsed.originalBaseline); } catch {}
-        }
-        // Scroll to results after restore
-        if (isPostAuth && !isPostPayment) {
-          setTimeout(() => {
-            document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
-          }, 400);
-        }
-      } else {
-        setPendingSession({ result: parsed.result, bullet: parsed.bullet, jd: parsed.jd, runType: parsed.runType || "original" });
-        setShowSessionRecovery(true);
+      if (!isPostPayment) {
+        setTimeout(() => {
+          document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+        }, 400);
       }
     } catch {
       localStorage.removeItem(SESSION_KEY);
