@@ -1151,7 +1151,7 @@ const Index = () => {
               { id: "director" as const, label: "Position", proOnly: false },
               { id: "calibrated" as const, label: "Resume", proOnly: true },
               { id: "coverletter" as const, label: "Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn", proOnly: false },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
