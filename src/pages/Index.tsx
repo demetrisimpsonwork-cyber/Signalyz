@@ -838,6 +838,8 @@ const Index = () => {
           runType,
           ts: Date.now(),
         }));
+        // Invalidate LinkedIn output — it was based on a previous alignment result
+        localStorage.removeItem("signalyz_linkedin_output");
       } catch {}
 
       // ─── Internal delta logging for calibration runs ──────────────────────
