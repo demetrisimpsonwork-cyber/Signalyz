@@ -38,6 +38,19 @@ function isTabSwitchError(err: any): boolean {
 export const FRIENDLY_FAIL_MSG =
   "Generation took longer than expected. Tap to retry.";
 
+/** Structured error from edge function with debug info */
+export class StructuredEdgeError extends Error {
+  error_code: string;
+  debug?: { step?: string; details?: string };
+  constructor(payload: { error_code?: string; message?: string; debug?: { step?: string; details?: string } }) {
+    const step = payload.debug?.step ? ` [step: ${payload.debug.step}]` : "";
+    const details = payload.debug?.details ? ` — ${payload.debug.details}` : "";
+    super(`${payload.error_code || "ERROR"}: ${payload.message || "Unknown error"}${step}${details}`);
+    this.error_code = payload.error_code || "UNKNOWN";
+    this.debug = payload.debug;
+  }
+}
+
 /**
  * Invoke an edge function resiliently.
  *
@@ -64,7 +77,7 @@ export async function invokeResilient(
       inFlight.delete(key);
       if (error) throw coerce(error);
       if (data?.status === "error")
-        throw new Error(data.message || data.error || FRIENDLY_FAIL_MSG);
+        throw new StructuredEdgeError(data);
       return data;
     }
     // Stale — remove and start fresh
@@ -83,12 +96,27 @@ export async function invokeResilient(
   try {
     const { data, error } = await Promise.race([promise, timeout]) as { data: any; error: any };
     inFlight.delete(key);
-    if (error) throw coerce(error);
-    if (data?.status === "error")
-      throw new Error(data.message || data.error || FRIENDLY_FAIL_MSG);
+    if (error) {
+      // Try to extract structured error from non-2xx response body
+      if (typeof error === "object" && error?.context?.body) {
+        try {
+          const parsed = JSON.parse(error.context.body);
+          if (parsed?.status === "error") {
+            throw new StructuredEdgeError(parsed);
+          }
+        } catch (e) {
+          if (e instanceof StructuredEdgeError) throw e;
+        }
+      }
+      throw coerce(error);
+    }
+    if (data?.status === "error") {
+      throw new StructuredEdgeError(data);
+    }
     return data;
   } catch (err: any) {
     inFlight.delete(key);
+    if (err instanceof StructuredEdgeError) throw err;
     if (err.message === "__TIMEOUT__") throw new Error(FRIENDLY_FAIL_MSG);
     throw coerce(err);
   }
