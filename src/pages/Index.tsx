@@ -1151,7 +1151,7 @@ const Index = () => {
               { id: "director" as const, label: "Position", proOnly: false },
               { id: "calibrated" as const, label: "Resume", proOnly: true },
               { id: "coverletter" as const, label: "Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn", proOnly: false },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -1184,7 +1184,7 @@ const Index = () => {
               { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
               { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: true },
+              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: false },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
