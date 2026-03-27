@@ -414,7 +414,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-foreground tracking-tight">
-                Your hiring friction points are mapped — here's exactly where you're losing
+                Your hiring friction points are mapped — here's exactly where your signal is breaking down
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 You've seen the surface-level read. The full report shows where you'll be screened out at each hiring stage — and the exact repositioning to fix it.

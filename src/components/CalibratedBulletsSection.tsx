@@ -146,10 +146,10 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-primary/30 bg-card p-6 text-center space-y-3">
-            <p className="text-sm font-medium text-foreground">Calibrated bullet variants are a Pro feature</p>
+            <p className="text-sm font-medium text-foreground">Repositioned bullet variants calibrated to this role</p>
             <p className="text-xs text-muted-foreground">Unlock repositioned bullet variants calibrated to this role's hiring signal.</p>
             {onUpgrade && (
-              <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence</Button>
+              <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence →</Button>
             )}
           </div>
         )}
@@ -260,10 +260,10 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-primary/30 bg-card p-6 text-center space-y-3">
-          <p className="text-sm font-medium text-foreground">Calibrated bullet variants are a Pro feature</p>
+          <p className="text-sm font-medium text-foreground">Repositioned bullet variants calibrated to this role</p>
           <p className="text-xs text-muted-foreground">Unlock repositioned bullet variants calibrated to this role's hiring signal.</p>
           {onUpgrade && (
-            <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence</Button>
+            <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence →</Button>
           )}
         </div>
       )}

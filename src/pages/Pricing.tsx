@@ -172,7 +172,7 @@ const Pricing = () => {
         {isAuthenticated ? (
           <div className="space-y-2">
             <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
-              Unlock Full Signal Intelligence → $19/month
+              Unlock Full Signal Intelligence → $19/mo
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
               One-time full report — $9

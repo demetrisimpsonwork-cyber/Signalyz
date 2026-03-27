@@ -1,5 +1,4 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Sparkles, AlertTriangle } from "lucide-react";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
@@ -67,7 +66,7 @@ const CoverLetterTab = ({
 
 function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
-  const { hasConsumedOneTimeCredit } = useSubscription();
+  
   const ctaLabel = "Unlock Full Signal Intelligence →";
   return (
     <div className="max-w-3xl mx-auto">

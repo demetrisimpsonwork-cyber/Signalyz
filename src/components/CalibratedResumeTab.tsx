@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Lock, RefreshCw, AlertTriangle, User } from "lucide-react";
@@ -315,7 +315,7 @@ const CalibratedResumeTab = ({
 
 function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
-  const { hasConsumedOneTimeCredit } = useSubscription();
+  
   const ctaLabel = "Unlock Full Signal Intelligence →";
   return (
     <div className="max-w-3xl mx-auto">
