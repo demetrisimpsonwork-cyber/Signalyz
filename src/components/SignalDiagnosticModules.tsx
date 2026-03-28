@@ -363,25 +363,59 @@ function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
       <SectionLabel>Hiring Pipeline Simulation</SectionLabel>
       <SectionSub>How your resume performs at each hiring stage</SectionSub>
       <div className="space-y-2.5">
-        {data.map((stage, i) => (
-          <div key={i} className={`rounded-lg border p-3 space-y-2 ${STATUS_STYLES[stage.status] || ""}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-muted-foreground">STAGE {i + 1}</span>
-                <p className="text-xs font-semibold text-foreground">{stage.stage}</p>
+        {data.map((stage, i) => {
+          const isRisk = stage.status === "MODERATE RISK" || stage.status === "HIGH RISK";
+          const hasConversion = isRisk && stage.signal_conversion_insight && !stage.signal_conversion_insight.toLowerCase().includes("no directly transferable signal");
+          const isTrueGap = isRisk && stage.signal_conversion_insight?.toLowerCase().includes("no directly transferable signal");
+
+          return (
+            <div key={i} className={`rounded-lg border p-3 space-y-2 ${STATUS_STYLES[stage.status] || ""}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground">STAGE {i + 1}</span>
+                  <p className="text-xs font-semibold text-foreground">{stage.stage}</p>
+                </div>
+                <Badge variant="secondary" className={`text-[10px] font-bold ${STATUS_STYLES[stage.status] || ""}`}>
+                  {stage.status}
+                </Badge>
               </div>
-              <Badge variant="secondary" className={`text-[10px] font-bold ${STATUS_STYLES[stage.status] || ""}`}>
-                {stage.status}
-              </Badge>
+              <p className="text-xs text-muted-foreground">{stage.explanation}</p>
+              <div className="flex flex-wrap gap-1">
+                {stage.criteria.map((c, j) => (
+                  <span key={j} className="text-[10px] text-muted-foreground/70 bg-background rounded px-1.5 py-0.5">{c}</span>
+                ))}
+              </div>
+
+              {/* Signal Conversion Insight */}
+              {hasConversion && stage.signal_conversion_insight && (
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5 space-y-1.5 mt-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">Signal Conversion</p>
+                  <p className="text-xs text-foreground leading-relaxed">{stage.signal_conversion_insight}</p>
+                  {stage.reposition_strategy && (
+                    <div className="flex items-start gap-1.5 pt-0.5">
+                      <ArrowRight className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">{stage.reposition_strategy}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* True Gap */}
+              {isTrueGap && (
+                <div className="rounded-md border border-destructive/20 bg-destructive/5 p-2.5 space-y-1.5 mt-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive">True Gap</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">No directly transferable signal detected — this requires building new experience or credentials.</p>
+                  {stage.reposition_strategy && (
+                    <div className="flex items-start gap-1.5 pt-0.5">
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">{stage.reposition_strategy}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">{stage.explanation}</p>
-            <div className="flex flex-wrap gap-1">
-              {stage.criteria.map((c, j) => (
-                <span key={j} className="text-[10px] text-muted-foreground/70 bg-background rounded px-1.5 py-0.5">{c}</span>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
