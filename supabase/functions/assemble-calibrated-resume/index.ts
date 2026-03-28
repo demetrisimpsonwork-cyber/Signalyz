@@ -1030,6 +1030,12 @@ async function generateSummary(
         temperature: 0.3,
         system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
 
+SIGNAL CONVERSION PRIORITY:
+- If SIGNAL CONVERSION CONTEXT is provided, the summary MUST incorporate at least one converted capability.
+- Frame existing experience using role-aligned language from the conversion mappings.
+- The candidate should read as someone who already does this work — just in a different environment.
+- Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
+
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
 - Every sentence must reference verifiable experience from the original resume.
