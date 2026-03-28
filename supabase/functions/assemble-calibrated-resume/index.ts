@@ -1624,6 +1624,8 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
     if (selected.length >= (aggressive ? 3 : 2)) break;
     // Skip single-word candidates that are just verbs — they produce unreadable injections
     if (!c.includes(" ") && SKIP_RAW_VERBS.has(c.toLowerCase())) continue;
+    // Skip candidates that are commercial/sales-function terms not in the source resume
+    if (originalResumeText && isDomainFabrication(c, originalResumeText)) continue;
     const words = c.toLowerCase().split(/\s+/);
     const hasOverlap = words.some(w => w.length >= 4 && usedWords.has(w));
     if (hasOverlap) continue;
@@ -1633,8 +1635,7 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!selected.length) return bullet;
 
-  // Use natural phrasing — inject as contextual framing, not as "driving X outcomes"
-  // which produces garbled output when X is already a multi-word phrase
+  // Use natural phrasing — inject as contextual framing
   if (selected.length === 1) {
     return appendClause(bullet, `aligned with ${selected[0]} priorities`);
   }
