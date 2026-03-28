@@ -935,6 +935,58 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   };
 }
 
+// ─── Signal Conversion Extraction ───
+// Extracts transferable signal mappings from the director/alignment result
+// so the resume generation prompts can apply signal conversion framing.
+
+function extractSignalConversions(directorResult: any): string {
+  const conversions: string[] = [];
+
+  // 1. From hiring_pipeline_simulation signal_conversion_insight
+  const pipeline = directorResult?.hiring_pipeline_simulation ||
+    directorResult?.signal_model?.risk_projection?.stages ||
+    directorResult?.signal_model?.hiring_pipeline_simulation || [];
+  for (const stage of pipeline) {
+    if (stage?.signal_conversion_insight &&
+        !stage.signal_conversion_insight.toLowerCase().includes("no directly transferable signal")) {
+      conversions.push(`• ${stage.stage}: ${stage.signal_conversion_insight}${stage.reposition_strategy ? ` → Strategy: ${stage.reposition_strategy}` : ""}`);
+    }
+  }
+
+  // 2. From transferable_signal_detection
+  const transferable = directorResult?.transferable_signal_detection ||
+    directorResult?.signal_model?.transferable_signal_detection;
+  if (transferable?.detected_capability) {
+    conversions.push(`• Transferable capability: ${transferable.detected_capability} — ${transferable.why_it_transfers || ""}`);
+    if (transferable.elevation_opportunity) {
+      conversions.push(`  → Elevation: ${transferable.elevation_opportunity}`);
+    }
+  }
+
+  // 3. From gap_strategy perception_gaps (titan-position)
+  const perceptionGaps = directorResult?.gap_strategy?.perception_gaps || [];
+  for (const gap of perceptionGaps.slice(0, 3)) {
+    if (typeof gap === "string" && gap.length > 10) {
+      conversions.push(`• Perception gap (not capability gap): ${gap}`);
+    }
+  }
+
+  // 4. From repositioning_matrix matching_experience
+  const matrix = directorResult?.repositioning_matrix || [];
+  for (const entry of matrix.slice(0, 3)) {
+    if (entry?.matching_experience && entry?.role_native_language) {
+      conversions.push(`• Convert "${entry.matching_experience}" → "${entry.role_native_language}"`);
+    }
+  }
+
+  if (conversions.length === 0) return "";
+  return `\nSIGNAL CONVERSION CONTEXT (CRITICAL — apply these mappings in every rewrite):
+These are transferable signals already present in the candidate's experience that map to the target role.
+Frame these as CAPABILITIES the candidate already has, expressed in role-aligned language.
+Do NOT treat these as gaps — treat them as perception issues to fix through language choices.
+${conversions.join("\n")}`;
+}
+
 // ─── Phase 2: Focused sectional API calls with JD context ───
 
 async function generateSummary(
