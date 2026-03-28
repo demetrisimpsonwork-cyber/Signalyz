@@ -1057,19 +1057,23 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
 // the candidate may not have performed.
 const COMMERCIAL_FUNCTION_TERMS = new Set([
   "pricing","pricing and availability","pricing information","pricing strategy",
-  "quoting","quote generation","quote preparation","quotation",
+  "pricing ownership","price quotes","price negotiation",
+  "quoting","quoting ownership","quote generation","quote preparation","quotation",
   "prospecting","cold calling","lead generation","lead qualification",
   "sales development","business development","new business",
   "revenue growth","revenue generation","revenue targets","revenue goals",
   "sales volume","sales targets","sales goals","sales pipeline",
   "sales cycle","sales forecasting","sales strategy","sales planning",
+  "sales support ownership","formal sales support",
   "upselling","cross-selling","upsell","cross-sell",
   "account acquisition","client acquisition","customer acquisition",
+  "account growth","assigned account growth","grow accounts",
   "territory management","territory planning","territory development",
   "product specifications","product spec","product knowledge","product expertise",
   "product demonstrations","product demo","product presentation",
   "developing ongoing relationships","developing relationships to increase",
   "increase sales volume","increase sales","grow revenue","grow sales",
+  "increasing sales volume","increasing revenue",
   "close deals","closing deals","deal closing","deal negotiation",
   "commission","quota attainment","quota achievement",
   "rfp","rfq","request for proposal","request for quote",
@@ -1079,8 +1083,15 @@ const COMMERCIAL_FUNCTION_TERMS = new Set([
   "vendor evaluation","supplier evaluation",
   "purchase orders","purchasing","procurement strategy",
   "inventory management","inventory control","stock management",
+  "inventory planning","inventory planning ownership",
   "bill of materials","bom","material requirements",
   "erp","mrp","material planning",
+  // Additional commercial function phrases that overstate support roles
+  "revenue-generating","revenue generating","profit margin",
+  "sales-driven","sales driven","sales enablement",
+  "demand generation","demand planning","demand forecasting",
+  "order fulfillment ownership","shipping coordination ownership",
+  "supply planning","material sourcing",
 ]);
 
 // Pre-sorted longest-first for efficient domain fabrication stripping
