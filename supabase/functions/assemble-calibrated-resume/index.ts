@@ -2150,8 +2150,8 @@ serve(async (req) => {
         status: "error",
         request_id,
         error_code: "INTERNAL_ERROR",
-        message: err instanceof Error ? err.message : "Unknown error",
-        debug: { step: "unknown", details: err instanceof Error ? err.stack?.slice(0, 500) : String(err) },
+        message: "An internal error occurred. Please try again.",
+        debug: { step: currentStep || "unknown" },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
