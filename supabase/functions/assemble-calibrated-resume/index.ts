@@ -2384,11 +2384,18 @@ function normalizeResult(assembled: any) {
     core_competencies: Array.isArray(assembled.core_competencies) ? assembled.core_competencies : [],
     experience,
     independent_projects: Array.isArray(assembled.independent_projects)
-      ? assembled.independent_projects.map((p: any) => ({
-          name: p.name || "",
-          description: p.description || "",
-          bullets: Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [],
-        }))
+      ? assembled.independent_projects.map((p: any) => {
+          // Enforce concise project descriptions — max 150 chars
+          let desc = (p.description || "").trim();
+          if (desc.length > 150) {
+            const cutIdx = desc.lastIndexOf(".", 150);
+            desc = cutIdx > 80 ? desc.slice(0, cutIdx + 1) : desc.slice(0, 150).trim().replace(/[,;\s]+$/, "") + ".";
+          }
+          let bullets = Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          // Max 3 tight bullets per project
+          if (bullets.length > 3) bullets = bullets.slice(0, 3);
+          return { name: p.name || "", description: desc, bullets };
+        })
       : [],
     skills: Array.isArray(assembled.skills) ? assembled.skills : [],
     certifications: Array.isArray(assembled.certifications) ? assembled.certifications : [],
