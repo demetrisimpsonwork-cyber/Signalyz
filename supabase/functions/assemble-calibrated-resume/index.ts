@@ -1,5 +1,6 @@
 // assemble-calibrated-resume v3.0 — robust resume parser
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1982,6 +1983,31 @@ Return ONLY valid JSON array:
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // ── JWT Authentication ──
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(
+      JSON.stringify({ status: "error", error_code: "UNAUTHORIZED", message: "Authentication required" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const supabaseAuth = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(
+    authHeader.replace("Bearer ", "")
+  );
+  if (userError || !user) {
+    return new Response(
+      JSON.stringify({ status: "error", error_code: "UNAUTHORIZED", message: "Authentication required" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
   const request_id = crypto.randomUUID();
 
