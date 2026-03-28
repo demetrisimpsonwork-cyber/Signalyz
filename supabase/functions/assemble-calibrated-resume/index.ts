@@ -985,6 +985,7 @@ RULES:
 - If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
 - DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
+- COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. Examples of FORBIDDEN injection: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline." If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
 - BANNED VERBS: NEVER use these verbs anywhere in the summary: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated signal language. Use direct alternatives instead (e.g., "led", "directed", "built", "drove", "managed").
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
@@ -1050,11 +1051,43 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "osha","safety standards",
 ]);
 
-// Pre-sorted longest-first for efficient domain fabrication stripping
-const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+// Commercial / sales-support / revenue-growth / quoting / pricing phrases
+// that must NOT be injected unless the candidate's resume explicitly contains them.
+// These are distinct from domain/industry terms — they describe commercial FUNCTIONS
+// the candidate may not have performed.
+const COMMERCIAL_FUNCTION_TERMS = new Set([
+  "pricing","pricing and availability","pricing information","pricing strategy",
+  "quoting","quote generation","quote preparation","quotation",
+  "prospecting","cold calling","lead generation","lead qualification",
+  "sales development","business development","new business",
+  "revenue growth","revenue generation","revenue targets","revenue goals",
+  "sales volume","sales targets","sales goals","sales pipeline",
+  "sales cycle","sales forecasting","sales strategy","sales planning",
+  "upselling","cross-selling","upsell","cross-sell",
+  "account acquisition","client acquisition","customer acquisition",
+  "territory management","territory planning","territory development",
+  "product specifications","product spec","product knowledge","product expertise",
+  "product demonstrations","product demo","product presentation",
+  "developing ongoing relationships","developing relationships to increase",
+  "increase sales volume","increase sales","grow revenue","grow sales",
+  "close deals","closing deals","deal closing","deal negotiation",
+  "commission","quota attainment","quota achievement",
+  "rfp","rfq","request for proposal","request for quote",
+  "bid preparation","bid management","proposal writing",
+  "market development","market expansion","market penetration",
+  "competitive analysis","competitive intelligence","competitive positioning",
+  "vendor evaluation","supplier evaluation",
+  "purchase orders","purchasing","procurement strategy",
+  "inventory management","inventory control","stock management",
+  "bill of materials","bom","material requirements",
+  "erp","mrp","material planning",
+]);
 
-// Pre-compiled regex patterns for domain terms — avoids creating 1600+ regexes per request
-const DOMAIN_TERM_COMPILED = SORTED_DOMAIN_TERMS.map(term => ({
+// Pre-sorted longest-first for efficient domain fabrication stripping
+const SORTED_ALL_BLOCKED_TERMS = [...DOMAIN_INDUSTRY_TERMS, ...COMMERCIAL_FUNCTION_TERMS].sort((a, b) => b.length - a.length);
+
+// Pre-compiled regex patterns for domain + commercial terms
+const DOMAIN_TERM_COMPILED = SORTED_ALL_BLOCKED_TERMS.map(term => ({
   term,
   rx: new RegExp(
     `(?:^|[\\s,;:(]|-)${escapeRegExp(term).replace(/\s+/g, "[\\s-]+")}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`,
@@ -1071,15 +1104,15 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
   const resumeLower = originalResumeText.toLowerCase();
   const candidateLower = candidate.toLowerCase();
 
-  // Check multi-word domain terms first (longer matches take priority)
+  // Check domain/industry terms
   for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+    if (candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
-  // Check single-word domain terms
-  for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+  // Check commercial/sales-support function terms
+  for (const term of COMMERCIAL_FUNCTION_TERMS) {
+    if (candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
@@ -1591,6 +1624,8 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
     if (selected.length >= (aggressive ? 3 : 2)) break;
     // Skip single-word candidates that are just verbs — they produce unreadable injections
     if (!c.includes(" ") && SKIP_RAW_VERBS.has(c.toLowerCase())) continue;
+    // Skip candidates that are commercial/sales-function terms not in the source resume
+    if (originalResumeText && isDomainFabrication(c, originalResumeText)) continue;
     const words = c.toLowerCase().split(/\s+/);
     const hasOverlap = words.some(w => w.length >= 4 && usedWords.has(w));
     if (hasOverlap) continue;
@@ -1600,8 +1635,7 @@ function ensureJdAlignment(original: string, bullet: string, jdModel: ReturnType
 
   if (!selected.length) return bullet;
 
-  // Use natural phrasing — inject as contextual framing, not as "driving X outcomes"
-  // which produces garbled output when X is already a multi-word phrase
+  // Use natural phrasing — inject as contextual framing
   if (selected.length === 1) {
     return appendClause(bullet, `aligned with ${selected[0]} priorities`);
   }
@@ -1784,6 +1818,32 @@ function strengthenFinalExperience(
   });
 }
 
+/**
+ * Cross-bullet deduplication: remove repetitive JD-echo tail phrases
+ * (e.g., "aligned with X priorities") that appear in multiple bullets.
+ * Keeps the first occurrence and strips duplicates.
+ */
+function deduplicateJdEchoPhrases(experience: any[]): any[] {
+  const tailRx = /,?\s*aligned with\s+.+?\s+priorities\.?$/i;
+  const seenTails = new Set<string>();
+
+  return experience.map((role: any) => {
+    const bullets = Array.isArray(role.bullets) ? role.bullets.map((b: string) => {
+      const tailMatch = b.match(tailRx);
+      if (!tailMatch) return b;
+      const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
+      if (seenTails.has(tailKey)) {
+        let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+        if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
+        return cleaned;
+      }
+      seenTails.add(tailKey);
+      return b;
+    }) : [];
+    return { ...role, bullets };
+  });
+}
+
 function countRepairOpportunities(sourceExperience: any[], jdModel: ReturnType<typeof buildSignalJdModel>): number {
   let opportunities = 0;
 
@@ -1912,6 +1972,12 @@ DOMAIN PRESERVATION (NON-NEGOTIABLE):
 - Examples of forbidden injection: adding "manufacturing," "distribution," "healthcare," "logistics," "warehouse" to describe a role that was NOT in that industry.
 - JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
 - The candidate's actual employer context must be preserved exactly.
+
+COMMERCIAL FUNCTION PRESERVATION (NON-NEGOTIABLE):
+- NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function phrases from the JD unless the candidate's original bullet explicitly demonstrates that function.
+- Forbidden examples: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline," "revenue growth," "competitive analysis."
+- If the original bullet describes support, operations, coordination, documentation, or administrative work, rewrite it as better support/operations/coordination language — do NOT reframe it as commercial, sales, or revenue-generating activity.
+- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support" over sales-function language.
 
 VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
@@ -2129,12 +2195,15 @@ serve(async (req) => {
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
 
+    // ── Cross-bullet deduplication: remove repetitive JD-echo tails ──
+    const dedupedExperience = deduplicateJdEchoPhrases(rewrittenExperience);
+
     currentStep = "final_assembly";
     console.log(`[assemble] [${request_id}] Final assembly`);
     const result = normalizeResult({
       ...structure,
       summary: cleanedSummary,
-      experience: rewrittenExperience,
+      experience: dedupedExperience,
     });
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
