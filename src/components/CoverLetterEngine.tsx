@@ -384,7 +384,21 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               </Button>
               <Button variant="outline" size="sm" onClick={handleDownloadDocx} className="gap-1.5 text-xs">
                 <Download className="h-3 w-3" />
-                <span className="hidden sm:inline">Export .docx</span>
+                <span className="hidden sm:inline">ATS (.docx)</span>
+                <span className="sm:hidden">.docx</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportCoverLetterPdf({
+                contactName: contact.name || undefined,
+                contactEmail: contact.email || undefined,
+                contactPhone: contact.phone || undefined,
+                date: formatDate(),
+                addressee: addresseeLine,
+                salutation,
+                bodyParagraphs: splitParagraphs(activeLetter),
+              })} className="gap-1.5 text-xs">
+                <Download className="h-3 w-3" />
+                <span className="hidden sm:inline">PDF (.pdf)</span>
+                <span className="sm:hidden">.pdf</span>
               </Button>
             </div>
           </div>
