@@ -1976,7 +1976,7 @@ async function rewriteExperienceBullets(
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
-        temperature: 0,
+        temperature: 0.2,
         system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
 
 TARGET JD SIGNAL CONTEXT:
@@ -1991,24 +1991,38 @@ CRITICAL JD MIRRORING RULES:
 
 DOMAIN PRESERVATION (NON-NEGOTIABLE):
 - NEVER insert industry, sector, or company-type language from the JD into bullets unless that exact language already appears in the candidate's original bullet.
-- Examples of forbidden injection: adding "manufacturing," "distribution," "healthcare," "logistics," "warehouse" to describe a role that was NOT in that industry.
-- JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
-- The candidate's actual employer context must be preserved exactly.
+- JD vocabulary may only describe HOW the candidate worked — NEVER WHERE they worked or WHAT industry they were in.
 
 COMMERCIAL FUNCTION PRESERVATION (NON-NEGOTIABLE):
 - NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function phrases from the JD unless the candidate's original bullet explicitly demonstrates that function.
-- Forbidden examples: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline," "revenue growth," "competitive analysis."
 - If the original bullet describes support, operations, coordination, documentation, or administrative work, rewrite it as better support/operations/coordination language — do NOT reframe it as commercial, sales, or revenue-generating activity.
-- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support" over sales-function language.
+- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support."
 
 VERB RULES:
-- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
+- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs.
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
 
-BULLET STRUCTURE (CRITICAL FOR READABILITY):
+BULLET RHYTHM & VARIATION (CRITICAL — prevents robotic uniformity):
+- NOT every bullet should follow the same "Verb + object + context" pattern. Mix these structures:
+  • ACTION-LED: "Managed vendor contracts across three regions." (most common — ~60% of bullets)
+  • CONTEXT-LED: "Across 12 client accounts, maintained SLA compliance above 98%." (~20% of bullets)
+  • OUTCOME-LED: "Reduced ticket backlog by 35% through revised escalation routing." (~20% of bullets)
+- Vary bullet LENGTH naturally within each role:
+  • Include 1-2 SHORT bullets (8-15 words) — punchy, single-fact statements
+  • Include 2-3 MEDIUM bullets (15-22 words) — standard action-context-result
+  • Allow at most 1 LONGER bullet (22-30 words) per role — only for complex, high-value accomplishments
+- NEVER write all bullets at the same word count. The length variation must be visible.
+- Within a single role, no two consecutive bullets should start with the same verb.
+- Across the entire resume, no verb should lead more than 3 bullets total.
+
+DEDUPLICATION (CRITICAL):
+- Before finalizing, scan ALL bullets across ALL roles for semantic duplicates.
+- If two bullets describe the same responsibility in different roles (e.g., "Managed vendor relationships" appears in Role 1 and Role 3), keep only the stronger version and replace the weaker one with a different, factual responsibility from that role.
+- Never repeat the same JD-echo phrase (e.g., "aligned with X priorities") in more than one bullet across the entire resume.
+
+BULLET STRUCTURE:
 - Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
 - Target 15-25 words per bullet. Never exceed 30 words.
-- Follow this pattern: Action verb → what was done → brief context or result.
 - Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
 - Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
 - Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
@@ -2020,24 +2034,13 @@ TONE (NON-NEGOTIABLE):
 - Right: "Coordinated system migrations across three departments, resolving 40+ configuration issues."
 
 NON-NEGOTIABLE RULES:
-1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
-2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
-3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
-4. Every bullet must preserve or strengthen truthfully implied outcome framing.
-5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
-
-SIGNAL TARGETS:
-- JD Keyword Alignment (HIGHEST PRIORITY): weave truthful target-role phrases and vocabulary directly into every bullet. Each bullet should contain at least one JD phrase or keyword.
-- Ownership Language Density: first word should be a strong action / ownership verb.
-- Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
-- Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
-- Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
+1. Rewrite EVERY bullet. Preserve company names, titles, dates, tools, metrics, team sizes, dollar amounts exactly.
+2. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
+3. Every bullet must remain ATS-safe, export-safe plain text.
 
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
-- Each bullet must be ONE short sentence (15-25 words, max 30).
-- No multi-clause chaining. No compound sentences joined by "and."
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
