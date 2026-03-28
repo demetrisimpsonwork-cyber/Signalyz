@@ -2041,6 +2041,7 @@ async function rewriteExperienceBullets(
     ? `\nTOP JD PHRASES (incorporate 1-2 per bullet where semantically valid):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nTOP JD KEYWORDS (distribute across all bullets):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
     : "";
   const jdSignals = rawJd?.trim() || extractJDSignals(directorResult);
+  const signalConversionBlock = extractSignalConversions(directorResult);
 
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
