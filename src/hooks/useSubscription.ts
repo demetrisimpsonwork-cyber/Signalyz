@@ -166,7 +166,7 @@ export function useSubscription(): SubscriptionState {
       return false;
     }
 
-    console.log("[SubCheck] One-time credit consumed successfully");
+    
     await queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
     return true;
   }, [queryClient]);
