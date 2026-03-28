@@ -7,6 +7,7 @@ import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import { antiAIFilter } from "@/lib/antiAIFilter";
+import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 
 interface CoverLetterEngineProps {
   experience: string;
