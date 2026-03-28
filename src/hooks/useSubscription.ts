@@ -120,7 +120,7 @@ export function useSubscription(): SubscriptionState {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[SubCheck] Auth state changed:", event, "user:", session?.user?.id ?? "none");
+      
       setAuthReady(true);
       queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
     });
