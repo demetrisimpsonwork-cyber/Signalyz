@@ -59,29 +59,63 @@ serve(async (req) => {
   }
 
   try {
-    // --- JWT Authentication ---
+    // --- Authentication & Usage Enforcement ---
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ status: "error", error_code: "UNAUTHORIZED", message: "Authentication required" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    let authenticatedUserId: string | null = null;
+
+    const adminSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
       );
+      const { data: { user } } = await supabase.auth.getUser(
+        authHeader.replace("Bearer ", "")
+      );
+      if (user) authenticatedUserId = user.id;
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    if (!authenticatedUserId) {
+      // Enforce daily limit for unauthenticated users via IP
+      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+        || req.headers.get("cf-connecting-ip")
+        || "unknown";
+      const today = new Date().toISOString().slice(0, 10);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(
-      authHeader.replace("Bearer ", "")
-    );
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ status: "error", error_code: "UNAUTHORIZED", message: "Authentication required" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const { data: usageRows } = await adminSupabase
+        .from("usage_tracking")
+        .select("alignment_count")
+        .eq("ip_address", clientIp)
+        .eq("usage_date", today)
+        .is("user_id", null)
+        .limit(1);
+
+      const currentCount = usageRows?.[0]?.alignment_count ?? 0;
+      if (currentCount >= 3) {
+        return new Response(
+          JSON.stringify({ status: "error", error_code: "USAGE_LIMIT_REACHED", message: "Daily limit reached. Sign up to continue." }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Upsert usage count
+      if (usageRows && usageRows.length > 0) {
+        await adminSupabase
+          .from("usage_tracking")
+          .update({ alignment_count: currentCount + 1, updated_at: new Date().toISOString() })
+          .eq("ip_address", clientIp)
+          .eq("usage_date", today)
+          .is("user_id", null);
+      } else {
+        await adminSupabase
+          .from("usage_tracking")
+          .insert({ ip_address: clientIp, usage_date: today, alignment_count: 1, user_id: null });
+      }
     }
 
     const body = await req.json();
