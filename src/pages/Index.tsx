@@ -1370,7 +1370,7 @@ const Index = () => {
                   <Textarea
                     placeholder="Paste the full job description you're targeting..."
                     value={jd}
-                    onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
+                    onChange={(e) => { invalidateStaleSession(); setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
                     rows={6}
                     className={errors.jd ? "border-destructive" : ""}
                   />
