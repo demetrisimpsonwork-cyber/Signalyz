@@ -450,9 +450,12 @@ const Index = () => {
   const SESSION_VERSION = 2;
   // Session recovery modal state removed — sessions now auto-restore silently
 
-  // Check for saved session on mount — always auto-restore silently
+  // Check for saved session on mount — only restore if user hasn't started new input
   useEffect(() => {
     if (result) return; // already have results
+    // If user already typed something before this effect runs, don't overwrite
+    if (userDirtyRef.current) return;
+    if (bullet.trim() || jd.trim()) return; // user already has input in fields
     try {
       const saved = localStorage.getItem(SESSION_KEY);
       if (!saved) return;
@@ -461,7 +464,8 @@ const Index = () => {
         localStorage.removeItem(SESSION_KEY);
         return;
       }
-      // Always auto-restore: no modal, no conditions
+      // Mark as restored so we can invalidate if user edits
+      sessionRestoredRef.current = true;
       setResult(parsed.result);
       setBullet(parsed.bullet);
       setJd(parsed.jd);
