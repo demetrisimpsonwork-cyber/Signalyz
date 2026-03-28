@@ -1083,10 +1083,10 @@ const COMMERCIAL_FUNCTION_TERMS = new Set([
 ]);
 
 // Pre-sorted longest-first for efficient domain fabrication stripping
-const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
+const SORTED_ALL_BLOCKED_TERMS = [...DOMAIN_INDUSTRY_TERMS, ...COMMERCIAL_FUNCTION_TERMS].sort((a, b) => b.length - a.length);
 
-// Pre-compiled regex patterns for domain terms — avoids creating 1600+ regexes per request
-const DOMAIN_TERM_COMPILED = SORTED_DOMAIN_TERMS.map(term => ({
+// Pre-compiled regex patterns for domain + commercial terms
+const DOMAIN_TERM_COMPILED = SORTED_ALL_BLOCKED_TERMS.map(term => ({
   term,
   rx: new RegExp(
     `(?:^|[\\s,;:(]|-)${escapeRegExp(term).replace(/\s+/g, "[\\s-]+")}(?:[-]\\w+)?(?=[\\s,;:.)!?]|$)`,
