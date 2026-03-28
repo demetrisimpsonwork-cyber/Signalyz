@@ -76,7 +76,7 @@ async function fetchSubscriptionData() {
   const isPaid =
     (tier === "pro" || (profile.subscription_tier as string) === "pinnacle") && isActiveSub;
 
-  console.log("[SubCheck] Tier resolution — rawTier:", profile.subscription_tier, "rawStatus:", status, "isActiveSub:", isActiveSub, "isPaid:", isPaid);
+  
 
   // Reset count in DB if new day
   if (isNewDay) {
