@@ -1350,7 +1350,7 @@ const Index = () => {
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
+                        onClick={() => { invalidateStaleSession(); setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
