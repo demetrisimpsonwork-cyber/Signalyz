@@ -3,6 +3,7 @@ import type { DirectorCalibrationResult } from "@/components/DirectorCalibration
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
+import { handleUsageLimitError } from "@/lib/usageLimitError";
 
 export interface CalibratedResumeData {
   header: {

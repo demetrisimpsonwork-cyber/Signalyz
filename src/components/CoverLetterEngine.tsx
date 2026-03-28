@@ -8,6 +8,7 @@ import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import { antiAIFilter } from "@/lib/antiAIFilter";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 interface CoverLetterEngineProps {
   experience: string;
