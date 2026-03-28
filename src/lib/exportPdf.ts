@@ -16,15 +16,14 @@ function cleanCert(cert: string): string {
 
 const PAGE_W = 210; // A4 mm
 const PAGE_H = 297;
-const ML = 18;      // left margin
-const MR = 18;
+const ML = 20;      // left margin
+const MR = 20;
 const MT = 22;       // top margin
-const MB = 18;       // bottom margin
+const MB = 20;       // bottom margin
 const CONTENT_W = PAGE_W - ML - MR;
 
 /**
- * Export the calibrated resume as a well-formatted PDF using jsPDF.
- * Mirrors the DOCX export's structure & hierarchy.
+ * Export the calibrated resume as a Pinnacle-standard PDF using jsPDF.
  */
 export async function exportCalibratedPdf(resume: CalibratedResumeData) {
   if (!resume) {
@@ -51,13 +50,14 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       text: string,
       x: number,
       fontSize: number,
-      options?: { bold?: boolean; italic?: boolean; color?: string; align?: "left" | "center"; maxWidth?: number; lineHeight?: number },
+      options?: { bold?: boolean; italic?: boolean; color?: string; align?: "left" | "center"; maxWidth?: number; lineHeight?: number; charSpace?: number },
     ): number {
-      const { bold = false, italic = false, color = "#1a1a2e", align = "left", maxWidth = CONTENT_W, lineHeight = 1.35 } = options || {};
+      const { bold = false, italic = false, color = "#1a1a2e", align = "left", maxWidth = CONTENT_W, lineHeight = 1.35, charSpace = 0 } = options || {};
       const style = bold && italic ? "bolditalic" : bold ? "bold" : italic ? "italic" : "normal";
       doc.setFont("helvetica", style);
       doc.setFontSize(fontSize);
       doc.setTextColor(color);
+      if (charSpace) doc.setCharSpace(charSpace);
       const lines = doc.splitTextToSize(text, maxWidth) as string[];
       const lh = (fontSize * lineHeight * 25.4) / 72; // pt → mm
       for (const line of lines) {
@@ -69,21 +69,24 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         }
         y += lh;
       }
+      if (charSpace) doc.setCharSpace(0); // reset
       return y;
     }
 
     function drawSectionHeader(title: string) {
-      ensureSpace(10);
-      y += 4;
+      ensureSpace(12);
+      y += 6;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor("#374151");
+      doc.setFontSize(10.5);
+      doc.setTextColor("#2d2d2d");
+      doc.setCharSpace(1.2);
       doc.text(title.toUpperCase(), ML, y);
-      y += 1.5;
-      doc.setDrawColor("#999999");
-      doc.setLineWidth(0.15);
+      doc.setCharSpace(0);
+      y += 2;
+      doc.setDrawColor("#888888");
+      doc.setLineWidth(0.2);
       doc.line(ML, y, PAGE_W - MR, y);
-      y += 4;
+      y += 4.5;
     }
 
     function drawBullet(text: string) {
@@ -91,12 +94,12 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       const textIndent = ML + 7;
       const bulletMaxW = CONTENT_W - 7;
       const fontSize = 10;
-      const lh = (fontSize * 1.32 * 25.4) / 72;
+      const lh = (fontSize * 1.35 * 25.4) / 72;
       const lines = doc.splitTextToSize(text, bulletMaxW) as string[];
 
       // Check if entire bullet fits; if not, page break first
-      const totalH = lines.length * lh;
-      ensureSpace(totalH + 1);
+      const totalH = lines.length * lh + 1.5; // include inter-bullet spacing
+      ensureSpace(totalH);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(fontSize);
@@ -106,29 +109,38 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
         doc.text(line, textIndent, y);
         y += lh;
       }
+      y += 1.5; // inter-bullet spacing for visual separation
     }
 
     /* ── Header ── */
-    drawWrapped(resume.header.name || "Name", ML, 14, { bold: true, align: "center" });
+    // Name — largest element, centered, bold
+    drawWrapped(resume.header.name || "Name", ML, 18, { bold: true, align: "center", color: "#111111" });
+    y += 1;
+
+    // Title if present
     if (resume.header.title) {
-      drawWrapped(resume.header.title, ML, 11, { align: "center", color: "#555555" });
+      drawWrapped(resume.header.title, ML, 11, { align: "center", color: "#444444" });
+      y += 0.5;
     }
+
+    // Contact line — centered, bullet separators
     const contactParts = [resume.header.location, resume.header.email, resume.header.phone, resume.header.linkedin].filter(Boolean);
     if (contactParts.length) {
-      drawWrapped(contactParts.join("  |  "), ML, 9.5, { align: "center", color: "#666666" });
+      drawWrapped(contactParts.join("  •  "), ML, 9, { align: "center", color: "#666666" });
     }
-    // HR
-    y += 1;
-    doc.setDrawColor("#CCCCCC");
-    doc.setLineWidth(0.15);
+
+    // Header divider
+    y += 2;
+    doc.setDrawColor("#BBBBBB");
+    doc.setLineWidth(0.3);
     doc.line(ML, y, PAGE_W - MR, y);
-    y += 4;
+    y += 5;
 
     /* ── Professional Summary ── */
     if (resume.summary) {
       drawSectionHeader("Professional Summary");
-      drawWrapped(resume.summary, ML, 10, { lineHeight: 1.38 });
-      y += 2;
+      drawWrapped(resume.summary, ML, 10, { lineHeight: 1.4 });
+      y += 3;
     }
 
     /* ── Core Competencies ── */
@@ -136,84 +148,80 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
     if (competencies.length) {
       drawSectionHeader("Core Competencies");
       drawWrapped(competencies.join("  •  "), ML, 10);
-      y += 2;
+      y += 3;
     }
 
     /* ── Professional Experience ── */
     if (resume.experience.length) {
-      drawSectionHeader("Experience");
+      drawSectionHeader("Professional Experience");
       for (const exp of resume.experience) {
-        // Estimate total height for the entire role block (title + company + all bullets)
-        // so it stays together on one page
+        // Estimate total height for the entire role block
         const bulletLines = exp.bullets.reduce((sum, b) => {
           const lines = doc.splitTextToSize(b, CONTENT_W - 7) as string[];
           return sum + lines.length;
         }, 0);
-        const roleBlockH = 4.5 + (exp.company ? 4 : 0) + bulletLines * ((10 * 1.32 * 25.4) / 72) + 2;
-        ensureSpace(Math.min(roleBlockH, PAGE_H - MT - MB)); // cap at page height for very long blocks
-        // Title + dates
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(10.5);
-        doc.setTextColor("#1a1a2e");
-        const titleText = exp.title || "";
-        doc.text(titleText, ML, y);
-        if (exp.dates) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(9.5);
-          doc.setTextColor("#666666");
-          doc.text(exp.dates, PAGE_W - MR, y, { align: "right" });
-        }
-        y += 4.5;
-        // Company
-        if (exp.company) {
+        const roleBlockH = 6 + (exp.company ? 5 : 0) + bulletLines * ((10 * 1.35 * 25.4) / 72) + exp.bullets.length * 1.5 + 4;
+        ensureSpace(Math.min(roleBlockH, PAGE_H - MT - MB));
+
+        // Role Title — bold, own line
+        if (exp.title) {
           doc.setFont("helvetica", "bold");
           doc.setFontSize(10.5);
-          doc.setTextColor("#374151");
-          doc.text(exp.company, ML, y);
-          y += 4;
+          doc.setTextColor("#111111");
+          doc.text(exp.title, ML, y);
+          y += 4.5;
         }
+
+        // Company | Location | Dates — second line, lighter
+        const metaParts = [exp.company, exp.dates].filter(Boolean);
+        if (metaParts.length) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor("#555555");
+          doc.text(metaParts.join("  |  "), ML, y);
+          y += 4.5;
+        }
+
         // Bullets
         for (const b of exp.bullets) {
           drawBullet(b);
         }
-        y += 2;
+        y += 4; // spacing between roles
       }
     }
 
-    /* ── Independent Projects (explicit page-break handling) ── */
+    /* ── Independent Projects ── */
     if (resume.independent_projects?.length) {
-      // Estimate minimum space: header + first project name + one bullet ≈ 20 mm
-      // If not enough room, start a new page so the section isn't truncated
       ensureSpace(24);
       drawSectionHeader("Independent Projects");
       for (const proj of resume.independent_projects) {
-        // Ensure project name + at least first bullet fit together
         ensureSpace(16);
+        // Project name — bold
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10.5);
-        doc.setTextColor("#1a1a2e");
+        doc.setTextColor("#111111");
         doc.text(proj.name, ML, y);
         y += 4;
+
+        // Description — regular weight, constrained width
         if (proj.description?.trim()) {
-          // Force regular description metrics + rendering in this section only
-          doc.setFont(undefined, "normal");
+          doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
-          doc.setTextColor("#666666");
-          const descText = `— ${proj.description.trim()}`;
-          const descLines = doc.splitTextToSize(descText, 155) as string[];
+          doc.setTextColor("#555555");
+          const descLines = doc.splitTextToSize(proj.description.trim(), 155) as string[];
           const descLh = (10 * 1.35 * 25.4) / 72;
           for (const dl of descLines) {
             ensureSpace(descLh);
-            doc.setFont(undefined, "normal");
-            doc.setFontSize(10);
             doc.text(dl, ML, y);
             y += descLh;
           }
+          y += 1;
         }
+
         for (const b of proj.bullets) {
           drawBullet(b);
         }
-        y += 2;
+        y += 3;
       }
     }
 
@@ -224,16 +232,19 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
       for (const cert of cleanedCerts) {
         drawBullet(cert);
       }
-      y += 2;
+      y += 3;
     }
 
     /* ── Education ── */
     if (resume.education?.length) {
       drawSectionHeader("Education");
       for (const edu of resume.education) {
-        const line = [edu.degree, edu.institution, edu.year].filter(Boolean).join(" — ");
-        drawWrapped(line, ML, 10);
-        y += 1;
+        const parts: string[] = [];
+        if (edu.degree) parts.push(edu.degree);
+        if (edu.institution) parts.push(edu.institution);
+        if (edu.year) parts.push(edu.year);
+        drawWrapped(parts.join("  —  "), ML, 10);
+        y += 2;
       }
     }
 
