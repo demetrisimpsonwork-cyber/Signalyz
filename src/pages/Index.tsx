@@ -1327,11 +1327,13 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
+                      invalidateStaleSession();
                       setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                     onClear={() => {
+                      invalidateStaleSession();
                       setBullet("");
                       setInputSource("paste");
                       setErrors((p) => ({ ...p, bullet: undefined }));
@@ -1341,7 +1343,7 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { invalidateStaleSession(); setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
