@@ -588,11 +588,18 @@ export function computePillarScores(resumeText: string, jdText: string) {
   const sections = extractSections(sanitizedResume);
   const jdModel = buildJdSignalVocabulary(jdText);
 
+  const jdMirroring = computeJdMirroringScore(sections, jdModel, jdText);
+  const ownershipScope = computeOwnershipScopeScore(sections);
+  const perceptionGap = computePerceptionGapScore(sections, jdText);
+  const readability = computeReadabilityScore(sections);
+
+  // Map to real 5-pillar model (same mapping used in computeDeterministicScore)
   return {
-    jdMirroring: computeJdMirroringScore(sections, jdModel, jdText),
-    ownershipScope: computeOwnershipScopeScore(sections),
-    perceptionGap: computePerceptionGapScore(sections, jdText),
-    readability: computeReadabilityScore(sections),
+    roleOutcomes: ownershipScope,
+    toolsWorkflow: jdMirroring,
+    domainContext: perceptionGap,
+    contextScale: Math.floor((ownershipScope * 0.5 + jdMirroring * 0.5)),
+    communicationLeadership: Math.floor((perceptionGap * 0.5 + ownershipScope * 0.5)),
   };
 }
 

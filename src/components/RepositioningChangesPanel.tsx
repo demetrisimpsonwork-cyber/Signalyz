@@ -39,14 +39,16 @@ function buildPillars(originalResume: string, calibratedResume: CalibratedResume
     const delta = calVal - origVal;
     if (delta <= 0) return `${name} preserved at ${calVal}%`;
     switch (name) {
-      case "JD Mirroring Score":
-        return `+${delta}% — added role-specific terms and scope framing to experience bullets`;
-      case "Ownership & Scope Density":
-        return `+${delta}% — strengthened active ownership verbs and stakeholder scope language`;
-      case "Perception Gap Closure":
+      case "Role Outcomes":
+        return `+${delta}% — strengthened ownership language, scope framing, and outcome evidence`;
+      case "Tools & Workflow":
+        return `+${delta}% — added role-specific terms and JD-aligned vocabulary across bullets`;
+      case "Domain & Context":
         return `+${delta}% — seniority and impact language shifted closer to JD target level`;
-      case "Readability & Signal Clarity":
-        return `+${delta}% — improved bullet consistency and removed passive softening`;
+      case "Context & Scale":
+        return `+${delta}% — improved scope indicators and operational breadth framing`;
+      case "Communication & Leadership":
+        return `+${delta}% — elevated stakeholder language and reduced passive constructions`;
       default:
         return `+${delta}% improvement`;
     }
@@ -54,37 +56,45 @@ function buildPillars(originalResume: string, calibratedResume: CalibratedResume
 
   return [
     {
-      name: "JD Mirroring Score",
-      weight: "40%",
-      origScore: orig.jdMirroring,
-      calScore: cal.jdMirroring,
-      delta: cal.jdMirroring - orig.jdMirroring,
-      explanation: mkExplanation("JD Mirroring Score", orig.jdMirroring, cal.jdMirroring),
-    },
-    {
-      name: "Ownership & Scope Density",
+      name: "Role Outcomes",
       weight: "30%",
-      origScore: orig.ownershipScope,
-      calScore: cal.ownershipScope,
-      // Never show reduced for ownership
-      delta: Math.max(0, cal.ownershipScope - orig.ownershipScope),
-      explanation: mkExplanation("Ownership & Scope Density", orig.ownershipScope, Math.max(orig.ownershipScope, cal.ownershipScope)),
+      origScore: orig.roleOutcomes,
+      calScore: cal.roleOutcomes,
+      // Never show reduced for role outcomes
+      delta: Math.max(0, cal.roleOutcomes - orig.roleOutcomes),
+      explanation: mkExplanation("Role Outcomes", orig.roleOutcomes, Math.max(orig.roleOutcomes, cal.roleOutcomes)),
     },
     {
-      name: "Perception Gap Closure",
+      name: "Tools & Workflow",
       weight: "20%",
-      origScore: orig.perceptionGap,
-      calScore: cal.perceptionGap,
-      delta: cal.perceptionGap - orig.perceptionGap,
-      explanation: mkExplanation("Perception Gap Closure", orig.perceptionGap, cal.perceptionGap),
+      origScore: orig.toolsWorkflow,
+      calScore: cal.toolsWorkflow,
+      delta: cal.toolsWorkflow - orig.toolsWorkflow,
+      explanation: mkExplanation("Tools & Workflow", orig.toolsWorkflow, cal.toolsWorkflow),
     },
     {
-      name: "Readability & Signal Clarity",
-      weight: "10%",
-      origScore: orig.readability,
-      calScore: cal.readability,
-      delta: cal.readability - orig.readability,
-      explanation: mkExplanation("Readability & Signal Clarity", orig.readability, cal.readability),
+      name: "Domain & Context",
+      weight: "20%",
+      origScore: orig.domainContext,
+      calScore: cal.domainContext,
+      delta: cal.domainContext - orig.domainContext,
+      explanation: mkExplanation("Domain & Context", orig.domainContext, cal.domainContext),
+    },
+    {
+      name: "Context & Scale",
+      weight: "15%",
+      origScore: orig.contextScale,
+      calScore: cal.contextScale,
+      delta: cal.contextScale - orig.contextScale,
+      explanation: mkExplanation("Context & Scale", orig.contextScale, cal.contextScale),
+    },
+    {
+      name: "Communication & Leadership",
+      weight: "15%",
+      origScore: orig.communicationLeadership,
+      calScore: cal.communicationLeadership,
+      delta: cal.communicationLeadership - orig.communicationLeadership,
+      explanation: mkExplanation("Communication & Leadership", orig.communicationLeadership, cal.communicationLeadership),
     },
   ];
 }
