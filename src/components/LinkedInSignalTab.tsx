@@ -5,6 +5,7 @@ import { Copy, Check, Loader2, ArrowRight, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -159,6 +160,7 @@ const LinkedInSignalTab = ({
       });
 
       if (headlineRes.error) throw headlineRes.error;
+      if (checkUsageLimitData(headlineRes.data)) { stepTimers.forEach(clearTimeout); setLoading(false); return; }
       const headlineData = headlineRes.data?.headline ? headlineRes.data : null;
 
       // 2. About guidance + Experience notes (Pro only)
@@ -186,6 +188,8 @@ const LinkedInSignalTab = ({
           }),
         ]);
 
+        if (checkUsageLimitData(aboutRes.data) || checkUsageLimitData(expRes.data)) { stepTimers.forEach(clearTimeout); setLoading(false); return; }
+
         if (aboutRes.error) console.warn("About guidance error:", aboutRes.error);
         if (expRes.error) console.warn("Experience notes error:", expRes.error);
 
@@ -202,7 +206,8 @@ const LinkedInSignalTab = ({
       };
       setOutput(newOutput);
       saveLinkedInOutput(newOutput);
-    } catch {
+    } catch (e) {
+      if (handleUsageLimitError(e)) { setLoading(false); return; }
       toast.error("Failed to calibrate LinkedIn signal.");
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@ import type { DirectorCalibrationResult } from "@/components/DirectorCalibration
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
+import { handleUsageLimitError } from "@/lib/usageLimitError";
 
 export interface CalibratedResumeData {
   header: {
@@ -123,6 +124,11 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         );
         break;
       } catch (err: any) {
+        if (handleUsageLimitError(err)) {
+          stepTimers.forEach(clearTimeout);
+          setLoading(false);
+          return;
+        }
         const isFriendly = err.message === FRIENDLY_FAIL_MSG;
         if (isFriendly && attempts < maxAttempts) {
           console.log("[useResumeAssembly] Attempt", attempts, "failed, retrying...");

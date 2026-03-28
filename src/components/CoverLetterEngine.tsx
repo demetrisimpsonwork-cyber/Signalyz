@@ -8,6 +8,7 @@ import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import { antiAIFilter } from "@/lib/antiAIFilter";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -197,6 +198,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       stepTimers.forEach(clearTimeout);
 
       if (fnError) throw fnError;
+      if (checkUsageLimitData(data)) { stepTimers.forEach(clearTimeout); setLoading(false); return; }
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
       const filteredLetter = antiAIFilter(data.letter || "");
@@ -206,6 +208,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       setStep(4);
     } catch (e: any) {
       stepTimers.forEach(clearTimeout);
+      if (handleUsageLimitError(e)) { setLoading(false); return; }
       const msg = e?.message || "Cover letter generation failed.";
       console.error("Cover letter generation error:", msg);
       setError(msg);

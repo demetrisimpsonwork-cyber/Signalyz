@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { antiAIFilter } from "@/lib/antiAIFilter";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 interface Variant {
   name: string;
@@ -34,9 +35,10 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (data?.variants) setVariants(data.variants);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 

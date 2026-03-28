@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 interface IAnswerFramework {
   situation: string;
@@ -81,9 +82,10 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (Array.isArray(data)) setQuestions(data);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 

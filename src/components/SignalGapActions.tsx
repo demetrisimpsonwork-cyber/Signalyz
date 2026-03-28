@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
 interface GapAction {
   gap_name: string;
@@ -44,9 +45,10 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (Array.isArray(data)) setGaps(data);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 
