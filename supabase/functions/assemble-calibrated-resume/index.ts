@@ -1753,8 +1753,8 @@ function cleanBulletArtifacts(bullet: string): string {
   }
 
   // ── 3. Enforce sentence boundary on excessive length ──
-  // If bullet > 400 chars, truncate at nearest sentence/clause boundary
-  const MAX_BULLET_LENGTH = 400;
+  // Target 1-2 lines max per bullet (~200 chars)
+  const MAX_BULLET_LENGTH = 200;
   if (bullet.length > MAX_BULLET_LENGTH) {
     // Find last sentence boundary (. ! ?) before the limit
     let cutIdx = -1;
