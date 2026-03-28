@@ -972,22 +972,32 @@ async function generateSummary(
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
-        temperature: 0,
+        temperature: 0.3,
         system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
 
 RULES:
-- Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
-- Use 2-3 sentences of active voice only. Keep it tight — no more than 50 words total.
-- NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
-- Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
-- Every sentence must reference verifiable experience from the original resume
-- Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
-- If TOP JD PHRASES are provided, weave 2-3 of them naturally into the summary where semantically valid
-- ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
-- TONE: Write like an experienced operator, not a marketing copywriter. No abstract claims, no "passionate about," no presentation language. State facts and capabilities plainly.
-- DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
-- COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. Examples of FORBIDDEN injection: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline." If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
-- BANNED VERBS: NEVER use these verbs anywhere in the summary: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated signal language. Use direct alternatives instead (e.g., "led", "directed", "built", "drove", "managed").
+- Write 3-4 sentences, max 60 words total. Active voice only.
+- Every sentence must reference verifiable experience from the original resume.
+- Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring.
+- If TOP JD PHRASES are provided, weave 2-3 of them naturally into the summary where semantically valid.
+- ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original.
+
+SENTENCE VARIATION (CRITICAL — prevents robotic uniformity):
+- The first sentence must be a direct identity statement anchored to the candidate's strongest signal pillar (e.g., "Operations coordinator with 6+ years managing cross-functional workflows.").
+- The second sentence must use a DIFFERENT structure — describe a specific capability or scope, not another identity claim.
+- The third sentence (if needed) should reference a concrete outcome, tool, or domain from the resume.
+- NEVER start two sentences with the same word or pattern. Vary openers: use a noun phrase, then a verb phrase, then a prepositional or qualifying phrase.
+- NEVER open with: "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", "Dedicated experience", "Experienced in", "Skilled in", "Proven track record".
+- Do NOT use the pattern "Adjective noun with X years..." more than once.
+
+TONE:
+- Write like an experienced operator, not a marketing copywriter. No abstract claims, no "passionate about," no presentation language. State facts and capabilities plainly.
+
+DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
+
+COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
+
+BANNED VERBS: NEVER use: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated.
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
         messages: [{ role: "user", content: context }],
@@ -1838,18 +1848,43 @@ function strengthenFinalExperience(
 function deduplicateJdEchoPhrases(experience: any[]): any[] {
   const tailRx = /,?\s*aligned with\s+.+?\s+priorities\.?$/i;
   const seenTails = new Set<string>();
+  // Track semantic fingerprints: normalized 4-word sequences to catch cross-role repetition
+  const seenFingerprints = new Set<string>();
 
   return experience.map((role: any) => {
     const bullets = Array.isArray(role.bullets) ? role.bullets.map((b: string) => {
+      // 1. Strip duplicate JD-echo tails
       const tailMatch = b.match(tailRx);
-      if (!tailMatch) return b;
-      const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
-      if (seenTails.has(tailKey)) {
-        let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
-        if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
-        return cleaned;
+      if (tailMatch) {
+        const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
+        if (seenTails.has(tailKey)) {
+          let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+          if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
+          b = cleaned;
+        } else {
+          seenTails.add(tailKey);
+        }
       }
-      seenTails.add(tailKey);
+
+      // 2. Semantic fingerprint dedup: extract core phrase (skip lead verb, take next 4 content words)
+      const words = b.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(w => w.length > 3);
+      if (words.length >= 5) {
+        const fingerprint = words.slice(1, 5).join(" ");
+        if (seenFingerprints.has(fingerprint)) {
+          // This bullet is semantically duplicate — strip JD tail to differentiate, or mark for removal
+          const stripped = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+          // If after stripping it's still a duplicate core, return empty to filter later
+          const strippedWords = stripped.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(w => w.length > 3);
+          const strippedFp = strippedWords.slice(1, 5).join(" ");
+          if (seenFingerprints.has(strippedFp)) {
+            return ""; // Will be filtered by normalizeResult (length > 5 check)
+          }
+          b = stripped;
+          if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
+        }
+        seenFingerprints.add(fingerprint);
+      }
+
       return b;
     }) : [];
     return { ...role, bullets };
@@ -1966,7 +2001,7 @@ async function rewriteExperienceBullets(
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
-        temperature: 0,
+        temperature: 0.2,
         system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
 
 TARGET JD SIGNAL CONTEXT:
@@ -1981,24 +2016,38 @@ CRITICAL JD MIRRORING RULES:
 
 DOMAIN PRESERVATION (NON-NEGOTIABLE):
 - NEVER insert industry, sector, or company-type language from the JD into bullets unless that exact language already appears in the candidate's original bullet.
-- Examples of forbidden injection: adding "manufacturing," "distribution," "healthcare," "logistics," "warehouse" to describe a role that was NOT in that industry.
-- JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
-- The candidate's actual employer context must be preserved exactly.
+- JD vocabulary may only describe HOW the candidate worked — NEVER WHERE they worked or WHAT industry they were in.
 
 COMMERCIAL FUNCTION PRESERVATION (NON-NEGOTIABLE):
 - NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function phrases from the JD unless the candidate's original bullet explicitly demonstrates that function.
-- Forbidden examples: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline," "revenue growth," "competitive analysis."
 - If the original bullet describes support, operations, coordination, documentation, or administrative work, rewrite it as better support/operations/coordination language — do NOT reframe it as commercial, sales, or revenue-generating activity.
-- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support" over sales-function language.
+- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support."
 
 VERB RULES:
-- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
+- Every bullet must begin with exactly ONE strong action verb. Never stack two verbs.
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
 
-BULLET STRUCTURE (CRITICAL FOR READABILITY):
+BULLET RHYTHM & VARIATION (CRITICAL — prevents robotic uniformity):
+- NOT every bullet should follow the same "Verb + object + context" pattern. Mix these structures:
+  • ACTION-LED: "Managed vendor contracts across three regions." (most common — ~60% of bullets)
+  • CONTEXT-LED: "Across 12 client accounts, maintained SLA compliance above 98%." (~20% of bullets)
+  • OUTCOME-LED: "Reduced ticket backlog by 35% through revised escalation routing." (~20% of bullets)
+- Vary bullet LENGTH naturally within each role:
+  • Include 1-2 SHORT bullets (8-15 words) — punchy, single-fact statements
+  • Include 2-3 MEDIUM bullets (15-22 words) — standard action-context-result
+  • Allow at most 1 LONGER bullet (22-30 words) per role — only for complex, high-value accomplishments
+- NEVER write all bullets at the same word count. The length variation must be visible.
+- Within a single role, no two consecutive bullets should start with the same verb.
+- Across the entire resume, no verb should lead more than 3 bullets total.
+
+DEDUPLICATION (CRITICAL):
+- Before finalizing, scan ALL bullets across ALL roles for semantic duplicates.
+- If two bullets describe the same responsibility in different roles (e.g., "Managed vendor relationships" appears in Role 1 and Role 3), keep only the stronger version and replace the weaker one with a different, factual responsibility from that role.
+- Never repeat the same JD-echo phrase (e.g., "aligned with X priorities") in more than one bullet across the entire resume.
+
+BULLET STRUCTURE:
 - Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
 - Target 15-25 words per bullet. Never exceed 30 words.
-- Follow this pattern: Action verb → what was done → brief context or result.
 - Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
 - Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
 - Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
@@ -2010,24 +2059,13 @@ TONE (NON-NEGOTIABLE):
 - Right: "Coordinated system migrations across three departments, resolving 40+ configuration issues."
 
 NON-NEGOTIABLE RULES:
-1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
-2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
-3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
-4. Every bullet must preserve or strengthen truthfully implied outcome framing.
-5. Every bullet must remain ATS-safe, export-safe, and preview-safe plain text.
-
-SIGNAL TARGETS:
-- JD Keyword Alignment (HIGHEST PRIORITY): weave truthful target-role phrases and vocabulary directly into every bullet. Each bullet should contain at least one JD phrase or keyword.
-- Ownership Language Density: first word should be a strong action / ownership verb.
-- Action Verb Lead Rate: every bullet should lead with a strong action verb whenever accurate.
-- Outcome Framing: preserve existing metrics / scope and add honest operational result framing where implied.
-- Passive Language Reduction: remove weak constructions like helped, assisted, supported, participated in, was involved, tasked with.
+1. Rewrite EVERY bullet. Preserve company names, titles, dates, tools, metrics, team sizes, dollar amounts exactly.
+2. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
+3. Every bullet must remain ATS-safe, export-safe plain text.
 
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
-- Each bullet must be ONE short sentence (15-25 words, max 30).
-- No multi-clause chaining. No compound sentences joined by "and."
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
