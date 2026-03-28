@@ -1818,6 +1818,32 @@ function strengthenFinalExperience(
   });
 }
 
+/**
+ * Cross-bullet deduplication: remove repetitive JD-echo tail phrases
+ * (e.g., "aligned with X priorities") that appear in multiple bullets.
+ * Keeps the first occurrence and strips duplicates.
+ */
+function deduplicateJdEchoPhrases(experience: any[]): any[] {
+  const tailRx = /,?\s*aligned with\s+.+?\s+priorities\.?$/i;
+  const seenTails = new Set<string>();
+
+  return experience.map((role: any) => {
+    const bullets = Array.isArray(role.bullets) ? role.bullets.map((b: string) => {
+      const tailMatch = b.match(tailRx);
+      if (!tailMatch) return b;
+      const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
+      if (seenTails.has(tailKey)) {
+        let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+        if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
+        return cleaned;
+      }
+      seenTails.add(tailKey);
+      return b;
+    }) : [];
+    return { ...role, bullets };
+  });
+}
+
 function countRepairOpportunities(sourceExperience: any[], jdModel: ReturnType<typeof buildSignalJdModel>): number {
   let opportunities = 0;
 
