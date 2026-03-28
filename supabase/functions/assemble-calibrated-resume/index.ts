@@ -1995,6 +1995,20 @@ VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
 
+BULLET STRUCTURE (CRITICAL FOR READABILITY):
+- Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
+- Target 15-25 words per bullet. Never exceed 30 words.
+- Follow this pattern: Action verb → what was done → brief context or result.
+- Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
+- Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
+- Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
+
+TONE (NON-NEGOTIABLE):
+- Use grounded, operator-level language appropriate for technical support, operations, and systems roles.
+- No abstract claims, no presentation language, no consulting-speak.
+- Wrong: "Strategically orchestrated cross-functional alignment initiatives to drive operational excellence across enterprise stakeholders."
+- Right: "Coordinated system migrations across three departments, resolving 40+ configuration issues."
+
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
@@ -2012,8 +2026,8 @@ SIGNAL TARGETS:
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
-- Each bullet should stay at least as information-dense as the original and should usually be longer, not shorter.
-- Every bullet must be one clean sentence.
+- Each bullet must be ONE short sentence (15-25 words, max 30).
+- No multi-clause chaining. No compound sentences joined by "and."
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
