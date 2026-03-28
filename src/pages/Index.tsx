@@ -345,6 +345,9 @@ const Index = () => {
   const [resultRunType, setResultRunType] = useState<"original" | "calibrated">("original");
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
+  // Session restore tracking: true when bullet/jd came from localStorage, false once user edits
+  const sessionRestoredRef = useRef(false);
+  const userDirtyRef = useRef(false); // true once user manually changes input
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
     try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
   });
@@ -447,9 +450,12 @@ const Index = () => {
   const SESSION_VERSION = 2;
   // Session recovery modal state removed — sessions now auto-restore silently
 
-  // Check for saved session on mount — always auto-restore silently
+  // Check for saved session on mount — only restore if user hasn't started new input
   useEffect(() => {
     if (result) return; // already have results
+    // If user already typed something before this effect runs, don't overwrite
+    if (userDirtyRef.current) return;
+    if (bullet.trim() || jd.trim()) return; // user already has input in fields
     try {
       const saved = localStorage.getItem(SESSION_KEY);
       if (!saved) return;
@@ -458,7 +464,8 @@ const Index = () => {
         localStorage.removeItem(SESSION_KEY);
         return;
       }
-      // Always auto-restore: no modal, no conditions
+      // Mark as restored so we can invalidate if user edits
+      sessionRestoredRef.current = true;
       setResult(parsed.result);
       setBullet(parsed.bullet);
       setJd(parsed.jd);
@@ -484,6 +491,19 @@ const Index = () => {
   const displayBreakdown = result?.scoring_breakdown;
 
   const animatedScore = useCountUp(displayScore, 1200);
+
+  // Invalidate stale restored results when user edits input
+  const invalidateStaleSession = useCallback(() => {
+    if (sessionRestoredRef.current) {
+      // User changed input after a restore — clear old results
+      sessionRestoredRef.current = false;
+      setResult(null);
+      setDirectorResult(null);
+      setSessionResumeAssembled(false);
+      setAlignmentError(null);
+    }
+    userDirtyRef.current = true;
+  }, []);
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
@@ -1307,11 +1327,13 @@ const Index = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
+                      invalidateStaleSession();
                       setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
                     }}
                     onClear={() => {
+                      invalidateStaleSession();
                       setBullet("");
                       setInputSource("paste");
                       setErrors((p) => ({ ...p, bullet: undefined }));
@@ -1321,14 +1343,14 @@ const Index = () => {
                     <Textarea
                       placeholder="Paste a resume bullet, summary, or short experience section here..."
                       value={bullet}
-                      onChange={(e) => { setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => { invalidateStaleSession(); setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
+                        onClick={() => { invalidateStaleSession(); setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                       >
@@ -1348,7 +1370,7 @@ const Index = () => {
                   <Textarea
                     placeholder="Paste the full job description you're targeting..."
                     value={jd}
-                    onChange={(e) => { setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
+                    onChange={(e) => { invalidateStaleSession(); setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
                     rows={6}
                     className={errors.jd ? "border-destructive" : ""}
                   />
