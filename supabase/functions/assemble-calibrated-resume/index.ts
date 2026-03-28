@@ -2077,8 +2077,21 @@ SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is pr
 - If escalation handling maps to issue ownership, bullets must show ownership framing, not passive support.
 - If stakeholder communication maps to account support, bullets must reflect relationship continuity and client-facing language.
 - The candidate should read as: "already does this role — just in a different environment."
-- Use stronger, role-aligned verbs where the conversion suggests it (e.g., "supported" → "managed" is OK only if the scope justifies it from the original).
 - ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
+
+SIGNAL CONVERSION VERB HARDENING (NON-NEGOTIABLE):
+- When converting a transferable signal, ALWAYS upgrade to ownership-level verbs. Soft/passive verbs are BANNED in converted bullets:
+  • "supported" → "executed" or "managed"
+  • "assisted" → "coordinated" or "directed"
+  • "helped manage" → "managed"
+  • "helped with" → "handled" or "owned"
+  • "participated in" → "contributed to" or "drove"
+  • "was responsible for" → "managed" or "oversaw"
+  • "involved in" → "executed" or "led"
+- Emphasize PROCESS OWNERSHIP verbs: managed, coordinated, executed, resolved, tracked, routed, completed, maintained, delivered, owned (only if scope justifies).
+- NEVER use these soft verbs in a converted-signal bullet: supported, assisted, helped, aided, contributed (alone), facilitated (unless genuinely orchestrating).
+- The verb must signal that the candidate PERFORMED the work, not that they were adjacent to it.
+- This upgrade is ONLY a language change — do NOT inflate scope. "Assisted with scheduling for 3 accounts" becomes "Coordinated scheduling across 3 accounts" — the scope (3 accounts) stays identical.
 
 CRITICAL JD MIRRORING RULES:
 - Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
