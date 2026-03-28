@@ -935,6 +935,58 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
   };
 }
 
+// ─── Signal Conversion Extraction ───
+// Extracts transferable signal mappings from the director/alignment result
+// so the resume generation prompts can apply signal conversion framing.
+
+function extractSignalConversions(directorResult: any): string {
+  const conversions: string[] = [];
+
+  // 1. From hiring_pipeline_simulation signal_conversion_insight
+  const pipeline = directorResult?.hiring_pipeline_simulation ||
+    directorResult?.signal_model?.risk_projection?.stages ||
+    directorResult?.signal_model?.hiring_pipeline_simulation || [];
+  for (const stage of pipeline) {
+    if (stage?.signal_conversion_insight &&
+        !stage.signal_conversion_insight.toLowerCase().includes("no directly transferable signal")) {
+      conversions.push(`• ${stage.stage}: ${stage.signal_conversion_insight}${stage.reposition_strategy ? ` → Strategy: ${stage.reposition_strategy}` : ""}`);
+    }
+  }
+
+  // 2. From transferable_signal_detection
+  const transferable = directorResult?.transferable_signal_detection ||
+    directorResult?.signal_model?.transferable_signal_detection;
+  if (transferable?.detected_capability) {
+    conversions.push(`• Transferable capability: ${transferable.detected_capability} — ${transferable.why_it_transfers || ""}`);
+    if (transferable.elevation_opportunity) {
+      conversions.push(`  → Elevation: ${transferable.elevation_opportunity}`);
+    }
+  }
+
+  // 3. From gap_strategy perception_gaps (titan-position)
+  const perceptionGaps = directorResult?.gap_strategy?.perception_gaps || [];
+  for (const gap of perceptionGaps.slice(0, 3)) {
+    if (typeof gap === "string" && gap.length > 10) {
+      conversions.push(`• Perception gap (not capability gap): ${gap}`);
+    }
+  }
+
+  // 4. From repositioning_matrix matching_experience
+  const matrix = directorResult?.repositioning_matrix || [];
+  for (const entry of matrix.slice(0, 3)) {
+    if (entry?.matching_experience && entry?.role_native_language) {
+      conversions.push(`• Convert "${entry.matching_experience}" → "${entry.role_native_language}"`);
+    }
+  }
+
+  if (conversions.length === 0) return "";
+  return `\nSIGNAL CONVERSION CONTEXT (CRITICAL — apply these mappings in every rewrite):
+These are transferable signals already present in the candidate's experience that map to the target role.
+Frame these as CAPABILITIES the candidate already has, expressed in role-aligned language.
+Do NOT treat these as gaps — treat them as perception issues to fix through language choices.
+${conversions.join("\n")}`;
+}
+
 // ─── Phase 2: Focused sectional API calls with JD context ───
 
 async function generateSummary(
@@ -950,10 +1002,13 @@ async function generateSummary(
   const jdModel = rawJd ? buildSignalJdModel(rawJd) : null;
   const topPhrases = jdModel ? [...jdModel.bigrams.slice(0, 6), ...jdModel.trigrams.slice(0, 4)] : [];
 
+  const signalConversionBlock = extractSignalConversions(directorResult);
+
   const context = [
     `Original summary: ${originalSummary}`,
     jdSource ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSource}` : "",
     topPhrases.length > 0 ? `\nTOP JD PHRASES TO INCORPORATE:\n${topPhrases.map(p => `• ${p}`).join("\n")}` : "",
+    signalConversionBlock,
     directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
     `\nFirst 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
   ].filter(Boolean).join("\n");
@@ -974,6 +1029,12 @@ async function generateSummary(
         max_tokens: 500,
         temperature: 0.3,
         system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
+
+SIGNAL CONVERSION PRIORITY:
+- If SIGNAL CONVERSION CONTEXT is provided, the summary MUST incorporate at least one converted capability.
+- Frame existing experience using role-aligned language from the conversion mappings.
+- The candidate should read as someone who already does this work — just in a different environment.
+- Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
 
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
@@ -1980,6 +2041,7 @@ async function rewriteExperienceBullets(
     ? `\nTOP JD PHRASES (incorporate 1-2 per bullet where semantically valid):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nTOP JD KEYWORDS (distribute across all bullets):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
     : "";
   const jdSignals = rawJd?.trim() || extractJDSignals(directorResult);
+  const signalConversionBlock = extractSignalConversions(directorResult);
 
   const expText = experience.map((exp: any, i: number) => {
     const header = [exp.title, exp.company, exp.dates].filter(Boolean).join(" | ");
@@ -2007,6 +2069,16 @@ async function rewriteExperienceBullets(
 TARGET JD SIGNAL CONTEXT:
 ${jdSignals}
 ${jdPhraseBlock}
+${signalConversionBlock}
+
+SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is present):
+- When a transferable signal mapping is provided (e.g., "escalation handling → issue resolution ownership"), rewrite bullets to express the CONVERTED signal.
+- Frame the candidate's existing work using role-aligned language: if workflows map to order coordination, bullets must reflect coordination, tracking, completion.
+- If escalation handling maps to issue ownership, bullets must show ownership framing, not passive support.
+- If stakeholder communication maps to account support, bullets must reflect relationship continuity and client-facing language.
+- The candidate should read as: "already does this role — just in a different environment."
+- Use stronger, role-aligned verbs where the conversion suggests it (e.g., "supported" → "managed" is OK only if the scope justifies it from the original).
+- ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
 
 CRITICAL JD MIRRORING RULES:
 - Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
