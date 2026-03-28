@@ -29,7 +29,7 @@ async function fetchSubscriptionData() {
     return null;
   }
 
-  console.log("[SubCheck] Querying profiles for user_id:", user.id);
+  
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
