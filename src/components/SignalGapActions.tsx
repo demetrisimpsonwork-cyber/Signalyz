@@ -37,7 +37,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
   const { hasConsumedOneTimeCredit } = useSubscription();
 
   useEffect(() => {
-    if (!experience || !jd) return;
+    if (!experience || !jd || !isPro) return;
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
