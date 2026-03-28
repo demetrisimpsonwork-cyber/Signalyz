@@ -492,6 +492,19 @@ const Index = () => {
 
   const animatedScore = useCountUp(displayScore, 1200);
 
+  // Invalidate stale restored results when user edits input
+  const invalidateStaleSession = useCallback(() => {
+    if (sessionRestoredRef.current) {
+      // User changed input after a restore — clear old results
+      sessionRestoredRef.current = false;
+      setResult(null);
+      setDirectorResult(null);
+      setSessionResumeAssembled(false);
+      setAlignmentError(null);
+    }
+    userDirtyRef.current = true;
+  }, []);
+
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
   const [sessionResumeAssembled, setSessionResumeAssembled] = useState(false);
