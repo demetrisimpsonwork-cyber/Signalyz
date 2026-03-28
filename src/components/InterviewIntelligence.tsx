@@ -81,9 +81,10 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (Array.isArray(data)) setQuestions(data);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 

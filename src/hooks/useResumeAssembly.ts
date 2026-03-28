@@ -123,6 +123,11 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         );
         break;
       } catch (err: any) {
+        if (handleUsageLimitError(err)) {
+          stepTimers.forEach(clearTimeout);
+          setLoading(false);
+          return;
+        }
         const isFriendly = err.message === FRIENDLY_FAIL_MSG;
         if (isFriendly && attempts < maxAttempts) {
           console.log("[useResumeAssembly] Attempt", attempts, "failed, retrying...");

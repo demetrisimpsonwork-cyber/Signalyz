@@ -34,9 +34,10 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (data?.variants) setVariants(data.variants);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 

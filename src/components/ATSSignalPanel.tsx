@@ -47,9 +47,10 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
       })
       .then(({ data: res, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(res)) return;
         if (res) setData(res as ATSData);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 

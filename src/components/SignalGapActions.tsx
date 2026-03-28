@@ -44,9 +44,10 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
       })
       .then(({ data, error }) => {
         if (error) throw error;
+        if (checkUsageLimitData(data)) return;
         if (Array.isArray(data)) setGaps(data);
       })
-      .catch(() => {})
+      .catch((e) => { handleUsageLimitError(e); })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 
