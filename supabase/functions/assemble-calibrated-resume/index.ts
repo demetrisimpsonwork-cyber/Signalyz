@@ -977,13 +977,14 @@ async function generateSummary(
 
 RULES:
 - Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
-- Use 2-4 sentences of active voice only
+- Use 2-3 sentences of active voice only. Keep it tight — no more than 50 words total.
 - NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
 - Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
 - Every sentence must reference verifiable experience from the original resume
 - Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
-- If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
+- If TOP JD PHRASES are provided, weave 2-3 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
+- TONE: Write like an experienced operator, not a marketing copywriter. No abstract claims, no "passionate about," no presentation language. State facts and capabilities plainly.
 - DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
 - COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. Examples of FORBIDDEN injection: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline." If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
 - BANNED VERBS: NEVER use these verbs anywhere in the summary: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated signal language. Use direct alternatives instead (e.g., "led", "directed", "built", "drove", "managed").
