@@ -62,7 +62,7 @@ const MatchScoreCard = ({ score, confidenceLevel, topMatchedSignal, topMissingSi
         <h3 className="text-sm font-semibold text-foreground">Match Score</h3>
         <button
           onClick={handleCopy}
-          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="rounded-md min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           aria-label="Copy Match Score"
         >
           {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
