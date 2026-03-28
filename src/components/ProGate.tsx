@@ -113,7 +113,7 @@ export function ProGate({
                 <p className="text-xs text-muted-foreground">Cancel anytime · Instant access</p>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground">Starting at $19/month · or $9 for a single report</p>
+
 
               <Button
                 onClick={() => handleUpgrade("subscription")}
