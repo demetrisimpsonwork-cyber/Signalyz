@@ -2069,6 +2069,16 @@ async function rewriteExperienceBullets(
 TARGET JD SIGNAL CONTEXT:
 ${jdSignals}
 ${jdPhraseBlock}
+${signalConversionBlock}
+
+SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is present):
+- When a transferable signal mapping is provided (e.g., "escalation handling → issue resolution ownership"), rewrite bullets to express the CONVERTED signal.
+- Frame the candidate's existing work using role-aligned language: if workflows map to order coordination, bullets must reflect coordination, tracking, completion.
+- If escalation handling maps to issue ownership, bullets must show ownership framing, not passive support.
+- If stakeholder communication maps to account support, bullets must reflect relationship continuity and client-facing language.
+- The candidate should read as: "already does this role — just in a different environment."
+- Use stronger, role-aligned verbs where the conversion suggests it (e.g., "supported" → "managed" is OK only if the scope justifies it from the original).
+- ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
 
 CRITICAL JD MIRRORING RULES:
 - Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
