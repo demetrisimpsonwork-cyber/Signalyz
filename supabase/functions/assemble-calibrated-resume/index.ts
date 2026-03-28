@@ -1050,6 +1050,38 @@ const DOMAIN_INDUSTRY_TERMS = new Set([
   "osha","safety standards",
 ]);
 
+// Commercial / sales-support / revenue-growth / quoting / pricing phrases
+// that must NOT be injected unless the candidate's resume explicitly contains them.
+// These are distinct from domain/industry terms — they describe commercial FUNCTIONS
+// the candidate may not have performed.
+const COMMERCIAL_FUNCTION_TERMS = new Set([
+  "pricing","pricing and availability","pricing information","pricing strategy",
+  "quoting","quote generation","quote preparation","quotation",
+  "prospecting","cold calling","lead generation","lead qualification",
+  "sales development","business development","new business",
+  "revenue growth","revenue generation","revenue targets","revenue goals",
+  "sales volume","sales targets","sales goals","sales pipeline",
+  "sales cycle","sales forecasting","sales strategy","sales planning",
+  "upselling","cross-selling","upsell","cross-sell",
+  "account acquisition","client acquisition","customer acquisition",
+  "territory management","territory planning","territory development",
+  "product specifications","product spec","product knowledge","product expertise",
+  "product demonstrations","product demo","product presentation",
+  "developing ongoing relationships","developing relationships to increase",
+  "increase sales volume","increase sales","grow revenue","grow sales",
+  "close deals","closing deals","deal closing","deal negotiation",
+  "commission","quota attainment","quota achievement",
+  "rfp","rfq","request for proposal","request for quote",
+  "bid preparation","bid management","proposal writing",
+  "market development","market expansion","market penetration",
+  "competitive analysis","competitive intelligence","competitive positioning",
+  "vendor evaluation","supplier evaluation",
+  "purchase orders","purchasing","procurement strategy",
+  "inventory management","inventory control","stock management",
+  "bill of materials","bom","material requirements",
+  "erp","mrp","material planning",
+]);
+
 // Pre-sorted longest-first for efficient domain fabrication stripping
 const SORTED_DOMAIN_TERMS = [...DOMAIN_INDUSTRY_TERMS].sort((a, b) => b.length - a.length);
 
