@@ -1946,6 +1946,12 @@ DOMAIN PRESERVATION (NON-NEGOTIABLE):
 - JD vocabulary may only describe HOW the candidate worked (verbs, methods, outcomes) — NEVER WHERE they worked or WHAT industry they were in.
 - The candidate's actual employer context must be preserved exactly.
 
+COMMERCIAL FUNCTION PRESERVATION (NON-NEGOTIABLE):
+- NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function phrases from the JD unless the candidate's original bullet explicitly demonstrates that function.
+- Forbidden examples: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline," "revenue growth," "competitive analysis."
+- If the original bullet describes support, operations, coordination, documentation, or administrative work, rewrite it as better support/operations/coordination language — do NOT reframe it as commercial, sales, or revenue-generating activity.
+- Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support" over sales-function language.
+
 VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
