@@ -1848,18 +1848,43 @@ function strengthenFinalExperience(
 function deduplicateJdEchoPhrases(experience: any[]): any[] {
   const tailRx = /,?\s*aligned with\s+.+?\s+priorities\.?$/i;
   const seenTails = new Set<string>();
+  // Track semantic fingerprints: normalized 4-word sequences to catch cross-role repetition
+  const seenFingerprints = new Set<string>();
 
   return experience.map((role: any) => {
     const bullets = Array.isArray(role.bullets) ? role.bullets.map((b: string) => {
+      // 1. Strip duplicate JD-echo tails
       const tailMatch = b.match(tailRx);
-      if (!tailMatch) return b;
-      const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
-      if (seenTails.has(tailKey)) {
-        let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
-        if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
-        return cleaned;
+      if (tailMatch) {
+        const tailKey = tailMatch[0].toLowerCase().replace(/[.,]/g, "").trim();
+        if (seenTails.has(tailKey)) {
+          let cleaned = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+          if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) cleaned += ".";
+          b = cleaned;
+        } else {
+          seenTails.add(tailKey);
+        }
       }
-      seenTails.add(tailKey);
+
+      // 2. Semantic fingerprint dedup: extract core phrase (skip lead verb, take next 4 content words)
+      const words = b.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(w => w.length > 3);
+      if (words.length >= 5) {
+        const fingerprint = words.slice(1, 5).join(" ");
+        if (seenFingerprints.has(fingerprint)) {
+          // This bullet is semantically duplicate — strip JD tail to differentiate, or mark for removal
+          const stripped = b.replace(tailRx, "").trim().replace(/,\s*$/, "").trim();
+          // If after stripping it's still a duplicate core, return empty to filter later
+          const strippedWords = stripped.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(w => w.length > 3);
+          const strippedFp = strippedWords.slice(1, 5).join(" ");
+          if (seenFingerprints.has(strippedFp)) {
+            return ""; // Will be filtered by normalizeResult (length > 5 check)
+          }
+          b = stripped;
+          if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
+        }
+        seenFingerprints.add(fingerprint);
+      }
+
       return b;
     }) : [];
     return { ...role, bullets };
