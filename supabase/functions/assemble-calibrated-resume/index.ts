@@ -2253,11 +2253,15 @@ serve(async (req) => {
   }
 });
 
-// Post-process: remove placeholders and enforce bullet caps
+// Post-process: remove placeholders, enforce bullet caps, strip filler
 function cleanBullet(bullet: string): string {
   let b = bullet
     .replace(/\[Insert\s+[^\]]*\]/gi, "")
     .replace(/\[[^\]]{1,60}\]/g, "")        // strip any remaining bracketed placeholders
+    // Strip filler phrases
+    .replace(/\b(in order to|with a focus on|in an effort to|as part of|as needed|on a daily basis|in a timely manner|at all times|going forward)\b/gi, "")
+    // Strip softener adverbs
+    .replace(/\b(effectively|successfully|efficiently|proactively|strategically|consistently|seamlessly|diligently|meticulously)\s+/gi, "")
     .replace(/\s{2,}/g, " ")                 // collapse double+ spaces
     .replace(/,\s*,+/g, ",")                // collapse double+ commas
     .replace(/\.\s*,/g, ".")                // fix ". ," -> "."
@@ -2271,6 +2275,42 @@ function cleanBullet(bullet: string): string {
     .replace(/\s*[,\-—]+\s*$/g, "")         // strip trailing comma/dash artifacts
     .replace(/\s{2,}/g, " ")                 // final double-space pass
     .trim();
+
+  // Split multi-clause bullets: if bullet has 2+ "and" conjunctions, keep only up to the second clause
+  const andCount = (b.match(/\band\b/gi) || []).length;
+  if (andCount >= 2 && b.length > 120) {
+    // Find the second "and" and truncate there
+    let idx = 0;
+    let found = 0;
+    const lowerB = b.toLowerCase();
+    while (idx < lowerB.length) {
+      const pos = lowerB.indexOf(" and ", idx);
+      if (pos === -1) break;
+      found++;
+      if (found === 2) {
+        b = b.slice(0, pos).trim();
+        break;
+      }
+      idx = pos + 5;
+    }
+  }
+
+  // Hard length cap at 200 chars — truncate at last clean boundary
+  if (b.length > 200) {
+    let cutIdx = -1;
+    for (let i = 200; i >= 120; i--) {
+      if (b[i] === "." || b[i] === "," || b[i] === ";" || b[i] === " ") {
+        cutIdx = i;
+        break;
+      }
+    }
+    if (cutIdx > 0) {
+      b = b.slice(0, cutIdx).trim().replace(/[,;\s]+$/, "");
+    } else {
+      b = b.slice(0, 200).trim();
+    }
+  }
+
   // Ensure ends with period if non-empty
   if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
   return b;
