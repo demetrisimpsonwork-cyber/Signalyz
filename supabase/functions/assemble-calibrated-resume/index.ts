@@ -1103,15 +1103,15 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
   const resumeLower = originalResumeText.toLowerCase();
   const candidateLower = candidate.toLowerCase();
 
-  // Check multi-word domain terms first (longer matches take priority)
+  // Check domain/industry terms
   for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+    if (candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
-  // Check single-word domain terms
-  for (const term of DOMAIN_INDUSTRY_TERMS) {
-    if (!term.includes(" ") && candidateLower.includes(term) && !resumeLower.includes(term)) {
+  // Check commercial/sales-support function terms
+  for (const term of COMMERCIAL_FUNCTION_TERMS) {
+    if (candidateLower.includes(term) && !resumeLower.includes(term)) {
       return true;
     }
   }
