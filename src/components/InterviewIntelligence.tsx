@@ -33,7 +33,7 @@ const QuestionCard = ({ q, idx, copiedIdx, onCopy }: { q: IQuestion; idx: number
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{idx + 1}</span>
         <p className="text-sm font-semibold text-foreground leading-snug">{q.question}</p>
       </div>
-      <button onClick={() => onCopy(q, idx)} className="shrink-0 p-1 rounded hover:bg-secondary transition-colors">
+      <button onClick={() => onCopy(q, idx)} className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded hover:bg-secondary transition-colors">
         {copiedIdx === idx ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
       </button>
     </div>

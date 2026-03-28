@@ -99,7 +99,7 @@ function ProGateCard({ title, description, onUpgrade }: { title: string; descrip
 
 function CopyButton({ text, id, copiedId, onCopy }: { text: string; id: string; copiedId: string | null; onCopy: (text: string, id: string) => void }) {
   return (
-    <button onClick={() => onCopy(text, id)} className="shrink-0 p-1 rounded hover:bg-secondary" title="Copy">
+    <button onClick={() => onCopy(text, id)} className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded hover:bg-secondary" title="Copy">
       {copiedId === id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
     </button>
   );
