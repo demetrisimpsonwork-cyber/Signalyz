@@ -37,7 +37,7 @@ async function fetchSubscriptionData() {
     .eq("user_id", user.id)
     .single();
 
-  console.log("[SubCheck] DB returned — tier:", profile?.subscription_tier, "status:", (profile as any)?.subscription_status, "sub_id:", (profile as any)?.subscription_id, "period_end:", (profile as any)?.subscription_period_end, "error:", profileError?.message ?? "none");
+  
 
   if (!profile) return null;
 
