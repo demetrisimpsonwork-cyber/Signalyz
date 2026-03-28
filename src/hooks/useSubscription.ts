@@ -25,11 +25,11 @@ async function fetchSubscriptionData() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    console.log("[SubCheck] No authenticated user");
+    
     return null;
   }
 
-  console.log("[SubCheck] Querying profiles for user_id:", user.id);
+  
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -37,7 +37,7 @@ async function fetchSubscriptionData() {
     .eq("user_id", user.id)
     .single();
 
-  console.log("[SubCheck] DB returned — tier:", profile?.subscription_tier, "status:", (profile as any)?.subscription_status, "sub_id:", (profile as any)?.subscription_id, "period_end:", (profile as any)?.subscription_period_end, "error:", profileError?.message ?? "none");
+  
 
   if (!profile) return null;
 
@@ -76,7 +76,7 @@ async function fetchSubscriptionData() {
   const isPaid =
     (tier === "pro" || (profile.subscription_tier as string) === "pinnacle") && isActiveSub;
 
-  console.log("[SubCheck] Tier resolution — rawTier:", profile.subscription_tier, "rawStatus:", status, "isActiveSub:", isActiveSub, "isPaid:", isPaid);
+  
 
   // Reset count in DB if new day
   if (isNewDay) {
@@ -109,7 +109,7 @@ async function fetchSubscriptionData() {
     },
   };
 
-  console.log("[SubCheck] Resolved tier:", result._debug.resolvedTier, "oneTimeCredit:", hasOneTimeCredit);
+  
 
   return result;
 }
@@ -120,7 +120,7 @@ export function useSubscription(): SubscriptionState {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[SubCheck] Auth state changed:", event, "user:", session?.user?.id ?? "none");
+      
       setAuthReady(true);
       queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
     });
@@ -166,7 +166,7 @@ export function useSubscription(): SubscriptionState {
       return false;
     }
 
-    console.log("[SubCheck] One-time credit consumed successfully");
+    
     await queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
     return true;
   }, [queryClient]);
