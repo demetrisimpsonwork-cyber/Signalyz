@@ -25,7 +25,7 @@ async function fetchSubscriptionData() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    console.log("[SubCheck] No authenticated user");
+    
     return null;
   }
 
