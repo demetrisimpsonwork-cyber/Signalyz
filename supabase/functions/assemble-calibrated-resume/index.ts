@@ -977,13 +977,14 @@ async function generateSummary(
 
 RULES:
 - Open with the candidate's strongest transferable identity signal that directly addresses the target role's primary hiring criteria
-- Use 2-4 sentences of active voice only
+- Use 2-3 sentences of active voice only. Keep it tight — no more than 50 words total.
 - NEVER open with "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", or "Dedicated experience"
 - Start with a direct declarative identity statement (e.g., "Client experience operations professional with 7+ years...")
 - Every sentence must reference verifiable experience from the original resume
 - Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring
-- If TOP JD PHRASES are provided, weave 3-5 of them naturally into the summary where semantically valid
+- If TOP JD PHRASES are provided, weave 2-3 of them naturally into the summary where semantically valid
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original
+- TONE: Write like an experienced operator, not a marketing copywriter. No abstract claims, no "passionate about," no presentation language. State facts and capabilities plainly.
 - DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
 - COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. Examples of FORBIDDEN injection: "pricing and availability information," "developing ongoing relationships to increase sales volume," "quoting," "lead generation," "product specifications," "territory management," "sales pipeline." If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
 - BANNED VERBS: NEVER use these verbs anywhere in the summary: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated. These are flagged as inflated signal language. Use direct alternatives instead (e.g., "led", "directed", "built", "drove", "managed").
@@ -1752,8 +1753,8 @@ function cleanBulletArtifacts(bullet: string): string {
   }
 
   // ── 3. Enforce sentence boundary on excessive length ──
-  // If bullet > 400 chars, truncate at nearest sentence/clause boundary
-  const MAX_BULLET_LENGTH = 400;
+  // Target 1-2 lines max per bullet (~200 chars)
+  const MAX_BULLET_LENGTH = 200;
   if (bullet.length > MAX_BULLET_LENGTH) {
     // Find last sentence boundary (. ! ?) before the limit
     let cutIdx = -1;
@@ -1994,6 +1995,20 @@ VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs at the start (e.g., "Resolved execute" or "Directed serve" is forbidden).
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
 
+BULLET STRUCTURE (CRITICAL FOR READABILITY):
+- Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
+- Target 15-25 words per bullet. Never exceed 30 words.
+- Follow this pattern: Action verb → what was done → brief context or result.
+- Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
+- Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
+- Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
+
+TONE (NON-NEGOTIABLE):
+- Use grounded, operator-level language appropriate for technical support, operations, and systems roles.
+- No abstract claims, no presentation language, no consulting-speak.
+- Wrong: "Strategically orchestrated cross-functional alignment initiatives to drive operational excellence across enterprise stakeholders."
+- Right: "Coordinated system migrations across three departments, resolving 40+ configuration issues."
+
 NON-NEGOTIABLE RULES:
 1. Rewrite EVERY bullet in EVERY role. Do not leave bullets untouched unless they already open with a stronger ownership verb AND already contain JD-aligned language AND already preserve metrics, scope, and outcomes.
 2. Preserve company names, titles, dates, tools, stakeholders, metrics, team sizes, dollar amounts, volumes, and factual responsibilities exactly when they appear.
@@ -2011,8 +2026,8 @@ SIGNAL TARGETS:
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
-- Each bullet should stay at least as information-dense as the original and should usually be longer, not shorter.
-- Every bullet must be one clean sentence.
+- Each bullet must be ONE short sentence (15-25 words, max 30).
+- No multi-clause chaining. No compound sentences joined by "and."
 - No placeholders. No brackets. No markdown.
 
 Return ONLY valid JSON array:
@@ -2238,11 +2253,15 @@ serve(async (req) => {
   }
 });
 
-// Post-process: remove placeholders and enforce bullet caps
+// Post-process: remove placeholders, enforce bullet caps, strip filler
 function cleanBullet(bullet: string): string {
   let b = bullet
     .replace(/\[Insert\s+[^\]]*\]/gi, "")
     .replace(/\[[^\]]{1,60}\]/g, "")        // strip any remaining bracketed placeholders
+    // Strip filler phrases
+    .replace(/\b(in order to|with a focus on|in an effort to|as part of|as needed|on a daily basis|in a timely manner|at all times|going forward)\b/gi, "")
+    // Strip softener adverbs
+    .replace(/\b(effectively|successfully|efficiently|proactively|strategically|consistently|seamlessly|diligently|meticulously)\s+/gi, "")
     .replace(/\s{2,}/g, " ")                 // collapse double+ spaces
     .replace(/,\s*,+/g, ",")                // collapse double+ commas
     .replace(/\.\s*,/g, ".")                // fix ". ," -> "."
@@ -2256,6 +2275,42 @@ function cleanBullet(bullet: string): string {
     .replace(/\s*[,\-—]+\s*$/g, "")         // strip trailing comma/dash artifacts
     .replace(/\s{2,}/g, " ")                 // final double-space pass
     .trim();
+
+  // Split multi-clause bullets: if bullet has 2+ "and" conjunctions, keep only up to the second clause
+  const andCount = (b.match(/\band\b/gi) || []).length;
+  if (andCount >= 2 && b.length > 120) {
+    // Find the second "and" and truncate there
+    let idx = 0;
+    let found = 0;
+    const lowerB = b.toLowerCase();
+    while (idx < lowerB.length) {
+      const pos = lowerB.indexOf(" and ", idx);
+      if (pos === -1) break;
+      found++;
+      if (found === 2) {
+        b = b.slice(0, pos).trim();
+        break;
+      }
+      idx = pos + 5;
+    }
+  }
+
+  // Hard length cap at 200 chars — truncate at last clean boundary
+  if (b.length > 200) {
+    let cutIdx = -1;
+    for (let i = 200; i >= 120; i--) {
+      if (b[i] === "." || b[i] === "," || b[i] === ";" || b[i] === " ") {
+        cutIdx = i;
+        break;
+      }
+    }
+    if (cutIdx > 0) {
+      b = b.slice(0, cutIdx).trim().replace(/[,;\s]+$/, "");
+    } else {
+      b = b.slice(0, 200).trim();
+    }
+  }
+
   // Ensure ends with period if non-empty
   if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
   return b;
@@ -2329,11 +2384,18 @@ function normalizeResult(assembled: any) {
     core_competencies: Array.isArray(assembled.core_competencies) ? assembled.core_competencies : [],
     experience,
     independent_projects: Array.isArray(assembled.independent_projects)
-      ? assembled.independent_projects.map((p: any) => ({
-          name: p.name || "",
-          description: p.description || "",
-          bullets: Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [],
-        }))
+      ? assembled.independent_projects.map((p: any) => {
+          // Enforce concise project descriptions — max 150 chars
+          let desc = (p.description || "").trim();
+          if (desc.length > 150) {
+            const cutIdx = desc.lastIndexOf(".", 150);
+            desc = cutIdx > 80 ? desc.slice(0, cutIdx + 1) : desc.slice(0, 150).trim().replace(/[,;\s]+$/, "") + ".";
+          }
+          let bullets = Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          // Max 3 tight bullets per project
+          if (bullets.length > 3) bullets = bullets.slice(0, 3);
+          return { name: p.name || "", description: desc, bullets };
+        })
       : [],
     skills: Array.isArray(assembled.skills) ? assembled.skills : [],
     certifications: Array.isArray(assembled.certifications) ? assembled.certifications : [],
