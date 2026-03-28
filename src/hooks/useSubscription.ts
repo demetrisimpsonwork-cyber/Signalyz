@@ -109,7 +109,7 @@ async function fetchSubscriptionData() {
     },
   };
 
-  console.log("[SubCheck] Resolved tier:", result._debug.resolvedTier, "oneTimeCredit:", hasOneTimeCredit);
+  
 
   return result;
 }
