@@ -22,6 +22,8 @@ export interface PipelineStage {
   status: "PASS" | "MODERATE RISK" | "HIGH RISK";
   criteria: string[];
   explanation: string;
+  signal_conversion_insight?: string;
+  reposition_strategy?: string;
 }
 
 export interface SignalShift {
