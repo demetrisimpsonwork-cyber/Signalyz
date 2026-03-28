@@ -345,6 +345,9 @@ const Index = () => {
   const [resultRunType, setResultRunType] = useState<"original" | "calibrated">("original");
   const calibratedRunPendingRef = useRef(false);
   const overrideResumeRef = useRef<string | null>(null);
+  // Session restore tracking: true when bullet/jd came from localStorage, false once user edits
+  const sessionRestoredRef = useRef(false);
+  const userDirtyRef = useRef(false); // true once user manually changes input
   const [originalResumeBeforeCalibration, setOriginalResumeBeforeCalibration] = useState<string | null>(() => {
     try { return localStorage.getItem("signalyz_original_resume_baseline"); } catch { return null; }
   });
