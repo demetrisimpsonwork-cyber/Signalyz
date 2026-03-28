@@ -2195,12 +2195,15 @@ serve(async (req) => {
       ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
       : rewrittenSummary;
 
+    // ── Cross-bullet deduplication: remove repetitive JD-echo tails ──
+    const dedupedExperience = deduplicateJdEchoPhrases(rewrittenExperience);
+
     currentStep = "final_assembly";
     console.log(`[assemble] [${request_id}] Final assembly`);
     const result = normalizeResult({
       ...structure,
       summary: cleanedSummary,
-      experience: rewrittenExperience,
+      experience: dedupedExperience,
     });
 
     console.log(`[assemble] [${request_id}] Assembly complete`);
