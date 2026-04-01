@@ -1035,7 +1035,9 @@ SIGNAL CONVERSION PRIORITY:
 - Frame existing experience using role-aligned language from the conversion mappings.
 - The candidate should read as someone who already does this work — just in a different environment.
 - Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
-- Use OWNERSHIP verbs (managed, coordinated, executed, resolved, delivered) — NEVER use soft verbs (supported, assisted, helped) when describing converted capabilities. The summary must signal that the candidate PERFORMS the work, not that they are adjacent to it.
+- Do NOT simply swap verbs. Functionally rewrite each capability statement to express the true operational role: what system/process the candidate controlled and what moved because of them.
+- NEVER use soft verbs (supported, assisted, helped). Instead, rewrite the full phrase to show process ownership.
+- Example: Instead of "supported order processing" → "managed order routing and fulfillment tracking across accounts."
 
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
