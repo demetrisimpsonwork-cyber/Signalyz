@@ -451,16 +451,35 @@ const Index = () => {
   // Session recovery modal state removed — sessions now auto-restore silently
 
   // Check for saved session on mount — only restore if user hasn't started new input
+  // and the session is recent and this isn't a fresh login
+  const MAX_SESSION_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours
+
   useEffect(() => {
     if (result) return; // already have results
     // If user already typed something before this effect runs, don't overwrite
     if (userDirtyRef.current) return;
     if (bullet.trim() || jd.trim()) return; // user already has input in fields
+
+    // Fresh login flag: don't auto-restore stale input on fresh sign-in
+    try {
+      const freshLogin = sessionStorage.getItem("signalyz_fresh_login");
+      if (freshLogin) {
+        sessionStorage.removeItem("signalyz_fresh_login");
+        // Don't restore old session on fresh login — user starts clean
+        return;
+      }
+    } catch {}
+
     try {
       const saved = localStorage.getItem(SESSION_KEY);
       if (!saved) return;
       const parsed = JSON.parse(saved);
       if (parsed.v !== SESSION_VERSION || !parsed.result || !parsed.bullet || !parsed.jd) {
+        localStorage.removeItem(SESSION_KEY);
+        return;
+      }
+      // Reject stale sessions older than 4 hours
+      if (parsed.ts && Date.now() - parsed.ts > MAX_SESSION_AGE_MS) {
         localStorage.removeItem(SESSION_KEY);
         return;
       }

@@ -35,6 +35,8 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
+    // Mark fresh login for all OAuth flows so Index won't auto-restore stale input
+    try { sessionStorage.setItem("signalyz_fresh_login", "1"); } catch {}
     try {
       if (isMobileDevice()) {
         // On mobile, use redirect-based OAuth to avoid popup blockers
@@ -95,6 +97,8 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        // Mark as fresh login so Index.tsx won't auto-restore stale input
+        try { sessionStorage.setItem("signalyz_fresh_login", "1"); } catch {}
         const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
         navigate(hasSavedSession ? "/?tab=alignment" : "/");
       }
