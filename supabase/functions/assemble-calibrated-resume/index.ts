@@ -2155,27 +2155,51 @@ VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs.
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
 
-BULLET RHYTHM & VARIATION (CRITICAL — prevents robotic uniformity):
+SIGNAL DENSITY VARIATION (CRITICAL — controls bullet hierarchy and readability):
+Each role MUST have a clear signal density hierarchy:
+
+  HIGH DENSITY (ANCHOR — exactly 1 per role, MUST be the first bullet):
+    - The candidate's most important responsibility or system control for that role.
+    - Contains: system/process + control/action + outcome or operational movement.
+    - Length: 18–26 words. Slightly longer, more layered sentence.
+    - Must feel like: "this is what they actually did at a core level."
+    - Example: "Coordinated cross-departmental escalation workflows from intake through resolution, tracking status across 4 teams and maintaining SLA compliance."
+
+  MEDIUM DENSITY (1–2 bullets per role):
+    - Supporting responsibilities: coordination, workflow handling, cross-functional interaction.
+    - Structured but less layered than anchor. Clean and direct.
+    - Length: 12–18 words.
+    - Example: "Tracked vendor deliverables across three regions, flagging delays to operations leads."
+
+  LOW DENSITY (0–2 bullets per role):
+    - Operational or narrower tasks. Shorter, sharper. No forced complexity.
+    - Adds realism and variation. Not every task needs to sound strategic.
+    - Length: 6–12 words.
+    - Example: "Processed weekly compliance reports for audit review."
+
+DENSITY DISTRIBUTION RULES:
+  - First bullet per role MUST be HIGH DENSITY (the anchor).
+  - Remaining bullets must mix MEDIUM and LOW — never stack multiple HIGH density bullets.
+  - No more than 2 bullets of similar length in a row.
+  - The density tier of a bullet must match the authority tier: HIGH density bullets typically use Tier 2 language, LOW density bullets often use Tier 3.
+
+BULLET RHYTHM & VARIATION (prevents robotic uniformity):
 - NOT every bullet should follow the same "Verb + object + context" pattern. Mix these structures:
   • ACTION-LED: "Managed vendor contracts across three regions." (most common — ~60% of bullets)
   • CONTEXT-LED: "Across 12 client accounts, maintained SLA compliance above 98%." (~20% of bullets)
   • OUTCOME-LED: "Reduced ticket backlog by 35% through revised escalation routing." (~20% of bullets)
-- Vary bullet LENGTH naturally within each role:
-  • Include 1-2 SHORT bullets (8-15 words) — punchy, single-fact statements
-  • Include 2-3 MEDIUM bullets (15-22 words) — standard action-context-result
-  • Allow at most 1 LONGER bullet (22-30 words) per role — only for complex, high-value accomplishments
-- NEVER write all bullets at the same word count. The length variation must be visible.
 - Within a single role, no two consecutive bullets should start with the same verb.
 - Across the entire resume, no verb should lead more than 3 bullets total.
+- Do NOT allow every bullet to sound equally "optimized." Some should be plain and operational.
 
 DEDUPLICATION (CRITICAL):
 - Before finalizing, scan ALL bullets across ALL roles for semantic duplicates.
-- If two bullets describe the same responsibility in different roles (e.g., "Managed vendor relationships" appears in Role 1 and Role 3), keep only the stronger version and replace the weaker one with a different, factual responsibility from that role.
-- Never repeat the same JD-echo phrase (e.g., "aligned with X priorities") in more than one bullet across the entire resume.
+- If two bullets describe the same responsibility in different roles, keep only the stronger version and replace the weaker one with a different, factual responsibility from that role.
+- Never repeat the same JD-echo phrase in more than one bullet across the entire resume.
 
 BULLET STRUCTURE:
 - Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
-- Target 15-25 words per bullet. Never exceed 30 words.
+- HIGH density bullets: 18–26 words. MEDIUM: 12–18 words. LOW: 6–12 words. Never exceed 30 words.
 - Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
 - Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
 - Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
