@@ -95,6 +95,8 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        // Mark as fresh login so Index.tsx won't auto-restore stale input
+        try { sessionStorage.setItem("signalyz_fresh_login", "1"); } catch {}
         const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
         navigate(hasSavedSession ? "/?tab=alignment" : "/");
       }
