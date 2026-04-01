@@ -1035,9 +1035,11 @@ SIGNAL CONVERSION PRIORITY:
 - Frame existing experience using role-aligned language from the conversion mappings.
 - The candidate should read as someone who already does this work — just in a different environment.
 - Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
-- Do NOT simply swap verbs. Functionally rewrite each capability statement to express the true operational role: what system/process the candidate controlled and what moved because of them.
-- NEVER use soft verbs (supported, assisted, helped). Instead, rewrite the full phrase to show process ownership.
-- Example: Instead of "supported order processing" → "managed order routing and fulfillment tracking across accounts."
+- Do NOT simply swap verbs. Functionally rewrite each capability statement to express the true operational role at the CORRECT authority level.
+- Use TIERED language: Tier 1 (owned, led) ONLY with clear evidence of direct authority. Default to Tier 2 (coordinated, handled, managed workflow, directed flow). Use Tier 3 (executed, processed, resolved) when the role was execution-level.
+- Do NOT inflate — "supported order processing" should become "processed and tracked order fulfillment across accounts" (Tier 3), NOT "managed order operations" (Tier 2) unless that authority is evidenced.
+- NEVER use soft verbs (supported, assisted, helped). Rewrite the full phrase at the appropriate tier.
+- The summary must communicate capability and system awareness, not inflate seniority beyond what the resume evidences.
 
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
