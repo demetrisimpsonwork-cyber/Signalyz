@@ -2082,31 +2082,55 @@ SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is pr
 - The candidate should read as: "already does this role — just in a different environment."
 - ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
 
-FUNCTIONAL REWRITING (NON-NEGOTIABLE — replaces simple verb swaps):
+FUNCTIONAL REWRITING WITH AUTHORITY CALIBRATION (NON-NEGOTIABLE):
 - Do NOT simply swap verbs (e.g., "assisted → managed"). That produces fake-sounding bullets.
 - Instead, REWRITE THE FULL SENTENCE to express the TRUE FUNCTIONAL ROLE the candidate performed.
-- Every rewritten bullet must clearly show: (1) what system/process was handled, (2) what the candidate controlled, (3) what moved because of them.
+- Every rewritten bullet must clearly show: (1) what system/process was involved, (2) what part the candidate directly controlled or influenced, (3) what operational movement or outcome occurred.
 
-FUNCTIONAL REWRITE EXAMPLES:
-  • WRONG (verb swap only): "Managed escalations" (was: "Helped resolve escalations")
-  • RIGHT (functional rewrite): "Coordinated escalation routing and resolution across stakeholders"
-  • WRONG: "Managed scheduling for 3 accounts" (was: "Assisted with scheduling for 3 accounts")
-  • RIGHT: "Owned scheduling coordination across 3 accounts, tracking completion and flagging conflicts"
-  • WRONG: "Coordinated onboarding" (was: "Helped with onboarding")
-  • RIGHT: "Managed new-hire onboarding workflow including system access, documentation, and orientation scheduling"
-  • WRONG: "Executed reporting" (was: "Assisted with reporting")
-  • RIGHT: "Compiled and distributed weekly status reports across operations and compliance teams"
+ROLE-SAFE LANGUAGE TIERS (apply strictly based on source resume evidence):
+  TIER 1 — HIGH AUTHORITY (use ONLY when the source resume explicitly proves direct authority):
+    owned, led, directed strategy, accountable for, built, established
+    → Only valid when the resume shows the candidate was the decision-maker or sole owner.
+  TIER 2 — MID CONTROL (DEFAULT TARGET — use for most rewrites):
+    coordinated, managed workflow, handled, directed flow, oversaw process execution, maintained, administered, tracked, routed
+    → Use when the candidate clearly controlled a process or system, even if not the final authority.
+  TIER 3 — ACTIVE EXECUTION (use when the candidate performed work but did not control the process):
+    executed, processed, resolved, responded, compiled, prepared, completed, logged, documented, fulfilled
+    → Appropriate for operational/support roles where the candidate was the doer, not the director.
 
-FUNCTIONAL REWRITE PATTERNS (use these structures):
-  • "Managed [process] across [scope], ensuring [outcome]"
-  • "Coordinated [activity] between [parties], tracking [what]"
-  • "Executed [workflow] including [specific steps]"
-  • "Owned routing, tracking, and resolution of [what]"
-  • "Maintained [system/process] for [scope], resolving [issues]"
+  DEFAULT TO TIER 2. Only escalate to Tier 1 with clear evidence. Use Tier 3 when the source bullet genuinely reflects execution-level work — do NOT force every bullet into Tier 2.
+
+ANTI-INFLATION RULES (CRITICAL):
+- Do NOT default to ownership verbs (owned, led, drove, managed) for every bullet.
+- Do NOT upgrade "handled" → "owned" or "assisted" → "led" or "supported" → "directed" — these are forced escalations.
+- Instead, restructure the sentence to show what was actually controlled at the level the candidate operated.
+- Some bullets SHOULD remain operational/execution-level if that reflects reality. Not every bullet needs to sound like a leadership statement.
+- WRONG: "Owned end-to-end escalation resolution" (source: "Helped resolve customer escalations")
+- RIGHT: "Routed and tracked customer escalations through resolution, coordinating with technical teams"
+- WRONG: "Led onboarding operations" (source: "Helped with new hire onboarding")
+- RIGHT: "Processed new-hire onboarding steps including system access setup, documentation, and orientation scheduling"
+
+FUNCTIONAL REWRITE PATTERNS (calibrated by tier):
+  Tier 2 patterns (most common):
+    • "Coordinated [activity] between [parties], tracking [what]"
+    • "Handled [process] across [scope], ensuring [outcome]"
+    • "Maintained [system/process] for [scope], resolving [issues]"
+    • "Directed [workflow] flow from [start] through [completion]"
+  Tier 3 patterns (for execution-level work):
+    • "Processed [volume] of [items] per [timeframe]"
+    • "Resolved [type] issues through [method]"
+    • "Compiled and distributed [reports/data] across [teams]"
+    • "Executed [workflow] including [specific steps]"
 
 BANNED SOFT LANGUAGE — these must NEVER appear in any rewritten bullet:
   supported, assisted, helped, aided, "participated in," "was responsible for," "involved in," "contributed to" (alone).
-  If the original uses these, the entire bullet must be functionally rewritten — not just the verb.
+  If the original uses these, the entire bullet must be functionally rewritten — but rewritten at the CORRECT tier, not automatically escalated.
+
+NATURAL VARIATION (NON-NEGOTIABLE):
+- Not every bullet should sound high-impact. Mix Tier 2 and Tier 3 bullets realistically within each role.
+- A realistic resume has some punchy ownership bullets AND some straightforward operational bullets.
+- If the source role was primarily execution/support work, MOST bullets should be Tier 3 with 1-2 Tier 2 bullets.
+- If the source role was coordinator/manager level, MOST bullets should be Tier 2 with 0-1 Tier 1 bullets.
 
 SCOPE PRESERVATION: Functional rewrites must preserve the EXACT scope (accounts, teams, metrics, tools). Only the sentence structure and framing change — never the facts.
 
