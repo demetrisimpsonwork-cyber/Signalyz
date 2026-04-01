@@ -1035,7 +1035,9 @@ SIGNAL CONVERSION PRIORITY:
 - Frame existing experience using role-aligned language from the conversion mappings.
 - The candidate should read as someone who already does this work — just in a different environment.
 - Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
-- Use OWNERSHIP verbs (managed, coordinated, executed, resolved, delivered) — NEVER use soft verbs (supported, assisted, helped) when describing converted capabilities. The summary must signal that the candidate PERFORMS the work, not that they are adjacent to it.
+- Do NOT simply swap verbs. Functionally rewrite each capability statement to express the true operational role: what system/process the candidate controlled and what moved because of them.
+- NEVER use soft verbs (supported, assisted, helped). Instead, rewrite the full phrase to show process ownership.
+- Example: Instead of "supported order processing" → "managed order routing and fulfillment tracking across accounts."
 
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
@@ -2080,19 +2082,33 @@ SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is pr
 - The candidate should read as: "already does this role — just in a different environment."
 - ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
 
-SIGNAL CONVERSION VERB HARDENING (NON-NEGOTIABLE):
-- When converting a transferable signal, ALWAYS upgrade to ownership-level verbs. Soft/passive verbs are BANNED in converted bullets:
-  • "supported" → "executed" or "managed"
-  • "assisted" → "coordinated" or "directed"
-  • "helped manage" → "managed"
-  • "helped with" → "handled" or "owned"
-  • "participated in" → "contributed to" or "drove"
-  • "was responsible for" → "managed" or "oversaw"
-  • "involved in" → "executed" or "led"
-- Emphasize PROCESS OWNERSHIP verbs: managed, coordinated, executed, resolved, tracked, routed, completed, maintained, delivered, owned (only if scope justifies).
-- NEVER use these soft verbs in a converted-signal bullet: supported, assisted, helped, aided, contributed (alone), facilitated (unless genuinely orchestrating).
-- The verb must signal that the candidate PERFORMED the work, not that they were adjacent to it.
-- This upgrade is ONLY a language change — do NOT inflate scope. "Assisted with scheduling for 3 accounts" becomes "Coordinated scheduling across 3 accounts" — the scope (3 accounts) stays identical.
+FUNCTIONAL REWRITING (NON-NEGOTIABLE — replaces simple verb swaps):
+- Do NOT simply swap verbs (e.g., "assisted → managed"). That produces fake-sounding bullets.
+- Instead, REWRITE THE FULL SENTENCE to express the TRUE FUNCTIONAL ROLE the candidate performed.
+- Every rewritten bullet must clearly show: (1) what system/process was handled, (2) what the candidate controlled, (3) what moved because of them.
+
+FUNCTIONAL REWRITE EXAMPLES:
+  • WRONG (verb swap only): "Managed escalations" (was: "Helped resolve escalations")
+  • RIGHT (functional rewrite): "Coordinated escalation routing and resolution across stakeholders"
+  • WRONG: "Managed scheduling for 3 accounts" (was: "Assisted with scheduling for 3 accounts")
+  • RIGHT: "Owned scheduling coordination across 3 accounts, tracking completion and flagging conflicts"
+  • WRONG: "Coordinated onboarding" (was: "Helped with onboarding")
+  • RIGHT: "Managed new-hire onboarding workflow including system access, documentation, and orientation scheduling"
+  • WRONG: "Executed reporting" (was: "Assisted with reporting")
+  • RIGHT: "Compiled and distributed weekly status reports across operations and compliance teams"
+
+FUNCTIONAL REWRITE PATTERNS (use these structures):
+  • "Managed [process] across [scope], ensuring [outcome]"
+  • "Coordinated [activity] between [parties], tracking [what]"
+  • "Executed [workflow] including [specific steps]"
+  • "Owned routing, tracking, and resolution of [what]"
+  • "Maintained [system/process] for [scope], resolving [issues]"
+
+BANNED SOFT LANGUAGE — these must NEVER appear in any rewritten bullet:
+  supported, assisted, helped, aided, "participated in," "was responsible for," "involved in," "contributed to" (alone).
+  If the original uses these, the entire bullet must be functionally rewritten — not just the verb.
+
+SCOPE PRESERVATION: Functional rewrites must preserve the EXACT scope (accounts, teams, metrics, tools). Only the sentence structure and framing change — never the facts.
 
 CRITICAL JD MIRRORING RULES:
 - Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
