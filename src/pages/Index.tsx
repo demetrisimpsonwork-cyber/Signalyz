@@ -461,13 +461,20 @@ const Index = () => {
     if (bullet.trim() || jd.trim()) return; // user already has input in fields
 
     // Fresh login flag: don't auto-restore stale input on fresh sign-in
+    // Check both sessionStorage (survives same-tab nav) and localStorage (survives OAuth redirect)
+    const FRESH_LOGIN_TTL_MS = 2 * 60 * 1000; // 2 minutes
     try {
-      const freshLogin = sessionStorage.getItem("signalyz_fresh_login");
-      if (freshLogin) {
+      const sessionFlag = sessionStorage.getItem("signalyz_fresh_login");
+      const localFlag = localStorage.getItem("signalyz_fresh_login");
+      const isFreshLogin = !!sessionFlag || (!!localFlag && Date.now() - Number(localFlag) < FRESH_LOGIN_TTL_MS);
+      if (isFreshLogin) {
+        // Consume both flags so future restores aren't blocked
         sessionStorage.removeItem("signalyz_fresh_login");
-        // Don't restore old session on fresh login — user starts clean
+        localStorage.removeItem("signalyz_fresh_login");
         return;
       }
+      // Clean up any expired localStorage flag
+      if (localFlag) localStorage.removeItem("signalyz_fresh_login");
     } catch {}
 
     try {
