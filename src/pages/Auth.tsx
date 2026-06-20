@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { isPasswordLeaked } from "@/lib/passwordCheck";
-
-const isMobileDevice = () => {
-  if (typeof window === "undefined") return false;
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
-};
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -41,32 +35,20 @@ const Auth = () => {
       sessionStorage.setItem("signalyz_fresh_login", "1");
     } catch {}
     try {
-      if (isMobileDevice()) {
-        // On mobile, use redirect-based OAuth to avoid popup blockers
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-        redirectTo: window.location.origin,
-            queryParams: {
-              prompt: "select_account",
-            },
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            prompt: "select_account",
           },
-        });
-        if (error) {
-          toast.error(error.message || "Google sign-in failed");
-          setGoogleLoading(false);
-        }
-        // Full-page redirect happens — no need to reset loading
-      } else {
-        // On desktop, use the managed lovable popup flow
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
-        });
-        if (error) {
-          toast.error(error.message || "Google sign-in failed");
-        }
+        },
+      });
+      if (error) {
+        toast.error(error.message || "Google sign-in failed");
         setGoogleLoading(false);
       }
+      // Full-page redirect to Google — loading state stays until navigation
     } catch (err) {
       toast.error("Google sign-in failed. Please try again.");
       setGoogleLoading(false);
