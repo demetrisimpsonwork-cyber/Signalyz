@@ -7,17 +7,27 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
+    // Subscribe first so we never miss the SIGNED_IN event that fires after an
+    // OAuth redirect once the code has been exchanged for a session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
+    // Resolve any persisted session (and the freshly exchanged OAuth session).
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { user, loading };

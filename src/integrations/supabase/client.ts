@@ -19,5 +19,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    // Exchange the OAuth redirect (`?code=...`) for a session on page load
+    // so Google sign-in works on Vercel and the custom domain.
+    detectSessionInUrl: true,
+    flowType: "pkce",
   },
 });
