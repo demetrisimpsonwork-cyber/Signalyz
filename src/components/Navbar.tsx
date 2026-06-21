@@ -1,9 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
-import { clearSessionState } from "@/lib/clearSession";
+import { clearSessionState, dispatchGoToAlignment } from "@/lib/clearSession";
 import { LogOut, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,13 +18,24 @@ const Navbar = () => {
     loading: subLoading,
   } = useSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const handleAlignClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    if (location.pathname === "/") {
+      dispatchGoToAlignment();
+    } else {
+      navigate("/?tab=alignment");
+    }
+  };
 
   const handleSignOut = async () => {
     clearSessionState();
     await supabase.auth.signOut();
-    navigate("/");
+    navigate("/?tab=alignment", { replace: true });
   };
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
@@ -41,7 +52,7 @@ const Navbar = () => {
 
           {/* Desktop */}
           <div className="hidden items-center gap-6 md:flex">
-            <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Align</Link>
+            <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Align</Link>
             <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Position</Link>
             <Link to="/history" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">History</Link>
             <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
@@ -97,7 +108,7 @@ const Navbar = () => {
         {mobileOpen && (
           <div className="border-t bg-card px-4 pb-4 pt-2 md:hidden">
             <div className="flex flex-col gap-3">
-              <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Align</Link>
+              <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground">Align</Link>
               <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Position</Link>
               <Link to="/history" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">History</Link>
               <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>

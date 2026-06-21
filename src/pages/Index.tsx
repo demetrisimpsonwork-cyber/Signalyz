@@ -46,6 +46,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import { ANALYSIS_CLEARED_EVENT, GO_TO_ALIGNMENT_EVENT } from "@/lib/clearSession";
 import {
   Accordion,
   AccordionContent,
@@ -386,16 +387,79 @@ const Index = () => {
   const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [analysisSessionKey, setAnalysisSessionKey] = useState(0);
+  const [showRestoredBanner, setShowRestoredBanner] = useState(false);
+  const prevUserRef = useRef<typeof user>(undefined);
 
-  // Handle ?tab= query param for deep-linking (e.g. /position redirect)
+  const resetAllAnalysisState = useCallback(() => {
+    sessionRestoredRef.current = false;
+    userDirtyRef.current = false;
+    setShowRestoredBanner(false);
+    setMode("alignment");
+    setBullet("");
+    setJd("");
+    setResult(null);
+    setDirectorResult(null);
+    setDirectorExperience("");
+    setDirectorLoading(false);
+    setDirectorError(null);
+    setSessionResumeAssembled(false);
+    setResultRunType("original");
+    setOriginalResumeBeforeCalibration(null);
+    setOriginalBaselineScore(null);
+    setAlignmentError(null);
+    setErrors({});
+    setShowSamples(false);
+    setScoreRevealed(false);
+    setAnalysisTime(0);
+    setIsResumeFromCalibrated(false);
+    setInputSource("paste");
+    calibratedRunPendingRef.current = false;
+    overrideResumeRef.current = null;
+    setAnalysisSessionKey((k) => k + 1);
+  }, []);
+
+  // Handle ?tab= query param for deep-linking (e.g. /position redirect, Align nav)
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam === "director" || tabParam === "alignment" || tabParam === "calibrated" || tabParam === "coverletter" || tabParam === "linkedin") {
       setMode(tabParam);
-      searchParams.delete("tab");
-      setSearchParams(searchParams, { replace: true });
+      const next = new URLSearchParams(searchParams);
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+      if (tabParam === "alignment") {
+        setTimeout(() => {
+          document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
     }
+  }, [searchParams, setSearchParams]);
+
+  // Align nav while already on home — switch tab without losing session data
+  useEffect(() => {
+    const handler = () => {
+      setMode("alignment");
+      requestAnimationFrame(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      });
+    };
+    window.addEventListener(GO_TO_ALIGNMENT_EVENT, handler);
+    return () => window.removeEventListener(GO_TO_ALIGNMENT_EVENT, handler);
   }, []);
+
+  // Sign-out / explicit session clear — reset in-memory analysis UI
+  useEffect(() => {
+    const onCleared = () => resetAllAnalysisState();
+    window.addEventListener(ANALYSIS_CLEARED_EVENT, onCleared);
+    return () => window.removeEventListener(ANALYSIS_CLEARED_EVENT, onCleared);
+  }, [resetAllAnalysisState]);
+
+  useEffect(() => {
+    if (prevUserRef.current && !user) {
+      resetAllAnalysisState();
+    }
+    prevUserRef.current = user;
+  }, [user, resetAllAnalysisState]);
 
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
@@ -492,6 +556,7 @@ const Index = () => {
       }
       // Mark as restored so we can invalidate if user edits
       sessionRestoredRef.current = true;
+      setShowRestoredBanner(true);
       setResult(parsed.result);
       setBullet(parsed.bullet);
       setJd(parsed.jd);
@@ -523,6 +588,7 @@ const Index = () => {
     if (sessionRestoredRef.current) {
       // User changed input after a restore — clear old results
       sessionRestoredRef.current = false;
+      setShowRestoredBanner(false);
       setResult(null);
       setDirectorResult(null);
       setSessionResumeAssembled(false);
@@ -1189,7 +1255,23 @@ const Index = () => {
       {/* Mode toggle + Tool */}
       <section id="alignment-tool" className="py-12 container max-w-6xl md:max-w-tool overflow-x-hidden">
 
-        {/* Sub-navigation tabs */}
+        {showRestoredBanner && (
+          <div
+            role="status"
+            className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5"
+          >
+            <p className="text-sm text-foreground">Previous analysis restored.</p>
+            <button
+              type="button"
+              onClick={() => setShowRestoredBanner(false)}
+              className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Sub-navigation tabs */}
         <div className="mb-6 flex justify-center mt-3">
           {/* Mobile layout */}
@@ -1261,7 +1343,7 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <div className="max-w-4xl md:max-w-content mx-auto">
+          <div key={analysisSessionKey} className="max-w-4xl md:max-w-content mx-auto">
             <LinkedInSignalTab
               experience={bullet}
               inferredRole={result?.inferred_role_title || ""}
@@ -1283,6 +1365,7 @@ const Index = () => {
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
           <CalibratedResumeTab
+            key={analysisSessionKey}
             isPro={effectiveIsPro}
             onUpgrade={() => setShowUpgrade(true)}
             directorResult={directorResult}
@@ -1315,6 +1398,7 @@ const Index = () => {
         {/* Cover Letter Tab */}
         {mode === "coverletter" && (
           <CoverLetterTab
+            key={analysisSessionKey}
             isPro={effectiveIsPro}
             onUpgrade={() => setShowUpgrade(true)}
             experience={bullet}
@@ -1329,6 +1413,7 @@ const Index = () => {
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
             <DirectorModeContent
+              key={analysisSessionKey}
               result={result}
               bullet={bullet}
               jd={jd}
@@ -1619,6 +1704,46 @@ const Index = () => {
                         <p className="text-sm font-semibold text-destructive">Your current signal is below typical interview range (70%+)</p>
                       )}
 
+                      {/* Why this score — run-specific scoring breakdown + signals */}
+                      {displayBreakdown && (
+                        <div className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-2.5">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Why this score · this run</p>
+                          <div className="space-y-1.5">
+                            {[
+                              { label: "Role Outcomes Alignment", value: displayBreakdown.role_outcomes_alignment, weight: "30%" },
+                              { label: "Tools & Workflow Alignment", value: displayBreakdown.tools_and_workflow_alignment, weight: "20%" },
+                              { label: "Domain & Context Alignment", value: displayBreakdown.domain_and_context_alignment, weight: "20%" },
+                              { label: "Context & Scale Alignment", value: displayBreakdown.context_and_scale_alignment, weight: "15%" },
+                              { label: "Communication & Leadership", value: displayBreakdown.communication_and_leadership_alignment, weight: "15%" },
+                            ].map((item) => {
+                              const pct = Math.max(0, Math.min(100, Number(item.value) || 0));
+                              return (
+                                <div key={item.label} className="space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs text-muted-foreground">{item.label} <span className="text-muted-foreground/50">({item.weight})</span></span>
+                                    <span className="text-xs font-semibold tabular-nums text-foreground">{pct}%</span>
+                                  </div>
+                                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                                    <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {(result.top_matched_signal || result.top_missing_signal) && (
+                            <div className="space-y-1.5 pt-2 border-t border-border/40">
+                              {result.top_matched_signal && (
+                                <p className="text-xs text-muted-foreground"><span className="font-medium text-green-600 dark:text-green-400">✓ Matched signal:</span> {result.top_matched_signal}</p>
+                              )}
+                              {result.top_missing_signal && (
+                                <p className="text-xs text-muted-foreground"><span className="font-medium text-destructive">✗ Under-signaled priority:</span> {result.top_missing_signal}</p>
+                              )}
+                            </div>
+                          )}
+                          <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1">Weighted across five employer-priority dimensions — these components produced the score above.</p>
+                        </div>
+                      )}
+
                       {/* Primary strength */}
                       {(result.signal_model?.executive_insight_summary?.primary_strength || (result as any).executive_insight_summary?.primary_strength) && (
                         <div className="border-t border-border/40 pt-3">
@@ -1775,6 +1900,8 @@ const Index = () => {
                         hiring_signal_benchmark: result.signal_model?.hiring_signal_benchmark || (result as any).hiring_signal_benchmark,
                         interview_gap_diagnosis: result.signal_model?.interview_gap_diagnosis || (result as any).interview_gap_diagnosis,
                         predicted_signal_lift: result.signal_model?.predicted_signal_lift || (result as any).predicted_signal_lift,
+                        scoring_breakdown: result.scoring_breakdown,
+                        score_rationale: result.score_rationale,
                         isPro: effectiveIsPro,
                         onUpgrade: () => setShowUpgrade(true),
                       }}
