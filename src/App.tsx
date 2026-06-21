@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AuthCallbackHandler from "@/components/AuthCallbackHandler";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -28,6 +29,7 @@ const App = () => (
         <Toaster />
         <Sonner position="bottom-center" />
         <BrowserRouter>
+          <AuthCallbackHandler />
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <div className="flex-1">
