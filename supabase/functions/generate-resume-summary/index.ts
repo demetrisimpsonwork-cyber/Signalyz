@@ -1,9 +1,43 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function makeRequestId(): string {
+  return crypto.randomUUID();
+}
+
+function err(
+  requestId: string,
+  errorCode: string,
+  message: string,
+  details?: Record<string, unknown>,
+) {
+  return new Response(
+    JSON.stringify({
+      status: "error",
+      request_id: requestId,
+      error_code: errorCode,
+      message,
+      ...(details ? { details } : {}),
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
+}
+
+function ok(payload: Record<string, unknown>, requestId: string) {
+  return new Response(
+    JSON.stringify({
+      status: "success",
+      request_id: requestId,
+      ...payload,
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
+}
 
 async function callAI(apiKey: string, prompt: string): Promise<string> {
   const controller = new AbortController();
@@ -18,7 +52,7 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 4096,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
