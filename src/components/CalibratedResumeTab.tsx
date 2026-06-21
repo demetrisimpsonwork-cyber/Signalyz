@@ -89,6 +89,7 @@ const CalibratedResumeTab = ({
   const {
     assembledResume, loading, error, step, assemble,
     confidence, pendingResume, confirmResume, skipConfirmation, reset: resetAssembly,
+    rewriteStatus,
   } = useResumeAssembly();
   const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
 
@@ -248,6 +249,29 @@ const CalibratedResumeTab = ({
 
       {currentResume && !loading && (
         <>
+          {rewriteStatus?.partial && (
+            <div
+              role="status"
+              className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-1"
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Partial AI rewrite</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {!rewriteStatus.summary_ai_applied && rewriteStatus.bullets_rewritten === 0
+                      ? "AI rewriting was unavailable for this run. Your original summary and experience bullets are shown unchanged."
+                      : !rewriteStatus.summary_ai_applied
+                        ? "Your professional summary was not AI-rewritten and shows your original text. Experience bullets may still be updated below."
+                        : rewriteStatus.bullets_rewritten < rewriteStatus.bullets_total
+                          ? `Only ${rewriteStatus.bullets_rewritten} of ${rewriteStatus.bullets_total} experience bullets were AI-rewritten. Unchanged bullets retain your original wording.`
+                          : "Some sections could not be fully rewritten. Review the document before exporting."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Name prompt when extraction failed */}
           {!currentResume.header.name && <NamePrompt onSubmit={(name) => updateField("header.name", name)} />}
 

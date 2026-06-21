@@ -597,14 +597,9 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
 
           <div className="divide-y divide-border/50">
             {(() => {
-              // Detect if any bullet_reference is actually a full resume
               const SECTION_HEADER_RX = /^(PROFESSIONAL\s+(EXPERIENCE|SUMMARY)|CORE\s+COMPETENCIES|EDUCATION|SKILLS|CERTIFICATIONS|WORK\s+HISTORY)/im;
-              const processedTargets = gap_analyzer.rewrite_targets.flatMap((target) => {
-                const ref = target.bullet_reference || "";
-                const isFullResume = ref.length > 500 && SECTION_HEADER_RX.test(ref);
-                if (!isFullResume) return [target];
 
-                // Parse individual bullets from the full resume text
+              const extractParsedBullets = (ref: string): Array<{ bullet: string; context: string }> => {
                 const lines = ref.split("\n").map(l => l.trim()).filter(Boolean);
                 const extractedBullets: Array<{ bullet: string; context: string }> = [];
                 let currentContext = "";
@@ -614,13 +609,11 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                     currentContext = "";
                     continue;
                   }
-                  // Detect role/company headers (lines with dates)
                   const dateRx = /(\d{4})\s*[-–—]\s*(present|current|\d{4})/i;
                   if (dateRx.test(line)) {
                     currentContext = line.replace(dateRx, "").replace(/[|—–,]\s*$/, "").trim();
                     continue;
                   }
-                  // Detect bullet points
                   if (/^[-•▪►]/.test(line) || (line.length > 40 && /^[A-Z]/.test(line) && !SECTION_HEADER_RX.test(line))) {
                     const cleanBullet = line.replace(/^[-•▪►]\s*/, "");
                     if (cleanBullet.length > 30) {
@@ -629,23 +622,34 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                   }
                 }
 
-                // Take top 5 most calibration-worthy bullets (longest / most substantive)
-                const topBullets = extractedBullets
+                return extractedBullets
                   .sort((a, b) => b.bullet.length - a.bullet.length)
                   .slice(0, 5);
+              };
 
-                if (topBullets.length === 0) return [target]; // fallback
+              // One rewrite target = one card. Never fan out the same A/B rewrite across parsed bullets.
+              const processedTargets = gap_analyzer.rewrite_targets.map((target) => {
+                const ref = target.bullet_reference || "";
+                const isFullResume = ref.length > 500 && SECTION_HEADER_RX.test(ref);
+                if (!isFullResume) return target;
 
-                return topBullets.map((b, idx) => ({
+                const parsedBullets = extractParsedBullets(ref);
+                return {
                   ...target,
-                  bullet_reference: b.bullet,
-                  _contextLabel: b.context || undefined,
-                  _parsedIndex: idx,
-                }));
+                  bullet_reference: parsedBullets[0]?.bullet || ref.slice(0, 280) + (ref.length > 280 ? "…" : ""),
+                  _contextLabel: parsedBullets[0]?.context || undefined,
+                  _relatedBullets: parsedBullets.slice(1).map((b) => b.bullet),
+                  _fullResumeSource: true,
+                };
               });
 
               return processedTargets.map((target: any, i: number) => (
                 <div key={i} className="px-4 py-3 space-y-2.5">
+                  {target._fullResumeSource && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed rounded-md border border-border/50 bg-muted/20 px-3 py-2">
+                      This rewrite target applies to your strongest experience signal. Related bullets from your resume are listed for context — each has its own rewrite in the Calibrated Resume tab.
+                    </p>
+                  )}
                   {target._contextLabel && (
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/60">{target._contextLabel}</p>
                   )}
@@ -658,6 +662,18 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                       {UPGRADE_TYPE_LABELS[target.upgrade_type as UpgradeType]}
                     </span>
                   </div>
+
+                  {Array.isArray(target._relatedBullets) && target._relatedBullets.length > 0 && (
+                    <div className="space-y-1.5 rounded-md border border-dashed border-border/60 bg-muted/10 px-3 py-2.5">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Related experience bullets (context only)</p>
+                      <ul className="space-y-1.5">
+                        {target._relatedBullets.map((b: string, j: number) => (
+                          <li key={j} className="text-xs text-muted-foreground leading-relaxed">• {b}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <p className="text-xs text-muted-foreground leading-relaxed">{target.reason}</p>
 
                   {/* A/B Rewrites */}

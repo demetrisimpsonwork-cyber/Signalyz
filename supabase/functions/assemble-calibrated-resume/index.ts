@@ -997,7 +997,7 @@ async function generateSummary(
   apiKey: string,
   requestId: string,
   rawJd?: string,
-): Promise<string> {
+): Promise<{ text: string; aiApplied: boolean }> {
   const jdSignals = extractJDSignals(directorResult);
   const jdSource = rawJd || jdSignals;
   const jdModel = rawJd ? buildSignalJdModel(rawJd) : null;
@@ -1075,14 +1075,16 @@ Return ONLY the summary text, no JSON, no quotes, no labels.`,
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Summary API error: ${response.status}`);
-      return originalSummary;
+      return { text: originalSummary, aiApplied: false };
     }
     const data = await response.json();
-    return data.content?.[0]?.text?.trim() || originalSummary;
+    const text = data.content?.[0]?.text?.trim() || originalSummary;
+    const aiApplied = text.trim() !== originalSummary.trim();
+    return { text, aiApplied };
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Summary generation failed: ${err.message}`);
-    return originalSummary;
+    return { text: originalSummary, aiApplied: false };
   }
 }
 
@@ -2033,8 +2035,8 @@ async function rewriteExperienceBullets(
   rawJd?: string,
   originalResumeText = "",
   prebuiltJdModel?: ReturnType<typeof buildSignalJdModel>,
-): Promise<any[]> {
-  if (experience.length === 0) return experience;
+): Promise<{ experience: any[]; bulletsRewritten: number; bulletsTotal: number }> {
+  if (experience.length === 0) return { experience, bulletsRewritten: 0, bulletsTotal: 0 };
 
   // Reuse pre-built model if available
   const jdSource = rawJd?.trim() || extractJDSignals(directorResult);
@@ -2231,7 +2233,8 @@ Return ONLY valid JSON array:
     clearTimeout(timeoutId);
     if (!response.ok) {
       console.error(`[assemble] [${requestId}] Experience API error: ${response.status}`);
-      return experience; // Skip post-processing — caller handles it
+      const bulletsTotal = experience.reduce((n: number, r: any) => n + (r.bullets?.length || 0), 0);
+      return { experience, bulletsRewritten: 0, bulletsTotal };
     }
 
     const data = await response.json();
@@ -2239,7 +2242,10 @@ Return ONLY valid JSON array:
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
 
-    return experience.map((role: any, roleIndex: number) => {
+    let bulletsRewritten = 0;
+    let bulletsTotal = 0;
+
+    const mapped = experience.map((role: any, roleIndex: number) => {
       const aiRole = Array.isArray(parsed) ? parsed[roleIndex] || {} : {};
       const aiBullets = Array.isArray(aiRole?.bullets) ? aiRole.bullets : [];
       return {
@@ -2247,18 +2253,25 @@ Return ONLY valid JSON array:
         title: role.title !== undefined && role.title !== null ? role.title : (aiRole?.title || ""),
         dates: role.dates !== undefined && role.dates !== null ? role.dates : (aiRole?.dates || ""),
         bullets: (role.bullets || []).map((originalBullet: string, bulletIndex: number) => {
+          bulletsTotal++;
           let aiBullet = aiBullets[bulletIndex] || originalBullet;
           if (originalResumeText) {
             aiBullet = stripDomainFabricationFromBullet(aiBullet, originalResumeText);
+          }
+          if (aiBullet.trim() !== originalBullet.trim()) {
+            bulletsRewritten++;
           }
           return aiBullet;
         }),
       };
     });
+
+    return { experience: mapped, bulletsRewritten, bulletsTotal };
   } catch (err: any) {
     clearTimeout(timeoutId);
     console.error(`[assemble] [${requestId}] Experience rewrite failed: ${err.message}`);
-    return experience; // Skip post-processing — caller handles it
+    const bulletsTotal = experience.reduce((n: number, r: any) => n + (r.bullets?.length || 0), 0);
+    return { experience, bulletsRewritten: 0, bulletsTotal };
   }
 }
 
@@ -2387,8 +2400,15 @@ serve(async (req) => {
     console.log(`[assemble] [${request_id}] Phase 2: Rewriting summary + experience (parallel)`);
     let rewrittenSummary: string;
     let rewrittenExperience: any[];
+    let rewriteStatus: {
+      summary_ai_applied: boolean;
+      experience_ai_applied: boolean;
+      bullets_rewritten: number;
+      bullets_total: number;
+      partial: boolean;
+    };
     try {
-      [rewrittenSummary, rewrittenExperience] = await Promise.all([
+      const [summaryResult, experienceResult] = await Promise.all([
         generateSummary(
           structure.summary, signalContext || {}, originalResume || "", ANTHROPIC_API_KEY, request_id, rawJdText
         ),
@@ -2396,6 +2416,15 @@ serve(async (req) => {
           structure.experience, signalContext || {}, ANTHROPIC_API_KEY, request_id, rawJdText, originalResume || "", jdModel
         ),
       ]);
+      rewrittenSummary = summaryResult.text;
+      rewrittenExperience = experienceResult.experience;
+      rewriteStatus = {
+        summary_ai_applied: summaryResult.aiApplied,
+        experience_ai_applied: experienceResult.bulletsRewritten > 0,
+        bullets_rewritten: experienceResult.bulletsRewritten,
+        bullets_total: experienceResult.bulletsTotal,
+        partial: !summaryResult.aiApplied || experienceResult.bulletsRewritten < experienceResult.bulletsTotal,
+      };
     } catch (err: any) {
       console.error(`[assemble] [${request_id}] Phase 2 failed:`, err.message);
       return new Response(
@@ -2423,9 +2452,9 @@ serve(async (req) => {
       experience: dedupedExperience,
     });
 
-    console.log(`[assemble] [${request_id}] Assembly complete`);
+    console.log(`[assemble] [${request_id}] Assembly complete (rewrite_status: summary=${rewriteStatus.summary_ai_applied}, bullets=${rewriteStatus.bullets_rewritten}/${rewriteStatus.bullets_total})`);
     return new Response(
-      JSON.stringify({ status: "ok", request_id, ...result }),
+      JSON.stringify({ status: "ok", request_id, rewrite_status: rewriteStatus, ...result }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
 

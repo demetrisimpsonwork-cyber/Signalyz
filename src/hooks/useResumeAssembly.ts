@@ -43,6 +43,7 @@ interface UseResumeAssemblyReturn {
   error: string | null;
   step: number;
   confidence: ConfidenceResult | null;
+  rewriteStatus: RewriteStatus | null;
   /** The raw (pre-confirmation) resume when confidence is low */
   pendingResume: CalibratedResumeData | null;
   confirmResume: (corrected: CalibratedResumeData) => void;
@@ -50,6 +51,14 @@ interface UseResumeAssemblyReturn {
   assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => Promise<void>;
   /** Clear all assembled state — use when a new alignment run begins */
   reset: () => void;
+}
+
+export interface RewriteStatus {
+  summary_ai_applied: boolean;
+  experience_ai_applied: boolean;
+  bullets_rewritten: number;
+  bullets_total: number;
+  partial: boolean;
 }
 
 const STEPS = [
@@ -65,6 +74,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const [rewriteStatus, setRewriteStatus] = useState<RewriteStatus | null>(null);
 
   const finalizeResume = useCallback((resume: CalibratedResumeData) => {
     setAssembledResume(resume);
@@ -93,6 +103,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setPendingResume(null);
     setConfidence(null);
     setError(null);
+    setRewriteStatus(null);
     setStep(0);
   }, []);
 
@@ -103,6 +114,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setStep(0);
     setPendingResume(null);
     setConfidence(null);
+    setRewriteStatus(null);
 
     const stepTimers = [
       setTimeout(() => setStep(1), 1200),
@@ -153,6 +165,12 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     try {
       if (data?.status === "partial" && data?.retry) {
         console.warn("[useResumeAssembly] Received partial result, using Phase 1 structure");
+      }
+
+      if (data?.rewrite_status && typeof data.rewrite_status === "object") {
+        setRewriteStatus(data.rewrite_status as RewriteStatus);
+      } else {
+        setRewriteStatus(null);
       }
 
       const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
@@ -387,5 +405,5 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     }
   }, [finalizeResume]);
 
-  return { assembledResume, loading, error, step, confidence, pendingResume, confirmResume, skipConfirmation, assemble, reset };
+  return { assembledResume, loading, error, step, confidence, rewriteStatus, pendingResume, confirmResume, skipConfirmation, assemble, reset };
 }
