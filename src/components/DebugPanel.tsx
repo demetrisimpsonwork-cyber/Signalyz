@@ -5,6 +5,12 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
 
+export interface CredentialGateDebugMatch {
+  label: string;
+  matchedText: string;
+  jdExcerpt: string;
+}
+
 export interface DebugInfo {
   request_id?: string;
   status_code?: number;
@@ -13,6 +19,8 @@ export interface DebugInfo {
   payload_length?: number;
   response_snippet?: string;
   timestamp?: string;
+  /** Populated when error_code is CREDENTIAL_MISMATCH */
+  credential_matches?: CredentialGateDebugMatch[];
 }
 
 interface DebugPanelProps {

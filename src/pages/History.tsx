@@ -10,6 +10,14 @@ import { Copy, ChevronDown, ChevronUp } from "lucide-react";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
+import {
+  SCORE_BREAKDOWN_DIMENSIONS,
+  extractPrimaryBlocker,
+  extractScoringBreakdown,
+  parseScoreRationale,
+  type ScoringBreakdown,
+} from "@/lib/scoreEvidence";
 
 /* ── types ── */
 interface HistoryEntry {
@@ -23,13 +31,31 @@ interface HistoryEntry {
 }
 
 /** Only flat, renderable primitives — no nested objects touch the DOM */
+interface BreakdownRow {
+  label: string;
+  weight: string;
+  value: number;
+}
 interface ExpandedResult {
   optimized_bullet: string;
   match_score: string;
   missing_keywords: string;
   suggested_verbs: string;
   top_gap: string;
+  primary_blocker: string | null;
+  top_matched_signal: string | null;
+  top_missing_signal: string | null;
+  strengths: string[];
+  gaps: string[];
+  breakdown: BreakdownRow[];
+  scoringBreakdown: ScoringBreakdown | null;
 }
+
+const HISTORY_BREAKDOWN_LABELS = SCORE_BREAKDOWN_DIMENSIONS.map((d) => ({
+  key: d.key as string,
+  label: d.label,
+  weight: d.weight,
+}));
 
 interface HistoryGroup {
   key: string;
@@ -109,10 +135,58 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
       else if (typeof r.top_missing_signal === "string" && r.top_missing_signal.trim()) top_gap = r.top_missing_signal;
     } catch { /* */ }
 
+    // 6. Primary blocker (evidence)
+    const primary_blocker = extractPrimaryBlocker(r);
+
+    // 6b. Top matched / missing signals
+    let top_matched_signal: string | null = null;
+    let top_missing_signal: string | null = null;
+    try {
+      if (typeof r.top_matched_signal === "string" && r.top_matched_signal.trim()) top_matched_signal = r.top_matched_signal;
+      if (typeof r.top_missing_signal === "string" && r.top_missing_signal.trim()) top_missing_signal = r.top_missing_signal;
+    } catch { /* */ }
+
+    // 7. Strengths + gaps (from score_rationale)
+    const { strengths, gaps } = parseScoreRationale(
+      Array.isArray(r.score_rationale) ? (r.score_rationale as string[]) : undefined,
+    );
+
+    // 8. Scoring breakdown (5 weighted dimensions)
+    const breakdown: BreakdownRow[] = [];
+    let scoringBreakdown: ScoringBreakdown | null = null;
+    try {
+      const sb =
+        extractScoringBreakdown(r.scoring_breakdown) ??
+        extractScoringBreakdown(r.signal_model?.scoring_breakdown) ??
+        extractScoringBreakdown(r.signal_model?.debug?.scoring_breakdown);
+      scoringBreakdown = sb;
+      if (sb) {
+        for (const d of HISTORY_BREAKDOWN_LABELS) {
+          const v = sb[d.key as keyof ScoringBreakdown];
+          if (typeof v === "number" && isFinite(v)) {
+            breakdown.push({ label: d.label, weight: d.weight, value: v });
+          }
+        }
+      }
+    } catch { /* */ }
+
     // Must have at least one real field
     if (optimized_bullet === UNAVAILABLE && match_score === UNAVAILABLE) return null;
 
-    return { optimized_bullet, match_score, missing_keywords, suggested_verbs, top_gap };
+    return {
+      optimized_bullet,
+      match_score,
+      missing_keywords,
+      suggested_verbs,
+      top_gap,
+      primary_blocker,
+      top_matched_signal,
+      top_missing_signal,
+      strengths,
+      gaps,
+      breakdown,
+      scoringBreakdown,
+    };
   } catch {
     return null;
   }
@@ -205,6 +279,14 @@ function ExpandedResultView({ result }: { result: ExpandedResult }) {
       { label: "Top Gap", content: result.top_gap },
     ];
 
+    const hasEvidence =
+      !!result.primary_blocker ||
+      result.strengths.length > 0 ||
+      result.gaps.length > 0 ||
+      result.breakdown.length > 0 ||
+      !!result.top_matched_signal ||
+      !!result.top_missing_signal;
+
     return (
       <div className="mt-2 space-y-2">
         {sections.map((s) => (
@@ -222,6 +304,20 @@ function ExpandedResultView({ result }: { result: ExpandedResult }) {
             </div>
           </div>
         ))}
+
+        {hasEvidence && (
+          <ScoreEvidencePanel
+            title="Why this score"
+            breakdown={result.scoringBreakdown}
+            topMatchedSignal={result.top_matched_signal}
+            topMissingSignal={result.top_missing_signal}
+            primaryBlocker={result.primary_blocker}
+            strengths={result.strengths}
+            gaps={result.gaps.slice(1)}
+            showRationale
+            className="bg-card border-border/60"
+          />
+        )}
       </div>
     );
   } catch {

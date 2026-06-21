@@ -35,6 +35,9 @@ import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalP
 import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import { computeDeterministicScore } from "@/lib/deterministicScore";
+import { evaluateCredentialGate } from "@/lib/credentialGate";
+import { parseScoreRationale } from "@/lib/scoreEvidence";
+import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { supabase } from "@/integrations/supabase/client";
@@ -659,31 +662,8 @@ const Index = () => {
   }, [result]);
 
 
-  // Credential patterns that indicate a hard requirement the resume cannot satisfy via repositioning
-  const CREDENTIAL_PATTERNS = [
-    /\b(MD|M\.D\.)\b/, /\b(JD|J\.D\.)\b/, /\b(RN|BSN)\b/, /\bCPA\b/, /\bP\.?E\.?\b/,
-    /\bPharmD\b/i, /\bDO\b/, /\bDDS\b/, /\bDMD\b/, /\bNP\b/, /\bPA-C\b/,
-    /\bLCSW\b/, /\bLMFT\b/, /\bPMP\b/, /\bCFA\b/, /\bCISS?P\b/,
-    /\bbar admission\b/i, /\bmedical licen[sc]e\b/i, /\bnursing licen[sc]e\b/i,
-    /\blicensed (physician|attorney|nurse|pharmacist|engineer)\b/i,
-    /\bboard[- ]?certif/i, /\bregistered nurse\b/i, /\battorney at law\b/i,
-  ];
-
   const CREDENTIAL_BLOCK_MSG =
     "This role requires credentials not found in your resume. Signalyz works best when your experience already qualifies you — the signal just needs repositioning.";
-
-  const checkCredentialMismatch = (resumeText: string, jdText: string): boolean => {
-    const resumeUpper = resumeText.toUpperCase();
-    for (const pattern of CREDENTIAL_PATTERNS) {
-      if (pattern.test(jdText)) {
-        // Check if the credential also appears in the resume
-        if (!pattern.test(resumeText) && !pattern.test(resumeUpper)) {
-          return true; // required credential missing from resume
-        }
-      }
-    }
-    return false;
-  };
 
   const looksLikeResume = (text: string): boolean => {
     const t = text.toLowerCase();
@@ -756,9 +736,18 @@ const Index = () => {
       setErrors(errs);
       return false;
     }
-    // Credential gate
-    if (checkCredentialMismatch(bullet.trim(), jd.trim())) {
-      setAlignmentError({ message: CREDENTIAL_BLOCK_MSG, error_code: "CREDENTIAL_MISMATCH" });
+    // Credential gate — hardened regex + context; structured matches for transparency
+    const credentialGate = evaluateCredentialGate(bullet.trim(), jd.trim());
+    if (credentialGate.blocked) {
+      setAlignmentError({
+        message: CREDENTIAL_BLOCK_MSG,
+        error_code: "CREDENTIAL_MISMATCH",
+        credential_matches: credentialGate.matches.map((m) => ({
+          label: m.label,
+          matchedText: m.matchedText,
+          jdExcerpt: m.jdExcerpt,
+        })),
+      });
       return false;
     }
     setErrors({});
@@ -1551,14 +1540,34 @@ const Index = () => {
 
                 {!loading && !result && alignmentError && (
                   alignmentError.error_code === "CREDENTIAL_MISMATCH" ? (
-                    <div className="rounded-lg border border-border bg-muted/30 p-5 my-6 flex items-start gap-3">
-                      <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Shield className="h-4 w-4 text-primary" />
+                    <div className="rounded-lg border border-border bg-muted/30 p-5 my-6 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 mt-0.5 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Shield className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <p className="text-sm font-semibold text-foreground">Qualification Blocker Detected</p>
+                          <p className="text-sm text-muted-foreground">{alignmentError.message}</p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">Credential Mismatch Detected</p>
-                        <p className="text-sm text-muted-foreground">{alignmentError.message}</p>
-                      </div>
+                      {alignmentError.credential_matches && alignmentError.credential_matches.length > 0 && (
+                        <div className="rounded-md border border-border/60 bg-background/60 p-3 space-y-2 ml-11">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Why this run was blocked</p>
+                          {alignmentError.credential_matches.map((m, i) => (
+                            <div key={i} className="space-y-1">
+                              <p className="text-xs font-medium text-foreground">
+                                {m.label} <span className="text-muted-foreground font-normal">— matched “{m.matchedText}”</span>
+                              </p>
+                              <p className="text-[11px] text-muted-foreground italic leading-relaxed pl-2 border-l-2 border-border/50">
+                                {m.jdExcerpt}
+                              </p>
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1">
+                            Onboarding steps, background checks, equipment specs, and state eligibility lists are excluded from this gate.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : alignmentError.error_code === "DAILY_LIMIT" ? (
                     <div className="rounded-lg border border-border bg-card p-5 space-y-4 my-6">
@@ -1706,42 +1715,15 @@ const Index = () => {
 
                       {/* Why this score — run-specific scoring breakdown + signals */}
                       {displayBreakdown && (
-                        <div className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Why this score · this run</p>
-                          <div className="space-y-1.5">
-                            {[
-                              { label: "Role Outcomes Alignment", value: displayBreakdown.role_outcomes_alignment, weight: "30%" },
-                              { label: "Tools & Workflow Alignment", value: displayBreakdown.tools_and_workflow_alignment, weight: "20%" },
-                              { label: "Domain & Context Alignment", value: displayBreakdown.domain_and_context_alignment, weight: "20%" },
-                              { label: "Context & Scale Alignment", value: displayBreakdown.context_and_scale_alignment, weight: "15%" },
-                              { label: "Communication & Leadership", value: displayBreakdown.communication_and_leadership_alignment, weight: "15%" },
-                            ].map((item) => {
-                              const pct = Math.max(0, Math.min(100, Number(item.value) || 0));
-                              return (
-                                <div key={item.label} className="space-y-1">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs text-muted-foreground">{item.label} <span className="text-muted-foreground/50">({item.weight})</span></span>
-                                    <span className="text-xs font-semibold tabular-nums text-foreground">{pct}%</span>
-                                  </div>
-                                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                                    <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {(result.top_matched_signal || result.top_missing_signal) && (
-                            <div className="space-y-1.5 pt-2 border-t border-border/40">
-                              {result.top_matched_signal && (
-                                <p className="text-xs text-muted-foreground"><span className="font-medium text-green-600 dark:text-green-400">✓ Matched signal:</span> {result.top_matched_signal}</p>
-                              )}
-                              {result.top_missing_signal && (
-                                <p className="text-xs text-muted-foreground"><span className="font-medium text-destructive">✗ Under-signaled priority:</span> {result.top_missing_signal}</p>
-                              )}
-                            </div>
-                          )}
-                          <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1">Weighted across five employer-priority dimensions — these components produced the score above.</p>
-                        </div>
+                        <ScoreEvidencePanel
+                          title="Why this score · this run"
+                          breakdown={displayBreakdown}
+                          topMatchedSignal={result.top_matched_signal}
+                          topMissingSignal={result.top_missing_signal}
+                          strengths={parseScoreRationale(result.score_rationale).strengths}
+                          gaps={parseScoreRationale(result.score_rationale).gaps.slice(1)}
+                          showRationale
+                        />
                       )}
 
                       {/* Primary strength */}

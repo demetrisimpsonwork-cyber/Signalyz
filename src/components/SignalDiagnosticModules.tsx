@@ -144,6 +144,14 @@ export interface SignalDiagnosticData {
     current_score?: number;
     predicted_score?: number;
   };
+  scoring_breakdown?: {
+    role_outcomes_alignment?: number;
+    tools_and_workflow_alignment?: number;
+    domain_and_context_alignment?: number;
+    context_and_scale_alignment?: number;
+    communication_and_leadership_alignment?: number;
+  };
+  score_rationale?: string[];
   isPro?: boolean;
   onUpgrade?: () => void;
 }
@@ -233,6 +241,7 @@ function TransferableSignal({ data, evidenceLedger }: { data: NonNullable<Signal
 
 /* ─── MODULE 2: Resume Signal Profile ─── */
 function ResumeSignalProfile({ data }: { data: NonNullable<SignalDiagnosticData["resume_signal_profile"]> }) {
+  const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const categories = [
     { key: "operational_execution", label: "Operational Execution" },
     { key: "stakeholder_coordination", label: "Stakeholder Coordination" },
@@ -268,9 +277,29 @@ function ResumeSignalProfile({ data }: { data: NonNullable<SignalDiagnosticData[
                 />
               </div>
               {cat.evidence.length > 0 && (
-                <p className="text-[11px] text-muted-foreground italic pl-1">
-                  {cat.evidence[0]}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-[11px] text-muted-foreground italic pl-1">
+                    {cat.evidence[0]}
+                  </p>
+                  {cat.evidence.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedEvidence(expandedEvidence === key ? null : key)}
+                        className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground pl-1"
+                      >
+                        {expandedEvidence === key ? "Hide" : "Show"} all evidence ({cat.evidence.length})
+                      </button>
+                      {expandedEvidence === key && (
+                        <ul className="space-y-1 pl-2 border-l-2 border-border/40">
+                          {cat.evidence.slice(1).map((ev, j) => (
+                            <li key={j} className="text-[11px] text-muted-foreground italic leading-relaxed">{ev}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           );
@@ -358,6 +387,8 @@ function SignalAlignmentAnalysis({ data }: { data: AlignmentEntry[] }) {
 
 /* ─── MODULE 5: Hiring Pipeline Simulation ─── */
 function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
+  const [expandedStage, setExpandedStage] = useState<number | null>(null);
+
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3">
       <SectionLabel>Hiring Pipeline Simulation</SectionLabel>
@@ -380,11 +411,23 @@ function HiringPipelineSimulation({ data }: { data: PipelineStage[] }) {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">{stage.explanation}</p>
-              <div className="flex flex-wrap gap-1">
-                {stage.criteria.map((c, j) => (
-                  <span key={j} className="text-[10px] text-muted-foreground/70 bg-background rounded px-1.5 py-0.5">{c}</span>
-                ))}
-              </div>
+              {stage.criteria.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedStage(expandedStage === i ? null : i)}
+                  className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                >
+                  Evidence basis ({stage.criteria.length} criteria)
+                  {expandedStage === i ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </button>
+              )}
+              {expandedStage === i && stage.criteria.length > 0 && (
+                <ul className="space-y-1 pl-2 border-l-2 border-border/40">
+                  {stage.criteria.map((c, j) => (
+                    <li key={j} className="text-[11px] text-muted-foreground leading-relaxed">• {c}</li>
+                  ))}
+                </ul>
+              )}
 
               {/* Signal Conversion Insight */}
               {hasConversion && stage.signal_conversion_insight && (
@@ -803,7 +846,28 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibr
 }
 
 /* ─── MODULE 12: Predicted Signal Lift ─── */
-function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>; overrideScore?: number }) {
+const SCORING_BREAKDOWN_LABELS: Array<{ key: keyof NonNullable<SignalDiagnosticData["scoring_breakdown"]>; label: string; weight: string }> = [
+  { key: "role_outcomes_alignment", label: "Role Outcomes Alignment", weight: "30%" },
+  { key: "tools_and_workflow_alignment", label: "Tools & Workflow Alignment", weight: "20%" },
+  { key: "domain_and_context_alignment", label: "Domain & Context Alignment", weight: "20%" },
+  { key: "context_and_scale_alignment", label: "Context & Scale Alignment", weight: "15%" },
+  { key: "communication_and_leadership_alignment", label: "Communication & Leadership", weight: "15%" },
+];
+
+function PredictedSignalLift({
+  data,
+  overrideScore,
+  scoringBreakdown,
+  scoreRationale,
+  strategicFixes,
+}: {
+  data: NonNullable<SignalDiagnosticData["predicted_signal_lift"]>;
+  overrideScore?: number;
+  scoringBreakdown?: SignalDiagnosticData["scoring_breakdown"];
+  scoreRationale?: string[];
+  strategicFixes?: string[];
+}) {
+  const [showWhy, setShowWhy] = useState(false);
   const currentScore = overrideScore ?? data.current_score ?? 0;
   const predictedScoreRaw = data.predicted_score ?? 0;
   const predictedScore = Math.min(predictedScoreRaw, 89);
@@ -811,6 +875,20 @@ function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<Signal
     .slice()
     .sort((a, b) => (b.lift ?? 0) - (a.lift ?? 0))
     .slice(0, 4);
+
+  // Evidence basis for the projection (all from existing run data — no recomputation)
+  const breakdownRows = scoringBreakdown
+    ? SCORING_BREAKDOWN_LABELS
+        .map((d) => ({ label: d.label, weight: d.weight, value: scoringBreakdown[d.key] }))
+        .filter((d) => typeof d.value === "number")
+    : [];
+  const gapItems = Array.isArray(scoreRationale)
+    ? scoreRationale
+        .filter((r) => typeof r === "string" && /^\[GAP\]/i.test(r))
+        .map((r) => r.replace(/^\[GAP\]\s*/i, ""))
+    : [];
+  const fixItems = Array.isArray(strategicFixes) ? strategicFixes.filter((f) => typeof f === "string" && f.trim()) : [];
+  const hasWhy = breakdownRows.length > 0 || gapItems.length > 0 || fixItems.length > 0;
 
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
@@ -842,6 +920,63 @@ function PredictedSignalLift({ data, overrideScore }: { data: NonNullable<Signal
               <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Why this projection — evidence basis from current run */}
+      {hasWhy && (
+        <div className="rounded-lg border bg-background">
+          <button
+            onClick={() => setShowWhy((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+            aria-expanded={showWhy}
+          >
+            <span className="text-xs font-semibold text-foreground">Why this projection</span>
+            {showWhy ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </button>
+          {showWhy && (
+            <div className="space-y-4 border-t px-3 py-3">
+              {breakdownRows.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Where you stand now</p>
+                  {breakdownRows.map((d) => {
+                    const pct = Math.max(0, Math.min(100, Number(d.value) || 0));
+                    return (
+                      <div key={d.label} className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-muted-foreground">{d.label} <span className="text-muted-foreground/50">({d.weight})</span></span>
+                          <span className="text-xs font-semibold tabular-nums text-foreground">{pct}%</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {gapItems.length > 0 && (
+                <div className="space-y-1.5 pt-1 border-t border-border/40">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Gaps these lifts close</p>
+                  <ul className="space-y-1">
+                    {gapItems.map((g, i) => (
+                      <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {g}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {fixItems.length > 0 && (
+                <div className="space-y-1.5 pt-1 border-t border-border/40">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">How to capture this lift</p>
+                  <ul className="space-y-1">
+                    {fixItems.map((f, i) => (
+                      <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -922,7 +1057,13 @@ const SignalDiagnosticModules = ({ data, matchScore, isCalibratedRun }: SignalDi
           )}
 
           {!isCalibratedRun && data.predicted_signal_lift && (data.predicted_signal_lift.dimensions?.length || 0) > 0 && (
-            <PredictedSignalLift data={data.predicted_signal_lift} overrideScore={matchScore} />
+            <PredictedSignalLift
+              data={data.predicted_signal_lift}
+              overrideScore={matchScore}
+              scoringBreakdown={data.scoring_breakdown}
+              scoreRationale={data.score_rationale}
+              strategicFixes={data.interview_gap_diagnosis?.strategic_fixes}
+            />
           )}
 
           {data.executive_insight_summary?.primary_insight && (
