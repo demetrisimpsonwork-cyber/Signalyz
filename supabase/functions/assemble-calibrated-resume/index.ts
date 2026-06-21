@@ -1,6 +1,7 @@
 // assemble-calibrated-resume v3.0 — robust resume parser
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1025,7 +1026,7 @@ async function generateSummary(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 500,
         temperature: 0.3,
         system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
@@ -2066,7 +2067,7 @@ async function rewriteExperienceBullets(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 4096,
         temperature: 0.2,
         system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
