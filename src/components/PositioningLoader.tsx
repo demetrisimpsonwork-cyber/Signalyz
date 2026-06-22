@@ -128,13 +128,13 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
       </div>
 
       <p className="text-center text-xs text-muted-foreground leading-relaxed">
-        {elapsed >= 50
+        {elapsed >= 120
           ? "Almost there — finalizing your signal analysis."
-          : elapsed >= 30
-          ? "Complex resumes may take up to 2 minutes. Hang tight."
-          : elapsed >= 15
-          ? "Deep analysis in progress — scoring across multiple dimensions."
-          : "Full signal analysis typically takes ~60 seconds. Zero fabrication • Your data remains private."}
+          : elapsed >= 90
+          ? "Complex resumes can take up to 3 minutes. Hang tight."
+          : elapsed >= 45
+          ? "Deep analysis in progress — running multiple diagnostic passes."
+          : "Full signal analysis typically takes 1–3 minutes. Zero fabrication • Your data remains private."}
       </p>
     </div>
   );

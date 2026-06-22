@@ -200,6 +200,8 @@ class DirectorCalibrationErrorBoundary extends Component<
 
 // ─── Input normalization (client-side) ─────────────────────────────────────
 const MAX_RESUME_CHARS = 10000;
+/** Client wait budget for director-calibration (multi-step Claude pipeline). */
+const DIRECTOR_CALIBRATION_TIMEOUT_MS = 180_000;
 const MAX_JD_CHARS = 8000;
 
 function normalizeClientInput(text: string, maxChars: number): { text: string; truncated: boolean } {
@@ -318,7 +320,7 @@ function DirectorModeContent({
           {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
           Run Signal Positioning Report
         </Button>
-        <p className="text-[11px] text-muted-foreground/70">Analysis typically completes in ~20 seconds. Zero fabrication • Your data remains private.</p>
+        <p className="text-[11px] text-muted-foreground/70">Full analysis typically takes 1–3 minutes. Complex resumes may take a bit longer. Zero fabrication • Your data remains private.</p>
       </div>
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
@@ -776,12 +778,16 @@ const Index = () => {
     setDirectorError(null);
     // telemetry: positioning_run_clicked
 
+    const requestStartedAt = new Date().toISOString();
+    const requestStartMs = Date.now();
+    let requestSucceeded = false;
+
     try {
       const data = await invokeResilient(
         "director",
         "director-calibration",
         { experience: normResume.text, jd: jd?.trim() || undefined, deterministic: false },
-        90_000,
+        DIRECTOR_CALIBRATION_TIMEOUT_MS,
       );
 
       // Capture debug info from response
@@ -805,10 +811,21 @@ const Index = () => {
       }
 
       setDirectorResult(result);
+      requestSucceeded = true;
     } catch (err: any) {
       const msg = err.message || FRIENDLY_FAIL_MSG;
       setDirectorError(msg);
     } finally {
+      const requestEndedAt = new Date().toISOString();
+      const totalDurationMs = Date.now() - requestStartMs;
+      console.log(JSON.stringify({
+        event: "director_calibration_client_runtime",
+        started_at: requestStartedAt,
+        ended_at: requestEndedAt,
+        total_duration_ms: totalDurationMs,
+        timeout_ms: DIRECTOR_CALIBRATION_TIMEOUT_MS,
+        success: requestSucceeded,
+      }));
       setDirectorLoading(false);
     }
   };
