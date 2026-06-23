@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,14 @@ import { Loader2, Copy, Check, Download, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
+import {
+  getDirectorReportEnrichmentKey,
+  logDirectorRawRenderedMs,
+  markDirectorEnrichmentSuperseded,
+  runBackgroundDirectorEvidenceEnrichment,
+} from "@/lib/evidenceRetrieval";
+import { getResumeSessionId } from "@/services/rag/groundedCalibrationClient";
+import { useAuth } from "@/hooks/useAuth";
 import DirectorQARunner from "@/components/DirectorQARunner";
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
@@ -117,12 +125,14 @@ const buildPlainText = (result: DirectorCalibrationResult): string => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const DirectorAudit = () => {
+  const { user } = useAuth();
   const [experience, setExperience] = useState("");
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<DirectorCalibrationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ experience?: string }>({});
   const [copied, setCopied] = useState(false);
+  const enrichmentKeyRef = useRef<string | null>(null);
   const deterministic = false;
 
   const validate = () => {
@@ -138,6 +148,9 @@ const DirectorAudit = () => {
     setLoading(true);
     setResult(null);
 
+    const pipelineStartedAtMs = Date.now();
+    markDirectorEnrichmentSuperseded(enrichmentKeyRef, pipelineStartedAtMs);
+
     try {
       const { data, error } = await supabase.functions.invoke("director-calibration", {
         body: {
@@ -150,7 +163,25 @@ const DirectorAudit = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setResult(data as DirectorCalibrationResult);
+      const directorData = data as DirectorCalibrationResult;
+      const enrichmentKey = getDirectorReportEnrichmentKey(directorData, undefined, pipelineStartedAtMs);
+      enrichmentKeyRef.current = enrichmentKey;
+
+      setResult(directorData);
+      setLoading(false);
+      logDirectorRawRenderedMs(pipelineStartedAtMs, enrichmentKey);
+
+      void runBackgroundDirectorEvidenceEnrichment({
+        directorData,
+        enrichmentKey,
+        pipelineStartedAtMs,
+        getActiveEnrichmentKey: () => enrichmentKeyRef.current,
+        context: {
+          sessionId: getResumeSessionId(),
+          isAuthenticated: !!user,
+        },
+        onApplyEnriched: setResult,
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       toast.error(msg);

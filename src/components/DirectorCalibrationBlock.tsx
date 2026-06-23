@@ -5,11 +5,24 @@ import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface DirectorEvidenceOverlay {
+  evidence_id: string;
+  content: string;
+  section: string;
+  company: string;
+  role_title: string;
+  similarity: number;
+}
+
 export interface DirectorDimension {
   name: string;
   classification: "Below Director Threshold" | "Near Director Threshold" | "At Director Threshold";
   strength_signal: string;
   risk_signal: string;
+  /** RAG-grounded strength narrative when indexed resume evidence is available. */
+  grounded_strength_narrative?: string;
+  supporting_evidence?: DirectorEvidenceOverlay[];
+  evidence_confidence?: "high" | "low" | "none";
 }
 
 export type UpgradeType =
@@ -45,6 +58,9 @@ export interface SignalDimensionScore {
   evidence_quotes?: string[];
   rationale?: string;
   missing: string[];
+  grounded_rationale?: string;
+  supporting_evidence?: DirectorEvidenceOverlay[];
+  evidence_confidence?: "high" | "low" | "none";
 }
 
 export interface SignalClassifierResult {
@@ -77,6 +93,9 @@ export interface DirectorCalibrationResult {
   director_signal_tier: {
     tier: string;
     rationale: string;
+    grounded_rationale?: string;
+    supporting_evidence?: DirectorEvidenceOverlay[];
+    evidence_confidence?: "high" | "low" | "none";
   };
   _detected_role_tier?: string;
   _role_tier_label?: string;
@@ -375,7 +394,9 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               {director_signal_tier.tier}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{director_signal_tier.rationale}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {director_signal_tier.grounded_rationale ?? director_signal_tier.rationale}
+          </p>
         </div>
       </BlockShell>
 
@@ -393,7 +414,14 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Strength</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed break-words">{dim.strength_signal}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed break-words">
+                    {dim.grounded_strength_narrative ?? dim.strength_signal}
+                  </p>
+                  {dim.grounded_strength_narrative && dim.evidence_confidence === "low" && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed">
+                      Limited indexed resume evidence — narrative stays conservative.
+                    </p>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Risk</p>
@@ -531,12 +559,19 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                     <div className={`h-1 rounded-full transition-all ${scoreBarColor(dim.score)}`} style={{ width: `${pct}%` }} />
                   </div>
                   {/* Rationale (new v2 field) */}
-                  {dim.rationale && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{dim.rationale}</p>
+                  {(dim.grounded_rationale || dim.rationale) && (
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {dim.grounded_rationale ?? dim.rationale}
+                    </p>
                   )}
                   {/* Legacy gap field fallback */}
-                  {!dim.rationale && dim.gap && (
+                  {!dim.grounded_rationale && !dim.rationale && dim.gap && (
                     <p className="text-xs text-muted-foreground leading-relaxed">{dim.gap}</p>
+                  )}
+                  {dim.grounded_rationale && dim.evidence_confidence === "low" && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed">
+                      Limited indexed resume evidence — narrative stays conservative.
+                    </p>
                   )}
                   {/* Evidence quotes */}
                   {dim.evidence_quotes && dim.evidence_quotes.length > 0 && (

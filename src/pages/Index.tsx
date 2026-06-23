@@ -38,6 +38,12 @@ import { computeDeterministicScore } from "@/lib/deterministicScore";
 import { evaluateCredentialGate } from "@/lib/credentialGate";
 import { parseScoreRationale } from "@/lib/scoreEvidence";
 import { buildScoringEvidence } from "@/lib/scoringEvidenceBuilder";
+import {
+  getDirectorReportEnrichmentKey,
+  logDirectorRawRenderedMs,
+  markDirectorEnrichmentSuperseded,
+  runBackgroundDirectorEvidenceEnrichment,
+} from "@/lib/evidenceRetrieval";
 import type { ScoringEvidence } from "@/lib/scoringEvidenceTypes";
 import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
@@ -407,6 +413,7 @@ const Index = () => {
   const [inputTruncated, setInputTruncated] = useState(false);
   const creditConsumedRef = useRef(false);
   const lastClickRef = useRef(0);
+  const directorEnrichmentKeyRef = useRef<string | null>(null);
 
   const { user } = useAuth();
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
@@ -803,6 +810,7 @@ const Index = () => {
 
     const requestStartedAt = new Date().toISOString();
     const requestStartMs = Date.now();
+    markDirectorEnrichmentSuperseded(directorEnrichmentKeyRef, requestStartMs);
     let requestSucceeded = false;
 
     try {
@@ -826,15 +834,37 @@ const Index = () => {
 
       if (data?.error) throw new Error(data.error);
 
-      const result = data as DirectorCalibrationResult;
+      const directorData = data as DirectorCalibrationResult;
 
       // Validate the result has minimum required fields
-      if (!result || !result.dimensions || !result.director_signal_tier) {
+      if (!directorData || !directorData.dimensions || !directorData.director_signal_tier) {
         throw new Error("Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.");
       }
 
-      setDirectorResult(result);
+      const enrichmentKey = getDirectorReportEnrichmentKey(
+        directorData,
+        data?.request_id,
+        requestStartMs,
+      );
+      directorEnrichmentKeyRef.current = enrichmentKey;
+
+      setDirectorResult(directorData);
+      setDirectorLoading(false);
+      logDirectorRawRenderedMs(requestStartMs, enrichmentKey);
       requestSucceeded = true;
+
+      void runBackgroundDirectorEvidenceEnrichment({
+        directorData,
+        enrichmentKey,
+        pipelineStartedAtMs: requestStartMs,
+        getActiveEnrichmentKey: () => directorEnrichmentKeyRef.current,
+        context: {
+          calibratedBullets: result?.calibrated_bullets,
+          sessionId: getResumeSessionId(),
+          isAuthenticated: !!user,
+        },
+        onApplyEnriched: setDirectorResult,
+      });
     } catch (err: any) {
       const msg = err.message || FRIENDLY_FAIL_MSG;
       setDirectorError(msg);
