@@ -37,6 +37,8 @@ import AlignmentLoader from "@/components/AlignmentLoader";
 import { computeDeterministicScore } from "@/lib/deterministicScore";
 import { evaluateCredentialGate } from "@/lib/credentialGate";
 import { parseScoreRationale } from "@/lib/scoreEvidence";
+import { buildScoringEvidence } from "@/lib/scoringEvidenceBuilder";
+import type { ScoringEvidence } from "@/lib/scoringEvidenceTypes";
 import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
@@ -170,6 +172,7 @@ interface OptimizationResult {
     original_bullet: string | null;
     missing_signal: string | null;
   };
+  scoring_evidence?: ScoringEvidence;
 }
 
 function getSessionToken(): string {
@@ -994,6 +997,15 @@ const Index = () => {
       setSessionResumeAssembled(false);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
+      res.scoring_evidence = buildScoringEvidence({
+        evidencePackage,
+        calibrated_bullets: res.calibrated_bullets,
+        scoring_breakdown: detScore.breakdown,
+        top_matched_signal: res.top_matched_signal,
+        top_missing_signal: res.top_missing_signal,
+        score_rationale: res.score_rationale,
+        missing_keywords: res.missing_keywords,
+      });
       setResult(res);
       setResultRunType(runType);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));

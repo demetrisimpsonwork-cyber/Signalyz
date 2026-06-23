@@ -1,4 +1,10 @@
-/** Shared scoring evidence helpers — used across alignment, history, and diagnostics. */
+/**
+ * Shared scoring evidence helpers — used across alignment, history, and diagnostics.
+ *
+ * R3A grounded scoring metadata: see scoringEvidenceTypes.ts.
+ * scoring_evidence must never create evidence — only reference evidencePackage
+ * or calibrated_bullets.used_evidence; otherwise linkage = "absent".
+ */
 
 export interface ScoringBreakdown {
   role_outcomes_alignment: number;
