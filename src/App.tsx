@@ -19,6 +19,12 @@ import RefundPolicy from "./pages/RefundPolicy";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import {
+  createEdgeFunctionEmbeddingProvider,
+  setEmbeddingProvider,
+} from "@/services/rag";
+
+setEmbeddingProvider(createEdgeFunctionEmbeddingProvider());
 
 const queryClient = new QueryClient();
 

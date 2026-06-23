@@ -44,6 +44,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
+import { useResumeRetrievalIngestion } from "@/hooks/useResumeRetrievalIngestion";
+import {
+  extractPrimaryResumeBullet,
+  getResumeSessionId,
+  retrieveCalibrationEvidencePackage,
+  type EvidencePackageItem,
+} from "@/services/rag/groundedCalibrationClient";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProGate } from "@/components/ProGate";
@@ -151,6 +158,18 @@ interface OptimizationResult {
   identity_strength_index?: IdentityStrengthIndexData;
   inferred_role_title?: string;
   signal_model?: SignalModel;
+  calibrated_bullets?: Array<{
+    text: string;
+    original_bullet?: string;
+    variant?: string;
+    used_evidence: EvidencePackageItem[];
+    grounding_status: "grounded" | "low_confidence" | "ungrounded_blocked";
+  }>;
+  grounding_context?: {
+    evidence_count: number;
+    original_bullet: string | null;
+    missing_signal: string | null;
+  };
 }
 
 function getSessionToken(): string {
@@ -391,6 +410,7 @@ const Index = () => {
   const isAdmin = useIsAdmin();
   const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
+  useResumeRetrievalIngestion(bullet, inputSource);
   const [searchParams, setSearchParams] = useSearchParams();
   const [analysisSessionKey, setAnalysisSessionKey] = useState(0);
   const [showRestoredBanner, setShowRestoredBanner] = useState(false);
@@ -885,11 +905,45 @@ const Index = () => {
     const sessionToken = user ? undefined : getSessionToken();
 
     const isCalibratedRerun = calibratedRunPendingRef.current;
+    const originalBullet = extractPrimaryResumeBullet(bulletWithContext);
+    const missingSignal =
+      result?.top_missing_signal ||
+      result?.signal_model?.gaps?.[0] ||
+      null;
+
+    let evidencePackage: EvidencePackageItem[] = [];
+    if (user) {
+      try {
+        evidencePackage = await retrieveCalibrationEvidencePackage({
+          originalBullet,
+          jd: normJd.text,
+          missingSignal,
+          sessionId: getResumeSessionId(),
+        });
+      } catch (evidenceErr) {
+        if (import.meta.env.DEV) {
+          console.warn("[RAG] Evidence retrieval skipped:", evidenceErr);
+        }
+      }
+    }
+
     const invokeAlignment = (attempt = 1) =>
       invokeResilient(
         isCalibratedRerun ? "alignment-calibrated" : (attempt === 1 ? "alignment" : "alignment-retry"),
         "optimize-bullet",
-        { bullet: bulletWithContext, jd: normJd.text, userId: user?.id ?? null, mode: engineMode, sessionToken, runType: isCalibratedRerun ? "calibrated" : "original" },
+        {
+          bullet: bulletWithContext,
+          jd: normJd.text,
+          userId: user?.id ?? null,
+          mode: engineMode,
+          sessionToken,
+          runType: isCalibratedRerun ? "calibrated" : "original",
+          evidencePackage,
+          calibrationContext: {
+            originalBullet,
+            missingSignal,
+          },
+        },
         120_000, // 120s timeout to accommodate cold starts
       );
 

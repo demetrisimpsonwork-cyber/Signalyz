@@ -185,6 +185,42 @@ export type Database = {
         }
         Relationships: []
       }
+      document_chunks: {
+        Row: {
+          id: string
+          user_id: string
+          document_id: string
+          chunk_index: number
+          content: string
+          metadata: Json
+          embedding: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          document_id: string
+          chunk_index?: number
+          content: string
+          metadata?: Json
+          embedding: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          document_id?: string
+          chunk_index?: number
+          content?: string
+          metadata?: Json
+          embedding?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       one_time_purchases: {
         Row: {
           created_at: string
@@ -531,6 +567,21 @@ export type Database = {
         Returns: boolean
       }
       increment_run_count: { Args: { p_user_id: string }; Returns: undefined }
+      match_document_chunks: {
+        Args: {
+          query_embedding: string
+          match_count?: number
+          match_threshold?: number
+        }
+        Returns: {
+          id: string
+          document_id: string
+          chunk_index: number
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string

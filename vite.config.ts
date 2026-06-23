@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@signalyz/groundedCalibration": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/groundedCalibration.ts",
+      ),
     },
   },
 }));
