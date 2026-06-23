@@ -18,6 +18,7 @@ import {
   parseScoreRationale,
   type ScoringBreakdown,
 } from "@/lib/scoreEvidence";
+import type { ScoringEvidence } from "@/lib/scoringEvidenceTypes";
 
 /* ── types ── */
 interface HistoryEntry {
@@ -49,6 +50,7 @@ interface ExpandedResult {
   gaps: string[];
   breakdown: BreakdownRow[];
   scoringBreakdown: ScoringBreakdown | null;
+  scoring_evidence: ScoringEvidence | null;
 }
 
 const HISTORY_BREAKDOWN_LABELS = SCORE_BREAKDOWN_DIMENSIONS.map((d) => ({
@@ -90,6 +92,27 @@ function safeParseEntry(raw: any): HistoryEntry | null {
     }
 
     return { id, created_at, inferred_role: inferred_role || "Alignment Run", score, strength_label, top_gap, resume_built };
+  } catch {
+    return null;
+  }
+}
+
+function parseStoredScoringEvidence(raw: unknown): ScoringEvidence | null {
+  try {
+    if (!raw || typeof raw !== "object") return null;
+    const se = raw as Record<string, unknown>;
+    if (!Array.isArray(se.matched_evidence) || !Array.isArray(se.missing_evidence)) return null;
+    const conf = se.evidence_confidence;
+    if (conf !== "high" && conf !== "medium" && conf !== "low") return null;
+    return {
+      matched_evidence: se.matched_evidence as ScoringEvidence["matched_evidence"],
+      missing_evidence: se.missing_evidence as ScoringEvidence["missing_evidence"],
+      pillar_evidence:
+        se.pillar_evidence && typeof se.pillar_evidence === "object"
+          ? (se.pillar_evidence as ScoringEvidence["pillar_evidence"])
+          : {},
+      evidence_confidence: conf,
+    };
   } catch {
     return null;
   }
@@ -170,6 +193,8 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
       }
     } catch { /* */ }
 
+    const scoring_evidence = parseStoredScoringEvidence(r.scoring_evidence);
+
     // Must have at least one real field
     if (optimized_bullet === UNAVAILABLE && match_score === UNAVAILABLE) return null;
 
@@ -186,6 +211,7 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
       gaps,
       breakdown,
       scoringBreakdown,
+      scoring_evidence,
     };
   } catch {
     return null;
@@ -262,7 +288,7 @@ function filterMatch(score: number, filter: FilterKey) {
 }
 
 /* ── expanded section component ── */
-function ExpandedResultView({ result }: { result: ExpandedResult }) {
+function ExpandedResultView({ result, isPro }: { result: ExpandedResult; isPro: boolean }) {
   const { toast } = useToast();
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -314,6 +340,8 @@ function ExpandedResultView({ result }: { result: ExpandedResult }) {
             primaryBlocker={result.primary_blocker}
             strengths={result.strengths}
             gaps={result.gaps.slice(1)}
+            scoringEvidence={result.scoring_evidence}
+            isPro={isPro}
             showRationale
             className="bg-card border-border/60"
           />
@@ -565,7 +593,7 @@ const History = () => {
 
               {/* Single entry expanded result */}
               {!isMulti && expandedId === latest.id && (
-                expandedResult ? <ExpandedResultView result={expandedResult} /> : (
+                expandedResult ? <ExpandedResultView result={expandedResult} isPro={isPro} /> : (
                   <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
                     <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
                   </div>
@@ -592,7 +620,7 @@ const History = () => {
                         </Button>
                       </div>
                       {expandedId === entry.id && (
-                        expandedResult ? <ExpandedResultView result={expandedResult} /> : (
+                        expandedResult ? <ExpandedResultView result={expandedResult} isPro={isPro} /> : (
                           <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
                             <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
                           </div>

@@ -1805,6 +1805,8 @@ const Index = () => {
                           topMissingSignal={result.top_missing_signal}
                           strengths={parseScoreRationale(result.score_rationale).strengths}
                           gaps={parseScoreRationale(result.score_rationale).gaps.slice(1)}
+                          scoringEvidence={result.scoring_evidence}
+                          isPro={effectiveIsPro}
                           showRationale
                         />
                       )}

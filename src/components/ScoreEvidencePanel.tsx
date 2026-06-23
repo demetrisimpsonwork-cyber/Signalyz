@@ -1,4 +1,6 @@
 import { breakdownToRows, type ScoringBreakdown } from "@/lib/scoreEvidence";
+import type { ScoringEvidence } from "@/lib/scoringEvidenceTypes";
+import { ScoringEvidenceSection } from "@/components/scoring-evidence";
 
 interface ScoreEvidencePanelProps {
   breakdown?: ScoringBreakdown | null;
@@ -12,6 +14,8 @@ interface ScoreEvidencePanelProps {
   title?: string;
   /** Show strength/gap lists when provided */
   showRationale?: boolean;
+  scoringEvidence?: ScoringEvidence | null;
+  isPro?: boolean;
   className?: string;
 }
 
@@ -24,6 +28,8 @@ export function ScoreEvidencePanel({
   primaryBlocker,
   title = "Why this score",
   showRationale = false,
+  scoringEvidence,
+  isPro = false,
   className = "",
 }: ScoreEvidencePanelProps) {
   const rows = breakdownToRows(breakdown);
@@ -34,7 +40,7 @@ export function ScoreEvidencePanel({
   if (!hasContent) return null;
 
   return (
-    <div className={`rounded-lg border border-border/60 bg-background/40 p-4 space-y-2.5 ${className}`}>
+    <div className={`rounded-lg border border-border/60 bg-background/40 p-4 space-y-2.5 min-w-0 overflow-hidden ${className}`}>
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
 
       {primaryBlocker && (
@@ -66,19 +72,25 @@ export function ScoreEvidencePanel({
       )}
 
       {hasSignals && (
-        <div className={`space-y-1.5 ${rows.length > 0 ? "pt-2 border-t border-border/40" : ""}`}>
+        <div className={`space-y-1.5 min-w-0 ${rows.length > 0 ? "pt-2 border-t border-border/40" : ""}`}>
           {topMatchedSignal && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground break-words">
               <span className="font-medium text-green-600 dark:text-green-400">✓ Matched signal:</span> {topMatchedSignal}
             </p>
           )}
           {topMissingSignal && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground break-words">
               <span className="font-medium text-destructive">✗ Under-signaled priority:</span> {topMissingSignal}
             </p>
           )}
         </div>
       )}
+
+      <ScoringEvidenceSection
+        scoringEvidence={scoringEvidence}
+        isPro={isPro}
+        className="min-w-0 bg-muted/10"
+      />
 
       {hasRationale && (
         <div className="space-y-2 pt-2 border-t border-border/40">
