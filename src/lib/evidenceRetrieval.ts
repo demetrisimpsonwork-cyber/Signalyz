@@ -5,6 +5,8 @@ import {
 import { retrieveResumeEvidence } from "@/services/rag/resumeIngestion";
 import { getResumeSessionId } from "@/services/rag/groundedCalibrationClient";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
+import type { AlignmentGapsInput } from "@/lib/groundedRecommendationTypes";
+import { buildGroundedRecommendations } from "@/lib/groundedRecommendations";
 
 /** Retrieved resume evidence chunk with stable display fields. */
 export interface RetrievedEvidence {
@@ -21,6 +23,7 @@ export interface EvidenceRetrievalContext {
   sessionId?: string;
   /** When false, chunk retrieval is skipped (guest / anonymous). */
   isAuthenticated?: boolean;
+  alignmentGaps?: AlignmentGapsInput | null;
 }
 
 export interface GroundedNarrativeResult {
@@ -241,6 +244,58 @@ function formatEvidenceClause(item: RetrievedEvidence): string {
   return sentence.endsWith(".") ? sentence : `${sentence}.`;
 }
 
+/** Exported for grounded recommendations — formats a clause from retrieved evidence only. */
+export function formatRetrievedEvidenceClause(item: RetrievedEvidence): string {
+  return formatEvidenceClause(item);
+}
+
+export function scoreEvidenceForSignal(
+  signal: string,
+  evidence: RetrievedEvidence[],
+): { ranked: RetrievedEvidence[]; overlap: number; primary: RetrievedEvidence | null } {
+  const ranked = rankEvidenceForQuery(signal, evidence);
+  const primary = ranked[0] ?? null;
+  const overlap = primary
+    ? overlapRatio(
+        significantTokens(signal),
+        `${primary.content} ${primary.company} ${primary.role_title}`,
+      )
+    : 0;
+  return { ranked, overlap, primary };
+}
+
+function isRetrievalVerified(context: EvidenceRetrievalContext): boolean {
+  return context.isAuthenticated === true || collectCalibratedEvidence(context).length > 0;
+}
+
+/** Shared in-memory cache for enrichment + recommendations (one positioning run). */
+export class EvidenceRetrievalCache {
+  private readonly entries = new Map<string, RetrievedEvidence[]>();
+
+  constructor(private readonly context: EvidenceRetrievalContext) {}
+
+  async forSignal(query: string): Promise<RetrievedEvidence[]> {
+    const trimmed = query.trim();
+    if (trimmed.length < MIN_QUERY_CHARS) {
+      return [];
+    }
+
+    const key = trimmed.toLowerCase();
+    const cached = this.entries.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await retrieveWithHierarchy(trimmed, this.context);
+    this.entries.set(key, result);
+    return result;
+  }
+
+  async forTheme(query: string): Promise<RetrievedEvidence[]> {
+    return this.forSignal(query);
+  }
+}
+
 /**
  * Build a human-readable narrative grounded only in retrieved evidence.
  * Never invents facts beyond what appears in evidence chunks.
@@ -310,10 +365,12 @@ export async function enrichPositioningReportWithEvidence(
   result: DirectorCalibrationResult,
   context: EvidenceRetrievalContext = {},
 ): Promise<DirectorCalibrationResult> {
+  const cache = new EvidenceRetrievalCache(context);
+
   const enrichedDimensions = await Promise.all(
     result.dimensions.map(async (dimension) => {
       const query = dimension.strength_signal || dimension.name;
-      const evidence = await retrieveEvidenceForTheme(query, context);
+      const evidence = await cache.forTheme(query);
       const grounded = buildGroundedNarrative(query, evidence);
 
       return {
@@ -335,7 +392,7 @@ export async function enrichPositioningReportWithEvidence(
       await Promise.all(
         dimensionEntries.map(async ([key, dim]) => {
           const query = dim.gap || dim.gap_label || key;
-          const evidence = await retrieveEvidenceForSignal(query, context);
+          const evidence = await cache.forSignal(query);
           const grounded = buildGroundedNarrative(query, evidence);
 
           const hasAiQuotes = (dim.evidence_quotes?.length ?? 0) > 0;
@@ -361,19 +418,24 @@ export async function enrichPositioningReportWithEvidence(
     };
   }
 
-  const tierEvidence = await retrieveEvidenceForTheme(
-    result.director_signal_tier.rationale,
-    context,
-  );
+  const tierEvidence = await cache.forTheme(result.director_signal_tier.rationale);
   const tierGrounded = buildGroundedNarrative(
     result.director_signal_tier.tier,
     tierEvidence,
   );
 
+  const grounded_recommendations = await buildGroundedRecommendations({
+    director: result,
+    alignmentGaps: context.alignmentGaps,
+    retrievalVerified: isRetrievalVerified(context),
+    retrieveForSignal: (signal) => cache.forSignal(signal),
+  });
+
   return {
     ...result,
     dimensions: enrichedDimensions,
     signal_classifier,
+    grounded_recommendations,
     director_signal_tier: {
       ...result.director_signal_tier,
       grounded_rationale:
@@ -462,6 +524,7 @@ export async function runBackgroundDirectorEvidenceEnrichment(
           event: "director_evidence_enriched_ms",
           ms: Date.now() - options.pipelineStartedAtMs,
           enrichment_key: options.enrichmentKey,
+          grounded_recommendations: enriched.grounded_recommendations?.length ?? 0,
         }),
       );
     }

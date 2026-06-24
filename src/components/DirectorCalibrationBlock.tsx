@@ -2,6 +2,7 @@ import { Copy, Check, Download, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { GroundedRecommendation } from "@/lib/groundedRecommendationTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,7 @@ export interface DirectorCalibrationResult {
   gap_analyzer?: GapAnalyzerResult | null;
   consistency_validator?: ConsistencyValidatorResult | null;
   export_builder?: ExportBuilderResult | null;
+  grounded_recommendations?: GroundedRecommendation[];
   run_id?: string;
   pipeline_version?: string;
   _replay?: boolean;
@@ -163,6 +165,12 @@ const UPGRADE_TYPE_LABELS: Record<UpgradeType, string> = {
   cross_functional_leadership: "Cross-Functional Leadership",
   lifecycle_governance: "Lifecycle Governance",
   risk_compression: "Risk Compression",
+};
+
+const classificationStyle: Record<GroundedRecommendation["classification"], string> = {
+  present: "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800/40",
+  partial: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40",
+  missing: "text-muted-foreground bg-muted/30 border-border/60",
 };
 
 const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
@@ -333,7 +341,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
     console.log(`[Signal Report] Run: ${result.run_id} v${result.pipeline_version || "?"} ${result._replay ? "(replay)" : ""}`);
   }
 
-  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator } = result;
+  const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator, grounded_recommendations } = result;
 
   // Dynamic role tier label (falls back to "Director" for backward compatibility)
   const roleLabel = result._role_tier_label || "Director";
@@ -399,6 +407,43 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
           </p>
         </div>
       </BlockShell>
+
+      {grounded_recommendations && grounded_recommendations.length > 0 && (
+        <BlockShell label="Grounded Next Steps">
+          <div className="divide-y divide-border/50">
+            {grounded_recommendations.map((rec, index) => (
+              <div key={`${rec.signal_name}-${index}`} className="px-4 py-4 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold text-foreground">{rec.signal_name}</p>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${classificationStyle[rec.classification]}`}
+                  >
+                    {rec.classification}
+                  </span>
+                  {!rec.grounded && (
+                    <span className="text-[10px] text-muted-foreground">Unverified</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground">{rec.classification_reason}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{rec.recommendation}</p>
+                {rec.evidence_used.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Evidence</p>
+                    {rec.evidence_used.map((snippet, i) => (
+                      <p
+                        key={i}
+                        className="text-[10px] text-muted-foreground/80 italic leading-relaxed pl-3 border-l-2 border-primary/40"
+                      >
+                        "{snippet}"
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </BlockShell>
+      )}
 
       {/* 2 — Perception Snapshot (visible to all users) */}
       <BlockShell label={`${roleLabel} Dimension Calibration`}>

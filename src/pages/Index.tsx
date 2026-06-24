@@ -862,6 +862,14 @@ const Index = () => {
           calibratedBullets: result?.calibrated_bullets,
           sessionId: getResumeSessionId(),
           isAuthenticated: !!user,
+          alignmentGaps: {
+            top_missing_signal: result?.top_missing_signal,
+            missing_keywords: result?.missing_keywords,
+            score_rationale: result?.score_rationale,
+            primary_blocker:
+              result?.signal_model?.interview_gap_diagnosis?.primary_blocker ??
+              result?.signal_model?.interview_gap_diagnosis?.primary_issue,
+          },
         },
         onApplyEnriched: setDirectorResult,
       });
