@@ -18,6 +18,22 @@ export interface GroundedRecommendation {
   evidence_confidence: number;
   transferability_confidence: number;
   grounded: boolean;
+  /** Lower index = higher JD importance (from gap registry order). */
+  jd_importance_rank?: number;
+}
+
+export interface GroundedRecommendationDisplayEvidence {
+  text: string;
+  is_duplicate: boolean;
+  duplicate_of_signal?: string;
+}
+
+export interface GroundedRecommendationInsights {
+  featured_repositioning: GroundedRecommendation | null;
+  highest_impact: GroundedRecommendation[];
+  already_supported: GroundedRecommendation[];
+  additional_gaps: GroundedRecommendation[];
+  display_evidence: Record<string, GroundedRecommendationDisplayEvidence[]>;
 }
 
 export interface AlignmentGapsInput {

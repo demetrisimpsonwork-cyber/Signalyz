@@ -2,14 +2,21 @@ import { describe, expect, it, vi } from "vitest";
 import type { EvidencePackageItem } from "@signalyz/groundedCalibration";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { RetrievedEvidence } from "@/lib/evidenceRetrieval";
+import { NJDOL_RESUME_TEXT } from "@/test/fixtures/rag/njdolResume";
+import type { AlignmentGapsInput } from "@/lib/groundedRecommendationTypes";
 import {
   buildGapRegistry,
   buildGroundedRecommendationText,
   classifySignalEvidence,
   buildGroundedRecommendations,
+  isClassificationConsistentWithRecommendation,
+  PARTIAL_REFRAME_PREFIX,
 } from "@/lib/groundedRecommendations";
+import { buildGroundedRecommendationInsights } from "@/lib/groundedRecommendationInsights";
+import { scoreEvidenceForSignal } from "@/lib/evidenceRetrieval";
 import {
   PARTIAL_OVERLAP_THRESHOLD,
+  PARTIAL_SIMILARITY_THRESHOLD,
   PRESENT_OVERLAP_THRESHOLD,
   PRESENT_SIMILARITY_THRESHOLD,
   ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD,
@@ -53,6 +60,15 @@ const njdolIntakeEvidence: RetrievedEvidence = {
   company: "NJDOL",
   role_title: "Customer Service Representative",
   similarity: 0.72,
+};
+
+const njdolCallQueueEvidence: RetrievedEvidence = {
+  evidence_id: "chunk-queues",
+  content: "Handled inbound and outbound call queues for benefits eligibility and status updates.",
+  section: "experience",
+  company: "NJDOL",
+  role_title: "Customer Service Representative",
+  similarity: 0.68,
 };
 
 const salesforceOnlyEvidence: RetrievedEvidence = {
@@ -155,13 +171,45 @@ describe("groundedRecommendations", () => {
     expect(result.transferability_confidence).toBeGreaterThan(0);
   });
 
-  it("classifies PARTIAL conservatively for related portfolio evidence", () => {
+  it("classifies PARTIAL for weak-adjacency call-center intake (not MISSING with reframe gap)", () => {
+    const classification = classifySignalEvidence(
+      "customer intake call handling",
+      [njdolCallQueueEvidence, njdolIntakeEvidence],
+      true,
+    );
+    const { recommendation } = buildGroundedRecommendationText(
+      "customer intake call handling",
+      classification,
+    );
+
+    expect(classification.classification).toBe("partial");
+    expect(isClassificationConsistentWithRecommendation({
+      classification: classification.classification,
+      classification_reason: classification.classification_reason,
+      signal_name: "customer intake call handling",
+      recommendation,
+      evidence_used: classification.evidence_used,
+      evidence_confidence: classification.evidence_confidence,
+      transferability_confidence: classification.transferability_confidence,
+      grounded: true,
+    })).toBe(true);
+    expect(recommendation).toContain("Your resume shows related experience");
+  });
+
+  it("classifies PARTIAL conservatively for related portfolio evidence", async () => {
+    const { scoreEvidenceForSignal } = await import("@/lib/evidenceRetrieval");
+    const scored = scoreEvidenceForSignal(
+      "enterprise customer portfolio ownership",
+      [njdolPortfolioEvidence],
+    );
     const result = classifySignalEvidence(
       "enterprise customer portfolio ownership",
       [njdolPortfolioEvidence],
       true,
     );
 
+    expect(scored.overlap).toBeGreaterThanOrEqual(PARTIAL_OVERLAP_THRESHOLD);
+    expect(njdolPortfolioEvidence.similarity).toBeGreaterThanOrEqual(PARTIAL_SIMILARITY_THRESHOLD);
     expect(["partial", "missing"]).toContain(result.classification);
     if (result.classification === "partial") {
       expect(result.classification_reason).toContain("Related experience");
@@ -220,6 +268,9 @@ describe("groundedRecommendations", () => {
     });
 
     expect(recommendations.length).toBeGreaterThan(0);
+    for (const rec of recommendations) {
+      expect(isClassificationConsistentWithRecommendation(rec)).toBe(true);
+    }
     const escalation = recommendations.find((r) =>
       r.signal_name.toLowerCase().includes("escalation"),
     );
@@ -233,5 +284,137 @@ describe("groundedRecommendations", () => {
     expect(PRESENT_OVERLAP_THRESHOLD).toBeGreaterThan(PARTIAL_OVERLAP_THRESHOLD);
     expect(TRANSFERABILITY_CONFIDENCE_THRESHOLD).toBe(0.4);
     expect(ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD).toBe(0.12);
+  });
+
+  it("classifies PARTIAL for contact center via call-queue adjacency without direct wording", () => {
+    const result = classifySignalEvidence("contact center", [njdolCallQueueEvidence], true);
+
+    expect(result.classification).toBe("partial");
+    expect(result.classification_reason).toBe(
+      "Related experience was found but does not fully satisfy the requested signal.",
+    );
+    const { recommendation } = buildGroundedRecommendationText("contact center", result);
+    expect(recommendation).toContain(PARTIAL_REFRAME_PREFIX);
+  });
+
+  it("does not classify PRESENT for inbound call center without direct call-center wording in evidence", () => {
+    const result = classifySignalEvidence("inbound call center", [njdolCallQueueEvidence], true);
+
+    expect(result.classification).not.toBe("present");
+    expect(["partial", "missing"]).toContain(result.classification);
+    if (result.classification === "partial") {
+      const { recommendation } = buildGroundedRecommendationText("inbound call center", result);
+      expect(recommendation).toContain(PARTIAL_REFRAME_PREFIX);
+    }
+  });
+
+  it("uses weakDomainMatch reason when evidence exists but signal stays MISSING", () => {
+    const result = classifySignalEvidence("tax preparation", [salesforceOnlyEvidence], true);
+
+    expect(result.classification).toBe("missing");
+    expect(result.classification_reason).toBe(
+      "Related evidence exists but the required domain, tool, or direct experience was not evidenced.",
+    );
+    expect(result.evidence_used.length).toBeGreaterThan(0);
+  });
+
+  it("classifies MISSING for TurboTax strict tool gap", () => {
+    const result = classifySignalEvidence("TurboTax", [njdolCallQueueEvidence], true);
+
+    expect(result.classification).toBe("missing");
+    expect(result.classification_reason).toBe(
+      "Related evidence exists but required tool evidence was not found.",
+    );
+  });
+});
+
+const TAX_OPERATIONS_GAPS: AlignmentGapsInput = {
+  top_missing_signal: "tax software navigation and filing workflow customer support",
+  missing_keywords: [
+    "tax preparation",
+    "TurboTax",
+    "tax filing",
+    "software troubleshooting",
+    "login support",
+    "tax season",
+    "inbound call center",
+    "contact center",
+  ],
+  score_rationale: [
+    "[GAP] No demonstrated tax software or filing workflow support experience",
+    "[GAP] Missing tax-season contact center signal",
+    "[GAP] No TurboTax or consumer tax platform tooling on resume",
+  ],
+  primary_blocker: "No tax operations domain evidence",
+};
+
+function chunkNjdolResume(): RetrievedEvidence[] {
+  const chunks: RetrievedEvidence[] = [];
+  for (const line of NJDOL_RESUME_TEXT.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("-")) {
+      chunks.push({
+        evidence_id: `chunk-${chunks.length}`,
+        content: trimmed.replace(/^-\s*/, ""),
+        section: "experience",
+        company: "NJDOL",
+        role_title: "Customer Service Representative",
+        similarity: 0.72,
+      });
+    }
+  }
+  return chunks;
+}
+
+describe("Phase 2B.1 tax operations smoke", () => {
+  it("recovers PARTIAL repositioning for NJDOL + Tax Operations JD", async () => {
+    const pool = chunkNjdolResume();
+    const raw = await buildGroundedRecommendations({
+      director: MOCK_DIRECTOR,
+      alignmentGaps: TAX_OPERATIONS_GAPS,
+      retrievalVerified: true,
+      retrieveForSignal: async (signal) => {
+        const scored = scoreEvidenceForSignal(signal, pool);
+        return scored.ranked
+          .map((item, idx) => ({
+            ...item,
+            similarity:
+              idx === 0
+                ? Math.min(0.88, 0.4 + scored.overlap * 0.55 + 0.1)
+                : item.similarity,
+          }))
+          .slice(0, 5);
+      },
+    });
+
+    const insights = buildGroundedRecommendationInsights(raw);
+    const partials = raw.filter((r) => r.classification === "partial");
+    const missing = raw.filter((r) => r.classification === "missing");
+
+    expect(partials.length).toBeGreaterThanOrEqual(1);
+    expect(insights.featured_repositioning).toBeTruthy();
+    expect(insights.highest_impact.length).toBeGreaterThan(0);
+
+    const turbotax = raw.find((r) => /turbotax/i.test(r.signal_name));
+    const taxPrep = raw.find((r) => /tax preparation/i.test(r.signal_name));
+    const taxFiling = raw.find((r) => /tax filing/i.test(r.signal_name));
+    expect(turbotax?.classification).toBe("missing");
+    expect(taxPrep?.classification).toBe("missing");
+    expect(taxFiling?.classification).toBe("missing");
+
+    const taxPartial = partials.find((r) =>
+      /tax|contact center|call center|inbound/i.test(r.signal_name),
+    );
+    expect(taxPartial).toBeTruthy();
+
+    for (const rec of raw) {
+      expect(isClassificationConsistentWithRecommendation(rec)).toBe(true);
+    }
+
+    for (const rec of missing) {
+      if (rec.evidence_used.length > 0) {
+        expect(rec.classification_reason).not.toBe("No supporting evidence was found.");
+      }
+    }
   });
 });

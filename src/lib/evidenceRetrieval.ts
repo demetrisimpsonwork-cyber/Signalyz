@@ -7,6 +7,7 @@ import { getResumeSessionId } from "@/services/rag/groundedCalibrationClient";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { AlignmentGapsInput } from "@/lib/groundedRecommendationTypes";
 import { buildGroundedRecommendations } from "@/lib/groundedRecommendations";
+import { buildGroundedRecommendationInsights } from "@/lib/groundedRecommendationInsights";
 
 /** Retrieved resume evidence chunk with stable display fields. */
 export interface RetrievedEvidence {
@@ -424,18 +425,32 @@ export async function enrichPositioningReportWithEvidence(
     tierEvidence,
   );
 
-  const grounded_recommendations = await buildGroundedRecommendations({
+  const rawRecommendations = await buildGroundedRecommendations({
     director: result,
     alignmentGaps: context.alignmentGaps,
     retrievalVerified: isRetrievalVerified(context),
     retrieveForSignal: (signal) => cache.forSignal(signal),
   });
 
+  const grounded_recommendation_insights = buildGroundedRecommendationInsights(rawRecommendations);
+  const grounded_recommendations = [
+    ...(grounded_recommendation_insights.featured_repositioning
+      ? [grounded_recommendation_insights.featured_repositioning]
+      : []),
+    ...grounded_recommendation_insights.highest_impact.filter(
+      (r) =>
+        r.signal_name !== grounded_recommendation_insights.featured_repositioning?.signal_name,
+    ),
+    ...grounded_recommendation_insights.already_supported,
+    ...grounded_recommendation_insights.additional_gaps,
+  ];
+
   return {
     ...result,
     dimensions: enrichedDimensions,
     signal_classifier,
     grounded_recommendations,
+    grounded_recommendation_insights,
     director_signal_tier: {
       ...result.director_signal_tier,
       grounded_rationale:
