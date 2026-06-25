@@ -1,5 +1,4 @@
 // assemble-calibrated-resume v3.0 — robust resume parser
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 
@@ -1217,6 +1216,8 @@ function isDomainFabrication(candidate: string, originalResumeText: string): boo
  * like "patient-focused" and phrases like "patient record management".
  */
 function stripDomainFabricationFromBullet(bullet: string, originalResumeText: string): string {
+  if (typeof bullet !== "string" || !bullet.trim()) return "";
+  if (typeof originalResumeText !== "string") return bullet.trim();
   const resumeLower = originalResumeText.toLowerCase();
   const bulletLower = bullet.toLowerCase();
   let cleaned = bullet;
@@ -1922,6 +1923,7 @@ function deduplicateJdEchoPhrases(experience: any[]): any[] {
 
   return experience.map((role: any) => {
     const bullets = Array.isArray(role.bullets) ? role.bullets.map((b: string) => {
+      if (typeof b !== "string") return "";
       // 1. Strip duplicate JD-echo tails
       const tailMatch = b.match(tailRx);
       if (tailMatch) {
@@ -2277,7 +2279,7 @@ Return ONLY valid JSON array:
 
 // ─── Main handler ───
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   // ── Authentication & Usage Enforcement ──
@@ -2340,10 +2342,10 @@ serve(async (req) => {
   }
 
   const request_id = crypto.randomUUID();
+  let currentStep = "input_received";
 
   try {
     let body;
-    let currentStep = "input_received";
     try {
       body = await req.json();
     } catch {
@@ -2437,9 +2439,12 @@ serve(async (req) => {
     // ── Lightweight post-processing (CPU-safe) ──
     currentStep = "cleanup_stage";
     console.log(`[assemble] [${request_id}] Cleanup stage`);
-    const cleanedSummary = originalResume
-      ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
-      : rewrittenSummary;
+    const cleanedSummary =
+      originalResume && typeof rewrittenSummary === "string"
+        ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
+        : typeof rewrittenSummary === "string"
+          ? rewrittenSummary
+          : "";
 
     // ── Cross-bullet deduplication: remove repetitive JD-echo tails ──
     const dedupedExperience = deduplicateJdEchoPhrases(rewrittenExperience);
@@ -2458,7 +2463,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
 
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(`[assemble] [${request_id}] Unhandled error:`, err);
     return new Response(
       JSON.stringify({
