@@ -9,6 +9,13 @@ export const ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD = 0.12;
 
 export type GroundedRecommendationClassification = "present" | "partial" | "missing";
 
+export interface DefensibilityFactors {
+  evidence_directness: number;
+  translation_distance: number;
+  tool_domain_specificity: number;
+  follow_up_defensibility: number;
+}
+
 export interface GroundedRecommendation {
   classification: GroundedRecommendationClassification;
   classification_reason: string;
@@ -20,6 +27,9 @@ export interface GroundedRecommendation {
   grounded: boolean;
   /** Lower index = higher JD importance (from gap registry order). */
   jd_importance_rank?: number;
+  /** Internal calibration score (0–100); not shown in UI by default. */
+  defensibility_score?: number;
+  defensibility_factors?: DefensibilityFactors;
 }
 
 export interface GroundedRecommendationDisplayEvidence {

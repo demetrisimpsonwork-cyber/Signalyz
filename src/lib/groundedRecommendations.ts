@@ -11,19 +11,18 @@ import {
   formatRetrievedEvidenceClause,
 } from "@/lib/evidenceRetrieval";
 import {
+  classifyWithDefensibility,
+  type DefensibilityFactors,
+} from "@/lib/groundedDefensibilityScore";
+import {
   type AlignmentGapsInput,
   type GroundedRecommendation,
-  PARTIAL_OVERLAP_THRESHOLD,
-  PARTIAL_SIMILARITY_THRESHOLD,
-  PRESENT_OVERLAP_THRESHOLD,
-  PRESENT_SIMILARITY_THRESHOLD,
   ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD,
   TRANSFERABILITY_CONFIDENCE_THRESHOLD,
 } from "@/lib/groundedRecommendationTypes";
 
 const MAX_RECOMMENDATIONS = 10;
 const MIN_KEYWORD_CHARS = 2;
-const MIN_PRESENT_LITERAL_TOKEN_MATCHES = 2;
 
 const GAP_LABEL_PHRASES: Record<string, string> = {
   no_commercial_attribution: "commercial impact attribution",
@@ -60,7 +59,6 @@ interface TransferabilityGroup {
   partialTransferThreshold?: number;
 }
 
-/** Adjacent capability groups — conservative transferability only within shared groups. */
 const TRANSFERABILITY_GROUPS: TransferabilityGroup[] = [
   { terms: ["portfolio", "caseload", "cases", "accounts", "customers", "client"] },
   {
@@ -98,7 +96,9 @@ const TRANSFERABILITY_GROUPS: TransferabilityGroup[] = [
   },
 ];
 
-/** Evidence markers that support call-center / contact-center adjacency reframes. */
+const CALL_CENTER_SIGNAL_PATTERN =
+  /\b(contact center|call center|inbound call center|inbound inquiry|inbound inquiries|phone support|high-volume inbound)\b/i;
+
 const CALL_CENTER_EVIDENCE_MARKERS = [
   "inbound",
   "outbound",
@@ -114,66 +114,6 @@ const CALL_CENTER_EVIDENCE_MARKERS = [
   "triage",
   "call center",
   "contact center",
-];
-
-const CALL_CENTER_SIGNAL_PATTERN =
-  /\b(contact center|call center|inbound call center|inbound inquiry|inbound inquiries|phone support|high-volume inbound)\b/i;
-
-const DIRECT_CALL_CENTER_EVIDENCE_PATTERN = /\b(call center|contact center)\b/i;
-
-const SUPPORT_ADJACENT_SIGNAL_PATTERNS = [
-  /customer support/,
-  /case resolution/,
-  /regulated/,
-  /contact center/,
-  /call center/,
-  /inbound (call|inquiry|inquiries|phone)/,
-  /phone support/,
-  /high-volume inbound/,
-  /login support/,
-  /software troubleshooting/,
-  /account issue/,
-  /documentation.*support/,
-  /filing workflow.*support/,
-  /tax software.*support/,
-  /support experience/,
-  /workflow customer support/,
-  /escalation/,
-  /intake/,
-  /troubleshoot/,
-];
-
-const ANALYTICS_SIGNAL_TOKENS = new Set([
-  "analytics",
-  "ga4",
-  "google",
-  "tableau",
-  "looker",
-  "powerbi",
-  "reporting",
-  "dashboard",
-  "metrics",
-]);
-
-/** Tool tokens that must appear in evidence when referenced by the signal. */
-const STRICT_TOOL_SIGNAL_TOKENS = [
-  "ga4",
-  "google analytics",
-  "servicetitan",
-  "service titan",
-  "gainsight",
-  "churnzero",
-  "churn zero",
-  "looker",
-  "tableau",
-  "power bi",
-  "powerbi",
-  "erp",
-  "warehouse",
-  "logistics",
-  "distribution",
-  "turbotax",
-  "zendesk",
 ];
 
 function humanizeGapLabel(raw: string): string {
@@ -253,19 +193,6 @@ function tokenStemMatch(a: string, b: string): boolean {
   return a.slice(0, stemLen) === b.slice(0, stemLen);
 }
 
-function countPresentTokenMatches(signal: string, evidenceText: string): number {
-  const signalTokens = tokenize(signal).filter((token) => token.length >= 3 && token !== "customer");
-  const evidenceTokens = tokenize(evidenceText);
-  let matches = 0;
-  for (const signalToken of signalTokens) {
-    if (STOP_WORDS.has(signalToken)) continue;
-    if (evidenceTokens.some((evidenceToken) => tokenStemMatch(signalToken, evidenceToken))) {
-      matches++;
-    }
-  }
-  return matches;
-}
-
 function countGroupTermHits(terms: string[], text: string): number {
   const lower = text.toLowerCase();
   const tokens = tokenize(text);
@@ -314,84 +241,8 @@ function computeTransferabilityConfidence(signal: string, evidenceText: string):
   };
 }
 
-function signalRequiresAnalyticsTool(signal: string): boolean {
-  const lower = signal.toLowerCase();
-  return [...ANALYTICS_SIGNAL_TOKENS].some((term) => lower.includes(term));
-}
-
-function evidenceSupportsAnalyticsTool(evidenceText: string): boolean {
-  const tools = extractToolMentions(evidenceText);
-  const analyticsTools = ["tableau", "power bi", "sql", "excel"];
-  return tools.some((tool) => analyticsTools.includes(tool) || tool.includes("analytics"));
-}
-
-function evidenceContainsToolToken(evidenceText: string, toolToken: string): boolean {
-  const normalizedEvidence = evidenceText.toLowerCase().replace(/[\s_-]+/g, "");
-  const normalizedTool = toolToken.toLowerCase().replace(/[\s_-]+/g, "");
-  return normalizedEvidence.includes(normalizedTool);
-}
-
-function getRequiredToolFromSignal(signal: string): string | null {
-  const lower = signal.toLowerCase();
-  for (const tool of STRICT_TOOL_SIGNAL_TOKENS) {
-    if (lower.includes(tool)) return tool;
-  }
-  const commonTools = extractToolMentions(signal);
-  if (commonTools.length > 0) return commonTools[0];
-  return null;
-}
-
-function hasToolMismatch(signal: string, evidenceText: string): boolean {
-  if (signalRequiresAnalyticsTool(signal) && !evidenceSupportsAnalyticsTool(evidenceText)) {
-    return true;
-  }
-  const requiredTool = getRequiredToolFromSignal(signal);
-  if (!requiredTool) return false;
-  return !evidenceContainsToolToken(evidenceText, requiredTool);
-}
-
 function isCallCenterRelatedSignal(signal: string): boolean {
   return CALL_CENTER_SIGNAL_PATTERN.test(signal.toLowerCase());
-}
-
-function evidenceHasDirectCallCenterWording(evidenceText: string): boolean {
-  return DIRECT_CALL_CENTER_EVIDENCE_PATTERN.test(evidenceText.toLowerCase());
-}
-
-function isStrictToolRequirement(signal: string): boolean {
-  const lower = signal.toLowerCase();
-  for (const tool of STRICT_TOOL_SIGNAL_TOKENS) {
-    if (lower.includes(tool)) return true;
-  }
-  return false;
-}
-
-/** Domain expertise gaps — not defensible as customer-support reframes. */
-function isDomainExpertiseOnly(signal: string): boolean {
-  const lower = signal.toLowerCase().trim();
-  if (/\bturbotax\b/i.test(lower)) return true;
-  if (/\btax preparation\b/i.test(lower)) return true;
-  if (/no demonstrated.*tax software/i.test(lower)) return true;
-  if (
-    /\btax filing\b/i.test(lower) &&
-    !/support|customer|workflow|guidance|assistance|user/i.test(lower)
-  ) {
-    return true;
-  }
-  if (/tax season\b/i.test(lower) && !/support/i.test(lower)) return true;
-  if (
-    /\btax software\b/i.test(lower) &&
-    !/customer support|user support|support experience|workflow customer/i.test(lower)
-  ) {
-    return true;
-  }
-  return false;
-}
-
-function isSupportAdjacentSignal(signal: string): boolean {
-  if (isDomainExpertiseOnly(signal)) return false;
-  const lower = signal.toLowerCase();
-  return SUPPORT_ADJACENT_SIGNAL_PATTERNS.some((pattern) => pattern.test(lower));
 }
 
 function computeContactCenterTransferability(signal: string, evidenceCorpus: string): number {
@@ -402,60 +253,14 @@ function computeContactCenterTransferability(signal: string, evidenceCorpus: str
   return Math.min(0.85, 0.4 + hits * 0.08);
 }
 
-function qualifiesForDomainAdjacentPartial(params: {
-  signal: string;
-  transferability: TransferabilityResult;
-  contactCenterTransfer: number;
-  toolMismatch: boolean;
-}): boolean {
-  const { signal, transferability, contactCenterTransfer, toolMismatch } = params;
-  if (toolMismatch || isStrictToolRequirement(signal)) return false;
-  if (!isSupportAdjacentSignal(signal)) return false;
-  const effectiveTransfer = Math.max(transferability.score, contactCenterTransfer);
-  return effectiveTransfer >= TRANSFERABILITY_CONFIDENCE_THRESHOLD;
-}
-
-function hasPresentLiteralMatch(signal: string, evidenceText: string): boolean {
-  const scored = scoreEvidenceForSignal(signal, [
-    {
-      evidence_id: "probe",
-      content: evidenceText,
-      section: "experience",
-      company: "",
-      role_title: "",
-      similarity: 1,
-    },
-  ]);
-  const tokenMatches = countPresentTokenMatches(signal, evidenceText);
-  return (
-    scored.overlap >= PRESENT_OVERLAP_THRESHOLD &&
-    tokenMatches >= MIN_PRESENT_LITERAL_TOKEN_MATCHES
-  );
-}
-
-function resolveMissingReason(params: {
-  toolMismatch: boolean;
-  hasRetrievedEvidence: boolean;
-  overlap: number;
-  similarity: number;
-  transferability: TransferabilityResult;
-}): string {
-  const { toolMismatch, hasRetrievedEvidence, overlap, similarity, transferability } = params;
-  if (toolMismatch) {
-    return CLASSIFICATION_REASON.toolMismatch;
-  }
-  if (!hasRetrievedEvidence) {
-    return CLASSIFICATION_REASON.noEvidence;
-  }
-  const meetsPartialOverlap = overlap >= PARTIAL_OVERLAP_THRESHOLD;
-  const meetsPartialSim = similarity >= PARTIAL_SIMILARITY_THRESHOLD;
-  if (
-    meetsPartialOverlap &&
-    meetsPartialSim &&
-    transferability.score < transferability.threshold
-  ) {
-    return CLASSIFICATION_REASON.weakAdjacency;
-  }
+function resolveMissingReasonFromGates(
+  gates: { id: string; forced_missing: boolean }[],
+  hasRetrievedEvidence: boolean,
+): string {
+  if (!hasRetrievedEvidence) return CLASSIFICATION_REASON.noEvidence;
+  const forced = gates.find((gate) => gate.forced_missing);
+  if (forced?.id === "strict_tool_missing") return CLASSIFICATION_REASON.toolMismatch;
+  if (forced) return CLASSIFICATION_REASON.weakDomainMatch;
   return CLASSIFICATION_REASON.weakDomainMatch;
 }
 
@@ -466,6 +271,8 @@ export interface SignalClassificationResult {
   transferability_confidence: number;
   primaryEvidence: RetrievedEvidence | null;
   evidence_used: string[];
+  defensibility_score?: number;
+  defensibility_factors?: DefensibilityFactors;
 }
 
 export function classifySignalEvidence(
@@ -499,74 +306,47 @@ export function classifySignalEvidence(
   const primary = scored.ranked[0];
   const overlap = scored.overlap;
   const similarity = primary.similarity;
-  const evidenceCorpus = scored.ranked.map((item) => item.content).join("\n");
+  const evidenceCorpus = scored.ranked
+    .map((item) => `${item.content} ${item.company} ${item.role_title}`)
+    .join("\n");
   const transferability = computeTransferabilityConfidence(signal, evidenceCorpus);
-  const evidenceConfidence = Math.min(
-    1,
-    Math.max(0, similarity * 0.6 + overlap * 0.4),
-  );
-  const presentLiteralMatch = hasPresentLiteralMatch(
-    signal,
-    `${primary.content} ${primary.company}`,
-  );
-  const toolMismatch = hasToolMismatch(signal, evidenceCorpus);
   const contactCenterTransfer = computeContactCenterTransferability(signal, evidenceCorpus);
   const effectiveTransferability = Math.max(transferability.score, contactCenterTransfer);
+  const evidenceConfidence = Math.min(1, Math.max(0, similarity * 0.6 + overlap * 0.4));
   const primaryEvidenceText = `${primary.content} ${primary.company} ${primary.role_title}`;
-  const callCenterPresentAllowed =
-    !isCallCenterRelatedSignal(signal) || evidenceHasDirectCallCenterWording(primaryEvidenceText);
 
-  if (
-    similarity >= PRESENT_SIMILARITY_THRESHOLD &&
-    presentLiteralMatch &&
-    !toolMismatch &&
-    callCenterPresentAllowed
-  ) {
-    return {
-      classification: "present",
-      classification_reason: CLASSIFICATION_REASON.present,
-      evidence_confidence: evidenceConfidence,
-      transferability_confidence: effectiveTransferability,
-      primaryEvidence: primary,
-      evidence_used: [primary.content],
-    };
-  }
-
-  const meetsPartialOverlap = overlap >= PARTIAL_OVERLAP_THRESHOLD;
-  const meetsPartialSim = similarity >= PARTIAL_SIMILARITY_THRESHOLD;
-  const defensibleTransferableAdjacency =
-    meetsPartialOverlap && meetsPartialSim && !toolMismatch && transferability.score > 0;
-  const domainAdjacentPartial = qualifiesForDomainAdjacentPartial({
+  const defensibility = classifyWithDefensibility({
     signal,
-    transferability,
+    evidenceCorpus,
+    primaryEvidenceText,
+    overlap,
+    similarity,
+    transferability: transferability.score,
     contactCenterTransfer,
-    toolMismatch,
+    hasRetrievedEvidence: Boolean(primary.content),
   });
 
-  if (defensibleTransferableAdjacency || domainAdjacentPartial) {
-    return {
-      classification: "partial",
-      classification_reason: CLASSIFICATION_REASON.partial,
-      evidence_confidence: evidenceConfidence,
-      transferability_confidence: effectiveTransferability,
-      primaryEvidence: primary,
-      evidence_used: [primary.content],
-    };
+  let classification_reason: string;
+  if (defensibility.classification === "present") {
+    classification_reason = CLASSIFICATION_REASON.present;
+  } else if (defensibility.classification === "partial") {
+    classification_reason = CLASSIFICATION_REASON.partial;
+  } else {
+    classification_reason = resolveMissingReasonFromGates(
+      defensibility.gates,
+      Boolean(primary.content),
+    );
   }
 
   return {
-    classification: "missing",
-    classification_reason: resolveMissingReason({
-      toolMismatch,
-      hasRetrievedEvidence: Boolean(primary.content),
-      overlap,
-      similarity,
-      transferability,
-    }),
+    classification: defensibility.classification,
+    classification_reason,
     evidence_confidence: evidenceConfidence,
     transferability_confidence: effectiveTransferability,
     primaryEvidence: primary,
     evidence_used: primary.content ? [primary.content] : [],
+    defensibility_score: defensibility.final_score,
+    defensibility_factors: defensibility.factors,
   };
 }
 
@@ -664,6 +444,8 @@ export async function buildGroundedRecommendations(params: {
       transferability_confidence: classification.transferability_confidence,
       grounded,
       jd_importance_rank: rank,
+      defensibility_score: classification.defensibility_score,
+      defensibility_factors: classification.defensibility_factors,
     });
   }
 
