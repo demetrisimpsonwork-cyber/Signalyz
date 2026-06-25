@@ -135,6 +135,39 @@ describe("Phase 2C calibration classification", () => {
     }));
     const result = classifySignalEvidence("tax filing", ranked, true);
     expect(result.classification).not.toBe("present");
+    expect(["partial", "missing"]).toContain(result.classification);
+  });
+
+  it("tax filing customer support is never PRESENT with only NJDOL support evidence", () => {
+    const pool = chunkResume();
+    const signal = "tax software navigation and filing workflow customer support";
+    const scored = scoreEvidenceForSignal(signal, pool);
+    const ranked = scored.ranked.map((item, idx) => ({
+      ...item,
+      similarity: idx === 0 ? 0.88 : item.similarity,
+    }));
+    const result = classifySignalEvidence(signal, ranked, true);
+    expect(result.classification).not.toBe("present");
+    expect(result.classification).toBe("partial");
+  });
+
+  it("chat support is never PRESENT without chat or channel evidence", () => {
+    const result = classifySignalEvidence("chat support", [escalationEvidence], true);
+    expect(result.classification).not.toBe("present");
+    expect(result.classification).toBe("missing");
+
+    const inflatedGates = evaluateHardGates("chat support", njdolCorpus);
+    const inflated = classifyFromDefensibility(inflatedFactors(), inflatedGates);
+    expect(inflated.classification).toBe("missing");
+  });
+
+  it("written communication customer support is not treated as chat support PRESENT", () => {
+    const result = classifySignalEvidence(
+      "written communication customer support",
+      [escalationEvidence],
+      true,
+    );
+    expect(result.classification).not.toBe("present");
   });
 
   it("first-call and first-contact do not collapse incorrectly", () => {

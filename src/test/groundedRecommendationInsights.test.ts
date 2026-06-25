@@ -132,6 +132,30 @@ describe("groundedRecommendationInsights", () => {
 
     expect(selectFeaturedRepositioning(partials, 5)?.signal_name).toBe("intake");
   });
+
+  it("contact center outranks account access for Tax Support JD partials", () => {
+    const contactCenter = makeRec({
+      signal_name: "contact center",
+      classification: "partial",
+      jd_importance_rank: 3,
+      evidence_confidence: 0.6,
+      transferability_confidence: 0.65,
+    });
+    const accountAccess = makeRec({
+      signal_name: "account access",
+      classification: "partial",
+      jd_importance_rank: 2,
+      evidence_confidence: 0.62,
+      transferability_confidence: 0.5,
+    });
+
+    expect(
+      selectFeaturedRepositioning([contactCenter, accountAccess], 5)?.signal_name,
+    ).toBe("contact center");
+    expect(
+      computeRecommendationPriorityScore(contactCenter, 5),
+    ).toBeGreaterThan(computeRecommendationPriorityScore(accountAccess, 5));
+  });
 });
 
 describe("classification consistency", () => {

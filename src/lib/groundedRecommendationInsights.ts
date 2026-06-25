@@ -10,6 +10,19 @@ const CLASSIFICATION_PRIORITY: Record<GroundedRecommendation["classification"], 
   missing: 1,
 };
 
+/** Small boost for phone/queue support signals vs account-access gaps on customer-support JDs. */
+const CUSTOMER_SUPPORT_FRONT_PATTERN =
+  /\b(contact center|call center|inbound (call|inquiry|inquiries|phone)|phone support|high-volume inbound)\b/i;
+
+const ACCOUNT_ACCESS_PATTERN = /\b(account access|login support|account login)\b/i;
+
+function computeCustomerSupportFrontBoost(signalName: string): number {
+  const lower = signalName.toLowerCase();
+  if (CUSTOMER_SUPPORT_FRONT_PATTERN.test(lower)) return 0.08;
+  if (ACCOUNT_ACCESS_PATTERN.test(lower)) return 0;
+  return 0;
+}
+
 /** Composite priority — JD importance, evidence, transferability, classification tier. */
 export function computeRecommendationPriorityScore(
   recommendation: GroundedRecommendation,
@@ -25,7 +38,8 @@ export function computeRecommendationPriorityScore(
     rankNorm * 0.35 +
     recommendation.evidence_confidence * 0.3 +
     recommendation.transferability_confidence * 0.2 +
-    classWeight * 0.15
+    classWeight * 0.15 +
+    computeCustomerSupportFrontBoost(recommendation.signal_name)
   );
 }
 

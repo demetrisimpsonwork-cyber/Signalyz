@@ -400,7 +400,7 @@ describe("Phase 2B.1 tax operations smoke", () => {
     const taxFiling = raw.find((r) => /tax filing/i.test(r.signal_name));
     expect(turbotax?.classification).toBe("missing");
     expect(taxPrep?.classification).toBe("missing");
-    expect(taxFiling?.classification).toBe("missing");
+    expect(taxFiling?.classification).not.toBe("present");
 
     const taxPartial = partials.find((r) =>
       /tax|contact center|call center|inbound/i.test(r.signal_name),

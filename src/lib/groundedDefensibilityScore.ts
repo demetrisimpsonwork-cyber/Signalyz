@@ -16,6 +16,7 @@ export interface DefensibilityFactors {
 export type DefensibilityGateId =
   | "strict_tool_missing"
   | "domain_expertise_missing"
+  | "tax_filing_present_blocked"
   | "channel_missing"
   | "metrics_missing"
   | "present_blocked_adjacency"
@@ -215,14 +216,48 @@ function isSupportFramedSignal(signal: string): boolean {
   );
 }
 
+/** Tax filing / operations signals — including support-framed variants. */
+export function isTaxFilingDomainSignal(signal: string): boolean {
+  const lower = signal.toLowerCase();
+  return (
+    /\btax filing\b/i.test(lower) ||
+    /\btax operations\b/i.test(lower) ||
+    (/\bfiling\b/i.test(lower) && /\bworkflow\b/i.test(lower) && /\btax\b/i.test(lower))
+  );
+}
+
+function taxFilingDirectlyEvident(evidenceCorpus: string): boolean {
+  return (
+    evidenceContainsToken(evidenceCorpus, "tax") && evidenceContainsToken(evidenceCorpus, "filing")
+  );
+}
+
+function hasTaxFilingSupportAdjacency(signal: string, evidenceCorpus: string): boolean {
+  if (!isTaxFilingDomainSignal(signal)) return false;
+  const supportFramed = isSupportFramedSignal(signal) || /\bsupport\b/i.test(signal);
+  if (!supportFramed && !hasSupportOpsAdjacency(evidenceCorpus)) return false;
+  return hasSupportOpsAdjacency(evidenceCorpus) || supportFramed;
+}
+
+export function isChatSupportSignal(signal: string): boolean {
+  const lower = signal.toLowerCase();
+  if (CHANNEL_SIGNAL_PATTERN.test(lower)) return true;
+  return /\bchat\b/i.test(lower) && /\b(support|messaging|live)\b/i.test(lower);
+}
+
 export function isDomainExpertiseSignal(signal: string): boolean {
   const lower = signal.toLowerCase().trim();
   if (isSupportFramedSignal(lower)) return false;
+  if (isTaxFilingDomainSignal(lower)) return false;
   if (/\btax preparation\b/i.test(lower)) return true;
   if (/no demonstrated.*tax software/i.test(lower)) return true;
-  if (/\btax filing\b/i.test(lower)) return true;
   if (/tax season\b/i.test(lower) && !/support/i.test(lower)) return true;
-  if (/\btax software\b/i.test(lower)) return true;
+  if (
+    /\btax software\b/i.test(lower) &&
+    !/customer support|user support|support experience|workflow customer/i.test(lower)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -250,7 +285,7 @@ function domainExpertiseDirectlyEvident(signal: string, evidenceCorpus: string):
 }
 
 export function isChannelSignal(signal: string): boolean {
-  return CHANNEL_SIGNAL_PATTERN.test(signal.toLowerCase());
+  return isChatSupportSignal(signal);
 }
 
 function channelDirectlyEvident(evidenceCorpus: string): boolean {
@@ -273,7 +308,12 @@ function metricsDirectlyEvident(signal: string, evidenceCorpus: string): boolean
 }
 
 export function isSupportOpsSignal(signal: string): boolean {
-  if (isDomainExpertiseSignal(signal) || isStrictToolSignal(signal) || isChannelSignal(signal)) {
+  if (
+    isDomainExpertiseSignal(signal) ||
+    isTaxFilingDomainSignal(signal) ||
+    isStrictToolSignal(signal) ||
+    isChatSupportSignal(signal)
+  ) {
     return false;
   }
   return SUPPORT_OPS_SIGNAL_PATTERN.test(signal.toLowerCase());
@@ -310,6 +350,24 @@ export function evaluateHardGates(signal: string, evidenceCorpus: string): Defen
     return gates;
   }
 
+  if (isTaxFilingDomainSignal(signal) && !taxFilingDirectlyEvident(evidenceCorpus)) {
+    gates.push({
+      id: "tax_filing_present_blocked",
+      forced_missing: false,
+      present_blocked: true,
+      score_cap: PARTIAL_ADJACENCY_CAP,
+    });
+    if (!hasTaxFilingSupportAdjacency(signal, evidenceCorpus)) {
+      gates.push({
+        id: "domain_expertise_missing",
+        forced_missing: true,
+        present_blocked: true,
+        score_cap: FORCED_MISSING_CAP,
+      });
+      return gates;
+    }
+  }
+
   if (isDomainExpertiseSignal(signal) && !domainExpertiseDirectlyEvident(signal, evidenceCorpus)) {
     gates.push({
       id: "domain_expertise_missing",
@@ -320,7 +378,7 @@ export function evaluateHardGates(signal: string, evidenceCorpus: string): Defen
     return gates;
   }
 
-  if (isChannelSignal(signal) && !channelDirectlyEvident(evidenceCorpus)) {
+  if (isChatSupportSignal(signal) && !channelDirectlyEvident(evidenceCorpus)) {
     gates.push({
       id: "channel_missing",
       forced_missing: true,
