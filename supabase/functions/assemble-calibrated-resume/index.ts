@@ -148,9 +148,29 @@ function isFieldContaminated(v: string): boolean {
 }
 
 /** Sanitize a title field — blank it out if contaminated */
+function stripEmptyParentheses(v: string): string {
+  return v.replace(/\s*\(\s*\)/g, "").replace(/\s*\(\s*[-–—]\s*\)/g, "").trim();
+}
+
+/** Titles that look like JD gap labels rather than real role titles */
+function isLikelySignalGapTitle(v: string): boolean {
+  const t = v.trim();
+  if (!t) return false;
+  if (ROLE_TITLE_RX.test(t)) return false;
+  return /\b(support|accuracy|routing|eligibility|documentation|compliance|resolution)\b/i.test(t) && t.split(/\s+/).length <= 6;
+}
+
+function sanitizeRoleField(v: string): string {
+  const t = stripEmptyParentheses(v || "");
+  if (!t || /^[-–—.\s,]+$/.test(t)) return "";
+  return t;
+}
+
 function sanitizeTitle(v: string): string {
-  if (isFieldContaminated(v)) return "";
-  return v.trim();
+  const stripped = stripEmptyParentheses(v);
+  if (isFieldContaminated(stripped)) return "";
+  if (isLikelySignalGapTitle(stripped)) return "";
+  return stripped.trim();
 }
 
 /** Sanitize a company field — blank it out if contaminated */
@@ -1063,6 +1083,13 @@ DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language fro
 
 COMMERCIAL FUNCTION PRESERVATION: NEVER insert commercial, sales-support, quoting, pricing, prospecting, revenue-growth, product-spec, or manufacturing-function language from the JD unless the candidate's original resume explicitly demonstrates that function. If the original resume shows support/operations/coordination work, describe it as support/operations/coordination — do not reframe it as commercial or sales activity.
 
+CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
+- NEVER claim chat, live chat, messaging, or in-app chat support unless the original resume explicitly mentions chat, messaging, live chat, or in-app chat.
+- Phone, email, member, and customer support framing IS allowed when supported by resume evidence.
+- NEVER claim EAP, employee assistance, crisis support, crisis routing, or crisis intervention unless evidenced in the original resume.
+- NEVER claim tax filing, payroll, W-2, 1099, or tax preparation unless evidenced in the original resume.
+- NEVER name specific software/tools (Salesforce, Zendesk, ServiceNow, Intercom, etc.) unless they appear in the original resume.
+
 BANNED VERBS: NEVER use: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated.
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
@@ -1262,6 +1289,87 @@ function stripDomainFabricationFromBullet(bullet: string, originalResumeText: st
   }
 
   return cleaned;
+}
+
+const CHAT_EVIDENCE_RX = /\b(chat|live chat|messaging|in-app chat|intercom|slack)\b/i;
+const EAP_CRISIS_EVIDENCE_RX = /\b(eap|employee assistance|crisis (support|routing|line|intervention)|mental health hotline)\b/i;
+const TAX_PAYROLL_EVIDENCE_RX = /\b(tax filing|payroll|w-?2|1099|tax preparation)\b/i;
+
+const TOOL_EVIDENCE_TERMS = [
+  "zendesk", "salesforce", "servicenow", "hubspot", "intercom", "freshdesk",
+  "jira", "confluence", "workday", "peoplesoft", "turbotax", "quickbooks", "netsuite",
+];
+
+function cleanupClaimArtifacts(text: string): string {
+  return text
+    .replace(/\s{2,}/g, " ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*\./g, ".")
+    .replace(/\s+\./g, ".")
+    .replace(/,\s*$/, "")
+    .trim();
+}
+
+/**
+ * Strip chat, EAP/crisis, tax/payroll, and tool claims not evidenced in the original resume.
+ */
+function stripUnverifiedClaims(text: string, originalResumeText: string): string {
+  if (typeof text !== "string" || !text.trim()) return "";
+  if (typeof originalResumeText !== "string") return text.trim();
+  const resumeLower = originalResumeText.toLowerCase();
+  let cleaned = text;
+
+  if (!CHAT_EVIDENCE_RX.test(resumeLower)) {
+    cleaned = cleaned
+      .replace(/\b(?:live\s+)?chat\s+support\b/gi, "customer support")
+      .replace(/\bchat(?:\s*,\s*|\s+and\s+)email\b/gi, "email")
+      .replace(/\bemail(?:\s*,\s*|\s+and\s+)chat\b/gi, "email")
+      .replace(/\bphone(?:\s*,\s*|\s+and\s+)chat\b/gi, "phone")
+      .replace(/\b(?:via|through)\s+chat\b/gi, "")
+      .replace(/\bchat-based\b/gi, "")
+      .replace(/\bmessaging\s+support\b/gi, "customer support")
+      .replace(/\bchat\b/gi, "");
+    cleaned = cleanupClaimArtifacts(cleaned);
+  }
+
+  if (!EAP_CRISIS_EVIDENCE_RX.test(resumeLower)) {
+    cleaned = cleaned
+      .replace(/\bemployee assistance program\b/gi, "")
+      .replace(/\bemployee assistance\b/gi, "")
+      .replace(/\beap\b/gi, "")
+      .replace(/\bcrisis (support|routing|line|intervention)\b/gi, "")
+      .replace(/\bmental health hotline\b/gi, "");
+    cleaned = cleanupClaimArtifacts(cleaned);
+  }
+
+  if (!TAX_PAYROLL_EVIDENCE_RX.test(resumeLower)) {
+    cleaned = cleaned
+      .replace(/\btax filing\b/gi, "")
+      .replace(/\btax preparation\b/gi, "")
+      .replace(/\bpayroll\b/gi, "")
+      .replace(/\bw-?2\b/gi, "")
+      .replace(/\b1099\b/gi, "");
+    cleaned = cleanupClaimArtifacts(cleaned);
+  }
+
+  for (const tool of TOOL_EVIDENCE_TERMS) {
+    if (resumeLower.includes(tool)) continue;
+    const rx = new RegExp(`\\b${escapeRegExp(tool)}\\b`, "gi");
+    cleaned = cleaned.replace(rx, "");
+  }
+  cleaned = cleanupClaimArtifacts(cleaned);
+
+  if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
+    cleaned += ".";
+  }
+  return cleaned;
+}
+
+/** Post-process AI-generated summary/bullet text for domain fabrication and unverified claims */
+function postProcessGeneratedText(text: string, originalResumeText: string): string {
+  const domainCleaned = stripDomainFabricationFromBullet(text, originalResumeText);
+  return stripUnverifiedClaims(domainCleaned, originalResumeText);
 }
 
 const STRONG_SIGNAL_VERBS = [
@@ -1775,7 +1883,7 @@ function repairSignalBullet(
   // Strip domain fabrication FIRST — before any other repairs that might
   // re-inject or anchor around fabricated industry language
   if (originalResumeText) {
-    bullet = stripDomainFabricationFromBullet(bullet, originalResumeText);
+    bullet = postProcessGeneratedText(bullet, originalResumeText);
   }
 
   bullet = eliminatePassiveLanguage(bullet);
@@ -2156,6 +2264,13 @@ COMMERCIAL FUNCTION PRESERVATION (NON-NEGOTIABLE):
 - If the original bullet describes support, operations, coordination, documentation, or administrative work, rewrite it as better support/operations/coordination language — do NOT reframe it as commercial, sales, or revenue-generating activity.
 - Prefer neutral framing: "account support," "issue resolution," "systems coordination," "documentation accuracy," "workflow support."
 
+CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
+- NEVER claim chat, live chat, messaging, or in-app chat support unless the original bullet or resume explicitly mentions chat, messaging, live chat, or in-app chat.
+- Phone, email, member, and customer support framing IS allowed when supported by resume evidence.
+- NEVER claim EAP, employee assistance, crisis support, crisis routing, or crisis intervention unless evidenced in the original resume or bullet.
+- NEVER claim tax filing, payroll, W-2, 1099, or tax preparation unless evidenced in the original resume or bullet.
+- NEVER name specific software/tools (Salesforce, Zendesk, ServiceNow, Intercom, etc.) unless they appear in the original resume or bullet.
+
 VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs.
 - If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
@@ -2258,7 +2373,7 @@ Return ONLY valid JSON array:
           bulletsTotal++;
           let aiBullet = aiBullets[bulletIndex] || originalBullet;
           if (originalResumeText) {
-            aiBullet = stripDomainFabricationFromBullet(aiBullet, originalResumeText);
+            aiBullet = postProcessGeneratedText(aiBullet, originalResumeText);
           }
           if (aiBullet.trim() !== originalBullet.trim()) {
             bulletsRewritten++;
@@ -2441,7 +2556,7 @@ Deno.serve(async (req) => {
     console.log(`[assemble] [${request_id}] Cleanup stage`);
     const cleanedSummary =
       originalResume && typeof rewrittenSummary === "string"
-        ? stripDomainFabricationFromBullet(rewrittenSummary, originalResume)
+        ? postProcessGeneratedText(rewrittenSummary, originalResume)
         : typeof rewrittenSummary === "string"
           ? rewrittenSummary
           : "";
@@ -2558,9 +2673,9 @@ function normalizeResult(assembled: any) {
           const maxBullets = idx === 0 ? 4 : 3;
           if (bullets.length > maxBullets) bullets = bullets.slice(0, maxBullets);
           return {
-            company: e.company || "",
-            title: e.title || "",
-            dates: e.dates || "",
+            company: sanitizeRoleField(sanitizeCompany(e.company || "")),
+            title: sanitizeRoleField(sanitizeTitle(e.title || "")),
+            dates: sanitizeRoleField(e.dates || ""),
             bullets,
           };
         })
@@ -2599,11 +2714,11 @@ function normalizeResult(assembled: any) {
   return {
     header: {
       name: cleanName,
-      title: assembled.header?.title || "",
+      title: sanitizeRoleField(assembled.header?.title || ""),
       email: assembled.header?.email || "",
       phone: assembled.header?.phone || "",
       linkedin: assembled.header?.linkedin || "",
-      location: assembled.header?.location || "",
+      location: sanitizeRoleField(assembled.header?.location || ""),
     },
     summary: assembled.summary || "",
     core_competencies: Array.isArray(assembled.core_competencies) ? assembled.core_competencies : [],

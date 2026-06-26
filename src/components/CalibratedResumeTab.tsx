@@ -89,9 +89,9 @@ const CalibratedResumeTab = ({
   const {
     assembledResume, loading, error, step, assemble,
     confidence, pendingResume, confirmResume, skipConfirmation, reset: resetAssembly,
-    rewriteStatus,
+    rewriteStatus, assemblyAttempt, assemblyBusy,
   } = useResumeAssembly();
-  const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume);
+  const { editedResume, editMode, setEditMode, saved, updateField } = useResumeEditor(assembledResume, assemblyAttempt);
 
   const currentResume = editedResume || assembledResume;
   const [showPdfFallback, setShowPdfFallback] = useState(false);
@@ -119,6 +119,7 @@ const CalibratedResumeTab = ({
   // Gate CTA handles upgrade prompting inline — no auto-trigger modal
 
   const handleAssemble = (overrideResume?: string) => {
+    if (assemblyBusy) return;
     const resumeText = overrideResume || originalResume;
     const contact = overrideResume ? extractContactFromText(overrideResume) : preExtractedContact;
     assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>, jdText);
@@ -229,6 +230,7 @@ const CalibratedResumeTab = ({
             onClick={() => handleAssemble()}
             variant="outline"
             className="w-full gap-2"
+            disabled={assemblyBusy}
           >
             <RefreshCw className="h-4 w-4" />
             Retry Assembly
@@ -281,7 +283,7 @@ const CalibratedResumeTab = ({
             onReassemble={() => handleAssemble()}
             onExportDocx={handleExportDocx}
             onExportPdf={handleExportPdf}
-            loading={loading}
+            loading={assemblyBusy}
             saved={saved}
           />
 

@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import type { ExtractedContactInfo } from "@/lib/contactExtractor";
-import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
+import { invokeResilient, FRIENDLY_FAIL_MSG, StructuredEdgeError, isInFlight, clearInFlight } from "@/lib/resilientEdgeFn";
 import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
 import { handleUsageLimitError } from "@/lib/usageLimitError";
 
@@ -51,6 +51,10 @@ interface UseResumeAssemblyReturn {
   assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => Promise<void>;
   /** Clear all assembled state — use when a new alignment run begins */
   reset: () => void;
+  /** Increments on each assemble attempt — clears stale editor state */
+  assemblyAttempt: number;
+  /** True while assembly is loading or an edge invoke is in-flight */
+  assemblyBusy: boolean;
 }
 
 export interface RewriteStatus {
@@ -75,6 +79,25 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [rewriteStatus, setRewriteStatus] = useState<RewriteStatus | null>(null);
+  const [assemblyAttempt, setAssemblyAttempt] = useState(0);
+  const assemblingRef = useRef(false);
+
+  const stripEmptyParentheses = (v: string): string =>
+    v.replace(/\s*\(\s*\)/g, "").replace(/\s*\(\s*[-–—]\s*\)/g, "").trim();
+
+  const isLikelySignalGapTitle = (v: string): boolean => {
+    const t = v.trim();
+    if (!t) return false;
+    const roleTitleRx = /\b(specialist|manager|analyst|coordinator|engineer|developer|director|lead|supervisor|associate|consultant|administrator|architect|designer|officer|president|vice\s+president|vp|intern|assistant|head\s+of|representative|technician|executive|chief|senior|junior|principal)\b/i;
+    if (roleTitleRx.test(t)) return false;
+    return /\b(support|accuracy|routing|eligibility|documentation|compliance|resolution)\b/i.test(t) && t.split(/\s+/).length <= 6;
+  };
+
+  const sanitizeRoleField = (v: string): string => {
+    const t = stripEmptyParentheses(v || "");
+    if (!t || /^[-–—.\s,]+$/.test(t)) return "";
+    return t;
+  };
 
   const finalizeResume = useCallback((resume: CalibratedResumeData) => {
     setAssembledResume(resume);
@@ -108,6 +131,10 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
   }, []);
 
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => {
+    if (assemblingRef.current || isInFlight("assembly")) return;
+    assemblingRef.current = true;
+    clearInFlight("assembly");
+    setAssemblyAttempt((n) => n + 1);
     setAssembledResume(null);
     setLoading(true);
     setError(null);
@@ -139,6 +166,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         if (handleUsageLimitError(err)) {
           stepTimers.forEach(clearTimeout);
           setLoading(false);
+          assemblingRef.current = false;
           return;
         }
         const isFriendly = err.message === FRIENDLY_FAIL_MSG;
@@ -148,8 +176,12 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
           continue;
         }
         stepTimers.forEach(clearTimeout);
-        setError(isFriendly ? FRIENDLY_FAIL_MSG : (err.message || FRIENDLY_FAIL_MSG));
+        const errMsg = err instanceof StructuredEdgeError
+          ? err.formatAssemblyMessage()
+          : (isFriendly ? FRIENDLY_FAIL_MSG : (err.message || FRIENDLY_FAIL_MSG));
+        setError(errMsg);
         setLoading(false);
+        assemblingRef.current = false;
         return;
       }
     }
@@ -159,6 +191,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     if (!data) {
       setError("Resume generation is taking longer than expected. Try again — your alignment data is saved.");
       setLoading(false);
+      assemblingRef.current = false;
       return;
     }
 
@@ -337,7 +370,10 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       });
 
       for (const exp of cleanExperience) {
-        if (isTitleContaminated(exp.title)) {
+        exp.title = sanitizeRoleField(exp.title);
+        exp.company = sanitizeRoleField(exp.company);
+        exp.dates = sanitizeRoleField(exp.dates);
+        if (isTitleContaminated(exp.title) || isLikelySignalGapTitle(exp.title)) {
           exp.title = "";
         }
         if (isCompanyContaminated(exp.company)) {
@@ -402,8 +438,11 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       setError(err.message || "Failed to assemble resume. Please retry.");
     } finally {
       setLoading(false);
+      assemblingRef.current = false;
     }
   }, [finalizeResume]);
 
-  return { assembledResume, loading, error, step, confidence, rewriteStatus, pendingResume, confirmResume, skipConfirmation, assemble, reset };
+  const assemblyBusy = loading || isInFlight("assembly");
+
+  return { assembledResume, loading, error, step, confidence, rewriteStatus, pendingResume, confirmResume, skipConfirmation, assemble, reset, assemblyAttempt, assemblyBusy };
 }

@@ -41,13 +41,34 @@ export const FRIENDLY_FAIL_MSG =
 /** Structured error from edge function with debug info */
 export class StructuredEdgeError extends Error {
   error_code: string;
+  request_id?: string;
+  http_status?: number;
   debug?: { step?: string; details?: string };
-  constructor(payload: { error_code?: string; message?: string; debug?: { step?: string; details?: string } }) {
-    const step = payload.debug?.step ? ` [step: ${payload.debug.step}]` : "";
-    const details = payload.debug?.details ? ` — ${payload.debug.details}` : "";
-    super(`${payload.error_code || "ERROR"}: ${payload.message || "Unknown error"}${step}${details}`);
+  constructor(
+    payload: {
+      error_code?: string;
+      message?: string;
+      request_id?: string;
+      debug?: { step?: string; details?: string };
+    },
+    httpStatus?: number,
+  ) {
+    super(payload.message || payload.error_code || "Unknown error");
     this.error_code = payload.error_code || "UNKNOWN";
+    this.request_id = payload.request_id;
+    this.http_status = httpStatus;
     this.debug = payload.debug;
+  }
+
+  /** User-facing assembly error with HTTP status, request_id, and stage when available */
+  formatAssemblyMessage(): string {
+    const lines: string[] = [];
+    if (this.message) lines.push(this.message);
+    if (this.http_status) lines.push(`HTTP ${this.http_status}`);
+    if (this.request_id) lines.push(`request_id: ${this.request_id}`);
+    if (this.debug?.step) lines.push(`stage: ${this.debug.step}`);
+    if (this.debug?.details) lines.push(this.debug.details);
+    return lines.join("\n");
   }
 }
 
@@ -75,7 +96,7 @@ export async function invokeResilient(
       // Still potentially alive — rejoin
       const { data, error } = await existing.promise;
       inFlight.delete(key);
-      if (error) throw coerce(error);
+      if (error) throw await enrichFunctionsError(error);
       if (data?.status === "error")
         throw new StructuredEdgeError(data);
       return data;
@@ -97,18 +118,7 @@ export async function invokeResilient(
     const { data, error } = await Promise.race([promise, timeout]) as { data: any; error: any };
     inFlight.delete(key);
     if (error) {
-      // Try to extract structured error from non-2xx response body
-      if (typeof error === "object" && error?.context?.body) {
-        try {
-          const parsed = JSON.parse(error.context.body);
-          if (parsed?.status === "error") {
-            throw new StructuredEdgeError(parsed);
-          }
-        } catch (e) {
-          if (e instanceof StructuredEdgeError) throw e;
-        }
-      }
-      throw coerce(error);
+      throw await enrichFunctionsError(error);
     }
     if (data?.status === "error") {
       throw new StructuredEdgeError(data);
@@ -125,6 +135,56 @@ export async function invokeResilient(
 /** Returns true if a request with this key is currently in-flight */
 export function isInFlight(key: string): boolean {
   return inFlight.has(key);
+}
+
+/** Drop a stale in-flight entry so a fresh invoke can start (e.g. explicit Re-Assemble) */
+export function clearInFlight(key: string): void {
+  inFlight.delete(key);
+}
+
+async function enrichFunctionsError(err: any): Promise<Error> {
+  if (err?.name === "FunctionsHttpError" && err?.context instanceof Response) {
+    const response = err.context as Response;
+    const httpStatus = response.status;
+    let bodyText = "";
+    try {
+      bodyText = await response.text();
+    } catch {
+      // ignore read failures
+    }
+    if (bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (parsed?.status === "error") {
+          return new StructuredEdgeError(parsed, httpStatus);
+        }
+        const msg = parsed?.message || parsed?.error || bodyText.slice(0, 300);
+        const synthetic = new StructuredEdgeError(
+          {
+            error_code: parsed?.error_code || "EDGE_ERROR",
+            message: msg,
+            request_id: parsed?.request_id,
+            debug: parsed?.debug,
+          },
+          httpStatus,
+        );
+        return synthetic;
+      } catch (e) {
+        if (e instanceof StructuredEdgeError) return e;
+      }
+      const fallback = new StructuredEdgeError(
+        { error_code: "EDGE_ERROR", message: bodyText.slice(0, 300) },
+        httpStatus,
+      );
+      return fallback;
+    }
+    const statusOnly = new StructuredEdgeError(
+      { error_code: "EDGE_ERROR", message: err.message || "Edge function failed" },
+      httpStatus,
+    );
+    return statusOnly;
+  }
+  return coerce(err);
 }
 
 function coerce(err: any): Error {

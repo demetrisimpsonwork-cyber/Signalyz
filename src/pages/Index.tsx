@@ -423,6 +423,7 @@ const Index = () => {
   useResumeRetrievalIngestion(bullet, inputSource);
   const [searchParams, setSearchParams] = useSearchParams();
   const [analysisSessionKey, setAnalysisSessionKey] = useState(0);
+  const [assemblySessionKey, setAssemblySessionKey] = useState(0);
   const [showRestoredBanner, setShowRestoredBanner] = useState(false);
   const prevUserRef = useRef<typeof user>(undefined);
 
@@ -1046,6 +1047,7 @@ const Index = () => {
       });
       setResult(res);
       setResultRunType(runType);
+      setAssemblySessionKey((k) => k + 1);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
       trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
 
@@ -1475,7 +1477,7 @@ const Index = () => {
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
           <CalibratedResumeTab
-            key={analysisSessionKey}
+            key={`${analysisSessionKey}-${assemblySessionKey}`}
             isPro={effectiveIsPro}
             onUpgrade={() => setShowUpgrade(true)}
             directorResult={directorResult}

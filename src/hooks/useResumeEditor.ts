@@ -9,11 +9,16 @@ interface UseResumeEditorReturn {
   updateField: (path: string, value: any) => void;
 }
 
-export function useResumeEditor(initial: CalibratedResumeData | null): UseResumeEditorReturn {
+export function useResumeEditor(initial: CalibratedResumeData | null, resetKey = 0): UseResumeEditorReturn {
   const [editedResume, setEditedResume] = useState<CalibratedResumeData | null>(initial);
   const [editMode, setEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Clear stale edits when a fresh assembly starts
+  useEffect(() => {
+    setEditedResume(null);
+  }, [resetKey]);
 
   // Sync when initial changes (new assembly)
   useEffect(() => {
