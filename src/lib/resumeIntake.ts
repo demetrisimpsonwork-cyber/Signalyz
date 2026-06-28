@@ -188,6 +188,17 @@ export function normalizeRawText(text: string): string {
   // Convert fancy bullets to "-"
   t = t.replace(FANCY_BULLETS, "-");
 
+  // Convert numbered / lettered list markers to "-" so they are recognized as
+  // bullets: "1.", "1)", "01.", "(1)", "a.", "A)". Only 1–2 digit numerics, so
+  // 4-digit years (2021) and phone fragments are never treated as bullets.
+  t = t
+    .split("\n")
+    .map((l) => {
+      const m = l.match(/^(\s*)(?:\(\d{1,2}\)|\d{1,2}[.)]|[a-hA-H][.)])\s+(\S.*)$/);
+      return m ? `${m[1]}- ${m[2]}` : l;
+    })
+    .join("\n");
+
   // De-hyphenate wrapped words: "calibra-\n tion" -> "calibration"
   t = t.replace(/(\w)-\s*\n\s*(\w)/g, "$1$2");
 
@@ -823,6 +834,51 @@ export function parseResumeIntake(rawText: string): ResumeIntakeResult {
 // ─── Quality Meter Helper ────────────────────────────────────────────────────
 
 export type PasteQuality = "strong" | "good" | "usable" | "needs_more";
+
+// ─── Pre-Assembly Confidence Gate ────────────────────────────────────────────
+
+/** User-facing message shown when the resume can't be parsed reliably enough to assemble. */
+export const PARSE_GATE_MESSAGE =
+  "We couldn't reliably read your work experience from this resume. Please paste your resume text directly (company, title, dates, and 3–5 bullet points per role) or upload a DOCX for best results.";
+
+export interface AssemblyParseGate {
+  blocked: boolean;
+  /** Machine-readable reason for logging/analytics. */
+  reason?: "too_short" | "unparseable" | "no_experience";
+  /** User-facing message (only when blocked). */
+  detail?: string;
+}
+
+/**
+ * Decide whether a resume is parseable enough to send to assembly.
+ *
+ * Intentionally conservative — it only blocks clearly unusable input (too short,
+ * unparseable, or no detectable experience at all) so that normal resumes the
+ * edge parser can handle are never falsely rejected.
+ */
+export function evaluateAssemblyParseGate(rawText: string): AssemblyParseGate {
+  const text = (rawText || "").trim();
+  const alphaCount = text.replace(/[^a-zA-Z]/g, "").length;
+  if (alphaCount < 120) {
+    return { blocked: true, reason: "too_short", detail: PARSE_GATE_MESSAGE };
+  }
+
+  const result = parseResumeIntake(text);
+  if (result.status === "error") {
+    return { blocked: true, reason: "unparseable", detail: PARSE_GATE_MESSAGE };
+  }
+
+  const exp = result.sections.experience;
+  const totalBullets = exp.reduce((sum, e) => sum + e.responsibilities.length, 0);
+  const hasAnyRole = exp.some(
+    (e) => e.company || e.role_title || e.responsibilities.length > 0,
+  );
+  if (!hasAnyRole || totalBullets === 0) {
+    return { blocked: true, reason: "no_experience", detail: PARSE_GATE_MESSAGE };
+  }
+
+  return { blocked: false };
+}
 
 export function getPasteQuality(result: ResumeIntakeResult): PasteQuality {
   if (result.status === "error") return "needs_more";

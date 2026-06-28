@@ -44,10 +44,37 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
     // Debug logging for layout detection
     console.log(`[PDF Parser] Layout: ${structured.layoutType}, Confidence: ${structured.confidence.toFixed(2)}, Sections: ${structured.sections.map(s => s.type).join(", ")}`);
 
-    const text = structured.rawText;
-    if (!text || text.length < 10) {
-      throw new Error("Could not extract meaningful text from this PDF. Try pasting your resume text directly.");
+    const text = structured.rawText || "";
+
+    // ── Scanned / image-based PDF detection ──
+    // Image-only PDFs yield little-to-no extractable text. Block these before
+    // they reach the parser or any AI call, and steer the user to DOCX / paste.
+    const SCANNED_PDF_MESSAGE =
+      "This PDF looks image-based or could not be read reliably. Please upload a DOCX or copy/paste your resume for best results.";
+    const numPages = pdf.numPages || 1;
+    const meaningfulChars = text.replace(/\s/g, "").length;
+    const avgCharsPerPage = meaningfulChars / numPages;
+    const pageCharCounts = pageData.map((p) =>
+      (p.content?.items || []).reduce(
+        (n: number, it: any) => n + ((it.str || "").trim().length),
+        0,
+      ),
+    );
+    const blankPages = pageCharCounts.filter((c) => c < 20).length;
+
+    const looksUnreadable =
+      meaningfulChars < 150 ||
+      avgCharsPerPage < 100 ||
+      blankPages === numPages ||
+      structured.confidence < 0.3;
+
+    if (looksUnreadable) {
+      console.warn(
+        `[PDF Parser] Unreadable/scanned PDF blocked: chars=${meaningfulChars}, avgCharsPerPage=${avgCharsPerPage.toFixed(0)}, blankPages=${blankPages}/${numPages}, confidence=${structured.confidence.toFixed(2)}`,
+      );
+      throw new Error(SCANNED_PDF_MESSAGE);
     }
+
     return text;
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { sanitizeResumeText } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
 import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
 import { Textarea } from "@/components/ui/textarea";
@@ -233,7 +234,9 @@ const DIRECTOR_CALIBRATION_TIMEOUT_MS = 180_000;
 const MAX_JD_CHARS = 8000;
 
 function normalizeClientInput(text: string, maxChars: number): { text: string; truncated: boolean } {
-  let cleaned = text
+  // Strip HTML/entities, invisible Unicode, smart quotes, and paste artifacts
+  // before the lighter control-character/whitespace normalization.
+  let cleaned = sanitizeResumeText(text)
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
     .replace(/[^\S\n]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")

@@ -4,6 +4,7 @@ import type { ExtractedContactInfo } from "@/lib/contactExtractor";
 import { invokeResilient, FRIENDLY_FAIL_MSG, StructuredEdgeError, isInFlight, clearInFlight } from "@/lib/resilientEdgeFn";
 import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
 import { handleUsageLimitError } from "@/lib/usageLimitError";
+import { evaluateAssemblyParseGate, PARSE_GATE_MESSAGE } from "@/lib/resumeIntake";
 
 export interface CalibratedResumeData {
   header: {
@@ -132,6 +133,23 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
 
   const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => {
     if (assemblingRef.current || isInFlight("assembly")) return;
+
+    // ── Parser confidence gate ──
+    // Block clearly unusable resumes (too short, unparseable, or no detectable
+    // experience) before spending an AI call or rendering a hollow document.
+    // Only enforced when we actually have resume text — alignment-only assembly
+    // (no originalResume) is allowed to proceed as before.
+    if (originalResume && originalResume.trim()) {
+      const gate = evaluateAssemblyParseGate(originalResume);
+      if (gate.blocked) {
+        console.warn("[useResumeAssembly] Parse gate blocked assembly:", gate.reason);
+        setError(gate.detail || PARSE_GATE_MESSAGE);
+        setStep(0);
+        setLoading(false);
+        return;
+      }
+    }
+
     assemblingRef.current = true;
     clearInFlight("assembly");
     setAssemblyAttempt((n) => n + 1);
