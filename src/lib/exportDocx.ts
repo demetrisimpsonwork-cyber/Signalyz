@@ -1,99 +1,127 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, HeadingLevel, LevelFormat } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  AlignmentType,
+  BorderStyle,
+  HeadingLevel,
+  LevelFormat,
+  Tab,
+  TabStopType,
+  TabStopPosition,
+} from "docx";
 import { saveAs } from "file-saver";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
-import { bulletToPastTense } from "@/lib/pastTense";
+import {
+  normalizeResumeForExport,
+  RESUME_SECTION_LABELS,
+} from "@/lib/resumeExportModel";
+
+const BULLET_NUMBERING = "resume-bullet-list";
+
+function sectionHeader(text: string) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    pageBreakBefore: false,
+    spacing: { before: 300, after: 140 },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "374151" } },
+    children: [
+      new TextRun({
+        text: text.toUpperCase(),
+        bold: true,
+        size: 22,
+        font: "Calibri",
+        color: "374151",
+        characterSpacing: 60,
+      }),
+    ],
+  });
+}
+
+function bulletParagraph(text: string) {
+  return new Paragraph({
+    spacing: { before: 20, after: 20, line: 264 },
+    numbering: { reference: BULLET_NUMBERING, level: 0 },
+    children: [new TextRun({ text, size: 22, font: "Calibri", color: "1A1A2E" })],
+  });
+}
+
+function experienceRoleParagraphs(exp: {
+  title: string;
+  company: string;
+  dates: string;
+  bullets: string[];
+}) {
+  const blocks: Paragraph[] = [];
+
+  if (exp.title || exp.dates) {
+    blocks.push(
+      new Paragraph({
+        spacing: { before: 200, after: 20 },
+        keepNext: true,
+        tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+        children: [
+          ...(exp.title
+            ? [new TextRun({ text: exp.title, italics: true, size: 24, font: "Calibri", color: "1A1A2E" })]
+            : []),
+          ...(exp.dates
+            ? [
+                new TextRun({
+                  children: [new Tab()],
+                  size: 21,
+                  font: "Calibri",
+                  color: "6B7280",
+                }),
+                new TextRun({ text: exp.dates, size: 21, font: "Calibri", color: "6B7280" }),
+              ]
+            : []),
+        ],
+      }),
+    );
+  }
+
+  if (exp.company) {
+    blocks.push(
+      new Paragraph({
+        spacing: { before: 0, after: 40 },
+        keepNext: true,
+        children: [
+          new TextRun({ text: exp.company, bold: true, size: 22, font: "Calibri", color: "374151" }),
+        ],
+      }),
+    );
+  }
+
+  blocks.push(...exp.bullets.map((b) => bulletParagraph(b)));
+  return blocks;
+}
+
+function educationParagraph(edu: { degree: string; institution: string; year: string }) {
+  const left = [edu.degree, edu.institution].filter(Boolean).join(" · ");
+  return new Paragraph({
+    spacing: { before: 40, after: 40 },
+    tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+    children: [
+      ...(left ? [new TextRun({ text: left, size: 22, font: "Calibri", color: "1A1A2E" })] : []),
+      ...(edu.year
+        ? [
+            new TextRun({ children: [new Tab()], size: 20, font: "Calibri", color: "6B7280" }),
+            new TextRun({ text: edu.year, size: 20, font: "Calibri", color: "6B7280" }),
+          ]
+        : []),
+    ],
+  });
+}
 
 export async function exportCalibratedDocx(resume: CalibratedResumeData) {
-  // Preprocess certifications: strip URLs, markdown links, brackets — plain text only
-  const cleanedCertifications = (resume.certifications || []).map((cert) => {
-    let clean = cert
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")   // [text](url) → text
-      .replace(/https?:\/\/\S+/gi, "")            // bare URLs
-      .replace(/www\.\S+/gi, "")                   // www links
-      .replace(/<a[^>]*>(.*?)<\/a>/gi, "$1")       // <a> tags
-      .replace(/\s{2,}/g, " ")
-      .trim();
-    if (/google\s+it\s+support\s+professional\s+certificate/i.test(clean)) {
-      clean = "Google IT Support Professional Certificate — Coursera";
-    }
-    return clean;
-  });
-
-  const sectionHeader = (text: string) =>
-    new Paragraph({
-      heading: HeadingLevel.HEADING_2,
-      pageBreakBefore: false,
-      spacing: { before: 300, after: 140 },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "888888" } },
-      children: [
-        new TextRun({
-          text: text.toUpperCase(),
-          bold: true,
-          size: 21,
-          font: "Calibri",
-          color: "2d2d2d",
-          characterSpacing: 60, // ~0.5pt letter spacing
-        }),
-      ],
-    });
-
-  const contactParts = [
-    resume.header.location,
-    resume.header.email,
-    resume.header.phone,
-    resume.header.linkedin,
-  ].filter(Boolean);
-
-  const experienceChildren = resume.experience.flatMap((exp) => {
-    const roleParts: Paragraph[] = [];
-
-    // Role Title — bold, own line
-    if (exp.title) {
-      roleParts.push(
-        new Paragraph({
-          spacing: { before: 240, after: 20 },
-          keepNext: true,
-          children: [
-            new TextRun({ text: exp.title, bold: true, size: 22, font: "Calibri", color: "111111" }),
-          ],
-        }),
-      );
-    }
-
-    // Company | Dates — second line, lighter color
-    const metaParts = [exp.company, exp.dates].filter(Boolean);
-    if (metaParts.length) {
-      roleParts.push(
-        new Paragraph({
-          spacing: { before: 0, after: 60 },
-          keepNext: true,
-          children: [
-            new TextRun({ text: metaParts.join("  |  "), size: 20, font: "Calibri", color: "555555" }),
-          ],
-        }),
-      );
-    }
-
-    // Bullets — consistent spacing
-    roleParts.push(
-      ...exp.bullets.map(
-        (b) =>
-          new Paragraph({
-            spacing: { before: 40, after: 40, line: 264 },
-            bullet: { level: 0 },
-            children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
-          }),
-      ),
-    );
-
-    return roleParts;
-  });
+  const model = normalizeResumeForExport(resume);
 
   const doc = new Document({
     numbering: {
       config: [
         {
-          reference: "bullet-list",
+          reference: BULLET_NUMBERING,
           levels: [
             {
               level: 0,
@@ -102,7 +130,7 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
               alignment: AlignmentType.LEFT,
               style: {
                 paragraph: {
-                  indent: { left: 360, hanging: 180 },
+                  indent: { left: 720, hanging: 360 },
                 },
               },
             },
@@ -117,24 +145,8 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           name: "Heading 1",
           basedOn: "Normal",
           next: "Normal",
-          run: { bold: true, size: 36, font: "Calibri", color: "111111" },
+          run: { bold: true, size: 48, font: "Calibri", color: "1A1A2E" },
           paragraph: { spacing: { after: 40 }, alignment: AlignmentType.CENTER },
-        },
-        {
-          id: "Heading2",
-          name: "Heading 2",
-          basedOn: "Normal",
-          next: "Normal",
-          run: { bold: true, size: 21, font: "Calibri", color: "2d2d2d" },
-          paragraph: { spacing: { before: 300, after: 140 } },
-        },
-        {
-          id: "Heading3",
-          name: "Heading 3",
-          basedOn: "Normal",
-          next: "Normal",
-          run: { bold: true, size: 22, font: "Calibri" },
-          paragraph: { spacing: { before: 200, after: 40 } },
         },
       ],
     },
@@ -144,144 +156,132 @@ export async function exportCalibratedDocx(resume: CalibratedResumeData) {
           page: { margin: { top: 1440, bottom: 1200, left: 1200, right: 1200 } },
         },
         children: [
-          // Name — largest element, centered
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
-            pageBreakBefore: false,
             alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
             children: [
-              new TextRun({ text: resume.header.name || "Name", bold: true, size: 36, font: "Calibri", color: "111111" }),
+              new TextRun({
+                text: model.header.name,
+                bold: true,
+                size: 48,
+                font: "Calibri",
+                color: "1A1A2E",
+              }),
             ],
           }),
-          // Title
-          ...(resume.header.title
+          ...(model.header.title
             ? [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
                   spacing: { after: 40 },
                   children: [
-                    new TextRun({ text: resume.header.title, size: 22, font: "Calibri", color: "444444" }),
+                    new TextRun({
+                      text: model.header.title,
+                      size: 28,
+                      font: "Calibri",
+                      color: "4B5563",
+                    }),
                   ],
                 }),
               ]
             : []),
-          // Contact line — bullet separators
-          ...(contactParts.length > 0
+          ...(model.header.contactLine
             ? [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  spacing: { after: 100 },
-                  children: [
-                    new TextRun({ text: contactParts.join("  •  "), size: 19, font: "Calibri", color: "666666" }),
-                  ],
-                }),
-              ]
-            : []),
-          // Header divider
-          new Paragraph({
-            spacing: { after: 240 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "BBBBBB" } },
-            children: [],
-          }),
-          // Professional Summary
-          ...(resume.summary
-            ? [
-                sectionHeader("Professional Summary"),
-                new Paragraph({
-                  spacing: { after: 240, line: 276 },
-                  children: [new TextRun({ text: resume.summary, size: 21, font: "Calibri" })],
-                }),
-              ]
-            : []),
-          // Core Competencies
-          ...((resume.core_competencies.length > 0 || (resume.skills && resume.skills.length > 0))
-            ? [
-                sectionHeader("Core Competencies"),
-                new Paragraph({
-                  spacing: { after: 240, line: 276 },
+                  spacing: { after: 120 },
                   children: [
                     new TextRun({
-                      text: [...(resume.core_competencies || []), ...(resume.skills || [])]
-                        .filter((v, i, a) => a.indexOf(v) === i)
-                        .join("  •  "),
-                      size: 21,
+                      text: model.header.contactLine,
+                      size: 22,
                       font: "Calibri",
+                      color: "6B7280",
                     }),
                   ],
                 }),
               ]
             : []),
-          // Experience
-          ...(experienceChildren.length > 0
-            ? [sectionHeader("Professional Experience"), ...experienceChildren]
-            : []),
-          // Independent Projects
-          ...(resume.independent_projects && resume.independent_projects.length > 0
+          new Paragraph({
+            spacing: { after: 240 },
+            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "D1D5DB" } },
+            children: [],
+          }),
+          ...(model.summary
             ? [
-                sectionHeader("Independent Projects"),
-                ...resume.independent_projects.flatMap((proj) => [
-                  new Paragraph({
-                    pageBreakBefore: false,
-                    spacing: { before: 180, after: 40 },
-                    children: [
-                      new TextRun({ text: proj.name, bold: true, size: 22, font: "Calibri", color: "111111" }),
-                    ],
-                  }),
-                  ...(proj.description
-                    ? [
-                        new Paragraph({
-                          spacing: { before: 0, after: 60 },
-                          children: [
-                            new TextRun({ text: proj.description, size: 20, font: "Calibri", color: "555555" }),
-                          ],
-                        }),
-                      ]
-                    : []),
-                  ...proj.bullets.map(
-                    (b) =>
-                      new Paragraph({
-                        spacing: { before: 40, after: 40, line: 264 },
-                        bullet: { level: 0 },
-                        children: [new TextRun({ text: bulletToPastTense(b), size: 21, font: "Calibri" })],
-                      }),
-                  ),
-                ]),
+                sectionHeader(RESUME_SECTION_LABELS.summary),
+                new Paragraph({
+                  spacing: { after: 200, line: 288 },
+                  children: [new TextRun({ text: model.summary, size: 23, font: "Calibri", color: "1A1A2E" })],
+                }),
               ]
             : []),
-          // Certifications
-          ...(cleanedCertifications.length > 0
+          ...(model.competencies.length > 0
             ? [
-                sectionHeader("Certifications"),
-                ...cleanedCertifications.map(
-                  (cert) =>
-                    new Paragraph({
-                      spacing: { before: 40, after: 40 },
-                      bullet: { level: 0 },
-                      children: [
-                        new TextRun({ text: cert, size: 21, font: "Calibri", color: "000000", bold: false }),
-                      ],
+                sectionHeader(RESUME_SECTION_LABELS.competencies),
+                new Paragraph({
+                  spacing: { after: 200, line: 288 },
+                  children: [
+                    new TextRun({
+                      text: model.competenciesText,
+                      size: 20,
+                      font: "Calibri",
+                      color: "374151",
                     }),
-                ),
+                  ],
+                }),
               ]
             : []),
-          // Education
-          ...(resume.education.length > 0
+          ...(model.experience.length > 0
             ? [
-                sectionHeader("Education"),
-                ...resume.education.map(
-                  (edu) =>
+                sectionHeader(RESUME_SECTION_LABELS.experience),
+                ...model.experience.flatMap((exp) => experienceRoleParagraphs(exp)),
+              ]
+            : []),
+          ...(model.projects.length > 0
+            ? [
+                sectionHeader(RESUME_SECTION_LABELS.projects),
+                ...model.projects.flatMap((proj) => {
+                  const lines: Paragraph[] = [
                     new Paragraph({
-                      spacing: { before: 40, after: 60 },
+                      spacing: { before: 120, after: 40 },
+                      keepNext: proj.bullets.length > 0,
                       children: [
                         new TextRun({
-                          text: [edu.degree, edu.institution, edu.year].filter(Boolean).join("  —  "),
-                          size: 21,
+                          text: proj.name,
+                          bold: true,
+                          size: 24,
                           font: "Calibri",
+                          color: "1A1A2E",
                         }),
+                        ...(proj.description
+                          ? [
+                              new TextRun({
+                                text: ` — ${proj.description}`,
+                                size: 22,
+                                font: "Calibri",
+                                color: "6B7280",
+                              }),
+                            ]
+                          : []),
                       ],
                     }),
-                ),
+                  ];
+                  lines.push(...proj.bullets.map((b) => bulletParagraph(b)));
+                  return lines;
+                }),
+              ]
+            : []),
+          ...(model.certifications.length > 0
+            ? [
+                sectionHeader(RESUME_SECTION_LABELS.certifications),
+                ...model.certifications.map((cert) => bulletParagraph(cert)),
+              ]
+            : []),
+          ...(model.education.length > 0
+            ? [
+                sectionHeader(RESUME_SECTION_LABELS.education),
+                ...model.education.map((edu) => educationParagraph(edu)),
               ]
             : []),
         ],
