@@ -1000,14 +1000,32 @@ function extractSignalConversions(directorResult: any): string {
   }
 
   if (conversions.length === 0) return "";
-  return `\nSIGNAL CONVERSION CONTEXT (CRITICAL — apply these mappings in every rewrite):
-These are transferable signals already present in the candidate's experience that map to the target role.
-Frame these as CAPABILITIES the candidate already has, expressed in role-aligned language.
-Do NOT treat these as gaps — treat them as perception issues to fix through language choices.
+  return `\nSIGNAL CONVERSION CONTEXT (optional reference — use only when resume evidence supports):
+These are transferable signals already present in the candidate's experience that may map to the target role.
+Frame as CAPABILITIES the candidate already has, using role-aligned language only when it accurately describes existing work.
+Do NOT treat these as gaps — never mention missing skills or JD-only requirements.
 ${conversions.join("\n")}`;
 }
 
 // ─── Phase 2: Focused sectional API calls with JD context ───
+
+const FINAL_EDITING_PASS = `FINAL EDITING PASS (INTERNAL — before returning output):
+Perform one silent editing pass on your draft. Do not explain this process.
+
+Remove:
+- repetitive wording
+- repeated sentence cadence
+- unnecessary adjectives
+- corporate filler
+- obvious AI phrasing
+
+Prefer:
+- shorter sentences
+- concrete wording
+- recruiter readability
+- evidence-first language
+
+If two versions communicate the same fact, choose the simpler one.`;
 
 async function generateSummary(
   originalSummary: string,
@@ -1026,8 +1044,8 @@ async function generateSummary(
 
   const context = [
     `Original summary: ${originalSummary}`,
-    jdSource ? `\nTARGET JD SIGNAL CONTEXT:\n${jdSource}` : "",
-    topPhrases.length > 0 ? `\nTOP JD PHRASES TO INCORPORATE:\n${topPhrases.map(p => `• ${p}`).join("\n")}` : "",
+    jdSource ? `\nTARGET ROLE CONTEXT (for vocabulary awareness only — do not mention gaps or missing skills in the summary):\n${jdSource}` : "",
+    topPhrases.length > 0 ? `\nROLE VOCABULARY REFERENCE (use sparingly — only when resume evidence supports; do not copy JD wording verbatim):\n${topPhrases.map(p => `• ${p}`).join("\n")}` : "",
     signalConversionBlock,
     directorResult.director_signal_tier ? `Signal tier: ${directorResult.director_signal_tier.tier}` : "",
     `\nFirst 2000 chars of resume:\n${originalResume.slice(0, 2000)}`,
@@ -1048,36 +1066,43 @@ async function generateSummary(
         model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 500,
         temperature: 0.3,
-        system: `Rewrite this professional summary to align with the target role's hiring criteria and maximize JD keyword mirroring.
+        system: `Rewrite this professional summary so a hiring manager trusts it on first read. Align vocabulary naturally with the target role where resume evidence supports it. Favor readability over keyword repetition. Use JD terminology only when it accurately reflects existing experience — never copy JD wording verbatim.
 
-SIGNAL CONVERSION PRIORITY:
-- If SIGNAL CONVERSION CONTEXT is provided, the summary MUST incorporate at least one converted capability.
-- Frame existing experience using role-aligned language from the conversion mappings.
-- The candidate should read as someone who already does this work — just in a different environment.
-- Example: If "workflow management → order coordination" is a conversion, the summary should reference coordination/tracking capability, not generic "workflow" language.
-- Do NOT simply swap verbs. Functionally rewrite each capability statement to express the true operational role at the CORRECT authority level.
-- Use TIERED language: Tier 1 (owned, led) ONLY with clear evidence of direct authority. Default to Tier 2 (coordinated, handled, managed workflow, directed flow). Use Tier 3 (executed, processed, resolved) when the role was execution-level.
+INTERNAL WRITING STANDARD (apply to every sentence):
+"Would an experienced recruiter naturally write this sentence about a real candidate?"
+Avoid corporate buzzwords, unnecessary adjective stacking, repetitive ATS phrasing, and unnatural keyword repetition.
+
+SIGNAL CONVERSION (when context is provided):
+- You MAY incorporate zero or one conversion if it fits without sounding repositioned.
+- Frame existing experience using role-aligned language only when the resume supports it.
+- Do NOT simply swap verbs. Express the true operational role at the CORRECT authority level.
+- Use TIERED language: Tier 1 (owned, led) ONLY with clear evidence of direct authority. Default to Tier 3 (executed, processed, resolved) for execution-level work; use Tier 2 (coordinated, handled, tracked, routed) only when the resume shows process control.
 - Do NOT inflate — "supported order processing" should become "processed and tracked order fulfillment across accounts" (Tier 3), NOT "managed order operations" (Tier 2) unless that authority is evidenced.
 - NEVER use soft verbs (supported, assisted, helped). Rewrite the full phrase at the appropriate tier.
-- The summary must communicate capability and system awareness, not inflate seniority beyond what the resume evidences.
+- Communicate capability and system awareness without inflating seniority beyond what the resume evidences.
 
 RULES:
 - Write 3-4 sentences, max 60 words total. Active voice only.
 - Every sentence must reference verifiable experience from the original resume.
-- Incorporate the target role's exact language and key phrases naturally throughout — this is critical for JD mirroring scoring.
-- If TOP JD PHRASES are provided, weave 2-3 of them naturally into the summary where semantically valid.
+- Use role-aligned terminology only when it naturally replaces generic wording. At most one JD-matched term in the full summary, and only if evidenced.
 - ZERO fabrication: do not invent experience, metrics, or capabilities not present in the original.
 
-SENTENCE VARIATION (CRITICAL — prevents robotic uniformity):
-- The first sentence must be a direct identity statement anchored to the candidate's strongest signal pillar (e.g., "Operations coordinator with 6+ years managing cross-functional workflows.").
-- The second sentence must use a DIFFERENT structure — describe a specific capability or scope, not another identity claim.
-- The third sentence (if needed) should reference a concrete outcome, tool, or domain from the resume.
-- NEVER start two sentences with the same word or pattern. Vary openers: use a noun phrase, then a verb phrase, then a prepositional or qualifying phrase.
+OPENING & CLOSING (recruiter quality):
+- Do NOT open like a LinkedIn headline (e.g., "Customer Support Specialist with 6 years..."). Avoid "Role title with X years..." as the default opener.
+- Open with demonstrated value: operational scope, customer impact, problem-solving depth, regulated or high-stakes environments, scale of responsibility, or ownership — whichever the resume best supports.
+- The final sentence must end with one concrete differentiator from the resume (metric, volume, tool, outcome, or environment) — not a generic capability claim.
+
+SENTENCE VARIATION:
+- Use a different structure in each sentence. Vary openers: scope phrase, impact phrase, prepositional phrase, or outcome phrase.
+- NEVER start two sentences with the same word or pattern.
 - NEVER open with: "Demonstrates", "Possesses", "Reflecting", "Highly accomplished", "Dedicated experience", "Experienced in", "Skilled in", "Proven track record".
-- Do NOT use the pattern "Adjective noun with X years..." more than once.
 
 TONE:
-- Write like an experienced operator, not a marketing copywriter. No abstract claims, no "passionate about," no presentation language. State facts and capabilities plainly.
+- Write like an experienced recruiter drafting a credible candidate summary — plain, specific, and trustworthy. No abstract claims, no "passionate about," no presentation language.
+
+JD VOCABULARY:
+- Allow JD vocabulary only when resume evidence exists or it is a natural synonym of existing work.
+- Do NOT encourage copying JD wording. Avoid obvious keyword stuffing.
 
 DOMAIN PRESERVATION: NEVER insert industry, sector, or company-type language from the JD (e.g., "manufacturing," "distribution," "healthcare," "logistics") unless that exact language already appears in the candidate's original resume. JD vocabulary may only describe HOW the candidate works — never WHERE they worked or WHAT industry they were in.
 
@@ -1091,6 +1116,8 @@ CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
 - NEVER name specific software/tools (Salesforce, Zendesk, ServiceNow, Intercom, etc.) unless they appear in the original resume.
 
 BANNED VERBS: NEVER use: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated.
+
+${FINAL_EDITING_PASS}
 
 Return ONLY the summary text, no JSON, no quotes, no labels.`,
         messages: [{ role: "user", content: context }],
@@ -2156,7 +2183,7 @@ async function rewriteExperienceBullets(
   const topPhrases = [...jdModel.bigrams.slice(0, 8), ...jdModel.trigrams.slice(0, 5)];
   const topKeywords = jdModel.keywords.slice(0, 10);
   const jdPhraseBlock = topPhrases.length > 0
-    ? `\nTOP JD PHRASES (incorporate 1-2 per bullet where semantically valid):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nTOP JD KEYWORDS (distribute across all bullets):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
+    ? `\nROLE VOCABULARY REFERENCE (for awareness only — use sparingly; many bullets may contain no explicit JD terminology):\n${topPhrases.map(p => `• ${p}`).join("\n")}\n\nROLE KEYWORDS REFERENCE (use only when naturally replacing generic wording — do not repeat for keyword density):\n${topKeywords.map(k => `• ${k}`).join("\n")}`
     : "";
   const jdSignals = rawJd?.trim() || extractJDSignals(directorResult);
   const signalConversionBlock = extractSignalConversions(directorResult);
@@ -2182,78 +2209,65 @@ async function rewriteExperienceBullets(
         model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 4096,
         temperature: 0.2,
-        system: `You are rewriting final resume bullets for a calibrated resume that must materially improve JD Mirroring score without fabricating experience.
+        system: `You are rewriting resume experience bullets so a hiring manager trusts them on first read. Improve clarity, specificity, ownership where evidenced, and recruiter readability. Do NOT rewrite simply to inject keywords. Preserve every fact from the source bullets.
 
-TARGET JD SIGNAL CONTEXT:
+INTERNAL WRITING STANDARD (apply to every bullet):
+"Would an experienced recruiter naturally write this sentence about a real candidate?"
+Avoid corporate buzzwords, unnecessary adjective stacking, repetitive ATS phrasing, and unnatural keyword repetition.
+
+TARGET ROLE CONTEXT:
 ${jdSignals}
 ${jdPhraseBlock}
 ${signalConversionBlock}
 
-SIGNAL CONVERSION RULES (CRITICAL — apply when SIGNAL CONVERSION CONTEXT is present):
-- When a transferable signal mapping is provided (e.g., "escalation handling → issue resolution ownership"), rewrite bullets to express the CONVERTED signal.
-- Frame the candidate's existing work using role-aligned language: if workflows map to order coordination, bullets must reflect coordination, tracking, completion.
-- If escalation handling maps to issue ownership, bullets must show ownership framing, not passive support.
-- If stakeholder communication maps to account support, bullets must reflect relationship continuity and client-facing language.
-- The candidate should read as: "already does this role — just in a different environment."
+SIGNAL CONVERSION (when context is provided):
+- When a transferable mapping is provided, you MAY reframe language only if the source bullet genuinely supports it.
+- Convert language, not authority level — do not upgrade passive support into ownership framing.
 - ZERO FABRICATION still applies: only reframe what genuinely exists. Do not invent new scope or responsibilities.
 
 FUNCTIONAL REWRITING WITH AUTHORITY CALIBRATION (NON-NEGOTIABLE):
 - Do NOT simply swap verbs (e.g., "assisted → managed"). That produces fake-sounding bullets.
-- Instead, REWRITE THE FULL SENTENCE to express the TRUE FUNCTIONAL ROLE the candidate performed.
-- Every rewritten bullet must clearly show: (1) what system/process was involved, (2) what part the candidate directly controlled or influenced, (3) what operational movement or outcome occurred.
+- REWRITE THE FULL SENTENCE to express the TRUE FUNCTIONAL ROLE the candidate performed.
+- Each rewritten bullet should show, where the source supports it: (1) what system/process was involved, (2) what part the candidate directly controlled or influenced, (3) what operational movement or outcome occurred.
 
 ROLE-SAFE LANGUAGE TIERS (apply strictly based on source resume evidence):
   TIER 1 — HIGH AUTHORITY (use ONLY when the source resume explicitly proves direct authority):
     owned, led, directed strategy, accountable for, built, established
-    → Only valid when the resume shows the candidate was the decision-maker or sole owner.
-  TIER 2 — MID CONTROL (DEFAULT TARGET — use for most rewrites):
+  TIER 2 — MID CONTROL (use when the candidate clearly controlled a process or system):
     coordinated, managed workflow, handled, directed flow, oversaw process execution, maintained, administered, tracked, routed
-    → Use when the candidate clearly controlled a process or system, even if not the final authority.
-  TIER 3 — ACTIVE EXECUTION (use when the candidate performed work but did not control the process):
+  TIER 3 — ACTIVE EXECUTION (DEFAULT for support/execution roles):
     executed, processed, resolved, responded, compiled, prepared, completed, logged, documented, fulfilled
-    → Appropriate for operational/support roles where the candidate was the doer, not the director.
 
-  DEFAULT TO TIER 2. Only escalate to Tier 1 with clear evidence. Use Tier 3 when the source bullet genuinely reflects execution-level work — do NOT force every bullet into Tier 2.
+  Match tier to evidence — do NOT force every bullet into Tier 2. Support and execution roles should mostly use Tier 3.
 
 ANTI-INFLATION RULES (CRITICAL):
 - Do NOT default to ownership verbs (owned, led, drove, managed) for every bullet.
 - Do NOT upgrade "handled" → "owned" or "assisted" → "led" or "supported" → "directed" — these are forced escalations.
-- Instead, restructure the sentence to show what was actually controlled at the level the candidate operated.
-- Some bullets SHOULD remain operational/execution-level if that reflects reality. Not every bullet needs to sound like a leadership statement.
+- Restructure the sentence to show what was actually controlled at the level the candidate operated.
+- Some bullets SHOULD remain operational/execution-level if that reflects reality.
 - WRONG: "Owned end-to-end escalation resolution" (source: "Helped resolve customer escalations")
-- RIGHT: "Routed and tracked customer escalations through resolution, coordinating with technical teams"
+- RIGHT: "Routed and tracked customer escalations through resolution, working with technical teams"
 - WRONG: "Led onboarding operations" (source: "Helped with new hire onboarding")
 - RIGHT: "Processed new-hire onboarding steps including system access setup, documentation, and orientation scheduling"
 
-FUNCTIONAL REWRITE PATTERNS (calibrated by tier):
-  Tier 2 patterns (most common):
-    • "Coordinated [activity] between [parties], tracking [what]"
-    • "Handled [process] across [scope], ensuring [outcome]"
-    • "Maintained [system/process] for [scope], resolving [issues]"
-    • "Directed [workflow] flow from [start] through [completion]"
-  Tier 3 patterns (for execution-level work):
-    • "Processed [volume] of [items] per [timeframe]"
-    • "Resolved [type] issues through [method]"
-    • "Compiled and distributed [reports/data] across [teams]"
-    • "Executed [workflow] including [specific steps]"
-
 BANNED SOFT LANGUAGE — these must NEVER appear in any rewritten bullet:
   supported, assisted, helped, aided, "participated in," "was responsible for," "involved in," "contributed to" (alone).
-  If the original uses these, the entire bullet must be functionally rewritten — but rewritten at the CORRECT tier, not automatically escalated.
+  If the original uses these, functionally rewrite at the CORRECT tier — do not automatically escalate authority.
 
 NATURAL VARIATION (NON-NEGOTIABLE):
-- Not every bullet should sound high-impact. Mix Tier 2 and Tier 3 bullets realistically within each role.
-- A realistic resume has some punchy ownership bullets AND some straightforward operational bullets.
-- If the source role was primarily execution/support work, MOST bullets should be Tier 3 with 1-2 Tier 2 bullets.
-- If the source role was coordinator/manager level, MOST bullets should be Tier 2 with 0-1 Tier 1 bullets.
+- Mix Tier 2 and Tier 3 bullets realistically within each role.
+- A realistic resume has some stronger bullets AND some straightforward operational bullets.
+- Do NOT let one opening structure dominate a role. Avoid repeatedly starting with the same verb patterns (e.g., Coordinated..., Managed..., Maintained..., Responsible for...).
+- Vary sentence structure: action-led, context-led, and outcome-led openings are all valid — no single structure should exceed ~40% of bullets in a role.
 
-SCOPE PRESERVATION: Functional rewrites must preserve the EXACT scope (accounts, teams, metrics, tools). Only the sentence structure and framing change — never the facts.
+SCOPE PRESERVATION: Functional rewrites must preserve the EXACT scope (accounts, teams, metrics, tools). Only sentence structure and framing change — never the facts.
 
-CRITICAL JD MIRRORING RULES:
-- Each bullet MUST incorporate 1-2 JD phrases (from the TOP JD PHRASES list above) where semantically valid.
-- Replace generic phrasing with JD-aligned vocabulary for verbs, objects, and outcomes.
-- The top JD keywords must appear multiple times across all bullets — distributed naturally, not stuffed.
-- Prioritize JD vocabulary over generic resume language in every rewrite decision.
+JD VOCABULARY (NATURAL ALIGNMENT):
+- Prefer the candidate's authentic experience. Use JD terminology only where it accurately describes existing work.
+- Use role-aligned terminology only when it naturally replaces generic wording. Many bullets may contain no explicit JD terminology.
+- Allow JD vocabulary only when resume evidence exists or it is a natural synonym of existing work.
+- Do NOT copy JD wording verbatim. Do NOT repeat the same role keyword across multiple bullets for density.
+- Never repeat the same JD-echo phrase in more than one bullet across the entire resume.
 
 DOMAIN PRESERVATION (NON-NEGOTIABLE):
 - NEVER insert industry, sector, or company-type language from the JD into bullets unless that exact language already appears in the candidate's original bullet.
@@ -2273,72 +2287,61 @@ CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
 
 VERB RULES:
 - Every bullet must begin with exactly ONE strong action verb. Never stack two verbs.
-- If the bullet already begins with an action verb, replace it with a stronger one — do not prepend a second verb.
+- Replace weak openers only when needed — do not upgrade verb authority tier for impact.
 
-SIGNAL DENSITY VARIATION (CRITICAL — controls bullet hierarchy and readability):
-Each role MUST have a clear signal density hierarchy:
+BULLET HIERARCHY (readability, not keyword density):
+Each role should have natural variation in depth:
 
-  HIGH DENSITY (ANCHOR — exactly 1 per role, MUST be the first bullet):
-    - The candidate's most important responsibility or system control for that role.
-    - Contains: system/process + control/action + outcome or operational movement.
-    - Length: 18–26 words. Slightly longer, more layered sentence.
-    - Must feel like: "this is what they actually did at a core level."
-    - Example: "Coordinated cross-departmental escalation workflows from intake through resolution, tracking status across 4 teams and maintaining SLA compliance."
+  ANCHOR (first bullet — the strongest factual responsibility for that role):
+    - Lead with scope, system, or outcome from the source bullet.
+    - Length: roughly 14–22 words. One process and one outcome maximum.
+    - Should read as the role's core contribution, not a keyword container.
 
-  MEDIUM DENSITY (1–2 bullets per role):
-    - Supporting responsibilities: coordination, workflow handling, cross-functional interaction.
-    - Structured but less layered than anchor. Clean and direct.
-    - Length: 12–18 words.
-    - Example: "Tracked vendor deliverables across three regions, flagging delays to operations leads."
+  SUPPORTING (1–2 bullets per role):
+    - Clean, direct responsibilities. Length: roughly 10–18 words.
 
-  LOW DENSITY (0–2 bullets per role):
-    - Operational or narrower tasks. Shorter, sharper. No forced complexity.
-    - Adds realism and variation. Not every task needs to sound strategic.
-    - Length: 6–12 words.
-    - Example: "Processed weekly compliance reports for audit review."
+  OPERATIONAL (remaining bullets):
+    - Narrower tasks. Shorter and sharper. Length: roughly 6–14 words.
+    - Plain operational bullets are welcome — not every task needs layered phrasing.
 
-DENSITY DISTRIBUTION RULES:
-  - First bullet per role MUST be HIGH DENSITY (the anchor).
-  - Remaining bullets must mix MEDIUM and LOW — never stack multiple HIGH density bullets.
-  - No more than 2 bullets of similar length in a row.
-  - The density tier of a bullet must match the authority tier: HIGH density bullets typically use Tier 2 language, LOW density bullets often use Tier 3.
+  - Do not stack multiple anchor-length bullets in a row.
+  - Match depth to authority tier: execution-level bullets stay short and direct.
 
-BULLET RHYTHM & VARIATION (prevents robotic uniformity):
-- NOT every bullet should follow the same "Verb + object + context" pattern. Mix these structures:
-  • ACTION-LED: "Managed vendor contracts across three regions." (most common — ~60% of bullets)
-  • CONTEXT-LED: "Across 12 client accounts, maintained SLA compliance above 98%." (~20% of bullets)
-  • OUTCOME-LED: "Reduced ticket backlog by 35% through revised escalation routing." (~20% of bullets)
+BULLET RHYTHM & VARIATION:
+- Mix action-led, context-led, and outcome-led structures within each role.
 - Within a single role, no two consecutive bullets should start with the same verb.
 - Across the entire resume, no verb should lead more than 3 bullets total.
-- Do NOT allow every bullet to sound equally "optimized." Some should be plain and operational.
+- Do NOT allow every bullet to sound equally polished. Some should be plain and operational.
 
-DEDUPLICATION (CRITICAL):
+DEDUPLICATION:
 - Before finalizing, scan ALL bullets across ALL roles for semantic duplicates.
 - If two bullets describe the same responsibility in different roles, keep only the stronger version and replace the weaker one with a different, factual responsibility from that role.
-- Never repeat the same JD-echo phrase in more than one bullet across the entire resume.
 
 BULLET STRUCTURE:
 - Each bullet must express ONE core idea. Do not chain multiple accomplishments with "and" or commas.
-- HIGH density bullets: 18–26 words. MEDIUM: 12–18 words. LOW: 6–12 words. Never exceed 30 words.
-- Remove all filler phrases: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
-- Remove all softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
-- Do NOT try to sound impressive. Write like an experienced operator describing their work plainly.
+- Never exceed 30 words.
+- Remove filler: "in order to," "with a focus on," "in an effort to," "as part of," "as needed," "on a daily basis."
+- Remove softeners: "effectively," "successfully," "efficiently," "proactively," "strategically," "consistently."
+- Do NOT try to sound impressive. Write plainly and specifically.
 
 TONE (NON-NEGOTIABLE):
-- Use grounded, operator-level language appropriate for technical support, operations, and systems roles.
+- Grounded, credible language appropriate for support, operations, and systems roles.
 - No abstract claims, no presentation language, no consulting-speak.
 - Wrong: "Strategically orchestrated cross-functional alignment initiatives to drive operational excellence across enterprise stakeholders."
-- Right: "Coordinated system migrations across three departments, resolving 40+ configuration issues."
+- Right: "Resolved configuration issues during a three-department system migration, closing 40+ tickets."
 
 NON-NEGOTIABLE RULES:
-1. Rewrite EVERY bullet. Preserve company names, titles, dates, tools, metrics, team sizes, dollar amounts exactly.
-2. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
-3. Every bullet must remain ATS-safe, export-safe plain text.
+1. Rewrite bullets that are weak, passive, vague, or generic. Preserve strong bullets with light edits only when they already read clearly.
+2. Preserve company names, titles, dates, tools, metrics, team sizes, dollar amounts exactly.
+3. ZERO FABRICATION: do not invent metrics, leadership, scope, responsibilities, tools, or results.
+4. Every bullet must remain ATS-safe, export-safe plain text with strong nouns and action verbs — without forced keyword repetition.
 
 OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
 - No placeholders. No brackets. No markdown.
+
+${FINAL_EDITING_PASS}
 
 Return ONLY valid JSON array:
 [{"company":"","title":"","dates":"","bullets":["..."]}]`,
