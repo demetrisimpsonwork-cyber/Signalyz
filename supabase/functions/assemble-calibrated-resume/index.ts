@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { shortenBullet, capRoleBullets } from "../_shared/bulletShaping.ts";
 import { sanitizeUntrustedText } from "../_shared/promptSafety.ts";
+import { normalizeEmployerPromotions } from "../_shared/promotionParser.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -487,7 +488,10 @@ function parseExperienceBlock(lines: string[]): ParsedRole[] {
   }
 
   commitRole();
-  return roles;
+  // Repair same-employer promotion grouping: split bled promotion headers,
+  // collapse employer-header pseudo-roles, and inherit the employer name onto
+  // promotion rows that lost it. Order and bullets are preserved exactly.
+  return normalizeEmployerPromotions(roles);
 }
 
 // ─── Education line validators ───
