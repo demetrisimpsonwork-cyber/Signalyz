@@ -4,6 +4,10 @@ import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { shortenBullet, capRoleBullets } from "../_shared/bulletShaping.ts";
 import { sanitizeUntrustedText } from "../_shared/promptSafety.ts";
 import { normalizeEmployerPromotions } from "../_shared/promotionParser.ts";
+import { repairStrippedGrammar } from "../_shared/grammarRepair.ts";
+import { stripUnsupportedMetrics } from "../_shared/metricProvenance.ts";
+import { rankBulletsByStrength, diversifyBulletOpenings } from "../_shared/bulletStrength.ts";
+import { curateCompetencies } from "../_shared/competencyCuration.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -857,10 +861,9 @@ function extractJDSignals(directorResult: any): string {
   return parts.join("\n");
 }
 
-function reorderCompetencies(skills: string[], directorResult: any): string[] {
-  if (!skills.length) return skills;
+function collectJdSignals(directorResult: any): string[] {
   const jdSignals: string[] = [];
-  const jdExtraction = directorResult.signal_classifier?.jd_signal_extraction;
+  const jdExtraction = directorResult?.signal_classifier?.jd_signal_extraction;
   if (jdExtraction) {
     jdSignals.push(
       ...(jdExtraction.role_identity_signals || []),
@@ -870,6 +873,12 @@ function reorderCompetencies(skills: string[], directorResult: any): string[] {
       ...(jdExtraction.relationship_signals || []),
     );
   }
+  return jdSignals.filter(Boolean);
+}
+
+function reorderCompetencies(skills: string[], directorResult: any): string[] {
+  if (!skills.length) return skills;
+  const jdSignals = collectJdSignals(directorResult);
   if (!jdSignals.length) return skills;
   const jdLower = jdSignals.map(s => s.toLowerCase());
   const scored = skills.map(skill => {
@@ -913,17 +922,19 @@ function assembleStructureFromSignalData(directorResult: any, originalResume: st
     independentProjects = parsed.independentProjects;
   }
 
-  // Core competencies: use actual skills parsed from the resume
-  if (skills.length > 0) {
-    coreCompetencies = skills.slice(0, 12);
+  // Core competencies: evidence-based curation (Phase 5.1 Priority 2). Start from
+  // the skills parsed from the resume, fall back to the signal report's
+  // competencies, then curate — dedupe, merge synonyms, Title Case, prioritize by
+  // JD relevance + demonstrated evidence, and cap to ~8–10. NEVER invents skills.
+  let competencySource: string[] = skills.length > 0 ? skills.slice() : [];
+  if (competencySource.length === 0 && report.export_builder?.core_competencies?.length) {
+    competencySource = report.export_builder.core_competencies;
   }
-  if (coreCompetencies.length === 0 && report.export_builder?.core_competencies?.length) {
-    coreCompetencies = report.export_builder.core_competencies;
-  }
+  const jdSignals = collectJdSignals(report);
+  const evidenceText = `${originalResume || ""}\n${textToParse || ""}`;
+  coreCompetencies = curateCompetencies(competencySource, jdSignals, evidenceText, { min: 6, max: 10 });
 
-  // NEVER use dimension_scores keys as competencies
-
-  coreCompetencies = reorderCompetencies(coreCompetencies, report);
+  // Skills list (kept separate from curated competencies) retains JD-aware ordering.
   skills = reorderCompetencies(skills, report);
 
   // Signal keywords
@@ -1412,7 +1423,12 @@ function stripUnverifiedClaims(text: string, originalResumeText: string): string
 /** Post-process AI-generated summary/bullet text for domain fabrication and unverified claims */
 function postProcessGeneratedText(text: string, originalResumeText: string): string {
   const domainCleaned = stripDomainFabricationFromBullet(text, originalResumeText);
-  return stripUnverifiedClaims(domainCleaned, originalResumeText);
+  const claimCleaned = stripUnverifiedClaims(domainCleaned, originalResumeText);
+  // P5: remove quantitative claims not supported by the source resume.
+  const metricCleaned = stripUnsupportedMetrics(claimCleaned, originalResumeText);
+  // P1: repair grammatical scars left behind by all the stripping above so the
+  // sentence reads as though it was originally written that way.
+  return repairStrippedGrammar(metricCleaned);
 }
 
 const STRONG_SIGNAL_VERBS = [
@@ -2657,8 +2673,10 @@ function cleanBullet(bullet: string): string {
     b = shaped.text;
   }
 
-  // Ensure ends with period if non-empty
-  if (b.length > 0 && !/[.!?]$/.test(b)) b += ".";
+  // Final grammar repair: clean any dangling connectors / punctuation left by
+  // filler and softener removal so the bullet reads naturally (also ensures a
+  // terminal period).
+  b = repairStrippedGrammar(b);
   return b;
 }
 
@@ -2684,6 +2702,8 @@ function normalizeResult(assembled: any, requestId = "") {
             console.log(`[assemble] [${requestId}] Role ${idx} bullet density: ${capped.from}→${capped.to}`);
           }
           bullets = capped.bullets;
+          // P3: lead each role with its strongest, most defensible bullet.
+          bullets = rankBulletsByStrength(bullets);
           return {
             company: sanitizeRoleField(sanitizeCompany(e.company || "")),
             title: sanitizeRoleField(sanitizeTitle(e.title || "")),
@@ -2692,6 +2712,13 @@ function normalizeResult(assembled: any, requestId = "") {
           };
         })
     : [];
+
+  // P4: reduce repeated leading verbs across the whole resume to cut AI rhythm.
+  // Uses a shared counter so variation spans roles, not just within one role.
+  const leadVerbUsage = new Map<string, number>();
+  for (const role of experience) {
+    role.bullets = diversifyBulletOpenings(role.bullets, leadVerbUsage);
+  }
 
   // Clean name: reject placeholders
   let cleanName = assembled.header?.name || "";
