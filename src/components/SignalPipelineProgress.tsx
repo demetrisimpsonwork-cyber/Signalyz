@@ -122,20 +122,20 @@ function StageConnector({ filled }: { filled: boolean }) {
 /* ── dynamic instructional copy ── */
 function getInstructionalCopy(stages: PipelineStage[], activeStageId?: string): string | null {
   const allLocked = stages.every((s) => s.status === "locked" || s.status === "active") && !stages.some((s) => s.status === "complete");
-  if (allLocked) return "Paste your resume and job description to begin your signal analysis.";
+  if (allLocked) return "Paste your resume and job description to begin your resume analysis.";
 
   // Use activeStageId (current tab) to determine copy
   if (activeStageId === "report" || activeStageId === "director") {
     const reportStage = stages.find((s) => s.id === "report");
-    if (reportStage?.status === "complete") return "Your Signal Positioning Report is ready. Review your full diagnosis below.";
-    if (reportStage?.status === "active") return "Your Signal Positioning Report is ready. Review your full diagnosis below.";
+    if (reportStage?.status === "complete") return "Your Hiring Report is ready. Review your full diagnosis below.";
+    if (reportStage?.status === "active") return "Your Hiring Report is ready. Review your full diagnosis below.";
   }
   if (activeStageId === "resume" || activeStageId === "calibrated") {
-    return "Generate your Calibrated Resume from your signal map.";
+    return "Generate your Calibrated Resume from your analysis.";
   }
   // Default: alignment active
   const alignmentStage = stages.find((s) => s.id === "alignment");
-  if (alignmentStage?.status === "active") return "Paste your resume and job description to begin your signal analysis.";
+  if (alignmentStage?.status === "active") return "Paste your resume and job description to begin your resume analysis.";
   return null;
 }
 

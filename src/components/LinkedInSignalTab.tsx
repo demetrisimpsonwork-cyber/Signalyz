@@ -40,10 +40,10 @@ interface ExperienceNoteItem {
 const STORAGE_KEY = "signalyz_linkedin_output";
 
 const CALIBRATION_STEPS = [
-  "Mapping role signal keywords to LinkedIn context…",
-  "Repositioning headline for recruiter pattern match…",
-  "Generating About section guidance…",
-  "Building experience framing notes…",
+  "Reading your role and target keywords…",
+  "Rewriting your headline for recruiters…",
+  "Drafting your About section guidance…",
+  "Building your experience framing notes…",
 ];
 
 /* ─── Persistence helpers ────────────────────────────────────────── */
@@ -227,7 +227,7 @@ const LinkedInSignalTab = ({
             Recruiters read your LinkedIn <span className="font-medium text-foreground">before</span> your resume. After alignment, Signalyz calibrates your headline and About section to send the same positioning signal — so your profile reinforces your application instead of contradicting it.
           </p>
           <Button variant="outline" size="sm" onClick={onRunAlignment} className="gap-1.5">
-            Run Alignment First
+            Analyze My Resume First
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>

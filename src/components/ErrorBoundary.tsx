@@ -29,9 +29,10 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="text-center space-y-4 max-w-md px-6">
-            <h1 className="text-2xl font-bold text-foreground">Something went wrong</h1>
+            <h1 className="text-2xl font-bold text-foreground">This page didn't load correctly</h1>
             <p className="text-sm text-muted-foreground">
-              An unexpected error occurred. Please refresh the page or try again.
+              Something unexpected happened. Refreshing the page usually fixes it. If it keeps happening, email{" "}
+              <a href="mailto:support@signalyz.ai" className="text-primary hover:underline">support@signalyz.ai</a>.
             </p>
             <Button
               onClick={() => {

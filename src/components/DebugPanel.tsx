@@ -122,7 +122,7 @@ export const EngineErrorCard = ({
   debugInfo?: DebugInfo; // kept for backward compat, ignored in UI
   onRetry?: () => void;
 }) => {
-  const displayMessage = message || "Generation took longer than expected. Tap to retry.";
+  const displayMessage = message || "Something interrupted this request — it may have timed out or lost connection. Please try again.";
   const isDailyLimit = displayMessage.toLowerCase().includes("daily") || displayMessage.toLowerCase().includes("free") || displayMessage.toLowerCase().includes("limit");
 
   if (isDailyLimit) {
@@ -136,7 +136,7 @@ export const EngineErrorCard = ({
           <X className="h-4 w-4 text-destructive" />
         </div>
         <div className="space-y-1 flex-1">
-          <p className="text-sm font-semibold text-foreground">Analysis Engine Error</p>
+          <p className="text-sm font-semibold text-foreground">We couldn't finish your analysis</p>
           <p className="text-sm text-muted-foreground">{displayMessage}</p>
         </div>
       </div>

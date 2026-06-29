@@ -184,6 +184,15 @@ const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
   risk_compression: "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40",
 };
 
+/** Plain-English display for "Below/Near/At {Role} Threshold" labels. */
+function humanizeThreshold(classification: string): string {
+  if (/^Below/i.test(classification)) return "Below target";
+  if (/^Near/i.test(classification)) return "Approaching target";
+  if (/^At/i.test(classification)) return "At target";
+  if (/^Above/i.test(classification)) return "Above target";
+  return classification;
+}
+
 /** Dynamic classification style — matches "Below X Threshold", "Near X Threshold", "At X Threshold" */
 function classificationStyleFor(classification: string): string {
   if (classification.startsWith("Below")) return "text-destructive bg-destructive/10 border border-destructive/20";
@@ -411,7 +420,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
       </BlockShell>
 
       {(grounded_recommendation_insights || (grounded_recommendations && grounded_recommendations.length > 0)) && (
-        <BlockShell label="Grounded Next Steps">
+        <BlockShell label="Evidence-Based Next Steps">
           {grounded_recommendation_insights ? (
             <GroundedNextStepsPanel insights={grounded_recommendation_insights} />
           ) : (
@@ -461,7 +470,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-3">
                 <p className="text-xs font-semibold text-foreground break-words min-w-0">{dim.name}</p>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 self-start sm:self-auto whitespace-nowrap ${classificationStyleFor(dim.classification)}`}>
-                  {dim.classification}
+                  {humanizeThreshold(dim.classification)}
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -71,11 +71,13 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [errored, setErrored] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (!experience || !jd) return;
     setLoading(true);
+    setErrored(false);
     supabase.functions
       .invoke("generate-pro-content", {
         body: { type: "interview_intelligence", experience, jd, alignmentResult },
@@ -85,7 +87,11 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         if (checkUsageLimitData(data)) return;
         if (Array.isArray(data)) setQuestions(data);
       })
-      .catch((e) => { handleUsageLimitError(e); })
+      .catch((e) => {
+        // If it wasn't a usage-limit error (which renders its own gate), show a
+        // visible, recoverable message instead of failing silently.
+        if (!handleUsageLimitError(e)) setErrored(true);
+      })
       .finally(() => setLoading(false));
   }, [experience, jd]);
 
@@ -106,6 +112,17 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-lg bg-muted" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (errored) {
+    return (
+      <div className="space-y-3">
+        <p className="section-label section-header">Interview Intelligence™</p>
+        <p className="text-sm text-muted-foreground">
+          We couldn't generate your interview questions right now. Please try again in a moment.
+        </p>
       </div>
     );
   }

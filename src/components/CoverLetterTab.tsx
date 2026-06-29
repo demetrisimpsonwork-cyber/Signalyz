@@ -35,14 +35,14 @@ const CoverLetterTab = ({
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-5">
           <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
-          <h3 className="text-base font-semibold text-foreground">Run an alignment first to generate your Cover Letter</h3>
+          <h3 className="text-base font-semibold text-foreground">Your cover letter needs an analysis first</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            The Cover Letter requires a completed alignment run in this session. Paste your resume and job description in the Alignment Engine to get started.
+            Your cover letter is written from your real experience and matched to this job, so we need both before we can draft it. Paste your resume and a job description in Resume Analysis to get started.
           </p>
           {onRunAlignment && (
             <Button onClick={onRunAlignment} variant="outline" className="gap-2 mt-2">
               <Sparkles className="h-4 w-4" />
-              Run Alignment →
+              Analyze My Resume →
             </Button>
           )}
         </div>

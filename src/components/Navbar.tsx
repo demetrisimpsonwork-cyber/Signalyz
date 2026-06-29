@@ -52,8 +52,8 @@ const Navbar = () => {
 
           {/* Desktop */}
           <div className="hidden items-center gap-6 md:flex">
-            <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Align</Link>
-            <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Position</Link>
+            <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Analyze</Link>
+            <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Report</Link>
             <Link to="/history" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">History</Link>
             <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
             {user && (
@@ -82,9 +82,12 @@ const Navbar = () => {
                 </Button>
               </div>
             ) : (
-              <Button size="sm" onClick={() => navigate("/auth")}>
-                <User className="mr-2 h-4 w-4" />Sign in
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                  <User className="mr-2 h-4 w-4" />Sign in
+                </Button>
+                <Button size="sm" onClick={() => navigate("/auth")}>Get Started</Button>
+              </div>
             )}
           </div>
 
@@ -98,7 +101,12 @@ const Navbar = () => {
                 +Pro
               </button>
             )}
-            <button onClick={() => setMobileOpen(!mobileOpen)}>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              className="flex h-10 w-10 items-center justify-center -mr-2"
+            >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
@@ -108,8 +116,8 @@ const Navbar = () => {
         {mobileOpen && (
           <div className="border-t bg-card px-4 pb-4 pt-2 md:hidden">
             <div className="flex flex-col gap-3">
-              <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground">Align</Link>
-              <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Position</Link>
+              <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground">Analyze</Link>
+              <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Report</Link>
               <Link to="/history" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">History</Link>
               <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
               {!loading && !user && (

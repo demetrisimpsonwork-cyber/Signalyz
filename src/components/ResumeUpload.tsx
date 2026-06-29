@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, Loader2, FileText, X } from "lucide-react";
+import { Upload, Loader2, FileText, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import mammoth from "mammoth";
 import { validateFileUpload } from "@/lib/sanitize";
@@ -150,12 +150,16 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <FileText className="h-3 w-3" />
             <span className="max-w-[140px] truncate">{fileName}</span>
-            <button onClick={handleClear} className="p-0.5 hover:text-foreground">
+            <button onClick={handleClear} className="p-0.5 hover:text-foreground" aria-label="Remove uploaded file">
               <X className="h-3 w-3" />
             </button>
           </div>
         )}
       </div>
+      <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground/80">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-px text-primary/70" />
+        <span>Encrypted in transit. We never sell your data or use your resume to train AI models.</span>
+      </p>
     </div>
   );
 };

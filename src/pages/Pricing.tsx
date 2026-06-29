@@ -35,18 +35,18 @@ const Pricing = () => {
         {/* Free tier */}
         <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-foreground">Signal Preview</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Surface-level alignment diagnostics</p>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Free</h3>
+            <p className="mt-1 text-sm text-muted-foreground">See your match score and top gap — free.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-foreground">$0</span>
           </div>
           <ul className="mt-6 space-y-3 flex-1">
             {[
-              "3 signal alignments per day",
-              "Calibrated bullet (1 version)",
-              "Overall alignment score",
-              "Top signal gap identification",
+              "3 resume analyses per day",
+              "Your overall match score",
+              "Your #1 reason for getting rejected",
+              "1 rewritten bullet example",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
@@ -72,7 +72,7 @@ const Pricing = () => {
           </div>
           <div>
             <h3 className="text-base font-semibold tracking-tight text-white">Full Signal Intelligence</h3>
-            <p className="mt-1 text-sm text-white/60">Full signal calibration engine</p>
+            <p className="mt-1 text-sm text-white/60">Everything you need to fix your resume and land interviews.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-white">$19</span>
@@ -80,17 +80,15 @@ const Pricing = () => {
           </div>
           <ul className="mt-6 space-y-3 flex-1">
             {[
-              "Unlimited alignments",
-              "Full Identity Strength Index™ (all 4 pillars)",
-              "Complete Signal Risk Projection (all 5 stages)",
-              "Multi-variant repositioned bullets",
-              "Build My Calibrated Resume (full DOCX export)",
-              "Executive Signal Audit access",
-              "Interview Intelligence™",
-              "ATS Signal Panel",
-              "Cover Letter Engine™",
-              "LinkedIn Signal calibration",
-              "Alignment history",
+              "Unlimited resume analyses",
+              "Full Hiring Report — see exactly how recruiters and hiring managers read you, and where you get screened out",
+              "See what changed and why your score improved",
+              "Multiple rewritten versions of every bullet",
+              "Full rewritten resume (DOCX download)",
+              "Interview questions tailored to your gaps",
+              "Matching cover letter",
+              "LinkedIn profile optimization",
+              "Saved analysis history",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-white/90">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
@@ -120,7 +118,7 @@ const Pricing = () => {
         <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
           <div>
             <h3 className="text-base font-semibold tracking-tight text-foreground">Single Report</h3>
-            <p className="mt-1 text-sm text-muted-foreground">One complete analysis session</p>
+            <p className="mt-1 text-sm text-muted-foreground">One full report for a single application.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-foreground">$9</span>
@@ -128,11 +126,11 @@ const Pricing = () => {
           </div>
           <ul className="mt-6 space-y-3 flex-1">
             {[
-              "1 full signal analysis",
-              "Complete Signal Diagnosis",
-              "Calibrated Resume output",
-              "Cover Letter generation",
-              "Full positioning report",
+              "1 complete resume analysis",
+              "Full breakdown of why you're getting rejected",
+              "Full rewritten resume (DOCX download)",
+              "Matching cover letter",
+              "Full Hiring Report",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />

@@ -1,12 +1,18 @@
 import { useEffect, useState, useRef } from "react";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, ShieldCheck } from "lucide-react";
 
 const STEPS = [
-  { label: "Mapping signal dimensions across hiring pipeline…", duration: 12000 },
-  { label: "Benchmarking against role threshold standards…", duration: 12000 },
-  { label: "Identifying panel risk stages…", duration: 12000 },
-  { label: "Projecting signal shift after repositioning…", duration: 12000 },
-  { label: "Assembling full diagnostic report…", duration: 12000 },
+  { label: "Reading your resume and the job…", duration: 12000 },
+  { label: "Comparing recruiter and hiring-manager signals…", duration: 12000 },
+  { label: "Finding the evidence behind each gap…", duration: 12000 },
+  { label: "Projecting your score after repositioning…", duration: 12000 },
+  { label: "Generating your hiring report…", duration: 12000 },
+];
+
+const CONFIDENCE = [
+  "No fabrication — based only on your real experience.",
+  "Recruiter-focused, grounded in your resume.",
+  "Every finding is backed by your own evidence.",
 ];
 
 interface PositioningLoaderProps {
@@ -56,21 +62,34 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
     99
   );
 
+  const confidence = CONFIDENCE[Math.floor(elapsed / 5) % CONFIDENCE.length];
+  const activeLabel = STEPS[Math.min(activeIndex, STEPS.length - 1)]?.label ?? "";
+
   return (
     <div
-      className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in"
+      className="flex flex-col justify-center rounded-lg border bg-card px-5 py-7 sm:px-6 sm:py-8 animate-fade-in"
       style={{ minHeight }}
+      role="status"
+      aria-live="polite"
+      aria-label="Generating your hiring report"
     >
+      <span className="sr-only">{activeLabel}</span>
       {/* Overall progress bar */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-foreground">Generating Signal Report</span>
+          <span className="text-xs font-medium text-foreground">Generating your hiring report</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             {elapsed}s
           </span>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+        <div
+          className="h-1.5 w-full rounded-full bg-border overflow-hidden"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(overallProgress)}
+        >
           <div
             className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
             style={{ width: `${overallProgress}%` }}
@@ -127,14 +146,19 @@ const PositioningLoader = ({ minHeight = "300px" }: PositioningLoaderProps) => {
         })}
       </div>
 
+      <div className="flex items-center justify-center gap-1.5 text-xs text-primary/90 mb-2" aria-hidden="true">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+        <span className="transition-opacity duration-500">{confidence}</span>
+      </div>
+
       <p className="text-center text-xs text-muted-foreground leading-relaxed">
         {elapsed >= 120
-          ? "Almost there — finalizing your signal analysis."
+          ? "Almost there — finishing your report."
           : elapsed >= 90
-          ? "Complex resumes can take up to 3 minutes. Hang tight."
+          ? "Longer resumes can take up to 3 minutes. Hang tight."
           : elapsed >= 45
-          ? "Deep analysis in progress — running multiple diagnostic passes."
-          : "Full signal analysis typically takes 1–3 minutes. Zero fabrication • Your data remains private."}
+          ? "Running multiple passes for an accurate read."
+          : "This usually takes 1–3 minutes. Your data stays private."}
       </p>
     </div>
   );

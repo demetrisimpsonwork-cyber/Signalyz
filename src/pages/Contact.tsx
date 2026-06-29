@@ -15,8 +15,8 @@ const Contact = () => (
         <Mail className="mt-1 h-5 w-5 shrink-0 text-primary" />
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-foreground">Email Support</h2>
-          <a href="mailto:Demetri.Simpson.work@gmail.com" className="text-primary hover:underline break-all">
-            Demetri.Simpson.work@gmail.com
+          <a href="mailto:support@signalyz.ai" className="text-primary hover:underline break-all">
+            support@signalyz.ai
           </a>
         </div>
       </CardContent>

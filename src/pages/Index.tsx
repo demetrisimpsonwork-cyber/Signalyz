@@ -33,7 +33,7 @@ import type { EvidenceEntry } from "@/components/EvidenceLedger";
 import PositioningLoader from "@/components/PositioningLoader";
 import CalibratedResumeTab from "@/components/CalibratedResumeTab";
 import SignalPipelineProgress, { type PipelineStage } from "@/components/SignalPipelineProgress";
-import { Loader2, Sparkles, Layers, Shield, LockKeyhole, ArrowDown, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
+import { Loader2, Sparkles, Layers, Shield, LockKeyhole, Quote, Lock, RefreshCw, Check, X } from "lucide-react";
 import AlignmentLoader from "@/components/AlignmentLoader";
 import { computeDeterministicScore } from "@/lib/deterministicScore";
 import { evaluateCredentialGate } from "@/lib/credentialGate";
@@ -212,7 +212,7 @@ class DirectorCalibrationErrorBoundary extends Component<
       return (
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <p className="text-sm text-foreground leading-relaxed">
-            Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.
+            Your Hiring Report couldn't be generated. This can happen with very long or complex resumes — please click retry.
           </p>
           <button
             onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}
@@ -304,9 +304,9 @@ function DirectorModeContent({
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <p className="text-sm text-muted-foreground">Run an alignment first to generate your Signal Positioning Report</p>
+        <p className="text-sm text-muted-foreground">Run your resume analysis first to generate your Hiring Report</p>
         <Button variant="outline" size="sm" onClick={onRunAlignment}>
-          Run Alignment →
+          Analyze My Resume →
         </Button>
       </div>
     );
@@ -317,10 +317,10 @@ function DirectorModeContent({
     <div className="grid gap-8 lg:grid-cols-2 w-full min-w-0 overflow-hidden">
       <div className="space-y-4 min-w-0 overflow-hidden">
         <div>
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signal Positioning Engine</p>
-          <h2 className="text-base font-semibold text-foreground mb-1">Diagnose where your professional signal breaks down across the hiring pipeline</h2>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Hiring Report</p>
+          <h2 className="text-base font-semibold text-foreground mb-1">See exactly how recruiters and hiring managers read your resume</h2>
           <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-            Then recalibrate it using only the experience you already have. 11-section diagnostic report. Zero fabrication. Private analysis.
+            Find out where you get screened out and how to fix it — using only the experience you already have. Zero fabrication. Private analysis.
           </p>
 
           {/* Confirmed inputs cards */}
@@ -330,7 +330,7 @@ function DirectorModeContent({
                 <Check className="h-3 w-3" strokeWidth={3} />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Resume detected from Alignment Engine</p>
+                <p className="text-sm font-medium text-foreground">Resume detected from your analysis</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {result.inferred_role_title ? `${result.inferred_role_title} · ` : ""}{bullet.slice(0, 80)}{bullet.length > 80 ? "…" : ""}
                 </p>
@@ -349,9 +349,9 @@ function DirectorModeContent({
         </div>
         <Button onClick={onRunDirector} disabled={directorLoading} className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
           {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
-          Run Signal Positioning Report
+          Generate My Hiring Report
         </Button>
-        <p className="text-[11px] text-muted-foreground/70">Full analysis typically takes 1–3 minutes. Complex resumes may take a bit longer. Zero fabrication • Your data remains private.</p>
+        <p className="text-[11px] text-muted-foreground/70">This usually takes about a minute (up to a few for longer resumes). Zero fabrication • Your data stays private.</p>
       </div>
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
@@ -662,20 +662,20 @@ const Index = () => {
     return [
       {
         id: "alignment",
-        label: "Alignment Engine",
-        shortLabel: "Alignment",
-        sublabel: "Score + signal diagnosis",
+        label: "Resume Analysis",
+        shortLabel: "Analysis",
+        sublabel: "Your match score + diagnosis",
         status: alignmentDone ? "complete" as const : "active" as const,
         completedAt: null,
       },
       {
         id: "report",
-        label: "Signal Report",
+        label: "Hiring Report",
         shortLabel: "Report",
-        sublabel: "12-section deep analysis",
+        sublabel: "Deep recruiter + hiring-manager read",
         status: getStatus("report", reportDone, alignmentDone),
         completedAt: null,
-        lockedReason: "Complete the Alignment Engine first",
+        lockedReason: "Complete your Resume Analysis first",
       },
       {
         id: "resume",
@@ -684,7 +684,7 @@ const Index = () => {
         sublabel: "Assembled + export ready",
         status: getStatus("resume", resumeDone, reportDone),
         completedAt: null,
-        lockedReason: "Run the Signal Positioning Report first",
+        lockedReason: "Run your Hiring Report first",
       },
     ];
   }, [result, directorResult, sessionResumeAssembled, mode]);
@@ -798,11 +798,11 @@ const Index = () => {
 
     const normResume = normalizeClientInput(bullet.trim(), MAX_RESUME_CHARS);
     if (!normResume.text) {
-      toast.error("Run the Alignment Engine first to load your resume.");
+      toast.error("Run your resume analysis first to load your resume.");
       return;
     }
     if (normResume.text.length < 300) {
-      setDirectorError("Your resume input is too short. Go back to the Alignment Engine and paste a fuller resume.");
+      setDirectorError("Your resume is too short to analyze. Go back to Resume Analysis and paste your full resume.");
       return;
     }
     if (normResume.truncated) setInputTruncated(true);
@@ -842,7 +842,7 @@ const Index = () => {
 
       // Validate the result has minimum required fields
       if (!directorData || !directorData.dimensions || !directorData.director_signal_tier) {
-        throw new Error("Your Signal Positioning Report couldn't render. This can happen with complex resumes — click retry to regenerate.");
+        throw new Error("Your Hiring Report couldn't be generated. This can happen with very long or complex resumes — please click retry.");
       }
 
       const enrichmentKey = getDirectorReportEnrichmentKey(
@@ -1202,21 +1202,28 @@ const Index = () => {
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
         <div className="container max-w-5xl md:max-w-content text-center relative z-10">
-          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Your experience speaks — but is your resume sending the right signal?</p>
+          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Resume optimization for people who already qualify</p>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Signalyz reads your experience the way hiring systems do — and shows you exactly what signal you're sending.
+            Upload your resume and paste a job description. Signalyz shows you exactly why you're getting interviews — or why you're not — then gives you a rewritten resume built only from your real experience.
           </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/55">
+            <span>1 · Upload your resume</span>
+            <span className="text-white/25">→</span>
+            <span>2 · Paste a job description</span>
+            <span className="text-white/25">→</span>
+            <span>3 · Get your score + optimized resume</span>
+          </div>
           <Button
             size="lg"
             className="mt-6 shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]"
             onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            Run Signal Analysis
+            Analyze My Resume — Free
           </Button>
         </div>
       </section>
@@ -1240,37 +1247,10 @@ const Index = () => {
         <div className="flex justify-center mt-10">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Run Your Signal Analysis →
+            Analyze My Resume →
           </Button>
         </div>
       </section>
-
-      {/* Before/After Transformation Showcase */}
-      <section className="py-12 container max-w-5xl md:max-w-content" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Same experience. Different signal.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Signalyz doesn't invent. It repositions what you already have.</p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-xl bg-[#2A2A2A] p-6 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">BEFORE — ORIGINAL LANGUAGE</p>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              Managed customer inquiries and helped resolve issues for business clients while maintaining documentation.
-            </p>
-          </div>
-          <div className="flex justify-center md:hidden">
-            <ArrowDown className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="rounded-xl bg-card border-l-4 border-l-primary p-6 space-y-3" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">AFTER — REPOSITIONED BY SIGNALYZ</p>
-            <p className="text-sm text-foreground leading-relaxed">
-              Owned resolution for 40–70 concurrent B2B cases under strict SLA requirements — managing escalation triage, documentation, and client follow-through across business and institutional accounts.
-            </p>
-          </div>
-        </div>
-        <p className="text-center text-xs text-muted-foreground mt-4 italic opacity-70">Zero fabrication — every detail came from the original resume. Only the framing changed.</p>
-      </section>
-
 
       {/* WAS/NOW Transformation Section */}
       <section className="py-12 container max-w-5xl md:max-w-content" style={{ backgroundColor: "hsl(210, 17%, 97%)" }}>
@@ -1316,7 +1296,7 @@ const Index = () => {
         <div className="flex justify-center mt-4">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Run Your Signal Analysis
+            Analyze My Resume →
           </Button>
         </div>
       </section>
@@ -1392,8 +1372,8 @@ const Index = () => {
           {/* Mobile layout */}
           <div className="flex lg:hidden w-full">
             {([
-              { id: "alignment" as const, label: "Align", proOnly: false },
-              { id: "director" as const, label: "Position", proOnly: false },
+              { id: "alignment" as const, label: "Analysis", proOnly: false },
+              { id: "director" as const, label: "Report", proOnly: false },
               { id: "calibrated" as const, label: "Resume", proOnly: true },
               { id: "coverletter" as const, label: "Letter", proOnly: true },
               { id: "linkedin" as const, label: "LinkedIn", proOnly: false },
@@ -1411,7 +1391,8 @@ const Index = () => {
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
                 }}
-                className={`flex-1 min-w-0 py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 ${
+                aria-current={mode === tab.id ? "page" : undefined}
+                className={`flex-1 min-w-0 min-h-[44px] py-2.5 text-[13px] font-medium transition-colors text-center border-b-2 ${
                   mode === tab.id
                     ? "text-primary border-primary"
                     : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
@@ -1425,11 +1406,11 @@ const Index = () => {
           {/* Desktop layout */}
           <div className="hidden lg:inline-flex lg:flex-nowrap items-center gap-1">
             {([
-              { id: "alignment" as const, label: "Alignment Engine", proOnly: false },
-              { id: "director" as const, label: "Signal Positioning Report", proOnly: false },
+              { id: "alignment" as const, label: "Resume Analysis", proOnly: false },
+              { id: "director" as const, label: "Hiring Report", proOnly: false },
               { id: "calibrated" as const, label: "Calibrated Resume", proOnly: true },
               { id: "coverletter" as const, label: "Cover Letter", proOnly: true },
-              { id: "linkedin" as const, label: "LinkedIn Signal", proOnly: false },
+              { id: "linkedin" as const, label: "LinkedIn", proOnly: false },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -1444,6 +1425,7 @@ const Index = () => {
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
                 }}
+                aria-current={mode === tab.id ? "page" : undefined}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors text-center border-b-2 ${
                   mode === tab.id
                     ? "text-primary border-primary"
@@ -1455,6 +1437,23 @@ const Index = () => {
             ))}
           </div>
         </div>
+
+        {/* Active tab description — helps first-time users understand each tab at a glance */}
+        {(() => {
+          const tabDescriptions: Record<string, string> = {
+            alignment: "Paste your resume and a job description to see your match score and your biggest gaps.",
+            director: "A deep read of how recruiters and hiring managers interpret your resume — and where you get screened out.",
+            calibrated: "Your resume rewritten from your real experience, optimized for this specific role.",
+            coverletter: "A matching cover letter, grounded in your actual experience.",
+            linkedin: "Optimize your LinkedIn profile to send the same strong signal as your resume.",
+          };
+          const description = tabDescriptions[mode];
+          return description ? (
+            <p className="mb-6 -mt-1 text-center text-xs text-muted-foreground leading-relaxed max-w-xl mx-auto px-4">
+              {description}
+            </p>
+          ) : null;
+        })()}
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
@@ -1550,7 +1549,7 @@ const Index = () => {
               {/* Left — Inputs */}
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Your Experience</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Your Resume</label>
                   <ResumeUpload
                     onTextExtracted={(text, source) => {
                       invalidateStaleSession();
@@ -1567,7 +1566,7 @@ const Index = () => {
                   />
                   <div className="relative mt-2">
                     <Textarea
-                      placeholder="Paste a resume bullet, summary, or short experience section here..."
+                      placeholder="Paste your full resume here — or upload it above. Include your experience, titles, dates, and bullet points."
                       value={bullet}
                       onChange={(e) => { invalidateStaleSession(); setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
                       rows={4}
@@ -1579,6 +1578,7 @@ const Index = () => {
                         onClick={() => { invalidateStaleSession(); setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
+                        aria-label="Clear resume input"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -1592,9 +1592,9 @@ const Index = () => {
                   {errors.bullet && <p className="mt-1 text-xs text-destructive">{errors.bullet}</p>}
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Target Role</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Job Description</label>
                   <Textarea
-                    placeholder="Paste the full job description you're targeting..."
+                    placeholder="Paste the full job description for the role you're targeting..."
                     value={jd}
                     onChange={(e) => { invalidateStaleSession(); setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
                     rows={6}
@@ -1632,7 +1632,7 @@ const Index = () => {
                   ) : (
                     <Button id="run-alignment-btn" onClick={handleOptimize} disabled={loading || subLoading} className={`gap-2 w-full sm:w-auto sticky bottom-4 z-10 sm:static transition-transform hover:scale-[1.03] active:scale-[0.97] ${errors.bullet ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : subLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                      {subLoading ? "Initializing…" : "Run Alignment"}
+                      {subLoading ? "Initializing…" : "Analyze My Resume"}
                     </Button>
                   )}
                   <div className="flex flex-wrap items-center gap-2">
@@ -1791,10 +1791,13 @@ const Index = () => {
 
                 {result && (
                   <>
-                    {/* Signal profile lock-in */}
-                    <div className="rounded-lg border border-border bg-card p-4 space-y-1.5 text-center">
-                      <p className="text-sm font-semibold text-foreground">Your signal profile has been built.</p>
-                      <p className="text-xs text-muted-foreground">This analysis is specific to your experience and this role.</p>
+                    {/* Signal profile lock-in — subtle success moment */}
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-1.5 text-center animate-fade-in">
+                      <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-foreground">
+                        <Check className="h-4 w-4 text-primary" />
+                        Resume analysis complete
+                      </p>
+                      <p className="text-xs text-muted-foreground">Specific to your experience and this role — built only from what you provided.</p>
                     </div>
 
                     {/* Professional Signal Diagnosis headline */}
@@ -2212,7 +2215,7 @@ const Index = () => {
             <AccordionItem value="who-is-it-for">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">Who is Signalyz for?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Signalyz is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want signal-level feedback, not generic resume tips. It is not a resume writer. It is a signal calibration engine.
+                Signalyz is built for professionals actively applying to jobs who want to understand how hiring managers actually read their experience — and fix it before it costs them interviews. It works best for people with real work history who are targeting specific roles and want precise, role-specific feedback instead of generic resume tips. You get a clear diagnosis and a rewritten resume — built only from your real experience.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="fabrication">
@@ -2236,13 +2239,13 @@ const Index = () => {
             <AccordionItem value="full-analysis">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                A Signal Diagnosis score showing exactly where your resume breaks down across the hiring process. Calibrated bullet repositioning. An Identity Strength Index across four hiring pillars. A 5-stage Signal Risk Projection showing where you'll face friction at each interview stage. And on Pro — a complete 12-section Signal Positioning Report including gap strategy, bullet recalibration, interview script, cover letter, and match score forecast. All from your actual experience. Nothing invented.
+                A match score showing exactly where your resume breaks down across the hiring process, your biggest reasons for getting rejected, and rewritten bullet examples. On Full Signal Intelligence, you also get the complete Hiring Report — gap-by-gap strategy, fully rewritten bullets, interview questions tied to your gaps, a matching cover letter, and a projected new score. All from your actual experience. Nothing invented.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="pricing">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Signalyz cost?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                You can run up to 3 free alignments per day at no cost. Full Signal Intelligence is $19/month and unlocks unlimited alignments, the full Signal Positioning Report, Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
+                You can run up to 3 free resume analyses per day at no cost. Full Signal Intelligence is $19/mo and unlocks unlimited analyses, the full Hiring Report, the Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="data-privacy">

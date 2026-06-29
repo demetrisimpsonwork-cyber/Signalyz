@@ -1,9 +1,9 @@
-import { Check } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 
 const STEPS = [
-  "Pulling signal-optimized components…",
-  "Calibrating language coherence…",
-  "Assembling final document…",
+  "Pulling your strongest, evidence-backed points…",
+  "Refining the writing so it reads naturally…",
+  "Building your optimized resume…",
 ];
 
 interface ResumeAssemblyLoaderProps {
@@ -11,8 +11,16 @@ interface ResumeAssemblyLoaderProps {
 }
 
 const ResumeAssemblyLoader = ({ currentStep }: ResumeAssemblyLoaderProps) => {
+  const activeLabel = STEPS[Math.min(currentStep, STEPS.length - 1)] ?? "";
   return (
-    <div className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in" style={{ minHeight: "200px" }}>
+    <div
+      className="flex flex-col justify-center rounded-lg border bg-card px-5 py-7 sm:px-6 sm:py-8 animate-fade-in"
+      style={{ minHeight: "200px" }}
+      role="status"
+      aria-live="polite"
+      aria-label="Building your optimized resume"
+    >
+      <span className="sr-only">{currentStep >= 3 ? "Optimized resume generated." : activeLabel}</span>
       <div className="space-y-4 mb-4">
         {STEPS.map((label, i) => {
           const done = i < currentStep;
@@ -49,8 +57,13 @@ const ResumeAssemblyLoader = ({ currentStep }: ResumeAssemblyLoaderProps) => {
           );
         })}
       </div>
-      {currentStep >= 3 && (
-        <p className="text-center text-xs text-primary font-medium">✓ Resume assembled. Ready to refine.</p>
+      {currentStep < 3 ? (
+        <div className="flex items-center justify-center gap-1.5 text-xs text-primary/90" aria-hidden="true">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+          <span>Built only from your real experience — nothing invented.</span>
+        </div>
+      ) : (
+        <p className="text-center text-xs text-primary font-medium">Optimized resume generated. Ready to refine.</p>
       )}
     </div>
   );

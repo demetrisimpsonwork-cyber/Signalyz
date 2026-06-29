@@ -1,12 +1,18 @@
 import { useEffect, useState, useRef } from "react";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, ShieldCheck } from "lucide-react";
 
 const STEPS = [
-  { label: "Extracting employer priority signals…", duration: 6000 },
-  { label: "Mapping your experience to weighted themes…", duration: 10000 },
-  { label: "Scoring alignment across 5 dimensions…", duration: 12000 },
-  { label: "Generating strategic positioning insights…", duration: 10000 },
-  { label: "Applying calibration filter…", duration: 7000 },
+  { label: "Reading your resume…", duration: 6000 },
+  { label: "Matching it against the job description…", duration: 10000 },
+  { label: "Comparing how recruiters read your experience…", duration: 12000 },
+  { label: "Scoring your alignment across 5 dimensions…", duration: 10000 },
+  { label: "Preparing your recommendations…", duration: 7000 },
+];
+
+const CONFIDENCE = [
+  "No fabrication — based only on your real experience.",
+  "Optimized for how recruiters actually read resumes.",
+  "Every insight is grounded in your resume.",
 ];
 
 interface AlignmentLoaderProps {
@@ -57,21 +63,34 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
     99
   );
 
+  const confidence = CONFIDENCE[Math.floor(elapsed / 4) % CONFIDENCE.length];
+  const activeLabel = STEPS[Math.min(activeIndex, STEPS.length - 1)]?.label ?? "";
+
   return (
     <div
-      className="flex flex-col justify-center rounded-lg border bg-card px-6 py-8 animate-fade-in"
+      className="flex flex-col justify-center rounded-lg border bg-card px-5 py-7 sm:px-6 sm:py-8 animate-fade-in"
       style={{ minHeight }}
+      role="status"
+      aria-live="polite"
+      aria-label="Analyzing your resume"
     >
+      <span className="sr-only">{activeLabel}</span>
       {/* Overall progress bar */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-foreground">Analyzing alignment</span>
+          <span className="text-xs font-medium text-foreground">Analyzing your resume</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             {elapsed}s
           </span>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+        <div
+          className="h-1.5 w-full rounded-full bg-border overflow-hidden"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(overallProgress)}
+        >
           <div
             className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
             style={{ width: `${overallProgress}%` }}
@@ -128,14 +147,19 @@ const AlignmentLoader = ({ minHeight = "280px" }: AlignmentLoaderProps) => {
         })}
       </div>
 
+      <div className="flex items-center justify-center gap-1.5 text-xs text-primary/90 mb-2" aria-hidden="true">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+        <span className="transition-opacity duration-500">{confidence}</span>
+      </div>
+
       <p className="text-center text-xs text-muted-foreground leading-relaxed">
         {elapsed >= 50
-          ? "Almost there — finalizing your signal analysis."
+          ? "Almost there — finishing up your analysis."
           : elapsed >= 30
-          ? "Complex resumes may take up to 2 minutes. Hang tight."
+          ? "Longer resumes can take up to 2 minutes. Hang tight."
           : elapsed >= 15
-          ? "Deep analysis in progress — scoring across 5 dimensions."
-          : "Full resume + job description analyses typically take 30–60 seconds."}
+          ? "Reading closely across 5 hiring dimensions."
+          : "This usually takes 30–60 seconds."}
       </p>
     </div>
   );

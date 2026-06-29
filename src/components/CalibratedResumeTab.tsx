@@ -182,14 +182,14 @@ const CalibratedResumeTab = ({
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
           <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
-          <h3 className="text-base font-semibold text-foreground">Run an alignment first to generate your Calibrated Resume</h3>
+          <h3 className="text-base font-semibold text-foreground">Your optimized resume starts with an analysis</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            The Calibrated Resume requires a completed alignment run in this session. Paste your resume and job description in the Alignment Engine to get started.
+            Your Calibrated Resume is rewritten from your real experience and tuned to this specific job — so first we need to see both. Paste your resume and a job description in Resume Analysis to get started.
           </p>
           {onRunAlignment && (
             <Button onClick={onRunAlignment} variant="outline" className="gap-2 mt-2">
               <Sparkles className="h-4 w-4" />
-              Run Alignment →
+              Analyze My Resume →
             </Button>
           )}
         </div>
@@ -222,7 +222,7 @@ const CalibratedResumeTab = ({
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Assembly interrupted</p>
+              <p className="text-sm font-medium text-foreground">We couldn't finish your resume</p>
               <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{error}</p>
             </div>
           </div>
@@ -312,11 +312,11 @@ const CalibratedResumeTab = ({
           {onRerunSignalAnalysis && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-sm font-medium text-foreground">See your new score</p>
+                <p className="text-sm font-medium text-foreground">See your new score (optional)</p>
                 <p className="text-xs text-muted-foreground">
                   {originalResumeBeforeCalibration
-                    ? "Re-run the Alignment Engine with your calibrated resume to measure the signal improvement."
-                    : "Original resume baseline not found — re-run alignment from the Alignment tab first."}
+                    ? "Re-score your calibrated resume to confirm how much your match score improves. This is optional — your resume is ready to download now."
+                    : "Re-scoring isn't available yet. Run a resume analysis first, then come back to compare your before and after."}
                 </p>
               </div>
               <Button

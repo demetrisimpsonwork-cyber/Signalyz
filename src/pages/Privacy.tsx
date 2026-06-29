@@ -37,7 +37,7 @@ const Privacy = () => (
     <Section title="6. Contact">
       <p>
         For privacy-related inquiries, contact us at{" "}
-        <a href="mailto:Demetri.Simpson.work@gmail.com" className="text-primary hover:underline">Demetri.Simpson.work@gmail.com</a>.
+        <a href="mailto:support@signalyz.ai" className="text-primary hover:underline">support@signalyz.ai</a>.
       </p>
     </Section>
   </main>
