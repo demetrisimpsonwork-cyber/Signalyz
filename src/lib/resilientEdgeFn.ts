@@ -36,7 +36,7 @@ function isTabSwitchError(err: any): boolean {
 }
 
 export const FRIENDLY_FAIL_MSG =
-  "Generation took longer than expected. Tap to retry.";
+  "Something interrupted this request — it may have timed out or lost connection. Please try again.";
 
 /** Structured error from edge function with debug info */
 export class StructuredEdgeError extends Error {
@@ -60,15 +60,34 @@ export class StructuredEdgeError extends Error {
     this.debug = payload.debug;
   }
 
-  /** User-facing assembly error with HTTP status, request_id, and stage when available */
+  /**
+   * Clean, user-facing assembly error message.
+   * Developer diagnostics (HTTP status, request_id, stage, raw details) are logged
+   * to the console only — never shown to the user.
+   */
   formatAssemblyMessage(): string {
-    const lines: string[] = [];
-    if (this.message) lines.push(this.message);
-    if (this.http_status) lines.push(`HTTP ${this.http_status}`);
-    if (this.request_id) lines.push(`request_id: ${this.request_id}`);
-    if (this.debug?.step) lines.push(`stage: ${this.debug.step}`);
-    if (this.debug?.details) lines.push(this.debug.details);
-    return lines.join("\n");
+    if (this.http_status || this.request_id || this.debug?.step || this.debug?.details) {
+      console.debug("[assembly error]", {
+        error_code: this.error_code,
+        http_status: this.http_status,
+        request_id: this.request_id,
+        stage: this.debug?.step,
+        details: this.debug?.details,
+      });
+    }
+    // Only surface the server message when it's a clean, human sentence — never a
+    // raw body, code, or markup.
+    const safeMessage =
+      this.message &&
+      this.message.length <= 160 &&
+      !/[<>{}]/.test(this.message) &&
+      this.error_code !== "EDGE_ERROR" &&
+      !/^(unknown error|edge_error)$/i.test(this.message)
+        ? this.message
+        : "";
+    return safeMessage
+      ? `${safeMessage} Please try again — your analysis is saved.`
+      : "We couldn't finish building your resume. Please try again — your analysis is saved.";
   }
 }
 
@@ -190,7 +209,10 @@ async function enrichFunctionsError(err: any): Promise<Error> {
 function coerce(err: any): Error {
   if (isTabSwitchError(err)) return new Error(FRIENDLY_FAIL_MSG);
   if (err instanceof Error) return err;
-  return new Error(
-    typeof err === "object" ? JSON.stringify(err).slice(0, 300) : String(err),
-  );
+  // Never surface raw serialized objects to the user — log and show a friendly message.
+  if (typeof err === "object") {
+    console.debug("[edge error]", err);
+    return new Error(FRIENDLY_FAIL_MSG);
+  }
+  return new Error(String(err));
 }
