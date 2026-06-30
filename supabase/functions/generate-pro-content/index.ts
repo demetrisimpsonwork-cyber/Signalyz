@@ -291,7 +291,8 @@ RULES:
 - Lead with the candidate's strongest signal for this specific role
 - Use language a recruiter scanning for ${inferredRole} would pattern-match on
 - Active framing only — no passive constructions
-- No buzzwords: "passionate," "results-driven," "dynamic," "innovative," "seasoned," "dedicated"
+- No buzzwords or AI tells: "passionate," "results-driven," "dynamic," "innovative," "seasoned," "dedicated," "demonstrates," "utilized," "leveraged," "proven track record"
+- Sound like a high-performing professional wrote it, not like AI. Avoid the generic "Title | Keyword • Keyword • Keyword" filler pattern unless it genuinely reads naturally.
 - ZERO FABRICATION: every word must be traceable to the resume. Do NOT invent tools, industries, scope, metrics, employer names, certifications, or domain claims not present in the resume.
 - Do NOT add metrics, percentages, team sizes, or quantified claims not verbatim in the resume.
 
@@ -387,7 +388,14 @@ Rewrite this LinkedIn About section for a candidate targeting ${inferredRole}. U
 Resume: ${experience.slice(0, 3000)}
 Current About: ${currentAbout || "(none — build from scratch)"}
 
-The summary must: open with a hook that names their specific professional identity in one sentence, spend the middle section connecting their cross-environment experience to the target role's core requirements, and close with a forward-looking statement about what kind of role and organization they're seeking. Tone: confident, direct, first person, no buzzwords. 3 paragraphs maximum.
+The summary must: open with a hook that names their specific professional identity in one sentence, spend the middle section connecting their cross-environment experience to the target role's core requirements, and close with a forward-looking statement about what kind of role and organization they're seeking. 3 paragraphs maximum.
+
+TONE — sound like an actual high-performing professional, not AI or copied resume bullets:
+- First person, confident, conversational but sharp. Write the way a strong professional actually talks about their work.
+- Do NOT paste resume bullets. Connect experience into a narrative with a point of view.
+- BANNED AI TELLS: "passionate about," "results-driven," "dynamic," "proven track record," "demonstrates," "utilized," "leveraged," "in order to," "wide range of," "seasoned," "dedicated professional," "synergy," "spearheaded."
+- No formulaic AI transitions ("Furthermore," "Moreover," "In today's fast-paced world"). Vary sentence length.
+- ZERO FABRICATION: every claim must trace to the resume.
 
 Return a JSON object with: "summary" (the full About section text)
 Return ONLY valid JSON, no markdown.`;
@@ -446,8 +454,9 @@ WRITING RULES:
 - Never describe what the role requires — the hiring manager knows
 - ZERO fabrication — every claim must trace to the resume
 - No bridging language: avoid "this experience," "these skills," "that background"
-- BANNED PHRASES: "track record," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "natural next step," "I learned that," "comprehensive," "I am excited to," "I am thrilled," "I would love to," "I look forward to discussing," "my first priority," "I plan to," "I intend to"
+- BANNED PHRASES: "track record," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "natural next step," "I learned that," "comprehensive," "I am excited to," "I am thrilled," "I would love to," "I look forward to discussing," "my first priority," "I plan to," "I intend to," "utilized," "leveraged," "in order to," "demonstrates," "dynamic," "a wide range of," "synergy," "spearheaded," "dedicated," "seasoned"
 - No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
+- Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Vary sentence length. Plain words over impressive ones.
 
 OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs separated by double newlines, no salutation or closing"}`;
 
