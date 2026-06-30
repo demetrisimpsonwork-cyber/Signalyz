@@ -74,7 +74,7 @@ function enforceCharLimits(resume: string, jd: string): { resume: string; jd: st
 
 async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<CallAIResult> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
+  const timeout = setTimeout(() => controller.abort(), 120000);
   try {
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -117,7 +117,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
     clearTimeout(timeout);
     if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 90s.");
+    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 120s.");
     throw new Error(`AI call failed: ${msg}`);
   }
 }
