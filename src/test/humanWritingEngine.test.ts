@@ -3,6 +3,7 @@ import {
   humanizeProse,
   HUMAN_WRITING_RULES,
   COVER_LETTER_STANDARD,
+  RECRUITER_PSYCHOLOGY,
 } from "../../supabase/functions/_shared/humanWritingEngine";
 
 // Phrases that must never survive in humanized prose.
@@ -113,10 +114,82 @@ describe("humanizeProse — removes AI tells, keeps grammar", () => {
   });
 });
 
+describe("humanizeProse — P9 recruiter-psychology weak patterns", () => {
+  it('leaves "demonstrated ability" to the prompt layer WITHOUT creating "a experience"', () => {
+    const out = humanizeProse("Operations lead with a demonstrated ability to manage audits.");
+    expect(out).not.toMatch(/\ba experience\b/i);
+    expect(out).toMatch(/manage audits/i);
+  });
+
+  it('does not break grammar on "proven ability to X"', () => {
+    const out = humanizeProse("Operations lead with a proven ability to manage audits.");
+    expect(out).not.toMatch(/\ba experience\b/i);
+    expect(out).toMatch(/manage audits/i);
+  });
+
+  it('rewrites "a proven track record" (no "of") without creating "a experience"', () => {
+    const out = humanizeProse("Operations lead with a proven track record.");
+    expect(out).not.toMatch(/proven track record/i);
+    expect(out).not.toMatch(/\ba experience\b/i);
+    expect(out).toMatch(/experience\.?$/i);
+  });
+
+  it('rewrites "a proven track record of managing X" cleanly', () => {
+    const out = humanizeProse("Operations lead with a proven track record of managing audits.");
+    expect(out).not.toMatch(/proven track record/i);
+    expect(out).not.toMatch(/\ba experience\b/i);
+    expect(out).toMatch(/experience managing audits/i);
+  });
+
+  it('drops "I believe" hedges without breaking the sentence', () => {
+    const out = humanizeProse("I believe I would be a strong fit for this team.");
+    expect(out).not.toMatch(/\bI believe\b/i);
+    expect(out).toMatch(/strong fit for this team/i);
+  });
+
+  it('removes the empty intensifier "successfully"', () => {
+    const out = humanizeProse("Successfully managed three regional teams.");
+    expect(out).not.toMatch(/\bsuccessfully\b/i);
+    expect(out).toMatch(/^Managed three regional teams\.?$/);
+  });
+
+  it('strips formulaic sentence-initial transitions', () => {
+    const out = humanizeProse("Reconciled accounts daily. Furthermore, I caught variances early.");
+    expect(out).not.toMatch(/\bfurthermore\b/i);
+    expect(out).toMatch(/Reconciled accounts daily\./);
+    expect(out).toMatch(/caught variances early/i);
+  });
+
+  it('strips a leading "Additionally,"', () => {
+    const out = humanizeProse("Additionally, I documented every escalation.");
+    expect(out).not.toMatch(/\badditionally\b/i);
+    expect(out).toMatch(/^I documented every escalation\.?$/);
+  });
+
+  it('PRESERVES legitimate words it must not blanket-delete (key/strategic/effective)', () => {
+    const clean = "Owned key vendor relationships and built an effective, strategic reconciliation process.";
+    expect(humanizeProse(clean)).toBe(clean);
+  });
+
+  it('does not touch "successfully" mid-word or as a non-leading adverb edge', () => {
+    // "success" must survive — only the adverb "successfully " is targeted.
+    const clean = "Measured the success rate of each reconciliation cycle.";
+    expect(humanizeProse(clean)).toBe(clean);
+  });
+});
+
 describe("humanWritingEngine — prompt blocks", () => {
   it("prompt blocks name the banned patterns so the model avoids them", () => {
     expect(HUMAN_WRITING_RULES).toMatch(/proven track record/i);
     expect(HUMAN_WRITING_RULES).toMatch(/transferable skills/i);
     expect(COVER_LETTER_STANDARD).toMatch(/I would welcome the opportunity/i);
+  });
+
+  it("RECRUITER_PSYCHOLOGY encodes the trust standard, weak patterns, and anti-repetition", () => {
+    expect(RECRUITER_PSYCHOLOGY).toMatch(/recruiter trust/i);
+    expect(RECRUITER_PSYCHOLOGY).toMatch(/demonstrated ability/i);
+    expect(RECRUITER_PSYCHOLOGY).toMatch(/quiet authority/i);
+    expect(RECRUITER_PSYCHOLOGY).toMatch(/skeptical recruiter/i);
+    expect(RECRUITER_PSYCHOLOGY).toMatch(/anti-repetition/i);
   });
 });

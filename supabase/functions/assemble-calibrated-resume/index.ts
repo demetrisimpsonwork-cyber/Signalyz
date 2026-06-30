@@ -10,7 +10,7 @@ import { rankBulletsByStrength, diversifyBulletOpenings } from "../_shared/bulle
 import { curateCompetencies } from "../_shared/competencyCuration.ts";
 import { enforceSummaryVoice } from "../_shared/summaryVoice.ts";
 import { scrubAiTells } from "../_shared/aiTellScrubber.ts";
-import { HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, SUMMARY_STANDARD, BULLET_STANDARD } from "../_shared/humanWritingEngine.ts";
+import { HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, SUMMARY_STANDARD, BULLET_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -1163,6 +1163,8 @@ CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
 BANNED VERBS: NEVER use: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated.
 
 ${SUMMARY_STANDARD}
+
+${RECRUITER_PSYCHOLOGY}
 
 ${HUMAN_WRITING_RULES}
 
@@ -2383,6 +2385,8 @@ OUTPUT RULES:
 - No placeholders. No brackets. No markdown.
 
 ${BULLET_STANDARD}
+
+${RECRUITER_PSYCHOLOGY}
 
 ${HUMAN_WRITING_RULES}
 

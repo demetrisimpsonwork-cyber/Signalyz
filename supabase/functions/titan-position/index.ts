@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { extractJsonFromModelResponse } from "../_shared/extractJson.ts";
-import { HUMAN_WRITING_RULES, REPORT_STANDARD } from "../_shared/humanWritingEngine.ts";
+import { HUMAN_WRITING_RULES, REPORT_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 
 interface CallAIResult {
   content: string;
@@ -186,6 +186,8 @@ RULES:
 - In optimized_summary: NEVER use the word "leader" or "leaders" unless that exact word appears in the resume. Use "professional" instead. Do not inflate titles.
 
 ${REPORT_STANDARD}
+
+${RECRUITER_PSYCHOLOGY}
 
 ${HUMAN_WRITING_RULES}
 

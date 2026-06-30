@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
-import { humanizeProse, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD } from "../_shared/humanWritingEngine.ts";
+import { humanizeProse, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -403,6 +403,8 @@ TONE — sound like an actual high-performing professional, not AI or copied res
 
 ${LINKEDIN_STANDARD}
 
+${RECRUITER_PSYCHOLOGY}
+
 ${HUMAN_WRITING_RULES}
 
 Return a JSON object with: "summary" (the full About section text)
@@ -476,6 +478,8 @@ WRITING RULES:
 - Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Vary sentence length. Plain words over impressive ones.
 
 ${COVER_LETTER_STANDARD}
+
+${RECRUITER_PSYCHOLOGY}
 
 ${NARRATIVE_PRINCIPLE}
 

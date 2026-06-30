@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import { RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +41,7 @@ function stripResumeHeader(text: string): string {
   return skipUntil > 0 ? lines.slice(skipUntil).join("\n").trim() : text;
 }
 
-const MODELS = ["claude-sonnet-4-20250514"];
+const MODELS = [ANTHROPIC_SONNET_MODEL];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -293,6 +295,10 @@ Tone requirements:
 - Institutional, Analytical, Concise, Executive-grade
 - No filler language, no coaching tone, no emojis, no casual phrasing
 - Write as if delivering a confidential ${config.tier === "supervisor" ? "hiring review" : "executive report"}.
+
+------------------------------------------------------------
+
+${RECRUITER_PSYCHOLOGY}
 
 ------------------------------------------------------------
 
@@ -698,7 +704,7 @@ async function callAI(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 8192,
         temperature: 0,
         system: systemPrompt,

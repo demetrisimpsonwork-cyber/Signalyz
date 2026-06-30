@@ -63,6 +63,19 @@ export const REPORT_STANDARD = `REPORT STANDARD (an expert recruiter explaining 
 - Plain language over jargon. Examples: "This helps you.", "This may hold you back.", "This is worth surfacing.", "Do not claim this unless you can defend it."
 - No repetitive diagnostic phrasing, no over-explaining, and no contradictions (never mark the same concept as both matched and missing).`;
 
+/**
+ * Recruiter Psychology — the writing-psychology layer shared by every long-form
+ * output. The goal is recruiter TRUST, not more keywords, enthusiasm, or
+ * explanation. Inject alongside the output-specific STANDARD blocks.
+ */
+export const RECRUITER_PSYCHOLOGY = `RECRUITER PSYCHOLOGY (write to build recruiter trust, not to impress):
+- Write like an elite resume writer and former recruiter. Every sentence must make the candidate more believable, hireable, or credible. If a sentence does not, cut it or rewrite it.
+- Prefer quiet authority over hype: concrete evidence, specific responsibility, clear scope, accurate outcomes, believable confidence. Never over-sell.
+- Each sentence should silently answer a recruiter's real questions — can this person do the job, handle the environment, own accuracy and follow-through, and be trusted — through evidence. Never state those questions directly.
+- Reduce or rewrite weak, low-credibility patterns (rewrite naturally, never delete in a way that breaks grammar): "demonstrated ability", "proven track record", "successfully", "strategic", "key", "effective", "relevant experience", "applicable experience", "transferable skills", "this demonstrates", "this experience", "this foundation", "that discipline applies", "throughout my career", "I believe", "I am excited", "I am writing to apply", "I would welcome the opportunity", "additionally", "furthermore", "in this role", "this opportunity".
+- Anti-repetition: each artifact has a different job — do not reuse the same evidence angle across the packet. Summary = high-level value proposition; bullets = specific proof; cover letter = human narrative and fit; LinkedIn = professional positioning; hiring report = recruiter interpretation of risk and opportunity.
+- Quality bar before finalizing each section: "Would a skeptical recruiter believe a top-tier human resume writer produced this?" If not, rewrite. Never invent, exaggerate, inflate, or weaken fabrication safeguards.`;
+
 // ──────────────────────────────────────────────────────────────────────────
 // DETERMINISTIC POST-PROCESSOR
 // ──────────────────────────────────────────────────────────────────────────
@@ -80,16 +93,30 @@ const PHRASE_REWRITES: Array<[RegExp, string]> = [
   [/\btransferable skills include\b/gi, "experience includes"],
   [/\b(?:transferable|applicable|relevant) skills\b/gi, "experience"],
   [/\b(?:applicable|relevant) experience\b/gi, "experience"],
-  [/\ba proven track record of\b/gi, "experience"],
+  // "experience" is uncountable, so any indefinite article in front of the
+  // replaced phrase must be consumed too — otherwise we'd emit "a experience".
+  [/\b(?:a|an)\s+proven track record of\b/gi, "experience"],
   [/\bproven track record of\b/gi, "experience"],
+  [/\b(?:a|an)\s+proven track record\b/gi, "experience"],
   [/\bproven track record\b/gi, "experience"],
-  [/\bproven ability\b/gi, "experience"],
+  // "proven ability to X" / "demonstrated ability to X" are PROMPT-ONLY.
+  // Swapping the noun phrase for "experience" leaves a dangling "a experience"
+  // or an ungrammatical "experience to X"; gerund conversion ("X-ing") is not
+  // safe for irregular verbs. The prompt layer bans these instead.
   [/\bskilled professional\b/gi, "professional"],
   [/\bpassionate about\b/gi, "focused on"],
   [/\bresults[-\s]driven\b,?\s*/gi, ""],
   [/\bpassionate\b,?\s*/gi, ""],
+  // P9: leading filler — "I believe (that)" hedges credibility, "successfully"
+  // is an empty intensifier before a verb. Both are safe to drop.
+  [/\bI believe (?:that )?/gi, ""],
+  [/\bsuccessfully\s+/gi, ""],
   [new RegExp(`\\bdynamic\\b,?\\s+(?!${DYNAMIC_DOMAIN}\\b)`, "gi"), ""],
 ];
+
+// P9: formulaic sentence-initial transitions add no meaning. Stripped only at a
+// sentence boundary so mid-sentence uses of these words are never touched.
+const LEADING_TRANSITIONS = /(^|[.!?]\s+)(?:additionally|furthermore|moreover|in conclusion)\b,?\s*/gi;
 
 // Whole sentences dominated by AI filler are dropped (these are never real proof).
 const DROP_MARKERS = [
@@ -126,6 +153,9 @@ export function humanizeProse(input: string): string {
 
   // 2. Grammar-safe phrase rewrites.
   for (const [rx, rep] of PHRASE_REWRITES) t = t.replace(rx, rep);
+
+  // 2b. Strip formulaic transitions at sentence starts (keep the boundary).
+  t = t.replace(LEADING_TRANSITIONS, (_m, boundary: string) => boundary);
 
   // 3. Drop whole sentences that are pure AI filler.
   const sentences = t.split(/(?<=[.!?])\s+/);
