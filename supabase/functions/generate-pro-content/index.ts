@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import { humanizeProse, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD } from "../_shared/humanWritingEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -297,6 +298,8 @@ RULES:
 - ZERO FABRICATION: every word must be traceable to the resume. Do NOT invent tools, industries, scope, metrics, employer names, certifications, or domain claims not present in the resume.
 - Do NOT add metrics, percentages, team sizes, or quantified claims not verbatim in the resume.
 
+${LINKEDIN_STANDARD}
+
 Return a JSON object with: "headline" (the repositioned headline text), "signal_basis" (one sentence explaining which resume evidence this headline is based on)
 Return ONLY valid JSON, no markdown.`;
         const raw = await callAI(prompt, 500);
@@ -398,11 +401,24 @@ TONE — sound like an actual high-performing professional, not AI or copied res
 - No formulaic AI transitions ("Furthermore," "Moreover," "In today's fast-paced world"). Vary sentence length.
 - ZERO FABRICATION: every claim must trace to the resume.
 
+${LINKEDIN_STANDARD}
+
+${HUMAN_WRITING_RULES}
+
 Return a JSON object with: "summary" (the full About section text)
 Return ONLY valid JSON, no markdown.`;
         const raw = await callAI(prompt, 1500);
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
-        result = JSON.parse(cleaned);
+        const parsedAbout = JSON.parse(cleaned);
+        // P8: humanize the About prose (remove AI tells, keep grammar).
+        if (parsedAbout && typeof parsedAbout.summary === "string") {
+          parsedAbout.summary = parsedAbout.summary
+            .split(/\n{2,}/)
+            .map((p: string) => humanizeProse(p))
+            .filter((p: string) => p.trim().length > 0)
+            .join("\n\n");
+        }
+        result = parsedAbout;
         break;
       }
 
@@ -459,6 +475,12 @@ WRITING RULES:
 - No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
 - Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Vary sentence length. Plain words over impressive ones.
 
+${COVER_LETTER_STANDARD}
+
+${NARRATIVE_PRINCIPLE}
+
+${HUMAN_WRITING_RULES}
+
 OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs separated by double newlines, no salutation or closing"}`;
 
         const raw = await callAI(prompt, 2000, toneTemp, 1);
@@ -469,7 +491,16 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
         if (jsonStart >= 0 && jsonEnd > jsonStart) {
           cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
         }
-        result = JSON.parse(cleaned);
+        const parsedLetter = JSON.parse(cleaned);
+        // P8: humanize the letter prose (remove AI tells, keep grammar).
+        if (parsedLetter && typeof parsedLetter.letter === "string") {
+          parsedLetter.letter = parsedLetter.letter
+            .split(/\n{2,}/)
+            .map((p: string) => humanizeProse(p))
+            .filter((p: string) => p.trim().length > 0)
+            .join("\n\n");
+        }
+        result = parsedLetter;
         break;
       }
 

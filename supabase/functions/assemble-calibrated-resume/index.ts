@@ -10,6 +10,7 @@ import { rankBulletsByStrength, diversifyBulletOpenings } from "../_shared/bulle
 import { curateCompetencies } from "../_shared/competencyCuration.ts";
 import { enforceSummaryVoice } from "../_shared/summaryVoice.ts";
 import { scrubAiTells } from "../_shared/aiTellScrubber.ts";
+import { HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, SUMMARY_STANDARD, BULLET_STANDARD } from "../_shared/humanWritingEngine.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -1160,6 +1161,10 @@ CHANNEL & CLAIM EVIDENCE (NON-NEGOTIABLE):
 - NEVER name specific software/tools (Salesforce, Zendesk, ServiceNow, Intercom, etc.) unless they appear in the original resume.
 
 BANNED VERBS: NEVER use: leveraged, spearheaded, championed, pioneered, mobilized, orchestrated.
+
+${SUMMARY_STANDARD}
+
+${HUMAN_WRITING_RULES}
 
 ${FINAL_EDITING_PASS}
 
@@ -2376,6 +2381,12 @@ OUTPUT RULES:
 - Keep the SAME number of roles in the SAME order.
 - Keep the SAME number of bullets per role in the SAME order.
 - No placeholders. No brackets. No markdown.
+
+${BULLET_STANDARD}
+
+${HUMAN_WRITING_RULES}
+
+${NARRATIVE_PRINCIPLE}
 
 ${FINAL_EDITING_PASS}
 

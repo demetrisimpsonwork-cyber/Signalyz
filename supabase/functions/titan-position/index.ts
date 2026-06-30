@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import { HUMAN_WRITING_RULES, REPORT_STANDARD } from "../_shared/humanWritingEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -170,6 +171,10 @@ RULES:
 - WRITING QUALITY (all prose fields — optimized_summary, explanations, narratives, scripts): write like a senior strategist, not an AI. Plain, specific, confident. Never use these AI tells: "results-driven", "dynamic", "passionate", "proven track record", "demonstrates", "utilized", "leveraged", "in order to", "a wide range of", "seasoned", "synergy", "spearheaded". No formulaic transitions ("Furthermore", "Moreover"). Vary sentence length.
 - Return ONLY valid JSON — no markdown, no code fences, no text outside JSON.
 - In optimized_summary: NEVER use the word "leader" or "leaders" unless that exact word appears in the resume. Use "professional" instead. Do not inflate titles.
+
+${REPORT_STANDARD}
+
+${HUMAN_WRITING_RULES}
 
 MATCH_SCORE_FORECAST.BEFORE_PERCENT — CRITICAL SCORING INSTRUCTIONS:
 before_percent must be computed using the EXACT same scoring model as the Alignment Engine. This is a 5-dimension weighted sum:
