@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import { extractJsonFromModelResponse } from "../_shared/extractJson.ts";
 import { HUMAN_WRITING_RULES, REPORT_STANDARD } from "../_shared/humanWritingEngine.ts";
+
+interface CallAIResult {
+  content: string;
+  stop_reason: string | null;
+  output_tokens: number | null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,7 +72,7 @@ function enforceCharLimits(resume: string, jd: string): { resume: string; jd: st
   return { resume, jd, truncated };
 }
 
-async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<string> {
+async function callAI(apiKey: string, prompt: string, _inputLen: number): Promise<CallAIResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
   try {
@@ -79,7 +86,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
       },
       body: JSON.stringify({
         model: ANTHROPIC_SONNET_MODEL,
-        max_tokens: 2800,
+        max_tokens: 4096,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -88,7 +95,13 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
     if (aiRes.ok) {
       const data = await aiRes.json();
       const content = data.content?.[0]?.text || "";
-      if (content) return content;
+      if (content) {
+        return {
+          content,
+          stop_reason: typeof data.stop_reason === "string" ? data.stop_reason : null,
+          output_tokens: typeof data.usage?.output_tokens === "number" ? data.usage.output_tokens : null,
+        };
+      }
       throw new Error("Anthropic returned empty content.");
     }
     const errBody = await aiRes.text();
@@ -229,14 +242,29 @@ RESUME: ${cleanExp}
 
 JOB DESCRIPTION: ${cleanJd}`;
 
-    let content = await callAI(apiKey, prompt, inputLen);
-    content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const aiResult = await callAI(apiKey, prompt, inputLen);
 
     let titan: Record<string, unknown>;
     try {
-      titan = JSON.parse(content);
+      const extracted = extractJsonFromModelResponse(aiResult.content);
+      titan = extracted.data;
+      if (extracted.usedBraceFallback) {
+        console.log(JSON.stringify({
+          event: "json_brace_fallback_succeeded",
+          request_id: requestId,
+          stop_reason: aiResult.stop_reason,
+          output_tokens: aiResult.output_tokens,
+        }));
+      }
     } catch {
-      console.error("JSON parse failed. Preview:", content.slice(0, 300));
+      console.error(JSON.stringify({
+        event: "json_parse_failed",
+        request_id: requestId,
+        stop_reason: aiResult.stop_reason,
+        output_tokens: aiResult.output_tokens,
+        fallback_extraction_attempted: true,
+        preview: aiResult.content.slice(0, 300),
+      }));
       throw new Error("Failed to parse AI response. Please try again.");
     }
 
