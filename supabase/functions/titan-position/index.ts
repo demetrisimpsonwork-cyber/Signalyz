@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,7 +77,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 2800,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],

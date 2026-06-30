@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +21,7 @@ async function callAI(prompt: string, maxTokens = 4000, temperature = 0, retries
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: ANTHROPIC_SONNET_MODEL,
           max_tokens: maxTokens,
           temperature: attempt > 0 ? Math.min(temperature, 0.5) : temperature,
           messages: [{ role: "user", content: prompt }],
