@@ -86,7 +86,7 @@ async function callAI(apiKey: string, prompt: string, _inputLen: number): Promis
       },
       body: JSON.stringify({
         model: ANTHROPIC_SONNET_MODEL,
-        max_tokens: 4096,
+        max_tokens: 8192,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
       }),
