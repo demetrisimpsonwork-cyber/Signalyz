@@ -3,6 +3,7 @@ import {
   antiAIFilter,
   repairSentenceFragments,
   repairCapabilityListVerb,
+  repairAsideBeforeMainVerb,
 } from "@/lib/antiAIFilter";
 
 describe("antiAIFilter — sentence-fragment safety (Phase 9.6)", () => {
@@ -85,5 +86,43 @@ describe("antiAIFilter — list-to-verb repair (Phase 9.8)", () => {
     expect(out.toLowerCase()).not.toContain("inventory reconciliation");
     expect(out.toLowerCase()).not.toContain("repair order");
     expect(out).toContain("all apply directly");
+  });
+});
+
+describe("antiAIFilter — dangling aside before main verb (Phase 9.9)", () => {
+  const OBSERVED =
+    "Managing 40–70 concurrent active support cases daily at the New Jersey Department of Labor — while resolving 8–15 per day under strict SLA requirements, reflects the kind of operational discipline and customer-first accuracy that CarMax's end-to-end sales and service process demands.";
+
+  it("removes the 'requirements, reflects' comma splice directly", () => {
+    const out = repairAsideBeforeMainVerb(OBSERVED);
+    expect(out).not.toContain("requirements, reflects");
+    expect(out).toContain("Department of Labor reflects the kind of operational discipline");
+  });
+
+  it("removes the comma splice through the full antiAIFilter pipeline", () => {
+    const out = antiAIFilter(OBSERVED);
+    expect(out).not.toContain("requirements, reflects");
+    expect(out).toContain("reflects the kind of operational discipline");
+  });
+
+  it("also repairs an aside that only appears after em-dash reduction", () => {
+    // Two em-dashes: reduceEmDashes keeps the first, turns the second into a
+    // comma, producing the dangling-aside signature the repair then fixes.
+    const input =
+      "The volume at NJDOL — sustained across every shift — demonstrates the discipline this role needs.";
+    const out = antiAIFilter(input);
+    expect(out).not.toMatch(/,\s*demonstrates\b/);
+    expect(out).toContain("demonstrates the discipline this role needs");
+  });
+
+  it("leaves a clean sentence with a properly closed aside untouched", () => {
+    const input = "I resolved 40 cases daily and the work required accuracy.";
+    expect(repairAsideBeforeMainVerb(input)).toBe(input);
+  });
+
+  it("preserves the clean CarMax salutation (repair + full filter leave it intact)", () => {
+    const salutation = "Dear CarMax Hiring Team,";
+    expect(repairAsideBeforeMainVerb(salutation)).toBe(salutation);
+    expect(antiAIFilter(salutation)).toBe(salutation);
   });
 });

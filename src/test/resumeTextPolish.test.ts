@@ -20,6 +20,16 @@ describe("resumeTextPolish — missing articles (Phase 9.8)", () => {
     );
   });
 
+  it("adds 'a' before comma-separated adjectives (compliance-sensitive, auditable)", () => {
+    expect(
+      polishResumeText(
+        "Maintained accuracy across all correspondence in compliance-sensitive, auditable environment.",
+      ),
+    ).toBe(
+      "Maintained accuracy across all correspondence in a compliance-sensitive, auditable environment.",
+    );
+  });
+
   it("does not double an existing article", () => {
     const input = "Executed accurately across a decentralized support environment.";
     expect(polishResumeText(input)).toBe(input);

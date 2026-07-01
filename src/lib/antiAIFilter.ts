@@ -218,6 +218,33 @@ export function repairSentenceFragments(text: string): string {
   );
 }
 
+// ─── Dangling aside before main verb ────────────────────────────────────────
+
+/**
+ * Repair a subject that is separated from its main verb by an em-dash aside
+ * whose closing delimiter became a comma (e.g. after em-dash reduction):
+ *   "Managing 40–70 cases daily at NJDOL — while resolving 8–15 per day under
+ *    strict SLA requirements, reflects the kind of discipline..."
+ * becomes:
+ *   "Managing 40–70 cases daily at NJDOL reflects the kind of discipline..."
+ *
+ * The signature is a lone em-dash opening an aside that is closed with a comma
+ * immediately before the sentence's main present-tense verb — a comma splice
+ * that reads as broken subject/verb structure. The aside is dropped so the
+ * subject reconnects cleanly to the verb. Bounded length + no crossing periods
+ * or additional em-dashes keeps it from over-matching normal prose.
+ */
+const MAIN_CLAUSE_VERBS =
+  "reflects|reflect|demonstrates|demonstrate|shows|show|means|requires|require|represents|represent|applies|apply|proves|prove|signals|signal|mirrors|mirror|matches|match";
+
+export function repairAsideBeforeMainVerb(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    new RegExp(`\\s*—\\s*[^—.]{2,90}?,\\s*(${MAIN_CLAUSE_VERBS})\\b`, "g"),
+    (_m, verb: string) => ` ${verb}`,
+  );
+}
+
 // ─── List-to-verb repair ────────────────────────────────────────────────────
 
 /**
@@ -360,6 +387,9 @@ export function antiAIFilter(text: string): string {
 
   // Step 2: Reduce excessive em dashes
   result = reduceEmDashes(result);
+
+  // Step 2b: Repair a dangling em-dash aside left before the main verb
+  result = repairAsideBeforeMainVerb(result);
 
   // Step 3: Reduce repeated "I" sentence starts
   result = reduceRepeatedI(result);

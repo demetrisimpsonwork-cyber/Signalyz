@@ -24,14 +24,17 @@ const DETERMINERS = new Set([
 ]);
 
 const ARTICLE_RX = new RegExp(
-  `\\b(across|in|within|into|through|from|under)\\s+((?:[a-z][a-z-]*\\s+){0,3})(${ARTICLE_NOUNS})\\b`,
+  // Modifiers may be comma-separated adjectives, e.g. "compliance-sensitive, auditable environment".
+  `\\b(across|in|within|into|through|from|under)\\s+((?:[a-z][a-z-]*,?\\s+){0,3})(${ARTICLE_NOUNS})\\b`,
   "gi",
 );
 
 /** Insert a missing "a"/"an" before singular nouns that follow a preposition. */
 function addMissingArticles(text: string): string {
   return text.replace(ARTICLE_RX, (whole, prep: string, mods: string, noun: string) => {
-    const firstWord = ((mods || "").trim().split(/\s+/)[0] || noun).toLowerCase();
+    const firstWord = ((mods || "").trim().split(/\s+/)[0] || noun)
+      .replace(/,$/, "")
+      .toLowerCase();
     if (DETERMINERS.has(firstWord)) return whole; // already determined
     const article = /^[aeiou]/i.test(firstWord) ? "an" : "a";
     return `${prep} ${article} ${mods}${noun}`;
