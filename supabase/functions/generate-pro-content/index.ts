@@ -479,7 +479,8 @@ WRITING RULES:
 - NO dramatic punchlines, copywriter one-liners, or rhetorical reversals. Specifically forbidden: em-dash "wasn't X — it was Y" contrasts (e.g. "wasn't a ceiling — it was the floor"), sentence fragments used for punch (e.g. "Both had to land."), and any line written for effect rather than information. Write in clear, complete, recruiter-safe sentences.
 - EVERY sentence must be grammatically complete (subject + verb). Never start a sentence with a bare linking verb ("Was...", "Is...", "Were...", "Are...") — that is a fragment. Do not use an em-dash aside that would read as a fragment if the dash were removed.
 - Mention any gap honestly but tactfully in ONE clause; never over-explain or apologize for it.
-- ZERO fabricated sales, product, counter, or quota experience. Do not claim formal sales, counter sales, or product-selection experience the resume does not support. Adjacent advisory/customer-guidance framing is fine only when the resume supports it.
+- ZERO fabricated sales, product, counter, or quota experience. Do not claim formal sales, counter sales, or product-selection experience the resume does not support.
+- ZERO fabricated domain-specific experience. Never claim OR imply experience the resume does not support — including vehicle/product sales, appraisal, vehicle condition assessment or inspection, inventory check-in/scanning/reconciliation, or repair-order handling. Do NOT name those employer-specific tasks as though you have performed them. Position around what the resume DOES support: high-volume customer support, documentation accuracy, process follow-through, cross-functional coordination, customer guidance, fast-paced operations, and integrity/accuracy. Any domain gap must be stated once, plainly, in a single clause — then move on.
 
 ${COVER_LETTER_STANDARD}
 

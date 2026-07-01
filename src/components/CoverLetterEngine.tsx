@@ -209,8 +209,10 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
     parts.push("");
     parts.push(formatDate());
     parts.push("");
-    parts.push(addresseeLine);
-    parts.push("");
+    if (addresseeLine) {
+      parts.push(addresseeLine);
+      parts.push("");
+    }
     parts.push(salutation);
     parts.push("");
     const paragraphs = splitParagraphs(activeLetter);
@@ -396,7 +398,9 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 )}
               </div>
               <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{formatDate()}</p>
-              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{addresseeLine}</p>
+              {addresseeLine && (
+                <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{addresseeLine}</p>
+              )}
               <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px", fontFamily: "'Georgia', 'Times New Roman', serif" }}>{salutation}</p>
 
               {/* Editable body */}
@@ -447,8 +451,10 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
               {/* Date */}
               <p className="text-muted-foreground" style={{ fontSize: "11px", marginBottom: "16px" }}>{formatDate()}</p>
 
-              {/* Recipient */}
-              <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{addresseeLine}</p>
+              {/* Recipient (only when a real addressee block is warranted) */}
+              {addresseeLine && (
+                <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{addresseeLine}</p>
+              )}
 
               {/* Salutation */}
               <p className="text-foreground" style={{ fontSize: "12px", marginBottom: "16px" }}>{salutation}</p>

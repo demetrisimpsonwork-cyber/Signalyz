@@ -138,27 +138,22 @@ export interface CoverLetterAddressee {
   salutation: string;
 }
 
-/** Build a paste-ready salutation; never emits "Dear and liaison,"-style artifacts. */
+/**
+ * Build a paste-ready salutation; never emits "Dear and liaison,"-style
+ * artifacts. The salutation is the single addressee line — we deliberately do
+ * NOT emit a separate recipient block (e.g. "Hiring Team, CarMax") because it
+ * duplicates the salutation and looks unprofessional in the exported letter.
+ */
 export function buildCoverLetterAddressee(jd: string): CoverLetterAddressee {
-  const companyName = inferCompanyNameFromJd(jd);
   const hiringManager = inferHiringManagerFromJd(jd);
-
   if (hiringManager) {
-    return {
-      addresseeLine: hiringManager,
-      salutation: `Dear ${hiringManager},`,
-    };
+    return { addresseeLine: "", salutation: `Dear ${hiringManager},` };
   }
 
+  const companyName = inferCompanyNameFromJd(jd);
   if (companyName) {
-    return {
-      addresseeLine: `Hiring Team, ${companyName}`,
-      salutation: `Dear ${companyName} Hiring Team,`,
-    };
+    return { addresseeLine: "", salutation: `Dear ${companyName} Hiring Team,` };
   }
 
-  return {
-    addresseeLine: "Hiring Team",
-    salutation: "Dear Hiring Team,",
-  };
+  return { addresseeLine: "", salutation: "Dear Hiring Team," };
 }

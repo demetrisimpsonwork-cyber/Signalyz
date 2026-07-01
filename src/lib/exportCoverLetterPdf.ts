@@ -71,9 +71,11 @@ export function exportCoverLetterPdf(input: CoverLetterPdfInput) {
     drawText(input.date, 10, { color: "#555555" });
     y += 2;
 
-    /* ── Addressee + salutation ── */
-    drawText(input.addressee, 10);
-    y += 3;
+    /* ── Addressee (optional) + salutation ── */
+    if (input.addressee && input.addressee.trim()) {
+      drawText(input.addressee, 10);
+      y += 3;
+    }
     drawText(input.salutation, 10);
     y += 4;
 
