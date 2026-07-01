@@ -457,17 +457,15 @@ CONTEXT:
 
 ${toneDirective}
 
-STRUCTURE — 4 to 5 concise paragraphs:
+STRUCTURE — exactly 4 concise paragraphs:
 
 P1 — OPENING: Lead with your single strongest credential for this specific role — a number, a system, a scope of work — in a complete sentence. Then one sentence connecting it to ${companyRef || "this company"} or this role. No "I am writing to apply." No philosophy.
 
 P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you solved. At least one sentence should lead with the result, not "I." Show you do the hard work this role requires.
 
-P3 — RELEVANT FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Demonstrate it through what you did, not by claiming it "translates."
+P3 — RELEVANT FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Demonstrate it through what you did, not by claiming it "translates." If there is a gap, note it honestly ONCE in a single plain clause and move on — do NOT over-explain, dramatize, or dwell on it. No apology.
 
-P4 — WHY HERE: Show you understand what ${companyRef || "this company"} does and why you want this role. Reference something concrete about the company or role. If there is a gap, note it honestly in a single plain clause and move on — do NOT over-explain, dramatize, or dwell on it. No apology.
-
-P5 — CLOSE (optional, may merge into P4): One to two plain sentences that invite a conversation. No onboarding plans. No "I look forward to discussing."
+P4 — WHY HERE + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} does and why you want this role, then invite a conversation in one plain sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.
 
 WRITING RULES:
 - Max 1 sentence per paragraph may start with "I"
@@ -479,7 +477,9 @@ WRITING RULES:
 - No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
 - Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Plain words over impressive ones.
 - NO dramatic punchlines, copywriter one-liners, or rhetorical reversals. Specifically forbidden: em-dash "wasn't X — it was Y" contrasts (e.g. "wasn't a ceiling — it was the floor"), sentence fragments used for punch (e.g. "Both had to land."), and any line written for effect rather than information. Write in clear, complete, recruiter-safe sentences.
-- Mention any gap honestly but tactfully in one clause; never over-explain or apologize for it.
+- EVERY sentence must be grammatically complete (subject + verb). Never start a sentence with a bare linking verb ("Was...", "Is...", "Were...", "Are...") — that is a fragment. Do not use an em-dash aside that would read as a fragment if the dash were removed.
+- Mention any gap honestly but tactfully in ONE clause; never over-explain or apologize for it.
+- ZERO fabricated sales, product, counter, or quota experience. Do not claim formal sales, counter sales, or product-selection experience the resume does not support. Adjacent advisory/customer-guidance framing is fine only when the resume supports it.
 
 ${COVER_LETTER_STANDARD}
 

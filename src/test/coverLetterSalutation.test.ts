@@ -2,12 +2,23 @@ import { describe, it, expect } from "vitest";
 import {
   buildCoverLetterAddressee,
   isValidPersonName,
+  isValidCompanyName,
   inferCompanyNameFromJd,
 } from "@/lib/coverLetterSalutation";
 
 const GRAYBAR_JD_SNIPPET = `As a Customer Service Representative, you will serve as a key contact and liaison for customers to ensure their total satisfaction.
 
 At Graybar, we are known for our comprehensive benefits.`;
+
+// A fuller Graybar-style JD including the slogan that previously leaked as the
+// addressee ("match to help secure your future").
+const GRAYBAR_FULL_JD = `Make a difference.
+
+As a Customer Service Representative, you will serve as a key contact and liaison for customers to ensure their total satisfaction.
+
+At Graybar, we are known for our comprehensive benefits and our employee stock ownership plan. We could be the match to help secure your future.
+
+Graybar is an Equal Opportunity Employer.`;
 
 describe("coverLetterSalutation", () => {
   it("rejects JD boilerplate like 'and liaison' as a person name", () => {
@@ -74,5 +85,38 @@ describe("coverLetterSalutation", () => {
     );
     expect(exported).toContain("Dear Hiring Team,");
     expect(exported).not.toContain("liaison");
+  });
+
+  // ── Phase 9.6: slogan / fragment addressee lock ──────────────────────────
+  it("rejects slogans and benefit fragments as company names", () => {
+    expect(isValidCompanyName("match to help secure your future")).toBe(false);
+    expect(isValidCompanyName("Match to help secure your future")).toBe(false);
+    expect(isValidCompanyName("Make a difference")).toBe(false);
+    expect(isValidCompanyName("employee stock ownership")).toBe(false);
+    expect(isValidCompanyName("total satisfaction")).toBe(false);
+    expect(isValidCompanyName("Equal Opportunity Employer")).toBe(false);
+  });
+
+  it("accepts real company names", () => {
+    expect(isValidCompanyName("Graybar")).toBe(true);
+    expect(isValidCompanyName("Graybar Electric")).toBe(true);
+    expect(isValidCompanyName("Bank of America")).toBe(true);
+  });
+
+  it("never turns 'match to help secure your future' into an addressee", () => {
+    const { addresseeLine, salutation } = buildCoverLetterAddressee(
+      "We could be the match to help secure your future. Make a difference.",
+    );
+    expect(addresseeLine).not.toMatch(/match|secure|future|difference/i);
+    expect(salutation).not.toMatch(/match|secure|future|difference/i);
+    expect(salutation).toBe("Dear Hiring Team,");
+  });
+
+  it("resolves the real company from a full Graybar JD, ignoring the slogan", () => {
+    expect(inferCompanyNameFromJd(GRAYBAR_FULL_JD)).toBe("Graybar");
+    const { salutation, addresseeLine } = buildCoverLetterAddressee(GRAYBAR_FULL_JD);
+    expect(salutation).toBe("Dear Graybar Hiring Team,");
+    expect(addresseeLine).toBe("Hiring Team, Graybar");
+    expect(salutation).not.toMatch(/match|secure|future|difference/i);
   });
 });

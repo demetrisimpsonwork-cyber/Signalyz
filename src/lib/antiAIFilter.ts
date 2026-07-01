@@ -186,16 +186,36 @@ const PHRASE_REPLACEMENTS: [RegExp, string][] = [
 
 function reduceEmDashes(text: string): string {
   // Replace patterns like "word — word" used as sentence connectors
-  // Keep the first occurrence per paragraph, replace subsequent ones
+  // Keep the first occurrence per paragraph, replace subsequent ones.
+  // IMPORTANT: reduce to a comma, never a period — a period here splits a clause
+  // from its subject and produces fragments like "... forward. Was a consistent
+  // part of both positions."
   const paragraphs = text.split(/\n\n+/);
   return paragraphs.map(para => {
     let dashCount = 0;
     return para.replace(/\s*—\s*/g, (match) => {
       dashCount++;
       if (dashCount <= 1) return match; // keep first em dash
-      return ". "; // replace subsequent em dashes with period
+      return ", "; // replace subsequent em dashes with a comma (no fragments)
     });
   }).join("\n\n");
+}
+
+// ─── Sentence-fragment repair ───────────────────────────────────────────────
+
+/**
+ * Repair clauses that were split from their subject and now begin with a bare
+ * linking verb (e.g. "... move forward. Was a consistent part."). A cover-letter
+ * sentence never legitimately starts with Was/Is/Were/Are, so rejoin it to the
+ * previous sentence with a comma. Guards against fragments from any source
+ * (em-dash reduction, edge humanizeProse, or the model itself).
+ */
+export function repairSentenceFragments(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    /([A-Za-z0-9,;)])\.\s+(Was|Is|Were|Are)\b/g,
+    (_m, prev: string, verb: string) => `${prev}, ${verb.toLowerCase()}`,
+  );
 }
 
 // ─── Post-cleanup: fix double spaces, capitalization after removals ──────────
@@ -317,6 +337,9 @@ export function antiAIFilter(text: string): string {
 
   // Step 4: Clean up whitespace and capitalization
   result = cleanupWhitespace(result);
+
+  // Step 5: Repair any sentence fragments left by clause splitting
+  result = repairSentenceFragments(result);
 
   return result;
 }
