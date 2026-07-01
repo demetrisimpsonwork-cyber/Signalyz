@@ -218,6 +218,35 @@ export function repairSentenceFragments(text: string): string {
   );
 }
 
+// ─── List-to-verb repair ────────────────────────────────────────────────────
+
+/**
+ * Repair a comma list whose items are the subject of a following plural verb but
+ * were written with a broken comma splice, e.g.:
+ *   "documentation accuracy, process integrity, real-time judgment under
+ *    pressure, apply directly..."
+ * becomes:
+ *   "documentation accuracy, process integrity, and real-time judgment under
+ *    pressure all apply directly..."
+ *
+ * Requires at least three list items (two "item, " leads + a final item) so it
+ * never touches a well-formed two-item clause. If the last item already begins
+ * with "and", the duplicate conjunction is dropped.
+ */
+const LIST_SUBJECT_VERBS = "apply|translate|transfer|carry|hold|matter";
+
+export function repairCapabilityListVerb(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    new RegExp(
+      `((?:[A-Za-z][^,.;:]*?, ){2,})([A-Za-z][^,.;:]*?), (${LIST_SUBJECT_VERBS})\\b`,
+      "g",
+    ),
+    (_m, head: string, last: string, verb: string) =>
+      `${head}and ${last.replace(/^and\s+/i, "")} all ${verb}`,
+  );
+}
+
 // ─── Post-cleanup: fix double spaces, capitalization after removals ──────────
 
 function cleanupWhitespace(text: string): string {
@@ -340,6 +369,9 @@ export function antiAIFilter(text: string): string {
 
   // Step 5: Repair any sentence fragments left by clause splitting
   result = repairSentenceFragments(result);
+
+  // Step 6: Repair broken list-to-verb comma splices
+  result = repairCapabilityListVerb(result);
 
   return result;
 }

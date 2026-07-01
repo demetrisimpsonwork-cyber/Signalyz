@@ -4,6 +4,7 @@
  */
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { bulletToPastTense } from "@/lib/pastTense";
+import { polishResumeText } from "@/lib/resumeTextPolish";
 
 /** Section labels — must match ResumeCanvas SectionHeader text */
 export const RESUME_SECTION_LABELS = {
@@ -52,10 +53,10 @@ export interface ExportResumeModel {
   education: ExportEducationEntry[];
 }
 
-/** Format bullet for preview/export — past tense, no length truncation */
+/** Format bullet for preview/export — past tense + grammar polish, no length truncation */
 export function formatBulletForDisplay(bullet: string): string {
   if (!bullet?.trim()) return "";
-  return bulletToPastTense(bullet.trim());
+  return polishResumeText(bulletToPastTense(bullet.trim()));
 }
 
 /** Clean certification line for export (URLs/markdown stripped) */
@@ -102,7 +103,7 @@ export function normalizeResumeForExport(resume: CalibratedResumeData): ExportRe
 
   const projects: ExportProjectEntry[] = (resume.independent_projects || []).map((proj) => ({
     name: (proj.name || "").trim(),
-    description: (proj.description || "").trim(),
+    description: polishResumeText((proj.description || "").trim()),
     bullets: (proj.bullets || [])
       .map((b) => formatBulletForDisplay(b))
       .filter(Boolean),
@@ -125,7 +126,7 @@ export function normalizeResumeForExport(resume: CalibratedResumeData): ExportRe
       contactParts,
       contactLine: contactParts.join("  |  "),
     },
-    summary: (resume.summary || "").trim(),
+    summary: polishResumeText((resume.summary || "").trim()),
     competencies,
     competenciesText: competencies.join(",  "),
     experience,
