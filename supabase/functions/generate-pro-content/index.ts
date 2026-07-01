@@ -457,17 +457,19 @@ CONTEXT:
 
 ${toneDirective}
 
-STRUCTURE — exactly 4 concise paragraphs:
+STRUCTURE — a human narrative in exactly 4 concise paragraphs. This should read like a focused person who understands the job wrote it in one sitting — NOT like a stacked list of evidence. Each paragraph flows into the next; do not label them.
 
-P1 — OPENING: Lead with your single strongest credential for this specific role — a number, a system, a scope of work — in a complete sentence. Then one sentence connecting it to ${companyRef || "this company"} or this role. No "I am writing to apply." No philosophy.
+P1 — WHY THIS ROLE FITS: Open with your single strongest reason you fit this specific role and why it makes sense for you to want it. Anchor it in one concrete credential (a number, a system, a scope of work), then connect it to ${companyRef || "this company"} or the role in the same breath. No "I am writing to apply." No philosophy.
 
-P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you solved. At least one sentence should lead with the result, not "I." Show you do the hard work this role requires.
+P2 — ONE FOCUSED PROOF: Prove capability through ONE focused work example told as a short story — the situation, what you did, and the outcome. Do NOT stack multiple jobs or dump a list of bullet-style accomplishments. Pick the most relevant example and go one level deeper on it instead of listing three shallow ones.
 
-P3 — RELEVANT FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Demonstrate it through what you did, not by claiming it "translates." If there is a gap, note it honestly ONCE in a single plain clause and move on — do NOT over-explain, dramatize, or dwell on it. No apology.
+P3 — HONEST GAP + BRIDGE: Name the main gap honestly in ONE plain sentence, then bridge in the same paragraph to the real, transferable strengths that matter for this role. Do NOT over-explain, dramatize, apologize, or dwell. Do NOT use the "this role requires X, I have Y" formula — just show the strength.
 
-P4 — WHY HERE + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} does and why you want this role, then invite a conversation in one plain sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.
+P4 — COMPANY MOTIVATION + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} actually does and why it draws you, then invite a conversation in one plain, professional sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.
 
 WRITING RULES:
+- Write a flowing human narrative, not an evidence dump. Vary how paragraphs open — do NOT start multiple paragraphs with "At <Employer>" (e.g. "At NJDOL...", "At Cyient..."). At most ONE paragraph may open with an employer name.
+- Do NOT repeat any single employer name more than twice in the whole letter. Prefer one focused example over name-dropping every job.
 - Max 1 sentence per paragraph may start with "I"
 - Never explain WHY experience applies — use it as direct proof
 - Never describe what the role requires — the hiring manager knows
@@ -480,6 +482,7 @@ WRITING RULES:
 - EVERY sentence must be grammatically complete (subject + verb). Never start a sentence with a bare linking verb ("Was...", "Is...", "Were...", "Are...") — that is a fragment. Do not use an em-dash aside that would read as a fragment if the dash were removed.
 - When a sentence lists two or more skills or strengths as its subject, the list must be grammatical: use "and" before the final item and a plural verb, e.g. "documentation accuracy, process integrity, and real-time judgment under pressure all apply directly to this role" — NEVER a comma splice like "documentation accuracy, process integrity, real-time judgment under pressure, apply directly".
 - Never separate a subject from its main verb with a comma. Do NOT write "X — aside, reflects Y" or "X requirements, reflects Y". If a subordinate aside would leave a comma sitting right before the main verb, drop the aside or rephrase so the subject connects directly to its verb, e.g. "Managing 40–70 concurrent cases daily at NJDOL reflects the operational discipline this role demands."
+- Punctuate every list correctly: always use "and" before the final item, and never leave a stray comma between the last list item and the word that follows it. Write "individuals, employers, and healthcare providers through complex processes" — NOT "individuals, employers, healthcare providers, through complex processes". If you set off an appositive list with an em-dash, CLOSE it with an em-dash, not a comma: "CarMax's model — transparent pricing, a structured process, and no-pressure guidance — is..." (or write it plainly without dashes) — NEVER "...no-pressure guidance, is...".
 - Mention any gap honestly but tactfully in ONE clause; never over-explain or apologize for it.
 - ZERO fabricated sales, product, counter, or quota experience. Do not claim formal sales, counter sales, or product-selection experience the resume does not support.
 - ZERO fabricated domain-specific experience. Never claim OR imply experience the resume does not support — including vehicle/product sales, appraisal, vehicle condition assessment or inspection, inventory check-in/scanning/reconciliation, or repair-order handling. Do NOT name those employer-specific tasks as though you have performed them. Position around what the resume DOES support: high-volume customer support, documentation accuracy, process follow-through, cross-functional coordination, customer guidance, fast-paced operations, and integrity/accuracy. Any domain gap must be stated once, plainly, in a single clause — then move on.

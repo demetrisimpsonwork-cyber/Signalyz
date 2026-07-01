@@ -4,6 +4,8 @@ import {
   repairSentenceFragments,
   repairCapabilityListVerb,
   repairAsideBeforeMainVerb,
+  repairEmDashAppositiveList,
+  repairListMissingAnd,
 } from "@/lib/antiAIFilter";
 
 describe("antiAIFilter — sentence-fragment safety (Phase 9.6)", () => {
@@ -13,8 +15,9 @@ describe("antiAIFilter — sentence-fragment safety (Phase 9.6)", () => {
     const out = antiAIFilter(input);
     expect(out).not.toContain(". Was ");
     expect(out).not.toContain(". Is ");
-    // The clause stays attached to its subject.
-    expect(out).toMatch(/move forward, was a consistent part/i);
+    // The clause stays attached to its subject — the appositive is re-closed
+    // with an em-dash (Phase 9.10) rather than a bare comma.
+    expect(out).toMatch(/move forward — was a consistent part/i);
   });
 
   it("does not turn an em-dash aside into a '. Is ' fragment", () => {
@@ -124,5 +127,52 @@ describe("antiAIFilter — dangling aside before main verb (Phase 9.9)", () => {
     const salutation = "Dear CarMax Hiring Team,";
     expect(repairAsideBeforeMainVerb(salutation)).toBe(salutation);
     expect(antiAIFilter(salutation)).toBe(salutation);
+  });
+});
+
+describe("antiAIFilter — list punctuation repair (Phase 9.10)", () => {
+  it("adds the missing 'and' and drops the stray comma before a connector", () => {
+    const input =
+      "Guiding individuals, employers, healthcare providers, through complex processes.";
+    const out = repairListMissingAnd(input);
+    expect(out).toBe("Guiding individuals, employers, and healthcare providers through complex processes.");
+    expect(out).not.toContain("providers, through");
+  });
+
+  it("fixes the missing-'and' list through the full pipeline", () => {
+    const input =
+      "I was guiding individuals, employers, healthcare providers, through complex processes daily.";
+    const out = antiAIFilter(input);
+    expect(out).toContain("individuals, employers, and healthcare providers through complex processes");
+  });
+
+  it("leaves a well-formed list before a connector untouched", () => {
+    const input = "Guiding employers, individuals, and healthcare providers through distinct requirements.";
+    expect(repairListMissingAnd(input)).toBe(input);
+  });
+
+  it("re-closes a broken em-dash appositive list before 'is'", () => {
+    const input =
+      "CarMax's model — transparent pricing, a structured process, no-pressure guidance, is the kind of environment I want.";
+    const out = repairEmDashAppositiveList(input);
+    expect(out).toBe(
+      "CarMax's model — transparent pricing, a structured process, and no-pressure guidance — is the kind of environment I want.",
+    );
+    expect(out).not.toContain("guidance, is");
+  });
+
+  it("re-closes the em-dash appositive after em-dash reduction in the full pipeline", () => {
+    // Two em-dashes: reduceEmDashes turns the second into a comma, producing the
+    // "..., is" break that the appositive repair then re-closes.
+    const input =
+      "CarMax's model — transparent pricing, a structured process, and no-pressure guidance — is the kind of environment I want to work in.";
+    const out = antiAIFilter(input);
+    expect(out).not.toMatch(/guidance,\s*is\b/);
+    expect(out).toContain("and no-pressure guidance — is the kind of environment");
+  });
+
+  it("does not touch a single-phrase em-dash aside (no list)", () => {
+    const input = "The role — a demanding one, is exactly what I want.";
+    expect(repairEmDashAppositiveList(input)).toBe(input);
   });
 });

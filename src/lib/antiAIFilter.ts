@@ -245,6 +245,37 @@ export function repairAsideBeforeMainVerb(text: string): string {
   );
 }
 
+// ─── Em-dash appositive list repair ─────────────────────────────────────────
+
+/**
+ * Repair an em-dash appositive list whose closing delimiter became a comma
+ * (typically after em-dash reduction), leaving a comma right before a linking
+ * verb:
+ *   "CarMax's model — transparent pricing, a structured process, no-pressure
+ *    guidance, is the kind of environment..."
+ * becomes:
+ *   "CarMax's model — transparent pricing, a structured process, and
+ *    no-pressure guidance — is the kind of environment..."
+ *
+ * Only fires when the aside is a comma list (≥2 items). It re-closes the aside
+ * with an em-dash and inserts the missing "and" before the final item. Bounded
+ * length + no crossing periods/em-dashes keeps it conservative.
+ */
+export function repairEmDashAppositiveList(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    /—\s*([^—.]{2,120}?),\s*(is|are|was|were)\b/g,
+    (whole, aside: string, verb: string) => {
+      if (!aside.includes(",")) return whole; // only list appositives
+      const items = aside.split(/,\s*/).filter(Boolean);
+      if (items.length >= 2 && !/^and\s/i.test(items[items.length - 1])) {
+        items[items.length - 1] = `and ${items[items.length - 1]}`;
+      }
+      return `— ${items.join(", ")} — ${verb}`;
+    },
+  );
+}
+
 // ─── List-to-verb repair ────────────────────────────────────────────────────
 
 /**
@@ -271,6 +302,33 @@ export function repairCapabilityListVerb(text: string): string {
     ),
     (_m, head: string, last: string, verb: string) =>
       `${head}and ${last.replace(/^and\s+/i, "")} all ${verb}`,
+  );
+}
+
+/**
+ * Repair a 3+ item comma list that is missing "and" before its final item and
+ * has a stray comma before the connecting preposition that follows it:
+ *   "guiding individuals, employers, healthcare providers, through complex
+ *    processes"
+ * becomes:
+ *   "guiding individuals, employers, and healthcare providers through complex
+ *    processes"
+ *
+ * The connector set is limited to prepositions that read as the list's object
+ * marker (through/across/into/within/throughout/toward/towards) to avoid
+ * touching legitimate comma pauses before common words like "for" or "to".
+ */
+const LIST_OBJECT_CONNECTORS = "through|across|into|within|throughout|toward|towards";
+
+export function repairListMissingAnd(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    new RegExp(
+      `((?:[A-Za-z][^,.;:]*?, ){2,})([A-Za-z][^,.;:]*?), (${LIST_OBJECT_CONNECTORS})\\b`,
+      "g",
+    ),
+    (_m, head: string, last: string, conn: string) =>
+      `${head}and ${last.replace(/^and\s+/i, "")} ${conn}`,
   );
 }
 
@@ -391,6 +449,9 @@ export function antiAIFilter(text: string): string {
   // Step 2b: Repair a dangling em-dash aside left before the main verb
   result = repairAsideBeforeMainVerb(result);
 
+  // Step 2c: Re-close em-dash appositive lists broken into "..., is/are"
+  result = repairEmDashAppositiveList(result);
+
   // Step 3: Reduce repeated "I" sentence starts
   result = reduceRepeatedI(result);
 
@@ -402,6 +463,9 @@ export function antiAIFilter(text: string): string {
 
   // Step 6: Repair broken list-to-verb comma splices
   result = repairCapabilityListVerb(result);
+
+  // Step 7: Add missing "and" before a list's final item ahead of a connector
+  result = repairListMissingAnd(result);
 
   return result;
 }
