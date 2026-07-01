@@ -13,6 +13,7 @@ vi.mock("@/services/rag/groundedCalibrationClient", () => ({
 
 import {
   buildGroundedNarrative,
+  enrichPositioningReportWithEvidence,
   retrieveEvidenceForSection,
   retrieveEvidenceForSignal,
   retrieveEvidenceForTheme,
@@ -302,6 +303,52 @@ describe("evidenceRetrieval", () => {
 
     it("getDirectorReportEnrichmentKey prefers run_id", () => {
       expect(getDirectorReportEnrichmentKey(MOCK_DIRECTOR_REPORT, "req-2", 123)).toBe("run-test-1");
+    });
+  });
+
+  describe("Phase A.1 — jdText wired into the gap taxonomy", () => {
+    const graybarJd = [
+      "Customer Service Representative at an electrical distribution branch.",
+      "SAP ERP experience is a plus.",
+      "Consultative selling is required for this role.",
+    ].join(" ");
+
+    it("classifies Preferred vs Direct gaps from the wired JD text", async () => {
+      const enriched = await enrichPositioningReportWithEvidence(MOCK_DIRECTOR_REPORT, {
+        isAuthenticated: false,
+        jdText: graybarJd,
+        alignmentGaps: {
+          top_missing_signal: "consultative selling",
+          missing_keywords: ["SAP ERP", "consultative selling"],
+        },
+      });
+
+      const recs = enriched.grounded_recommendations ?? [];
+      const erp = recs.find((r) => r.signal_name === "SAP ERP");
+      const selling = recs.find((r) => r.signal_name === "consultative selling");
+
+      // Both are unevidenced → missing (evidence classification unchanged).
+      expect(erp?.classification).toBe("missing");
+      expect(selling?.classification).toBe("missing");
+
+      // The JD wording now differentiates them via the taxonomy.
+      expect(erp?.requirement_tier).toBe("preferred");
+      expect(erp?.gap_type).toBe("preferred");
+      expect(selling?.requirement_tier).toBe("required");
+      expect(selling?.gap_type).toBe("direct");
+    });
+
+    it("without jdText the requirement tier is unknown (Preferred/Direct stays dormant)", async () => {
+      const enriched = await enrichPositioningReportWithEvidence(MOCK_DIRECTOR_REPORT, {
+        isAuthenticated: false,
+        alignmentGaps: { missing_keywords: ["SAP ERP", "consultative selling"] },
+      });
+
+      const recs = enriched.grounded_recommendations ?? [];
+      const selling = recs.find((r) => r.signal_name === "consultative selling");
+      expect(selling?.requirement_tier).toBe("unknown");
+      // A generic signal with no JD signal still resolves conservatively to Direct.
+      expect(selling?.gap_type).toBe("direct");
     });
   });
 });

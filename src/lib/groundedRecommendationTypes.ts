@@ -7,6 +7,8 @@ export const TRANSFERABILITY_CONFIDENCE_THRESHOLD = 0.4;
 /** Lower transfer gate for routing / intake / queue adjacency only. */
 export const ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD = 0.12;
 
+import type { GapType, RequirementTier } from "@/lib/gapTaxonomy";
+
 export type GroundedRecommendationClassification = "present" | "partial" | "missing";
 
 export interface DefensibilityFactors {
@@ -30,6 +32,12 @@ export interface GroundedRecommendation {
   /** Internal calibration score (0–100); not shown in UI by default. */
   defensibility_score?: number;
   defensibility_factors?: DefensibilityFactors;
+  /** 4-way gap taxonomy label (Phase A). null/undefined for matched signals. */
+  gap_type?: GapType | null;
+  /** JD-derived requirement tier used to distinguish Direct vs Preferred gaps. */
+  requirement_tier?: RequirementTier;
+  /** Short honest-not-harsh guidance copy for the gap type. */
+  gap_type_rationale?: string;
 }
 
 export interface GroundedRecommendationDisplayEvidence {

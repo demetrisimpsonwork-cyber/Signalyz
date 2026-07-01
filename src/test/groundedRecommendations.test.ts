@@ -279,6 +279,48 @@ describe("groundedRecommendations", () => {
     expect(escalation?.recommendation).not.toContain("$50M");
   });
 
+  it("populates the gap taxonomy without altering evidence classification (Phase A)", async () => {
+    const retrieveForSignal = vi.fn(async (signal: string) => {
+      if (signal.toLowerCase().includes("escalation")) {
+        return asRetrieved(njdolEscalationEvidence);
+      }
+      return [];
+    });
+
+    const jdText =
+      "Customer escalation management is required. SAP ERP experience is a plus. Electrical product knowledge required.";
+
+    const recommendations = await buildGroundedRecommendations({
+      director: MOCK_DIRECTOR,
+      alignmentGaps: {
+        top_missing_signal: "customer escalation management",
+        missing_keywords: ["SAP ERP", "electrical product knowledge"],
+      },
+      retrievalVerified: true,
+      retrieveForSignal,
+      jdText,
+    });
+
+    for (const rec of recommendations) {
+      // Evidence classification semantics are unchanged.
+      expect(["present", "partial", "missing"]).toContain(rec.classification);
+      // Taxonomy is a derived, consistent overlay.
+      if (rec.classification === "present") {
+        expect(rec.gap_type == null).toBe(true);
+      } else if (rec.classification === "partial") {
+        expect(rec.gap_type).toBe("transferable");
+      } else {
+        expect(["direct", "preferred", "domain"]).toContain(rec.gap_type);
+      }
+      expect(["required", "preferred", "unknown"]).toContain(rec.requirement_tier);
+    }
+
+    const erp = recommendations.find((r) => r.signal_name === "SAP ERP");
+    if (erp && erp.classification === "missing") {
+      expect(erp.gap_type).toBe("preferred");
+    }
+  });
+
   it("uses exported threshold constants in classification", () => {
     expect(PRESENT_SIMILARITY_THRESHOLD).toBeGreaterThan(PARTIAL_OVERLAP_THRESHOLD);
     expect(PRESENT_OVERLAP_THRESHOLD).toBeGreaterThan(PARTIAL_OVERLAP_THRESHOLD);

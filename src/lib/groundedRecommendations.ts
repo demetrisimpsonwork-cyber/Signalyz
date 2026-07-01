@@ -20,6 +20,7 @@ import {
   ROUTING_INTAKE_TRANSFERABILITY_THRESHOLD,
   TRANSFERABILITY_CONFIDENCE_THRESHOLD,
 } from "@/lib/groundedRecommendationTypes";
+import { classifyGapType, detectRequirementTier } from "@/lib/gapTaxonomy";
 
 const MAX_RECOMMENDATIONS = 10;
 const MIN_KEYWORD_CHARS = 2;
@@ -424,6 +425,8 @@ export async function buildGroundedRecommendations(params: {
   alignmentGaps?: AlignmentGapsInput | null;
   retrievalVerified: boolean;
   retrieveForSignal: (signal: string) => Promise<RetrievedEvidence[]>;
+  /** Optional JD text — enables requirement-tier detection for the gap taxonomy. */
+  jdText?: string | null;
 }): Promise<GroundedRecommendation[]> {
   const signals = buildGapRegistry(params.director, params.alignmentGaps);
   const recommendations: GroundedRecommendation[] = [];
@@ -433,6 +436,17 @@ export async function buildGroundedRecommendations(params: {
     const evidence = await params.retrieveForSignal(signal);
     const classification = classifySignalEvidence(signal, evidence, params.retrievalVerified);
     const { recommendation, grounded } = buildGroundedRecommendationText(signal, classification);
+
+    // Phase A: label the gap (present/partial/missing → Direct/Transferable/
+    // Preferred/Domain). Purely derived from already-computed signals; no scoring.
+    const requirement_tier = detectRequirementTier(signal, params.jdText);
+    const { gap_type, gap_type_rationale } = classifyGapType({
+      signal,
+      classification: classification.classification,
+      transferabilityConfidence: classification.transferability_confidence,
+      toolDomainSpecificity: classification.defensibility_factors?.tool_domain_specificity,
+      requirementTier: requirement_tier,
+    });
 
     recommendations.push({
       classification: classification.classification,
@@ -446,6 +460,9 @@ export async function buildGroundedRecommendations(params: {
       jd_importance_rank: rank,
       defensibility_score: classification.defensibility_score,
       defensibility_factors: classification.defensibility_factors,
+      gap_type,
+      requirement_tier,
+      gap_type_rationale,
     });
   }
 

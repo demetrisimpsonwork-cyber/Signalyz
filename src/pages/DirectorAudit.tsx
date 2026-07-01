@@ -179,6 +179,7 @@ const DirectorAudit = () => {
         context: {
           sessionId: getResumeSessionId(),
           isAuthenticated: !!user,
+          jdText: jd.trim() || undefined,
         },
         onApplyEnriched: setResult,
       });

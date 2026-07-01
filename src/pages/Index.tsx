@@ -866,6 +866,7 @@ const Index = () => {
           calibratedBullets: result?.calibrated_bullets,
           sessionId: getResumeSessionId(),
           isAuthenticated: !!user,
+          jdText: jd?.trim() || undefined,
           alignmentGaps: {
             top_missing_signal: result?.top_missing_signal,
             missing_keywords: result?.missing_keywords,

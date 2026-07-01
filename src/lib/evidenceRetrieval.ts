@@ -25,6 +25,8 @@ export interface EvidenceRetrievalContext {
   /** When false, chunk retrieval is skipped (guest / anonymous). */
   isAuthenticated?: boolean;
   alignmentGaps?: AlignmentGapsInput | null;
+  /** Raw JD text — enables requirement-tier detection for the gap taxonomy. */
+  jdText?: string | null;
 }
 
 export interface GroundedNarrativeResult {
@@ -430,6 +432,7 @@ export async function enrichPositioningReportWithEvidence(
     alignmentGaps: context.alignmentGaps,
     retrievalVerified: isRetrievalVerified(context),
     retrieveForSignal: (signal) => cache.forSignal(signal),
+    jdText: context.jdText,
   });
 
   const grounded_recommendation_insights = buildGroundedRecommendationInsights(rawRecommendations);

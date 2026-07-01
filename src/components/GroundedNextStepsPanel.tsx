@@ -5,6 +5,7 @@ import type {
   GroundedRecommendationDisplayEvidence,
   GroundedRecommendationInsights,
 } from "@/lib/groundedRecommendationTypes";
+import { GAP_TYPE_LABEL, type GapType } from "@/lib/gapTaxonomy";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const classificationStyle: Record<GroundedRecommendation["classification"], string> = {
@@ -13,6 +14,19 @@ const classificationStyle: Record<GroundedRecommendation["classification"], stri
   partial:
     "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40",
   missing: "text-muted-foreground bg-muted/30 border-border/60",
+};
+
+// Gap-type badge styling — deliberately not alarmist. Transferable/Preferred/
+// Domain read as "reframe/optional/trainable"; only Direct is a firm miss.
+const gapTypeStyle: Record<GapType, string> = {
+  transferable:
+    "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40",
+  preferred:
+    "text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-800/40",
+  domain:
+    "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800/40",
+  direct:
+    "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40",
 };
 
 function RecommendationEvidence({
@@ -63,6 +77,13 @@ function RecommendationCard({
         >
           {rec.classification}
         </span>
+        {rec.gap_type && (
+          <span
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${gapTypeStyle[rec.gap_type]}`}
+          >
+            {GAP_TYPE_LABEL[rec.gap_type]}
+          </span>
+        )}
         {featured && (
           <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
             Most defensible repositioning
@@ -72,6 +93,11 @@ function RecommendationCard({
       </div>
       <p className="text-[10px] text-muted-foreground">{rec.classification_reason}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">{rec.recommendation}</p>
+      {rec.gap_type && rec.gap_type_rationale && (
+        <p className="text-[10px] text-muted-foreground/80 italic leading-relaxed">
+          {rec.gap_type_rationale}
+        </p>
+      )}
       <RecommendationEvidence signalName={rec.signal_name} displayEvidence={displayEvidence} />
     </div>
   );
