@@ -90,6 +90,15 @@ describe("enforceSummaryVoice — implied first person hardening", () => {
     expectNoForbidden(out);
   });
 
+  it("preserves the hyphenated compound 'follow-through' (Phase 9.5)", () => {
+    // Regression: "follow-through." collapsed to "follow-." during connector tidy.
+    const out = enforceSummaryVoice(
+      "Operations professional known for accuracy and follow-through.",
+    );
+    expect(out).toContain("follow-through");
+    expect(out).not.toContain("follow-.");
+  });
+
   it("returns empty string for empty or non-string input", () => {
     expect(enforceSummaryVoice("")).toBe("");
     // @ts-expect-error testing runtime guard against non-string

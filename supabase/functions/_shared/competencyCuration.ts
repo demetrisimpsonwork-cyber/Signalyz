@@ -17,6 +17,9 @@ const ACRONYMS = new Set([
   "SLA", "KPI", "KPIS", "CRM", "SQL", "P&L", "B2B", "B2C", "SAAS", "QA", "HR",
   "IT", "ERP", "POS", "API", "AWS", "SEO", "SEM", "ROI", "CX", "UX", "UI", "PMP",
   "GAAP", "AP", "AR", "EHR", "HRIS", "ATS", "SOP", "SOPS", "PHI", "PII", "EDI",
+  "SAP", "CSR", "CSRS", "HVAC", "GA4", "GA", "APIS", "SDK", "SDR", "BDR",
+  "SAML", "SSO", "VOIP", "IVR", "NPS", "CSAT", "TAT", "RMA", "WMS", "TMS", "OMS",
+  "PLC", "OEM", "MRP", "BOM", "RFQ", "RFP", "PO", "GL", "OTIF",
 ]);
 
 const SMALL_WORDS = new Set(["of", "and", "the", "for", "to", "in", "with", "a", "an", "&"]);

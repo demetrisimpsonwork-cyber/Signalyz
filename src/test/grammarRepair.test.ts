@@ -26,6 +26,17 @@ describe("repairStrippedGrammar — claim/metric strip scars", () => {
     );
   });
 
+  it("does not break the hyphenated compound 'follow-through' (Phase 9.5)", () => {
+    // Regression: "follow-through." collapsed to "follow-." because "through"
+    // was treated as a dangling connector before terminal punctuation.
+    expect(repairStrippedGrammar("Owned routing, follow-through, and resolution.")).toBe(
+      "Owned routing, follow-through, and resolution.",
+    );
+    expect(repairStrippedGrammar("Delivered strong accuracy and follow-through.")).toBe(
+      "Delivered strong accuracy and follow-through.",
+    );
+  });
+
   it("strips a dangling conjunction at the end", () => {
     expect(repairStrippedGrammar("Oversaw logistics and")).toBe("Oversaw logistics.");
   });

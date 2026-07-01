@@ -444,7 +444,7 @@ Return ONLY valid JSON, no markdown.`;
           ? `TONE: Strategic. Write like a senior operator briefing someone who makes hiring decisions. Commercially precise. Frame every paragraph around business impact, organizational outcomes, or market context. Never open a sentence with "I" unless unavoidable. Sentences average 18-22 words. Use subordinate clauses. No contractions. No exclamation marks. The letter should read like a business case written by someone who understands the company's problems. No paragraph exceeds 3 lines. The close is one sentence — a decisive statement, not a meeting request. Total length: 260-280 words.`
           : tone === "direct"
           ? `TONE: Direct. Short declarative sentences. No adjectives unless they carry data. Subject-verb-object. Every word must prove something or it gets cut. Sentences average 8-14 words. No compound sentences joined by "and" — split them. No semicolons. Periods only. No paragraph exceeds 3 lines. The close is one forward statement of intent. The letter should feel like it was written by someone who values the reader's time. Total length: 200-220 words.`
-          : `TONE: Confident. Write like a sharp professional who genuinely wants this specific job. Warm but not casual. Direct but not stiff. Mix sentence lengths — one short punch after a longer thought. Show momentum. Contractions are fine. At least one paragraph should contain a sentence under 6 words. The letter should feel like a real person wrote it because they wanted the job. Total length: 240-260 words.`;
+          : `TONE: Confident. Write like a sharp, credible professional who genuinely wants this specific job. Warm but not casual. Direct but not stiff. Use clear, complete professional sentences that a recruiter can scan quickly. Contractions are fine in moderation. Do NOT use dramatic one-liners, punchy fragments, or short "mic-drop" sentences for effect. The letter should read like a real, polished application — confident, not performative. Total length: 240-260 words.`;
 
         const companyRef = companyName !== "the company" ? companyName : "";
         const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
@@ -457,17 +457,17 @@ CONTEXT:
 
 ${toneDirective}
 
-STRUCTURE — exactly 5 paragraphs:
+STRUCTURE — 4 to 5 concise paragraphs:
 
-P1 — OPENING HOOK: Start with your single strongest credential for this specific role — a number, a system, a scope of work. Then one sentence connecting it to why ${companyRef || "this company"} or this role. No "I am writing to apply." No philosophy. Start mid-action.
+P1 — OPENING: Lead with your single strongest credential for this specific role — a number, a system, a scope of work — in a complete sentence. Then one sentence connecting it to ${companyRef || "this company"} or this role. No "I am writing to apply." No philosophy.
 
 P2 — OPERATIONAL PROOF: Your hardest relevant work. Volumes, outcomes, problems you solved. At least one sentence should lead with the result, not "I." Show you do the hard work this role requires.
 
-P3 — TRANSFERABLE FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Do not explain that experience "translates" — just demonstrate it through what you did.
+P3 — RELEVANT FIT: Connect a different dimension of your experience — analytical capability, technical skill, cross-functional coordination — to what this role needs. Use specifics from the resume. Demonstrate it through what you did, not by claiming it "translates."
 
-P4 — WHY HERE: Show you understand what ${companyRef || "this company"} does and why you want to be part of it specifically. Reference something concrete about the company or role. Then acknowledge what you haven't done yet in one short clause, immediately followed by what makes you ready to figure it out. No apology.
+P4 — WHY HERE: Show you understand what ${companyRef || "this company"} does and why you want this role. Reference something concrete about the company or role. If there is a gap, note it honestly in a single plain clause and move on — do NOT over-explain, dramatize, or dwell on it. No apology.
 
-P5 — CLOSE: One to two sentences. Make the reader want to have the conversation. No onboarding plans. No "I look forward to discussing." End with forward motion.
+P5 — CLOSE (optional, may merge into P4): One to two plain sentences that invite a conversation. No onboarding plans. No "I look forward to discussing."
 
 WRITING RULES:
 - Max 1 sentence per paragraph may start with "I"
@@ -477,7 +477,9 @@ WRITING RULES:
 - No bridging language: avoid "this experience," "these skills," "that background"
 - BANNED PHRASES: "track record," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "natural next step," "I learned that," "comprehensive," "I am excited to," "I am thrilled," "I would love to," "I look forward to discussing," "my first priority," "I plan to," "I intend to," "utilized," "leveraged," "in order to," "demonstrates," "dynamic," "a wide range of," "synergy," "spearheaded," "dedicated," "seasoned"
 - No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
-- Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Vary sentence length. Plain words over impressive ones.
+- Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Plain words over impressive ones.
+- NO dramatic punchlines, copywriter one-liners, or rhetorical reversals. Specifically forbidden: em-dash "wasn't X — it was Y" contrasts (e.g. "wasn't a ceiling — it was the floor"), sentence fragments used for punch (e.g. "Both had to land."), and any line written for effect rather than information. Write in clear, complete, recruiter-safe sentences.
+- Mention any gap honestly but tactfully in one clause; never over-explain or apologize for it.
 
 ${COVER_LETTER_STANDARD}
 

@@ -179,47 +179,81 @@ function isAlreadyPastTense(word: string): boolean {
   return false;
 }
 
-function toPastTense(word: string): string {
-  const lower = word.toLowerCase();
+// The only common English verbs that end in "-ly". Everything else ending in
+// "-ly" is an adverb (e.g. "Independently", "Successfully") and must NOT be
+// conjugated — doing so produced garbage like "Independentlied".
+const LY_VERBS = new Set([
+  "apply", "supply", "imply", "comply", "reply", "rely", "multiply", "ply",
+  "ally", "tally", "rally", "dally", "sully", "belly", "bully",
+]);
 
-  // Already past tense — leave it alone
-  if (isAlreadyPastTense(word)) return word;
-
-  // Check irregular map
-  const irregular = IRREGULAR[lower];
-  if (irregular) {
-    // Preserve original casing style (Title case since bullets start with capital)
-    return irregular.charAt(0).toUpperCase() + irregular.slice(1).toLowerCase();
-  }
-
-  // Regular conjugation rules
-  let base = lower;
-  let past: string;
+/** Apply regular/irregular past-tense rules to a lowercase verb stem. */
+function conjugateStem(base: string): string {
+  const irregular = IRREGULAR[base];
+  if (irregular) return irregular.toLowerCase();
 
   if (base.endsWith("e")) {
-    past = base + "d";
-  } else if (base.endsWith("y") && base.length > 2 && !"aeiou".includes(base[base.length - 2])) {
-    past = base.slice(0, -1) + "ied";
-  } else if (
+    return base + "d";
+  }
+  if (base.endsWith("y") && base.length > 2 && !"aeiou".includes(base[base.length - 2])) {
+    return base.slice(0, -1) + "ied";
+  }
+  if (
     base.length >= 3 &&
     !"aeiou".includes(base[base.length - 1]) &&
     "aeiou".includes(base[base.length - 2]) &&
     !"aeiou".includes(base[base.length - 3]) &&
     !base.endsWith("w") &&
     !base.endsWith("x") &&
-    !base.endsWith("y")
+    !base.endsWith("y") &&
+    // English never doubles a final "s"; doing so produced "Demonstratessed".
+    !base.endsWith("s")
   ) {
     // CVC pattern — double final consonant
-    past = base + base[base.length - 1] + "ed";
-  } else {
-    past = base + "ed";
+    return base + base[base.length - 1] + "ed";
+  }
+  return base + "ed";
+}
+
+function toPastTense(word: string): string {
+  const lower = word.toLowerCase();
+
+  // Already past tense — leave it alone
+  if (isAlreadyPastTense(word)) return word;
+
+  // Adverbs ("Independently", "Successfully", ...) are not verbs — never conjugate.
+  if (lower.endsWith("ly") && !LY_VERBS.has(lower)) return word;
+
+  // Irregular base verbs (e.g. "build" → "built").
+  const irregular = IRREGULAR[lower];
+  if (irregular) {
+    // Preserve original casing style (Title case since bullets start with capital)
+    return matchFirstCase(word, irregular.toLowerCase());
   }
 
-  // Preserve original capitalisation (first letter)
-  if (word[0] === word[0].toUpperCase()) {
-    past = past.charAt(0).toUpperCase() + past.slice(1);
+  // Third-person present singular ("Demonstrates", "Manages", "Leads") — strip
+  // the trailing "s" and conjugate the base ("demonstrate" → "demonstrated",
+  // "lead" → "led"). Skip "-ss"/"-us"/"-is" endings, which are not 3rd-person
+  // markers (e.g. "assess", "focus", "analysis").
+  let base = lower;
+  if (
+    lower.length > 3 &&
+    lower.endsWith("s") &&
+    !lower.endsWith("ss") &&
+    !lower.endsWith("us") &&
+    !lower.endsWith("is")
+  ) {
+    base = lower.slice(0, -1);
   }
 
+  return matchFirstCase(word, conjugateStem(base));
+}
+
+/** Preserve the leading capitalisation of the original word. */
+function matchFirstCase(original: string, past: string): string {
+  if (original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()) {
+    return past.charAt(0).toUpperCase() + past.slice(1);
+  }
   return past;
 }
 

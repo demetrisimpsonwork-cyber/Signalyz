@@ -43,8 +43,10 @@ function tidy(text: string): string {
   t = t.replace(/\s{2,}/g, " ");
   // remove space before punctuation
   t = t.replace(/\s+([,.;:])/g, "$1");
-  // connector immediately before clause/terminal punctuation = dangling → drop it
-  t = t.replace(/\b(?:and|but|with|via|using|through|by|for|to|of|in|on|at|as)\s*([.,;:])/gi, "$1");
+  // connector immediately before clause/terminal punctuation = dangling → drop it.
+  // The (?<!-) guard prevents stripping the tail of a hyphenated compound
+  // (e.g. "follow-through." must not become "follow-.").
+  t = t.replace(/(?<!-)\b(?:and|but|with|via|using|through|by|for|to|of|in|on|at|as)\s*([.,;:])/gi, "$1");
   // collapse duplicate punctuation
   t = t.replace(/([,.;:])\1+/g, "$1");
   t = t.replace(/,\s*\./g, ".");

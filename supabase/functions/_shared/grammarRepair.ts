@@ -20,8 +20,10 @@ const CONNECTOR_ALT = DANGLING_CONNECTORS
   .map((c) => c.replace(/\s+/g, "\\s+"))
   .join("|");
 
+// The (?<!-) guard prevents stripping the tail of a hyphenated compound
+// (e.g. "follow-through." must not collapse to "follow-.").
 const DANGLING_BEFORE_PUNCT = new RegExp(
-  `\\b(?:${CONNECTOR_ALT})\\b\\s*(?=[.,;:!?)]|$)`,
+  `(?<!-)\\b(?:${CONNECTOR_ALT})\\b\\s*(?=[.,;:!?)]|$)`,
   "gi",
 );
 

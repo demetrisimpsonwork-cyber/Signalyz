@@ -14,6 +14,14 @@ describe("titleCaseCompetency", () => {
   it("lowercases small connecting words", () => {
     expect(titleCaseCompetency("scope of work")).toBe("Scope of Work");
   });
+  it("preserves SAP and other enterprise acronyms (Phase 9.5)", () => {
+    // Regression: "SAP" was title-cased into "Sap".
+    expect(titleCaseCompetency("SAP")).toBe("SAP");
+    expect(titleCaseCompetency("sap")).toBe("SAP");
+    expect(titleCaseCompetency("sap administration")).toBe("SAP Administration");
+    expect(titleCaseCompetency("erp systems")).toBe("ERP Systems");
+    expect(titleCaseCompetency("hvac knowledge")).toBe("HVAC Knowledge");
+  });
 });
 
 describe("curateCompetencies — dedupe, merge, prioritize", () => {
