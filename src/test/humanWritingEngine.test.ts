@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   humanizeProse,
+  enforceFirstPersonVoice,
   HUMAN_WRITING_RULES,
   COVER_LETTER_STANDARD,
   RECRUITER_PSYCHOLOGY,
@@ -175,6 +176,56 @@ describe("humanizeProse — P9 recruiter-psychology weak patterns", () => {
     // "success" must survive — only the adverb "successfully " is targeted.
     const clean = "Measured the success rate of each reconciliation cycle.";
     expect(humanizeProse(clean)).toBe(clean);
+  });
+});
+
+describe("enforceFirstPersonVoice — LinkedIn About paste-ready voice (P9.2)", () => {
+  const SECOND_PERSON = /\b(you|your|you've|you're|you'll|yourself|yours)\b/i;
+
+  it("does NOT start in second person (rewrites 'Your background…')", () => {
+    const out = enforceFirstPersonVoice("Your background is in operations and documentation.");
+    expect(out).toMatch(/^My background is in operations/);
+    expect(SECOND_PERSON.test(out)).toBe(false);
+  });
+
+  it("rewrites the 'You know…' coaching voice", () => {
+    const out = enforceFirstPersonVoice("You know what it costs when a handoff breaks down.");
+    expect(out).toMatch(/^I know what it costs/);
+    expect(SECOND_PERSON.test(out)).toBe(false);
+  });
+
+  it("fixes BE-verb agreement (no 'I are')", () => {
+    const out = enforceFirstPersonVoice("You are detail-oriented and you were accountable for SLAs.");
+    expect(out).toMatch(/I am detail-oriented/);
+    expect(out).toMatch(/I was accountable/);
+    expect(out).not.toMatch(/\bI are\b/);
+  });
+
+  it("maps contractions (you've/you're → I've/I'm), incl. curly apostrophes", () => {
+    expect(enforceFirstPersonVoice("You've built systems and you're precise.")).toMatch(
+      /^I've built systems and I'm precise\.$/,
+    );
+    expect(enforceFirstPersonVoice("You\u2019ve owned this.")).toMatch(/^I've owned this\.$/);
+  });
+
+  it("converts a full second-person About paragraph with no residue", () => {
+    const input =
+      "Your background is in operations. You built the systems that kept teams running, and you know what accuracy costs. You're ready for the next step.";
+    const out = enforceFirstPersonVoice(input);
+    expect(SECOND_PERSON.test(out)).toBe(false);
+    expect(out).toMatch(/My background is in operations/);
+    expect(out).toMatch(/I built the systems/);
+  });
+
+  it("preserves already-first-person writing unchanged", () => {
+    const clean = "I built and maintained the systems that kept support teams running.";
+    expect(enforceFirstPersonVoice(clean)).toBe(clean);
+  });
+
+  it("handles empty / non-string input", () => {
+    expect(enforceFirstPersonVoice("")).toBe("");
+    // @ts-expect-error runtime guard
+    expect(enforceFirstPersonVoice(null)).toBe("");
   });
 });
 

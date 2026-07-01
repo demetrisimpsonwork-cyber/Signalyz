@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
-import { humanizeProse, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
+import { humanizeProse, enforceFirstPersonVoice, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -385,7 +385,7 @@ Return ONLY valid JSON array, no markdown.`;
 
       case "linkedin_summary": {
         // Legacy — kept for backward compatibility but no longer primary path
-        const prompt = `Address the user directly in second person throughout. Use 'you' and 'your' exclusively.
+        const prompt = `Write in FIRST PERSON as the candidate. This is paste-ready text for the candidate's OWN LinkedIn About section. Use "I" and "my". NEVER address the reader as "you" or "your"; no second-person coaching voice.
 
 Rewrite this LinkedIn About section for a candidate targeting ${inferredRole}. Use only experience from the resume — zero fabrication.
 
@@ -413,10 +413,12 @@ Return ONLY valid JSON, no markdown.`;
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```/g, "").trim();
         const parsedAbout = JSON.parse(cleaned);
         // P8: humanize the About prose (remove AI tells, keep grammar).
+        // P9.2: enforce first-person voice — the About is paste-ready profile
+        // text, never second-person coaching ("Your background…", "You know…").
         if (parsedAbout && typeof parsedAbout.summary === "string") {
           parsedAbout.summary = parsedAbout.summary
             .split(/\n{2,}/)
-            .map((p: string) => humanizeProse(p))
+            .map((p: string) => humanizeProse(enforceFirstPersonVoice(p)))
             .filter((p: string) => p.trim().length > 0)
             .join("\n\n");
         }

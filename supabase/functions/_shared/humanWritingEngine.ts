@@ -170,3 +170,43 @@ export function humanizeProse(input: string): string {
   if (!out.trim()) out = tidy(t);
   return out;
 }
+
+// Preserve the leading-capital case of a matched token on its replacement.
+function capLike(sample: string, repl: string): string {
+  if (sample && sample[0] === sample[0].toUpperCase() && sample[0] !== sample[0].toLowerCase()) {
+    return repl.charAt(0).toUpperCase() + repl.slice(1);
+  }
+  return repl;
+}
+
+/**
+ * P9.2: Convert second-person "coaching" voice to first person for paste-ready
+ * outputs (e.g. a LinkedIn About the candidate pastes into their own profile).
+ *
+ * The prompt is the primary control; this is a safety net for when the model
+ * slips into "You built…/Your background…". First- and second-person verb
+ * forms are identical EXCEPT the verb "to be", so BE is handled explicitly and
+ * everything else is a safe pronoun swap. Handles straight and curly
+ * apostrophes. Pure: string in → string out.
+ */
+export function enforceFirstPersonVoice(input: string): string {
+  if (typeof input !== "string" || !input.trim()) return typeof input === "string" ? input : "";
+  let t = input;
+  // Contractions (before the generic swap).
+  t = t.replace(/\byou['’]re\b/gi, (m) => capLike(m, "I'm"));
+  t = t.replace(/\byou['’]ve\b/gi, (m) => capLike(m, "I've"));
+  t = t.replace(/\byou['’]ll\b/gi, (m) => capLike(m, "I'll"));
+  t = t.replace(/\byou['’]d\b/gi, (m) => capLike(m, "I'd"));
+  // BE-verb agreement (must precede the generic you→I swap to avoid "I are").
+  t = t.replace(/\byou aren['’]t\b/gi, (m) => capLike(m, "I'm not"));
+  t = t.replace(/\byou weren['’]t\b/gi, (m) => capLike(m, "I wasn't"));
+  t = t.replace(/\byou are\b/gi, (m) => capLike(m, "I am"));
+  t = t.replace(/\byou were\b/gi, (m) => capLike(m, "I was"));
+  // Possessives / reflexive.
+  t = t.replace(/\byourself\b/gi, (m) => capLike(m, "myself"));
+  t = t.replace(/\byours\b/gi, (m) => capLike(m, "mine"));
+  t = t.replace(/\byour\b/gi, (m) => capLike(m, "my"));
+  // Remaining subject "you" → "I" (non-BE verb forms are identical, so safe).
+  t = t.replace(/\byou\b/gi, "I");
+  return t.replace(/[ \t]{2,}/g, " ");
+}

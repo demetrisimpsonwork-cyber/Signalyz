@@ -11,6 +11,18 @@ export interface BulletShortenResult {
   shortened: boolean;
 }
 
+// A résumé "Skills:" / "Tools:" section line that leaked into the experience
+// bullets. Requires the heading keyword to be immediately followed by a colon,
+// so normal bullets that merely mention a skill ("Skills training delivered…",
+// "Built a skills matrix that tracked…") are never matched.
+const SECTION_HEADING_BULLET =
+  /^\s*(?:technical|core|key|professional|additional|hard|soft|relevant)?\s*(?:skills?|tools|competencies|technologies|proficiencies)(?:\s*(?:&|and)\s*tools)?\s*:/i;
+
+/** True when a bullet is really a Skills/Tools section heading, not experience. */
+export function isSectionHeadingBullet(bullet: string): boolean {
+  return typeof bullet === "string" && SECTION_HEADING_BULLET.test(bullet);
+}
+
 /**
  * Shorten an over-long bullet WITHOUT cutting mid-thought.
  *

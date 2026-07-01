@@ -3,7 +3,48 @@ import {
   shortenBullet,
   capRoleBullets,
   tokenOverlapRatio,
+  isSectionHeadingBullet,
 } from "../../supabase/functions/_shared/bulletShaping";
+
+describe("isSectionHeadingBullet — Skills/Tools lines are not experience bullets (P9.2)", () => {
+  it("flags a raw Skills line that leaked into experience bullets", () => {
+    expect(isSectionHeadingBullet("Skills: Customer service, CRM, Excel")).toBe(true);
+  });
+
+  it("flags labeled variants (Technical/Core Skills, Skills & Tools, Tools)", () => {
+    expect(isSectionHeadingBullet("Technical Skills: Salesforce, Zendesk, SQL")).toBe(true);
+    expect(isSectionHeadingBullet("Core Skills: escalation handling, QA")).toBe(true);
+    expect(isSectionHeadingBullet("Skills & Tools: Jira, Confluence")).toBe(true);
+    expect(isSectionHeadingBullet("Tools: Excel, Tableau, Looker")).toBe(true);
+  });
+
+  it("preserves normal bullets that merely mention a skill", () => {
+    expect(
+      isSectionHeadingBullet("Delivered skills training to 20 new support staff, cutting ramp time."),
+    ).toBe(false);
+    expect(
+      isSectionHeadingBullet("Built a skills matrix that tracked certifications across the team."),
+    ).toBe(false);
+    expect(
+      isSectionHeadingBullet("Resolved escalations using CRM tools and internal ticketing systems."),
+    ).toBe(false);
+  });
+
+  it("does not flag unrelated colon-led bullets", () => {
+    expect(isSectionHeadingBullet("Data analysis: reduced reporting errors by tracking metrics weekly.")).toBe(false);
+    expect(isSectionHeadingBullet("Key achievement: launched onboarding program for new hires.")).toBe(false);
+  });
+
+  it("filters Skills lines out of a bullet list while keeping real bullets", () => {
+    const raw = [
+      "Skills: Customer service, escalation handling, CRM",
+      "Handled 60+ inbound support tickets daily with a 95% CSAT rating.",
+      "Tools: Zendesk, Salesforce",
+    ];
+    const kept = raw.filter((b) => !isSectionHeadingBullet(b));
+    expect(kept).toEqual(["Handled 60+ inbound support tickets daily with a 95% CSAT rating."]);
+  });
+});
 
 describe("shortenBullet — no mid-sentence truncation", () => {
   it("leaves short bullets untouched", () => {

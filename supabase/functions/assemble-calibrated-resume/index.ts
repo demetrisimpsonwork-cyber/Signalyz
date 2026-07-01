@@ -1,7 +1,7 @@
 // assemble-calibrated-resume v3.0 — robust resume parser
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
-import { shortenBullet, capRoleBullets } from "../_shared/bulletShaping.ts";
+import { shortenBullet, capRoleBullets, isSectionHeadingBullet } from "../_shared/bulletShaping.ts";
 import { sanitizeUntrustedText } from "../_shared/promptSafety.ts";
 import { normalizeEmployerPromotions } from "../_shared/promotionParser.ts";
 import { repairStrippedGrammar } from "../_shared/grammarRepair.ts";
@@ -2739,7 +2739,7 @@ function normalizeResult(assembled: any, requestId = "") {
           return true;
         })
         .map((e: any, idx: number) => {
-          let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          let bullets = Array.isArray(e.bullets) ? e.bullets.map(cleanBullet).filter((b: string) => b.length > 5 && !isSectionHeadingBullet(b)) : [];
           // Intentional density policy: target 4/3 bullets but allow 5/4 when
           // evidence is distinct. Near-duplicates are merged before anything is
           // dropped, so unique evidence is never silently removed.
@@ -2816,7 +2816,7 @@ function normalizeResult(assembled: any, requestId = "") {
             const cutIdx = desc.lastIndexOf(".", 150);
             desc = cutIdx > 80 ? desc.slice(0, cutIdx + 1) : desc.slice(0, 150).trim().replace(/[,;\s]+$/, "") + ".";
           }
-          let bullets = Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5) : [];
+          let bullets = Array.isArray(p.bullets) ? p.bullets.map(cleanBullet).filter((b: string) => b.length > 5 && !isSectionHeadingBullet(b)) : [];
           // Max 3 tight bullets per project
           if (bullets.length > 3) bullets = bullets.slice(0, 3);
           return { name: p.name || "", description: desc, bullets };
