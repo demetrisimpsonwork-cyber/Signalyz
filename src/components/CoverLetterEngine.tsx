@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import { buildCoverLetterAddressee, inferCompanyNameFromJd } from "@/lib/coverLetterSalutation";
 import { antiAIFilter } from "@/lib/antiAIFilter";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
@@ -33,32 +34,6 @@ const STEPS = [
   "Calibrating narrative structure…",
   "Assembling cover letter…",
 ];
-
-function inferCompanyName(jd: string): string | undefined {
-  if (!jd) return undefined;
-  const patterns = [
-    /(?:company|employer|organization)[:\s]+([A-Z][\w &.,'-]+)/i,
-    /(?:about|join|at)\s+([A-Z][\w &.,'-]{2,40})(?:\s*[,.\n])/i,
-  ];
-  for (const rx of patterns) {
-    const m = jd.match(rx);
-    if (m?.[1] && m[1].length < 50) return m[1].trim();
-  }
-  return undefined;
-}
-
-function inferHiringManager(jd: string): string | undefined {
-  if (!jd) return undefined;
-  const patterns = [
-    /(?:hiring\s+manager|recruiter|contact)[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
-    /(?:report(?:s|ing)\s+to)[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
-  ];
-  for (const rx of patterns) {
-    const m = jd.match(rx);
-    if (m?.[1]) return m[1].trim();
-  }
-  return undefined;
-}
 
 function formatDate(): string {
   return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -150,16 +125,8 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const contact = useMemo(() => extractContactFromText(experience), [experience]);
-  const companyName = useMemo(() => inferCompanyName(jd), [jd]);
-  const hiringManager = useMemo(() => inferHiringManager(jd), [jd]);
-
-  const addresseeLine = useMemo(() => {
-    if (hiringManager) return hiringManager;
-    if (companyName) return `Hiring Team, ${companyName}`;
-    return "Hiring Team";
-  }, [hiringManager, companyName]);
-
-  const salutation = hiringManager ? `Dear ${hiringManager},` : "Dear Hiring Team,";
+  const { addresseeLine, salutation } = useMemo(() => buildCoverLetterAddressee(jd), [jd]);
+  const companyName = useMemo(() => inferCompanyNameFromJd(jd), [jd]);
 
   // The active letter content (edited or original)
   const activeLetter = editedLetter || letter;

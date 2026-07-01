@@ -8,6 +8,7 @@ import type { DirectorCalibrationResult } from "@/components/DirectorCalibration
 import type { AlignmentGapsInput } from "@/lib/groundedRecommendationTypes";
 import { buildGroundedRecommendations } from "@/lib/groundedRecommendations";
 import { buildGroundedRecommendationInsights } from "@/lib/groundedRecommendationInsights";
+import { capEvidenceExcerpt } from "@/lib/evidenceDisplay";
 
 /** Retrieved resume evidence chunk with stable display fields. */
 export interface RetrievedEvidence {
@@ -231,7 +232,7 @@ function cleanEvidenceSentence(content: string): string {
 }
 
 function formatEvidenceClause(item: RetrievedEvidence): string {
-  const sentence = cleanEvidenceSentence(item.content);
+  const sentence = capEvidenceExcerpt(cleanEvidenceSentence(item.content));
   if (!sentence) return "";
 
   const company = item.company.trim();

@@ -3,6 +3,7 @@ import type {
   GroundedRecommendationDisplayEvidence,
   GroundedRecommendationInsights,
 } from "@/lib/groundedRecommendationTypes";
+import { capEvidenceExcerpt } from "@/lib/evidenceDisplay";
 
 const CLASSIFICATION_PRIORITY: Record<GroundedRecommendation["classification"], number> = {
   partial: 3,
@@ -60,13 +61,13 @@ export function buildDisplayEvidenceMap(
       if (!key) continue;
       if (seenContent.has(key)) {
         entries.push({
-          text,
+          text: capEvidenceExcerpt(text),
           is_duplicate: true,
           duplicate_of_signal: seenContent.get(key),
         });
       } else {
         seenContent.set(key, rec.signal_name);
-        entries.push({ text, is_duplicate: false });
+        entries.push({ text: capEvidenceExcerpt(text), is_duplicate: false });
       }
     }
     display[rec.signal_name] = entries;

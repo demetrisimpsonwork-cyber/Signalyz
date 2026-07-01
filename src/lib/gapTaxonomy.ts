@@ -130,6 +130,18 @@ const DOMAIN_TOOL_MARKERS = [
   "product knowledge",
 ];
 
+// Sales / retail / outbound signals — generic customer support is NOT honest transfer.
+const SALES_RETAIL_SIGNAL_PATTERN =
+  /\b(counter sales|retail sales|inbound sales|outbound calls?|product sales|product selection|product recommendation|active selling|pricing|selling\b)/i;
+
+// Order / billing workflows — case and dispute work can reframe honestly.
+const ORDER_WORKFLOW_SIGNAL_PATTERN =
+  /\b(order entry|order coordination|order maintenance|order and request|request coordination|credit and claims|billing disputes?|claims handling|expediting)\b/i;
+
+// Product / industry knowledge — domain unless directly evidenced (present).
+const PRODUCT_DOMAIN_SIGNAL_PATTERN =
+  /\b(electrical product|product knowledge|industry knowledge|distribution knowledge|goods and services)\b/i;
+
 const STOP_WORDS = new Set([
   "the", "and", "for", "with", "that", "this", "from", "your", "you", "our", "are",
   "was", "were", "have", "has", "had", "will", "can", "must", "should", "into",
@@ -156,9 +168,20 @@ function significantTokens(text: string): string[] {
 /** True when the signal names a specific tool, platform, industry, or product domain. */
 export function isDomainOrToolSpecificSignal(signal: string): boolean {
   const lower = signal.toLowerCase();
+  if (PRODUCT_DOMAIN_SIGNAL_PATTERN.test(lower)) return true;
   return DOMAIN_TOOL_MARKERS.some((marker) =>
     new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(marker)}(?:[^a-z0-9]|$)`, "i").test(lower),
   );
+}
+
+/** Sales/retail/outbound — never transferable from generic customer support alone. */
+export function isSalesRetailSignal(signal: string): boolean {
+  return SALES_RETAIL_SIGNAL_PATTERN.test(signal.toLowerCase());
+}
+
+/** Order/billing/case workflows that can reframe from adjacent resume experience. */
+export function isOrderWorkflowSignal(signal: string): boolean {
+  return ORDER_WORKFLOW_SIGNAL_PATTERN.test(signal.toLowerCase());
 }
 
 /**
@@ -223,34 +246,54 @@ export interface GapTypeResult {
 /**
  * Project the evidence classification + requirement tier into a gap label.
  *
- * Precedence: matched → none; partial → transferable; preferred tier → preferred;
- * domain/tool-specific → domain; otherwise → direct.
+ * Precedence: matched → none; domain/product → domain; sales-retail partial/missing
+ * → preferred/direct (never transferable from generic CS); order/billing partial →
+ * transferable; other partial → transferable; preferred tier → preferred; else direct.
  */
 export function classifyGapType(input: ClassifyGapTypeInput): GapTypeResult {
   if (input.classification === "present") {
     return { gap_type: null, gap_type_rationale: "" };
   }
 
+  const tier = input.requirementTier ?? "unknown";
+
+  // Domain / product / tool knowledge — trainable gap; preferred tier softens the label.
+  if (isDomainOrToolSpecificSignal(input.signal)) {
+    if (tier === "preferred") {
+      return { gap_type: "preferred", gap_type_rationale: GAP_TYPE_COPY.preferred };
+    }
+    return { gap_type: "domain", gap_type_rationale: GAP_TYPE_COPY.domain };
+  }
+
   if (input.classification === "partial") {
+    if (isSalesRetailSignal(input.signal)) {
+      if (tier === "preferred") {
+        return { gap_type: "preferred", gap_type_rationale: GAP_TYPE_COPY.preferred };
+      }
+      return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };
+    }
+    if (isOrderWorkflowSignal(input.signal)) {
+      return { gap_type: "transferable", gap_type_rationale: GAP_TYPE_COPY.transferable };
+    }
     return { gap_type: "transferable", gap_type_rationale: GAP_TYPE_COPY.transferable };
   }
 
-  // classification === "missing" from here down.
-  const tier = input.requirementTier ?? "unknown";
+  // classification === "missing"
   if (tier === "preferred") {
     return { gap_type: "preferred", gap_type_rationale: GAP_TYPE_COPY.preferred };
   }
 
-  // For a MISSING signal, defensibility's tool_domain_specificity is LOW precisely
-  // when the signal targets a specific, unevidenced tool/domain — so a low value
-  // corroborates the signal-text markers rather than contradicting them.
   const numericIndicatesSpecific =
     typeof input.toolDomainSpecificity === "number" &&
     input.toolDomainSpecificity > 0 &&
     input.toolDomainSpecificity < DOMAIN_SPECIFICITY_THRESHOLD;
 
-  if (isDomainOrToolSpecificSignal(input.signal) || numericIndicatesSpecific) {
+  if (numericIndicatesSpecific) {
     return { gap_type: "domain", gap_type_rationale: GAP_TYPE_COPY.domain };
+  }
+
+  if (isSalesRetailSignal(input.signal)) {
+    return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };
   }
 
   return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };

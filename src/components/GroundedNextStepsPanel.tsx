@@ -5,6 +5,7 @@ import type {
   GroundedRecommendationDisplayEvidence,
   GroundedRecommendationInsights,
 } from "@/lib/groundedRecommendationTypes";
+import { capEvidenceExcerpt, formatDuplicateEvidenceNote } from "@/lib/evidenceDisplay";
 import { GAP_TYPE_LABEL, type GapType } from "@/lib/gapTaxonomy";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -49,8 +50,8 @@ function RecommendationEvidence({
           className="text-[10px] text-muted-foreground/80 italic leading-relaxed pl-3 border-l-2 border-primary/40"
         >
           {entry.is_duplicate
-            ? `Same evidence as "${entry.duplicate_of_signal}" — not repeated here.`
-            : `"${entry.text}"`}
+            ? formatDuplicateEvidenceNote(entry.duplicate_of_signal ?? "another gap")
+            : `"${capEvidenceExcerpt(entry.text)}"`}
         </p>
       ))}
     </div>

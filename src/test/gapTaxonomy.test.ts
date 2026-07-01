@@ -71,6 +71,40 @@ describe("classifyGapType — precedence", () => {
     expect(r.gap_type_rationale).toMatch(/related experience/i);
   });
 
+  it("partial sales/retail signals are NOT transferable from generic CS", () => {
+    expect(
+      classifyGapType({ signal: "counter sales", classification: "partial", requirementTier: "preferred" })
+        .gap_type,
+    ).toBe<GapType>("preferred");
+    expect(
+      classifyGapType({ signal: "product selection", classification: "partial", requirementTier: "required" })
+        .gap_type,
+    ).toBe<GapType>("direct");
+    expect(
+      classifyGapType({ signal: "outbound calls", classification: "partial", requirementTier: "required" })
+        .gap_type,
+    ).toBe<GapType>("direct");
+    expect(
+      classifyGapType({ signal: "inbound sales", classification: "partial", requirementTier: "required" })
+        .gap_type,
+    ).toBe<GapType>("direct");
+  });
+
+  it("partial billing/claims and order workflows stay Transferable", () => {
+    expect(
+      classifyGapType({ signal: "credit and claims", classification: "partial" }).gap_type,
+    ).toBe<GapType>("transferable");
+    expect(
+      classifyGapType({ signal: "order entry", classification: "partial" }).gap_type,
+    ).toBe<GapType>("transferable");
+  });
+
+  it("partial product/electrical knowledge is Domain Gap", () => {
+    expect(
+      classifyGapType({ signal: "electrical product knowledge", classification: "partial" }).gap_type,
+    ).toBe<GapType>("domain");
+  });
+
   it("missing + preferred marker => Preferred Gap (even if domain-specific)", () => {
     const r = classifyGapType({
       signal: "SAP ERP",
@@ -145,6 +179,9 @@ describe("classifyGapType — Graybar CSR fixture", () => {
     { signal: "electrical product knowledge", classification: "missing", toolDomainSpecificity: 22, expected: "domain" },
     { signal: "inbound sales and product recommendation", classification: "missing", toolDomainSpecificity: 55, expected: "direct" },
     { signal: "retail or counter sales experience", classification: "missing", expected: "preferred" },
+    { signal: "counter sales", classification: "partial", expected: "preferred" },
+    { signal: "product selection", classification: "partial", expected: "direct" },
+    { signal: "credit and claims", classification: "partial", expected: "transferable" },
   ];
 
   for (const row of rows) {

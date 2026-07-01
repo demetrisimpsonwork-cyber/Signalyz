@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { GroundedRecommendation, GroundedRecommendationInsights } from "@/lib/groundedRecommendationTypes";
 import { GroundedNextStepsPanel } from "@/components/GroundedNextStepsPanel";
+import { resolveHiringReportRoleLabel } from "@/lib/hiringReportRoleLabel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -342,7 +343,7 @@ function normalizeResult(raw: DirectorCalibrationResult): DirectorCalibrationRes
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, isAuthenticated = true }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void; isAuthenticated?: boolean }) => {
+const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, isAuthenticated = true, targetRoleTitle }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void; isAuthenticated?: boolean; targetRoleTitle?: string | null }) => {
   const [copied, setCopied] = useState(false);
 
   const result = normalizeResult(rawResult);
@@ -354,8 +355,8 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
 
   const { dimensions, director_signal_tier, hiring_stage_friction, pattern_detection, recalibration_directives, signal_classifier, gap_analyzer, consistency_validator, grounded_recommendations, grounded_recommendation_insights } = result;
 
-  // Dynamic role tier label (falls back to "Director" for backward compatibility)
-  const roleLabel = result._role_tier_label || "Director";
+  // Dynamic role tier label — neutral for non-leadership targets (CSR, specialist, etc.)
+  const roleLabel = resolveHiringReportRoleLabel(result._role_tier_label, targetRoleTitle);
 
   const frictionStages = [
     { stage: "Recruiter Filter Risk", key: "Recruiter Filter" as const, data: hiring_stage_friction.recruiter_filter_risk },
