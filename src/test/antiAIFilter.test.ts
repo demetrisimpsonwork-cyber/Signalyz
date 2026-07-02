@@ -6,6 +6,8 @@ import {
   repairAsideBeforeMainVerb,
   repairEmDashAppositiveList,
   repairListMissingAnd,
+  repairCommaSpliceBeforeMainVerb,
+  repairCommaSpliceBeforeLinkingVerb,
 } from "@/lib/antiAIFilter";
 
 describe("antiAIFilter — sentence-fragment safety (Phase 9.6)", () => {
@@ -171,8 +173,52 @@ describe("antiAIFilter — list punctuation repair (Phase 9.10)", () => {
     expect(out).toContain("and no-pressure guidance — is the kind of environment");
   });
 
-  it("does not touch a single-phrase em-dash aside (no list)", () => {
+  it("re-closes a single-phrase em-dash aside before 'is' (punctuation only)", () => {
     const input = "The role — a demanding one, is exactly what I want.";
-    expect(repairEmDashAppositiveList(input)).toBe(input);
+    const out = repairEmDashAppositiveList(input);
+    expect(out).toBe("The role — a demanding one — is exactly what I want.");
+    // Punctuation-only: no words added or removed, only the dangling comma
+    // becomes a closing em-dash.
+    expect(out).not.toContain("one, is");
+    expect(out.replace(/[—,]/g, "").replace(/\s+/g, " ").trim()).toBe(
+      input.replace(/[—,]/g, "").replace(/\s+/g, " ").trim(),
+    );
+  });
+});
+
+describe("antiAIFilter — comma-splice repairs (Phase 9.13)", () => {
+  it('repairs "guidance, reflects" without injecting new claims', () => {
+    const input =
+      "The way I offer no-pressure guidance, reflects the discipline this role needs.";
+    const out = repairCommaSpliceBeforeMainVerb(input);
+    expect(out).toBe(
+      "The way I offer no-pressure guidance reflects the discipline this role needs.",
+    );
+    expect(out).not.toContain("guidance, reflects");
+  });
+
+  it('repairs "requirements, reflects" through the full pipeline', () => {
+    const input =
+      "Managing distinct requirements, reflects the accuracy this work demands.";
+    const out = antiAIFilter(input);
+    expect(out).not.toContain("requirements, reflects");
+    expect(out).toContain("requirements reflects the accuracy");
+  });
+
+  it('repairs "while research moves fast, is" parenthetical comma splice', () => {
+    const input =
+      "The pace of change, while research moves fast, is a specific and interesting problem.";
+    const out = repairCommaSpliceBeforeLinkingVerb(input);
+    expect(out).toBe(
+      "The pace of change — while research moves fast — is a specific and interesting problem.",
+    );
+    expect(out).not.toMatch(/moves fast,\s*is\b/);
+  });
+
+  it("does not inject canned fit claims or new sentences", () => {
+    const input = "Managing distinct requirements, reflects the accuracy this work demands.";
+    const out = antiAIFilter(input);
+    expect(out.toLowerCase()).not.toContain("strong match");
+    expect(out.toLowerCase()).not.toContain("that is a");
   });
 });

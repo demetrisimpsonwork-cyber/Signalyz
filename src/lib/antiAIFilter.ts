@@ -245,6 +245,39 @@ export function repairAsideBeforeMainVerb(text: string): string {
   );
 }
 
+/**
+ * Repair a plain comma splice where a main verb immediately follows a comma
+ * ("guidance, reflects" / "requirements, reflects"). Punctuation-only: drops the
+ * errant comma so the subject reconnects to its verb. Bounded to the same verb
+ * set as the quality gate — does not touch legitimate list-subject splices
+ * handled by repairCapabilityListVerb.
+ */
+const COMMA_SPLICED_MAIN_VERBS =
+  "reflects|reflect|means|mean|requires|require|applies|apply|demonstrates|demonstrate|signals|signal";
+
+export function repairCommaSpliceBeforeMainVerb(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    new RegExp(`,\\s*(${COMMA_SPLICED_MAIN_VERBS})\\b`, "g"),
+    (_m, verb: string) => ` ${verb}`,
+  );
+}
+
+/**
+ * Repair a parenthetical comma splice before a linking verb, e.g.:
+ *   "The pace of change, while research moves fast, is a specific problem."
+ * becomes:
+ *   "The pace of change — while research moves fast — is a specific problem."
+ * Punctuation-only — no words added or removed.
+ */
+export function repairCommaSpliceBeforeLinkingVerb(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  return text.replace(
+    /,\s*((?:while|although|though|when|where|as)\s+[^,]{2,80}?),\s*(is|are)\b/gi,
+    (_m, aside: string, verb: string) => ` — ${aside} — ${verb}`,
+  );
+}
+
 // ─── Em-dash appositive list repair ─────────────────────────────────────────
 
 /**
@@ -257,16 +290,18 @@ export function repairAsideBeforeMainVerb(text: string): string {
  *   "CarMax's model — transparent pricing, a structured process, and
  *    no-pressure guidance — is the kind of environment..."
  *
- * Only fires when the aside is a comma list (≥2 items). It re-closes the aside
- * with an em-dash and inserts the missing "and" before the final item. Bounded
- * length + no crossing periods/em-dashes keeps it conservative.
+ * Re-closes the dangling aside with a second em-dash so the linking verb attaches
+ * cleanly to the subject. For a comma list (≥2 items) it also inserts the missing
+ * "and" before the final item; for a single-phrase aside it only re-closes the
+ * pair. This is a punctuation-only repair — no words are added or removed beyond
+ * the missing list conjunction. Bounded length + no crossing periods/em-dashes
+ * keeps it conservative.
  */
 export function repairEmDashAppositiveList(text: string): string {
   if (!text || typeof text !== "string") return text;
   return text.replace(
     /—\s*([^—.]{2,120}?),\s*(is|are|was|were)\b/g,
-    (whole, aside: string, verb: string) => {
-      if (!aside.includes(",")) return whole; // only list appositives
+    (_whole, aside: string, verb: string) => {
       const items = aside.split(/,\s*/).filter(Boolean);
       if (items.length >= 2 && !/^and\s/i.test(items[items.length - 1])) {
         items[items.length - 1] = `and ${items[items.length - 1]}`;
@@ -449,6 +484,9 @@ export function antiAIFilter(text: string): string {
   // Step 2b: Repair a dangling em-dash aside left before the main verb
   result = repairAsideBeforeMainVerb(result);
 
+  // Step 2b2: Repair parenthetical comma splices before linking verbs
+  result = repairCommaSpliceBeforeLinkingVerb(result);
+
   // Step 2c: Re-close em-dash appositive lists broken into "..., is/are"
   result = repairEmDashAppositiveList(result);
 
@@ -463,6 +501,10 @@ export function antiAIFilter(text: string): string {
 
   // Step 6: Repair broken list-to-verb comma splices
   result = repairCapabilityListVerb(result);
+
+  // Step 6b: Repair plain comma splices before main verbs (after list repair so
+  // "pressure, apply directly" is not broken)
+  result = repairCommaSpliceBeforeMainVerb(result);
 
   // Step 7: Add missing "and" before a list's final item ahead of a connector
   result = repairListMissingAnd(result);

@@ -8,9 +8,16 @@
  * cover-letter BODY only (no salutation), so salutation logic is untouched.
  */
 
+import type { RoleCategory } from "./coverLetterRoleStyle.ts";
+
 export interface CoverLetterQualityResult {
   ok: boolean;
   issues: string[];
+}
+
+export interface CoverLetterQualityOptions {
+  /** When the role is genuinely technical, technical terms are not penalized. */
+  roleCategory?: RoleCategory;
 }
 
 // Weak / formulaic phrasing that makes a letter read like an assembled AI draft.
@@ -23,6 +30,39 @@ const WEAK_PHRASES: { label: string; rx: RegExp }[] = [
   { label: `cliché "environment I'm built for"`, rx: /\benvironment (?:i['’]m|i am) built for\b/i },
   { label: `cliché "model depends on"`, rx: /\bmodel depends on\b/i },
   { label: `cliché "where that approach holds up"`, rx: /\bwhere that approach holds up\b/i },
+];
+
+// Sentence-level grammar defects — a comma or a dangling em-dash aside sitting
+// directly in front of a main/linking verb. These read as comma splices and are
+// the "guidance, reflects" / "requirements, reflects" / "moves fast, is" family.
+const GRAMMAR_DEFECTS: { label: string; rx: RegExp }[] = [
+  {
+    label: "dangling em-dash aside before a main verb",
+    rx: /—\s*[^—.]{2,120}?,\s*(?:reflects?|is|are|means?|requires?|applies|demonstrates?|signals?)\b/i,
+  },
+  {
+    label: "comma splice before a main verb",
+    rx: /,\s*(?:reflects?|means?|requires?|applies|demonstrates?|signals?)\b/i,
+  },
+  {
+    label: "comma splice before a linking verb",
+    rx: /,\s*(?:is|are)\s+(?:an?|the|exactly|what|specific)\b/i,
+  },
+];
+
+// Over-stylized "AI marketing copy" phrasing. The GLOBAL set is always flagged.
+const OVERSTYLIZED_GLOBAL: { label: string; rx: RegExp }[] = [
+  { label: `over-stylized "operational layer"`, rx: /\boperational layer\b/i },
+  { label: `over-stylized "mental architecture"`, rx: /\bmental architecture\b/i },
+  { label: `over-stylized "specific and interesting problem"`, rx: /\bspecific and interesting problem\b/i },
+  { label: `over-stylized "this role sits in"`, rx: /\bthis role sits in\b/i },
+];
+
+// Technical-sounding terms that are legitimate in a genuinely technical role but
+// read as over-stylized filler elsewhere. Skipped for `technical_ai_product`.
+const OVERSTYLIZED_TECH_SENSITIVE: { label: string; rx: RegExp }[] = [
+  { label: `over-stylized "orchestration layer"`, rx: /\borchestration layer\b/i },
+  { label: `over-stylized "frontier AI"`, rx: /\bfrontier ai\b/i },
 ];
 
 // First-person / positive claims about CarMax-style domain tasks the resume
@@ -51,7 +91,10 @@ const EMPLOYER_OPENER =
  * Analyze a cover-letter body and return a verdict plus a list of human-readable
  * issues. `ok` is true only when no issues are found.
  */
-export function analyzeCoverLetterQuality(text: string): CoverLetterQualityResult {
+export function analyzeCoverLetterQuality(
+  text: string,
+  options: CoverLetterQualityOptions = {},
+): CoverLetterQualityResult {
   if (typeof text !== "string" || !text.trim()) {
     return { ok: false, issues: ["empty letter body"] };
   }
@@ -61,6 +104,21 @@ export function analyzeCoverLetterQuality(text: string): CoverLetterQualityResul
 
   for (const { label, rx } of WEAK_PHRASES) {
     if (rx.test(text)) issues.push(label);
+  }
+
+  for (const { label, rx } of GRAMMAR_DEFECTS) {
+    if (rx.test(text)) issues.push(label);
+  }
+
+  for (const { label, rx } of OVERSTYLIZED_GLOBAL) {
+    if (rx.test(text)) issues.push(label);
+  }
+
+  // Technical terms are only penalized outside genuinely technical roles.
+  if (options.roleCategory !== "technical_ai_product") {
+    for (const { label, rx } of OVERSTYLIZED_TECH_SENSITIVE) {
+      if (rx.test(text)) issues.push(label);
+    }
   }
 
   for (const { label, rx } of FABRICATION_CLAIMS) {

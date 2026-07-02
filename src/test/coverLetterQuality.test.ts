@@ -94,3 +94,88 @@ describe("analyzeCoverLetterQuality — clean letter passes (Phase 9.11)", () =>
     expect(issues.join(" ")).toMatch(/too many paragraphs/i);
   });
 });
+
+describe("analyzeCoverLetterQuality — sentence-level grammar defects (Phase 9.13)", () => {
+  it('flags a comma splice before "reflects" ("guidance, reflects")', () => {
+    const { ok, issues } = analyzeCoverLetterQuality(
+      "The way I offer no-pressure guidance, reflects the discipline this role needs.",
+    );
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/comma splice before a main verb/i);
+  });
+
+  it('flags a comma splice before "reflects" ("requirements, reflects")', () => {
+    const { ok, issues } = analyzeCoverLetterQuality(
+      "Managing distinct requirements, reflects the accuracy this work demands.",
+    );
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/comma splice before a main verb/i);
+  });
+
+  it('flags a comma splice before a linking verb ("while research moves fast, is")', () => {
+    const { ok, issues } = analyzeCoverLetterQuality(
+      "The pace of change, while research moves fast, is a specific and interesting problem.",
+    );
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/comma splice before a linking verb/i);
+  });
+
+  it("flags a dangling em-dash aside before a main verb", () => {
+    const { ok, issues } = analyzeCoverLetterQuality(
+      "That habit of accuracy — a discipline I carry everywhere, reflects how I work.",
+    );
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/dangling em-dash aside before a main verb/i);
+  });
+});
+
+describe("analyzeCoverLetterQuality — over-stylized phrasing (Phase 9.13)", () => {
+  it("flags over-stylized filler phrases", () => {
+    expect(analyzeCoverLetterQuality("This role sits in the operational layer of the business.").ok).toBe(false);
+    expect(analyzeCoverLetterQuality("It matches my mental architecture perfectly.").ok).toBe(false);
+    expect(
+      analyzeCoverLetterQuality("This is a specific and interesting problem I want to solve.").ok,
+    ).toBe(false);
+  });
+
+  it("flags technical filler for a NON-technical role", () => {
+    expect(
+      analyzeCoverLetterQuality("Their orchestration layer is impressive.", {
+        roleCategory: "customer_service_retail_ops",
+      }).ok,
+    ).toBe(false);
+    expect(
+      analyzeCoverLetterQuality("I want to work on frontier AI.", {
+        roleCategory: "customer_service_retail_ops",
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("does NOT flag legitimate technical terms for a technical role", () => {
+    const orch = analyzeCoverLetterQuality(
+      "I built the orchestration layer for our deployment pipeline.",
+      { roleCategory: "technical_ai_product" },
+    );
+    expect(orch.issues.some((i) => /orchestration layer/i.test(i))).toBe(false);
+
+    const frontier = analyzeCoverLetterQuality(
+      "I want to contribute to frontier AI systems in production.",
+      { roleCategory: "technical_ai_product" },
+    );
+    expect(frontier.issues.some((i) => /frontier ai/i.test(i))).toBe(false);
+  });
+});
+
+describe("analyzeCoverLetterQuality — honest gap clauses are safe (Phase 9.13)", () => {
+  it("does not flag honest gap disclaimers", () => {
+    expect(
+      analyzeCoverLetterQuality("I have not worked in automotive retail.").issues,
+    ).toEqual([]);
+    expect(
+      analyzeCoverLetterQuality("I have not built agentic AI frameworks or LLM pipelines.").issues,
+    ).toEqual([]);
+    expect(
+      analyzeCoverLetterQuality("I have not owned quota or renewals.").issues,
+    ).toEqual([]);
+  });
+});

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { humanizeProse, enforceFirstPersonVoice, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 import { analyzeCoverLetterQuality } from "../_shared/coverLetterQuality.ts";
-import { buildRoleStyleBlock } from "../_shared/coverLetterRoleStyle.ts";
+import { detectRoleCategory, roleStyleGuidance } from "../_shared/coverLetterRoleStyle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -449,7 +449,8 @@ Return ONLY valid JSON, no markdown.`;
           : `TONE: Confident. Write like a sharp, credible professional who genuinely wants this specific job. Warm but not casual. Direct but not stiff. Use clear, complete professional sentences that a recruiter can scan quickly. Contractions are fine in moderation. Do NOT use dramatic one-liners, punchy fragments, or short "mic-drop" sentences for effect. The letter should read like a real, polished application — confident, not performative. Total length: 240-260 words.`;
 
         const companyRef = companyName !== "the company" ? companyName : "";
-        const roleStyleBlock = buildRoleStyleBlock(jd, roleTitle);
+        const roleCategory = detectRoleCategory(jd, roleTitle);
+        const roleStyleBlock = roleStyleGuidance(roleCategory);
         const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
 
 CONTEXT:
@@ -526,10 +527,10 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
         // Phase 9.11: single corrective rewrite when the quality gate flags weak
         // patterns. Fully defensive — any failure keeps the original letter.
         try {
-          const quality = analyzeCoverLetterQuality(parsedLetter?.letter || "");
+          const quality = analyzeCoverLetterQuality(parsedLetter?.letter || "", { roleCategory });
           if (!quality.ok) {
             console.warn(`[generate-pro-content] cover letter quality issues: ${quality.issues.join("; ")}`);
-            const revisionPrompt = `${prompt}\n\nREVISION REQUIRED — a first draft was rejected by the quality gate for: ${quality.issues.join("; ")}. Rewrite the ENTIRE letter from scratch, fully obeying every rule above. Remove the flagged phrases and any close variants, vary how paragraphs open (do NOT start multiple paragraphs with an employer name), keep exactly 4 flowing human paragraphs, and stay grounded with zero fabricated claims. Return ONLY the JSON described above.`;
+            const revisionPrompt = `${prompt}\n\nREVISION REQUIRED — a first draft was flagged by the quality gate for: ${quality.issues.join("; ")}.\n\nRewrite the cover letter to fix sentence-quality issues only. Keep the same facts, structure, and evidence. Do not add new experience, claims, tools, metrics, or domain knowledge. Make the language plainer, cleaner, and more human. Fix dangling em-dash asides, comma splices before main verbs, and over-stylized AI-sounding phrases. Prefer direct sentences over abstract phrasing. Return the full revised letter as ONLY the JSON described above.`;
             const rawRetry = await callAI(revisionPrompt, 2000, toneTemp, 1);
             let cleanedRetry = rawRetry.replace(/```json\n?/g, "").replace(/```/g, "").trim();
             const rs = cleanedRetry.indexOf("{");
@@ -542,7 +543,7 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
                 .map((p: string) => humanizeProse(p))
                 .filter((p: string) => p.trim().length > 0)
                 .join("\n\n");
-              const retryQuality = analyzeCoverLetterQuality(parsedRetry.letter);
+              const retryQuality = analyzeCoverLetterQuality(parsedRetry.letter, { roleCategory });
               // Only adopt the rewrite if it is at least as clean as the original.
               if (retryQuality.issues.length <= quality.issues.length) {
                 result = parsedRetry;

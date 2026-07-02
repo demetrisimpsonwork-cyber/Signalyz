@@ -23,7 +23,8 @@ describe("cover letter prompt — human narrative lock (Phase 9.10)", () => {
   it("injects role-aware emphasis, not only CarMax-specific guidance (Phase 9.12)", () => {
     // The prompt injects a computed role-style block rather than hard-coding one role.
     expect(PROMPT_SOURCE).toContain("ROLE-AWARE EMPHASIS");
-    expect(PROMPT_SOURCE).toContain("buildRoleStyleBlock");
+    expect(PROMPT_SOURCE).toContain("detectRoleCategory");
+    expect(PROMPT_SOURCE).toContain("roleStyleGuidance");
     expect(PROMPT_SOURCE).toMatch(/from "\.\.\/_shared\/coverLetterRoleStyle\.ts"/);
     // The generalized fabrication rule now references the role-aware block and
     // frames automotive/SaaS/technical claims as examples, not the only case.
@@ -72,5 +73,26 @@ describe("cover letter prompt — human narrative lock (Phase 9.10)", () => {
       /appraisal.*inventory.*reconciliation|inventory check-in\/scanning\/reconciliation/i,
     );
     expect(PROMPT_SOURCE).toMatch(/ZERO fabricated (sales|domain-specific)/i);
+  });
+});
+
+describe("cover letter quality retry prompt — final reviewer (Phase 9.13)", () => {
+  it("scopes the single retry to sentence-quality fixes only", () => {
+    expect(PROMPT_SOURCE).toContain("fix sentence-quality issues only");
+    expect(PROMPT_SOURCE).toContain("Keep the same facts, structure, and evidence");
+    expect(PROMPT_SOURCE).toContain(
+      "Do not add new experience, claims, tools, metrics, or domain knowledge",
+    );
+    expect(PROMPT_SOURCE).toContain("plainer, cleaner, and more human");
+    expect(PROMPT_SOURCE).toContain("Fix dangling em-dash asides");
+    expect(PROMPT_SOURCE).toContain("comma splices before main verbs");
+    expect(PROMPT_SOURCE).toContain("over-stylized AI-sounding phrases");
+    expect(PROMPT_SOURCE).toContain("Prefer direct sentences over abstract phrasing");
+  });
+
+  it("keeps exactly one corrective retry (no second AI reviewer)", () => {
+    // A single revision prompt string, used by one extra callAI in the try block.
+    const revisionMatches = PROMPT_SOURCE.match(/const revisionPrompt =/g) || [];
+    expect(revisionMatches.length).toBe(1);
   });
 });
