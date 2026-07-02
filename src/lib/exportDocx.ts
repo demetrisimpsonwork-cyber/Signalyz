@@ -17,6 +17,7 @@ import {
   normalizeResumeForExport,
   RESUME_SECTION_LABELS,
 } from "@/lib/resumeExportModel";
+import type { CalibratedResumeSanitizeOptions } from "@/lib/calibratedResumeSanitizer";
 
 const BULLET_NUMBERING = "resume-bullet-list";
 
@@ -114,8 +115,11 @@ function educationParagraph(edu: { degree: string; institution: string; year: st
   });
 }
 
-export async function exportCalibratedDocx(resume: CalibratedResumeData) {
-  const model = normalizeResumeForExport(resume);
+export async function exportCalibratedDocx(
+  resume: CalibratedResumeData,
+  sanitizeOptions?: CalibratedResumeSanitizeOptions,
+) {
+  const model = normalizeResumeForExport(resume, sanitizeOptions);
 
   const doc = new Document({
     numbering: {

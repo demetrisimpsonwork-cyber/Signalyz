@@ -5,6 +5,7 @@ import { invokeResilient, FRIENDLY_FAIL_MSG, StructuredEdgeError, isInFlight, cl
 import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidence";
 import { handleUsageLimitError } from "@/lib/usageLimitError";
 import { evaluateAssemblyParseGate, PARSE_GATE_MESSAGE } from "@/lib/resumeIntake";
+import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
 
 export interface CalibratedResumeData {
   header: {
@@ -428,7 +429,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       }
 
       // Omit sections that have no clean entries rather than inserting malformed data
-      const resume: CalibratedResumeData = {
+      let resume: CalibratedResumeData = {
         header: mergedHeader,
         summary: data.summary || "",
         core_competencies: Array.isArray(data.core_competencies) && data.core_competencies.length > 0 ? data.core_competencies : [],
@@ -439,6 +440,13 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         education: cleanEducation.length > 0 ? cleanEducation : [],
         signal_keywords: data.signal_keywords || [],
       };
+
+      // Phase 10.0: scrub stale target-company artifacts and repair parse corruption
+      // before confidence scoring, preview, or export.
+      resume = sanitizeCalibratedResume(resume, {
+        jdText: jdText || "",
+        originalResumeText: originalResume,
+      }).resume;
 
       // ── Confidence check ──
       const conf = evaluateConfidence(resume);

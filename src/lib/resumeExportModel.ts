@@ -5,6 +5,10 @@
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { bulletToPastTense } from "@/lib/pastTense";
 import { polishResumeText } from "@/lib/resumeTextPolish";
+import {
+  sanitizeCalibratedResume,
+  type CalibratedResumeSanitizeOptions,
+} from "@/lib/calibratedResumeSanitizer";
 
 /** Section labels — must match ResumeCanvas SectionHeader text */
 export const RESUME_SECTION_LABELS = {
@@ -78,21 +82,28 @@ export function cleanCertificationText(cert: string): string {
  * Normalize resume data for export and preview bullet display.
  * Uses core_competencies only (matches canvas — skills array is not shown separately).
  */
-export function normalizeResumeForExport(resume: CalibratedResumeData): ExportResumeModel {
+export function normalizeResumeForExport(
+  resume: CalibratedResumeData,
+  sanitizeOptions?: CalibratedResumeSanitizeOptions,
+): ExportResumeModel {
+  const cleaned = sanitizeOptions
+    ? sanitizeCalibratedResume(resume, sanitizeOptions).resume
+    : resume;
+
   const contactParts = [
-    resume.header.location,
-    resume.header.email,
-    resume.header.phone,
-    resume.header.linkedin,
+    cleaned.header.location,
+    cleaned.header.email,
+    cleaned.header.phone,
+    cleaned.header.linkedin,
   ]
     .map((s) => (s || "").trim())
     .filter(Boolean);
 
-  const competencies = (resume.core_competencies || [])
+  const competencies = (cleaned.core_competencies || [])
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const experience: ExportExperienceEntry[] = (resume.experience || []).map((exp) => ({
+  const experience: ExportExperienceEntry[] = (cleaned.experience || []).map((exp) => ({
     title: (exp.title || "").trim(),
     company: (exp.company || "").trim(),
     dates: (exp.dates || "").trim(),
@@ -101,7 +112,7 @@ export function normalizeResumeForExport(resume: CalibratedResumeData): ExportRe
       .filter(Boolean),
   }));
 
-  const projects: ExportProjectEntry[] = (resume.independent_projects || []).map((proj) => ({
+  const projects: ExportProjectEntry[] = (cleaned.independent_projects || []).map((proj) => ({
     name: (proj.name || "").trim(),
     description: polishResumeText((proj.description || "").trim()),
     bullets: (proj.bullets || [])
@@ -109,11 +120,11 @@ export function normalizeResumeForExport(resume: CalibratedResumeData): ExportRe
       .filter(Boolean),
   }));
 
-  const certifications = (resume.certifications || [])
+  const certifications = (cleaned.certifications || [])
     .map(cleanCertificationText)
     .filter(Boolean);
 
-  const education: ExportEducationEntry[] = (resume.education || []).map((edu) => ({
+  const education: ExportEducationEntry[] = (cleaned.education || []).map((edu) => ({
     degree: (edu.degree || "").trim(),
     institution: (edu.institution || "").trim(),
     year: (edu.year || "").trim(),
@@ -121,12 +132,12 @@ export function normalizeResumeForExport(resume: CalibratedResumeData): ExportRe
 
   return {
     header: {
-      name: (resume.header.name || "").trim() || "Name",
-      title: (resume.header.title || "").trim(),
+      name: (cleaned.header.name || "").trim() || "Name",
+      title: (cleaned.header.title || "").trim(),
       contactParts,
       contactLine: contactParts.join("  |  "),
     },
-    summary: polishResumeText((resume.summary || "").trim()),
+    summary: polishResumeText((cleaned.summary || "").trim()),
     competencies,
     competenciesText: competencies.join(",  "),
     experience,

@@ -6,6 +6,7 @@ import {
   RESUME_SECTION_LABELS,
   type ExportResumeModel,
 } from "@/lib/resumeExportModel";
+import type { CalibratedResumeSanitizeOptions } from "@/lib/calibratedResumeSanitizer";
 
 const PAGE_W = 210;
 const PAGE_H = 297;
@@ -315,7 +316,10 @@ function renderPdfLayout(model: ExportResumeModel, doc: JsPdfDoc): PdfLayoutCont
 /**
  * Export the calibrated resume as a designed PDF using jsPDF.
  */
-export async function exportCalibratedPdf(resume: CalibratedResumeData) {
+export async function exportCalibratedPdf(
+  resume: CalibratedResumeData,
+  sanitizeOptions?: CalibratedResumeSanitizeOptions,
+) {
   if (!resume) {
     toast.error("No resume data found. Please assemble your resume first.");
     return;
@@ -323,7 +327,7 @@ export async function exportCalibratedPdf(resume: CalibratedResumeData) {
 
   try {
     toast.info("Generating PDF…");
-    const model = normalizeResumeForExport(resume);
+    const model = normalizeResumeForExport(resume, sanitizeOptions);
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     renderPdfLayout(model, doc);
     doc.save("Calibrated_Resume.pdf");

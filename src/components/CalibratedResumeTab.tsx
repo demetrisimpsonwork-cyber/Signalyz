@@ -148,15 +148,20 @@ const CalibratedResumeTab = ({
     }
   }, [isPro, hasCurrentSessionAlignment, currentResume, pendingResume, loading, error, showPdfFallback]);
 
+  const exportSanitizeOptions = useMemo(
+    () => ({ jdText: jdText || "", originalResumeText: originalResume }),
+    [jdText, originalResume],
+  );
+
   const handleExportDocx = () => {
     if (!currentResume) return;
-    exportCalibratedDocx(currentResume);
+    exportCalibratedDocx(currentResume, exportSanitizeOptions);
     toast.success("ATS resume exported");
   };
 
   const handleExportPdf = () => {
     if (!currentResume) return;
-    exportCalibratedPdf(currentResume);
+    exportCalibratedPdf(currentResume, exportSanitizeOptions);
   };
 
   const handleCleanTextProvided = (text: string) => {
