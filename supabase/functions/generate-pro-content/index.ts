@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { humanizeProse, enforceFirstPersonVoice, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 import { analyzeCoverLetterQuality } from "../_shared/coverLetterQuality.ts";
+import { buildRoleStyleBlock } from "../_shared/coverLetterRoleStyle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -448,6 +449,7 @@ Return ONLY valid JSON, no markdown.`;
           : `TONE: Confident. Write like a sharp, credible professional who genuinely wants this specific job. Warm but not casual. Direct but not stiff. Use clear, complete professional sentences that a recruiter can scan quickly. Contractions are fine in moderation. Do NOT use dramatic one-liners, punchy fragments, or short "mic-drop" sentences for effect. The letter should read like a real, polished application — confident, not performative. Total length: 240-260 words.`;
 
         const companyRef = companyName !== "the company" ? companyName : "";
+        const roleStyleBlock = buildRoleStyleBlock(jd, roleTitle);
         const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
 
 CONTEXT:
@@ -457,6 +459,9 @@ CONTEXT:
 - Job description: ${jd.slice(0, 1500)}
 
 ${toneDirective}
+
+ROLE-AWARE EMPHASIS (tailor the letter to this role type; emphasize only resume-supported strengths, never fabricate):
+${roleStyleBlock}
 
 STRUCTURE — a human narrative in exactly 4 concise paragraphs. This should read like a focused person who understands the job wrote it in one sitting — NOT like a stacked list of evidence. Each paragraph flows into the next; do not label them.
 
@@ -487,7 +492,7 @@ WRITING RULES:
 - Punctuate every list correctly: always use "and" before the final item, and never leave a stray comma between the last list item and the word that follows it. Write "individuals, employers, and healthcare providers through complex processes" — NOT "individuals, employers, healthcare providers, through complex processes". If you set off an appositive list with an em-dash, CLOSE it with an em-dash, not a comma: "CarMax's model — transparent pricing, a structured process, and no-pressure guidance — is..." (or write it plainly without dashes) — NEVER "...no-pressure guidance, is...".
 - Mention any gap honestly but tactfully in ONE clause; never over-explain or apologize for it.
 - ZERO fabricated sales, product, counter, or quota experience. Do not claim formal sales, counter sales, or product-selection experience the resume does not support.
-- ZERO fabricated domain-specific experience. Never claim OR imply experience the resume does not support — including vehicle/product sales, appraisal, vehicle condition assessment or inspection, inventory check-in/scanning/reconciliation, or repair-order handling. Do NOT name those employer-specific tasks as though you have performed them. Position around what the resume DOES support: high-volume customer support, documentation accuracy, process follow-through, cross-functional coordination, customer guidance, fast-paced operations, and integrity/accuracy. Any domain gap must be stated once, plainly, in a single clause — then move on.
+- ZERO fabricated domain-specific experience. Never claim OR imply experience the resume does not support, and honor the ROLE-AWARE EMPHASIS block above for which domain claims to avoid for THIS role type. (Example — for an automotive-retail role: never claim vehicle/product sales, appraisal, vehicle condition assessment or inspection, inventory check-in/scanning/reconciliation, or repair-order handling. For a SaaS role: never claim quota, book-of-business, renewals, or expansion. For a technical role: never claim ML research, senior eng leadership, or team management.) Do NOT name role-specific tasks as though you have performed them. Position around what the resume DOES support. Any domain gap must be stated once, plainly, in a single clause — then move on.
 
 ${COVER_LETTER_STANDARD}
 

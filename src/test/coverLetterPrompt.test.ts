@@ -20,6 +20,24 @@ describe("cover letter prompt — human narrative lock (Phase 9.10)", () => {
     expect(PROMPT_SOURCE).toMatch(/do NOT repeat any single employer name more than twice/i);
   });
 
+  it("injects role-aware emphasis, not only CarMax-specific guidance (Phase 9.12)", () => {
+    // The prompt injects a computed role-style block rather than hard-coding one role.
+    expect(PROMPT_SOURCE).toContain("ROLE-AWARE EMPHASIS");
+    expect(PROMPT_SOURCE).toContain("buildRoleStyleBlock");
+    expect(PROMPT_SOURCE).toMatch(/from "\.\.\/_shared\/coverLetterRoleStyle\.ts"/);
+    // The generalized fabrication rule now references the role-aware block and
+    // frames automotive/SaaS/technical claims as examples, not the only case.
+    expect(PROMPT_SOURCE).toMatch(/honor the ROLE-AWARE EMPHASIS block/i);
+    expect(PROMPT_SOURCE).toMatch(/For a SaaS role|For a technical role/i);
+  });
+
+  it("still requires one real work story and a single honest gap sentence", () => {
+    expect(PROMPT_SOURCE).toContain("P2 — ONE FOCUSED PROOF");
+    expect(PROMPT_SOURCE).toMatch(/ONE focused work example/i);
+    expect(PROMPT_SOURCE).toContain("P3 — HONEST GAP + BRIDGE");
+    expect(PROMPT_SOURCE).toMatch(/name the (?:main )?gap honestly in ONE plain sentence/i);
+  });
+
   it("requires a 4-paragraph human narrative structure", () => {
     expect(PROMPT_SOURCE).toContain("a human narrative in exactly 4 concise paragraphs");
     expect(PROMPT_SOURCE).toContain("P1 — WHY THIS ROLE FITS");
