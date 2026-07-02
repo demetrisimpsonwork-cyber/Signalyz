@@ -8,6 +8,8 @@
  * NOT applied to: diagnostic sections, scoring, analysis output.
  */
 
+import { maskTimeAbbreviations } from "../../supabase/functions/_shared/coverLetterIntegrity";
+
 // ─── Overused AI phrases → cleaner replacements ─────────────────────────────
 
 const PHRASE_REPLACEMENTS: [RegExp, string][] = [
@@ -393,15 +395,17 @@ function cleanupWhitespace(text: string): string {
 function reduceRepeatedI(text: string): string {
   const paragraphs = text.split(/\n\n+/);
   return paragraphs.map(para => {
-    // Split into sentences (simple split on ". " or start of line)
-    const sentences = para.split(/(?<=\.)\s+/);
+    const { masked, unmask } = maskTimeAbbreviations(para);
+    // Split into sentences without breaking a.m./p.m.
+    const sentences = masked.split(/(?<=[.!?])\s+/);
     if (sentences.length < 3) return para;
 
     let consecutive = 0;
     const result: string[] = [];
 
     for (let i = 0; i < sentences.length; i++) {
-      const startsWithI = /^I\s/.test(sentences[i].trim());
+      const sentence = unmask(sentences[i]);
+      const startsWithI = /^I\s/.test(sentence.trim());
       if (startsWithI) {
         consecutive++;
       } else {
@@ -410,14 +414,14 @@ function reduceRepeatedI(text: string): string {
 
       // On the 3rd+ consecutive "I" sentence, reframe by removing leading "I"
       if (consecutive >= 3 && startsWithI) {
-        const s = sentences[i].trim();
+        const s = sentence.trim();
         // Try to restructure: "I led the team..." → "Led the team..."
         // or "I managed..." → "Managed..."
         const reframed = s.replace(/^I\s+/, "");
         result.push(reframed.charAt(0).toUpperCase() + reframed.slice(1));
         consecutive = 0; // reset after reframe
       } else {
-        result.push(sentences[i]);
+        result.push(sentence);
       }
     }
 

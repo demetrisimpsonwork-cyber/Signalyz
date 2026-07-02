@@ -179,3 +179,82 @@ describe("analyzeCoverLetterQuality — honest gap clauses are safe (Phase 9.13)
     ).toEqual([]);
   });
 });
+
+describe("analyzeCoverLetterQuality — Phase 9.14 integrity + technical role", () => {
+  const signalyzResume = `
+    Signalyz — independent AI SaaS product
+    Built production AI SaaS with Claude/Anthropic API, Supabase, PostgreSQL, Edge Functions
+    RAG, embeddings, vector search, production debugging, Stripe auth exports
+  `;
+
+  it("flags low-noise diagnostic thinking and generic production systems demand", () => {
+    expect(analyzeCoverLetterQuality("I bring low-noise diagnostic thinking to every incident.").ok).toBe(false);
+    expect(analyzeCoverLetterQuality("Production systems demand constant vigilance.").ok).toBe(false);
+  });
+
+  it("flags integrity corruption artifacts", () => {
+    expect(analyzeCoverLetterQuality("n. And someone has to own the diagnosis.").ok).toBe(false);
+    expect(analyzeCoverLetterQuality("Systems fail at 2 a.").ok).toBe(false);
+  });
+
+  it("flags NJDOL-centered letter when resume has Signalyz technical evidence", () => {
+    const letter = [
+      "At the New Jersey Department of Labor, I managed 40–70 concurrent cases daily under strict SLAs.",
+      "That volume taught me to diagnose workflow failures quickly and keep customers moving.",
+      "I have not built LLM pipelines, but I bring strong operational troubleshooting.",
+      "I would welcome a conversation about this Staff AI Engineer role.",
+    ].join("\n\n");
+    const { ok, issues } = analyzeCoverLetterQuality(letter, {
+      roleCategory: "technical_ai_product",
+      resumeText: signalyzResume,
+    });
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/technical role letter centers casework/i);
+  });
+
+  it("does not flag a Signalyz-led technical letter", () => {
+    const letter = [
+      "Building Signalyz, a production AI SaaS on Supabase and Claude, is my strongest proof for this Staff AI Engineer role.",
+      "I integrated Anthropic APIs, debugged Edge Functions under load, and kept output quality reliable in production.",
+      "I have not shipped production ML infrastructure or computer-vision systems, but I can credibly bring adjacent AI product experience.",
+      "I would welcome a conversation about how that builder background fits your team.",
+    ].join("\n\n");
+    const { ok, issues } = analyzeCoverLetterQuality(letter, {
+      roleCategory: "technical_ai_product",
+      resumeText: signalyzResume,
+      severeTechnicalGap: true,
+    });
+    expect(issues.filter((i) => /centers casework/i.test(i))).toEqual([]);
+    expect(ok).toBe(true);
+  });
+
+  it("flags fabricated Staff AI claims", () => {
+    expect(
+      analyzeCoverLetterQuality("I shipped production ML infrastructure at scale.", {
+        severeTechnicalGap: true,
+      }).ok,
+    ).toBe(false);
+    expect(
+      analyzeCoverLetterQuality("I have computer-vision experience across aerial imagery.", {
+        severeTechnicalGap: true,
+      }).ok,
+    ).toBe(false);
+    expect(
+      analyzeCoverLetterQuality("I led a team of engineers on enterprise-scale ownership.", {
+        severeTechnicalGap: true,
+      }).ok,
+    ).toBe(false);
+    expect(
+      analyzeCoverLetterQuality("I built and shipped agentic AI orchestration layers.", {
+        severeTechnicalGap: true,
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("allows honest severe-gap sentences for Staff AI roles", () => {
+    const gap =
+      "I have not shipped production ML infrastructure or computer-vision systems, but my strongest relevant work is building Signalyz.";
+    const { issues } = analyzeCoverLetterQuality(gap, { severeTechnicalGap: true });
+    expect(issues.filter((i) => /fabricated/i.test(i))).toEqual([]);
+  });
+});

@@ -8,6 +8,10 @@ import { saveAs } from "file-saver";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import { buildCoverLetterAddressee, inferCompanyNameFromJd } from "@/lib/coverLetterSalutation";
 import { antiAIFilter } from "@/lib/antiAIFilter";
+import {
+  splitSentencesSafe,
+  validateCoverLetterIntegrity,
+} from "../../supabase/functions/_shared/coverLetterIntegrity";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 
@@ -48,10 +52,7 @@ const COVER_LETTER_SECTIONS = [
 ] as const;
 
 function splitIntoSentences(text: string): string[] {
-  const matches = text.match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g) ?? [];
-  return matches
-    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
+  return splitSentencesSafe(text);
 }
 
 function splitParagraphs(text: string): string[] {
@@ -170,7 +171,12 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (!data?.letter) throw new Error("No letter content returned.");
       const filteredLetter = antiAIFilter(data.letter || "");
       const segmentedLetter = segmentCoverLetterBody(filteredLetter);
-      setLetter(segmentedLetter || filteredLetter);
+      const segmentedIntegrity = validateCoverLetterIntegrity(segmentedLetter);
+      const finalLetter =
+        segmentedLetter && segmentedIntegrity.ok
+          ? segmentedLetter
+          : filteredLetter;
+      setLetter(finalLetter || filteredLetter);
       setHasGenerated(true);
       setStep(4);
     } catch (e: any) {

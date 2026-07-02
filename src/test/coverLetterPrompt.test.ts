@@ -96,3 +96,18 @@ describe("cover letter quality retry prompt — final reviewer (Phase 9.13)", ()
     expect(revisionMatches.length).toBe(1);
   });
 });
+
+describe("cover letter prompt — technical evidence + severe gap (Phase 9.14)", () => {
+  it("injects technical evidence priority and severe-gap realism for AI roles", () => {
+    expect(PROMPT_SOURCE).toContain("buildTechnicalEvidencePriorityBlock");
+    expect(PROMPT_SOURCE).toContain("buildSevereGapRealismBlock");
+    expect(PROMPT_SOURCE).toContain("detectSevereTechnicalGap");
+    expect(PROMPT_SOURCE).toContain("technicalRoleStructureBlock");
+    expect(PROMPT_SOURCE).toContain("validateCoverLetterIntegrity");
+  });
+
+  it("passes resume text into the quality gate", () => {
+    expect(PROMPT_SOURCE).toContain("resumeText: experience");
+    expect(PROMPT_SOURCE).toContain("severeTechnicalGap");
+  });
+});

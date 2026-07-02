@@ -3,6 +3,11 @@ import {
   detectRoleCategory,
   roleStyleGuidance,
   buildRoleStyleBlock,
+  detectSevereTechnicalGap,
+  detectTechnicalResumeEvidence,
+  letterUnderusesTechnicalEvidence,
+  buildTechnicalEvidencePriorityBlock,
+  buildSevereGapRealismBlock,
 } from "../../supabase/functions/_shared/coverLetterRoleStyle";
 
 describe("detectRoleCategory (Phase 9.12)", () => {
@@ -22,6 +27,12 @@ describe("detectRoleCategory (Phase 9.12)", () => {
     const jd =
       "Full-stack software engineer building API integrations and owning production deployment of our web application.";
     expect(detectRoleCategory(jd, "Software Engineer")).toBe("technical_ai_product");
+  });
+
+  it("classifies a Staff AI Engineer JD as technical_ai_product", () => {
+    const jd =
+      "Staff AI Engineer building agentic AI systems, LLM pipelines, RAG, vector search, and production ML infrastructure. PhD preferred.";
+    expect(detectRoleCategory(jd, "Staff AI Engineer")).toBe("technical_ai_product");
   });
 
   it("classifies a claims / compliance role", () => {
@@ -79,5 +90,57 @@ describe("buildRoleStyleBlock (Phase 9.12)", () => {
       "Customer Specialist",
     );
     expect(block).toMatch(/customer service \/ retail \/ operations/i);
+  });
+});
+
+describe("technical role evidence priority (Phase 9.14)", () => {
+  const resume = `
+    Signalyz — AI SaaS product with Claude/Anthropic API, Supabase, PostgreSQL, Edge Functions, RAG, embeddings
+  `;
+
+  it("detects severe technical gap on Staff AI JD", () => {
+    const jd =
+      "Staff AI Engineer, production ML, agentic AI, RAG, vector search, computer vision. PhD preferred.";
+    expect(detectSevereTechnicalGap(jd, "Staff AI Engineer")).toBe(true);
+  });
+
+  it("detects Signalyz and related technical resume markers", () => {
+    const markers = detectTechnicalResumeEvidence(resume);
+    expect(markers).toContain("Signalyz");
+    expect(markers.some((m) => /anthropic|claude|supabase|rag/i.test(m))).toBe(true);
+  });
+
+  it("builds a technical evidence priority prompt block", () => {
+    const block = buildTechnicalEvidencePriorityBlock(resume);
+    expect(block).toMatch(/TECHNICAL EVIDENCE PRIORITY/i);
+    expect(block).toMatch(/Signalyz/i);
+    expect(block).toMatch(/never as the main centerpiece/i);
+  });
+
+  it("builds a severe-gap realism block for Staff AI JDs", () => {
+    const block = buildSevereGapRealismBlock(
+      "Staff AI Engineer, production ML, agentic AI",
+      "Staff AI Engineer",
+    );
+    expect(block).toMatch(/SEVERE ROLE-GAP REALISM/i);
+    expect(block).toMatch(/not the conventional Staff AI profile/i);
+  });
+
+  it("flags NJDOL-centered letters when resume has technical evidence", () => {
+    const letter = [
+      "At the New Jersey Department of Labor, I managed high-volume casework.",
+      "That experience shapes how I troubleshoot failures.",
+    ].join("\n\n");
+    expect(
+      letterUnderusesTechnicalEvidence(letter, resume, "technical_ai_product"),
+    ).toBe(true);
+  });
+
+  it("does not flag letters that lead with Signalyz", () => {
+    const letter =
+      "Building Signalyz, a production AI SaaS on Supabase and Claude, is my strongest proof for this role.";
+    expect(
+      letterUnderusesTechnicalEvidence(letter, resume, "technical_ai_product"),
+    ).toBe(false);
   });
 });

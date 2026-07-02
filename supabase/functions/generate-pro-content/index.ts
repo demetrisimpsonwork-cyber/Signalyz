@@ -3,7 +3,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { humanizeProse, enforceFirstPersonVoice, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 import { analyzeCoverLetterQuality } from "../_shared/coverLetterQuality.ts";
-import { detectRoleCategory, roleStyleGuidance } from "../_shared/coverLetterRoleStyle.ts";
+import {
+  detectRoleCategory,
+  roleStyleGuidance,
+  buildTechnicalEvidencePriorityBlock,
+  buildSevereGapRealismBlock,
+  detectSevereTechnicalGap,
+  technicalRoleStructureBlock,
+} from "../_shared/coverLetterRoleStyle.ts";
+import { validateCoverLetterIntegrity } from "../_shared/coverLetterIntegrity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -450,7 +458,25 @@ Return ONLY valid JSON, no markdown.`;
 
         const companyRef = companyName !== "the company" ? companyName : "";
         const roleCategory = detectRoleCategory(jd, roleTitle);
+        const severeTechnicalGap = detectSevereTechnicalGap(jd, roleTitle);
         const roleStyleBlock = roleStyleGuidance(roleCategory);
+        const technicalEvidenceBlock = roleCategory === "technical_ai_product"
+          ? buildTechnicalEvidencePriorityBlock(experience)
+          : "";
+        const severeGapBlock = roleCategory === "technical_ai_product"
+          ? buildSevereGapRealismBlock(jd, roleTitle)
+          : "";
+        const structureBlock = roleCategory === "technical_ai_product"
+          ? technicalRoleStructureBlock()
+          : `STRUCTURE — a human narrative in exactly 4 concise paragraphs. This should read like a focused person who understands the job wrote it in one sitting — NOT like a stacked list of evidence. Each paragraph flows into the next; do not label them.
+
+P1 — WHY THIS ROLE FITS: Open with your single strongest reason you fit this specific role and why it makes sense for you to want it. Anchor it in one concrete credential (a number, a system, a scope of work), then connect it to ${companyRef || "this company"} or the role in the same breath. No "I am writing to apply." No philosophy.
+
+P2 — ONE FOCUSED PROOF: Prove capability through ONE focused work example told as a short story — the situation, what you did, and the outcome. Do NOT stack multiple jobs or dump a list of bullet-style accomplishments. Pick the most relevant example and go one level deeper on it instead of listing three shallow ones.
+
+P3 — HONEST GAP + BRIDGE: Name the main gap honestly in ONE plain sentence, then bridge in the same paragraph to the real, transferable strengths that matter for this role. Do NOT over-explain, dramatize, apologize, or dwell. Do NOT use the "this role requires X, I have Y" formula — just show the strength.
+
+P4 — COMPANY MOTIVATION + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} actually does and why it draws you, then invite a conversation in one plain, professional sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.`;
         const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
 
 CONTEXT:
@@ -463,16 +489,10 @@ ${toneDirective}
 
 ROLE-AWARE EMPHASIS (tailor the letter to this role type; emphasize only resume-supported strengths, never fabricate):
 ${roleStyleBlock}
+${technicalEvidenceBlock ? `\n${technicalEvidenceBlock}` : ""}
+${severeGapBlock ? `\n${severeGapBlock}` : ""}
 
-STRUCTURE — a human narrative in exactly 4 concise paragraphs. This should read like a focused person who understands the job wrote it in one sitting — NOT like a stacked list of evidence. Each paragraph flows into the next; do not label them.
-
-P1 — WHY THIS ROLE FITS: Open with your single strongest reason you fit this specific role and why it makes sense for you to want it. Anchor it in one concrete credential (a number, a system, a scope of work), then connect it to ${companyRef || "this company"} or the role in the same breath. No "I am writing to apply." No philosophy.
-
-P2 — ONE FOCUSED PROOF: Prove capability through ONE focused work example told as a short story — the situation, what you did, and the outcome. Do NOT stack multiple jobs or dump a list of bullet-style accomplishments. Pick the most relevant example and go one level deeper on it instead of listing three shallow ones.
-
-P3 — HONEST GAP + BRIDGE: Name the main gap honestly in ONE plain sentence, then bridge in the same paragraph to the real, transferable strengths that matter for this role. Do NOT over-explain, dramatize, apologize, or dwell. Do NOT use the "this role requires X, I have Y" formula — just show the strength.
-
-P4 — COMPANY MOTIVATION + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} actually does and why it draws you, then invite a conversation in one plain, professional sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.
+${structureBlock}
 
 WRITING RULES:
 - Write a flowing human narrative, not an evidence dump. Vary how paragraphs open — do NOT start multiple paragraphs with "At <Employer>" (e.g. "At NJDOL...", "At Cyient..."). At most ONE paragraph may open with an employer name.
@@ -514,20 +534,54 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
           cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
         }
         const parsedLetter = JSON.parse(cleaned);
-        // P8: humanize the letter prose (remove AI tells, keep grammar).
-        if (parsedLetter && typeof parsedLetter.letter === "string") {
-          parsedLetter.letter = parsedLetter.letter
+        const humanizeLetterBody = (letter: string) =>
+          letter
             .split(/\n{2,}/)
             .map((p: string) => humanizeProse(p))
             .filter((p: string) => p.trim().length > 0)
             .join("\n\n");
+
+        const preHumanizeLetter =
+          parsedLetter && typeof parsedLetter.letter === "string"
+            ? parsedLetter.letter
+            : "";
+
+        // P8: humanize the letter prose (remove AI tells, keep grammar).
+        if (parsedLetter && typeof parsedLetter.letter === "string") {
+          parsedLetter.letter = humanizeLetterBody(parsedLetter.letter);
+        }
+
+        const pickLetterWithIntegrity = (humanized: string, raw: string): string => {
+          const humanizedIntegrity = validateCoverLetterIntegrity(humanized);
+          if (humanizedIntegrity.ok) return humanized;
+          const rawIntegrity = validateCoverLetterIntegrity(raw);
+          if (rawIntegrity.ok) {
+            console.warn(
+              `[generate-pro-content] cover letter integrity fallback to pre-humanize: ${humanizedIntegrity.issues.join("; ")}`,
+            );
+            return raw;
+          }
+          return humanized;
+        };
+
+        if (parsedLetter && typeof parsedLetter.letter === "string") {
+          parsedLetter.letter = pickLetterWithIntegrity(
+            parsedLetter.letter,
+            preHumanizeLetter,
+          );
         }
         result = parsedLetter;
+
+        const qualityOptions = {
+          roleCategory,
+          resumeText: experience,
+          severeTechnicalGap,
+        };
 
         // Phase 9.11: single corrective rewrite when the quality gate flags weak
         // patterns. Fully defensive — any failure keeps the original letter.
         try {
-          const quality = analyzeCoverLetterQuality(parsedLetter?.letter || "", { roleCategory });
+          const quality = analyzeCoverLetterQuality(parsedLetter?.letter || "", qualityOptions);
           if (!quality.ok) {
             console.warn(`[generate-pro-content] cover letter quality issues: ${quality.issues.join("; ")}`);
             const revisionPrompt = `${prompt}\n\nREVISION REQUIRED — a first draft was flagged by the quality gate for: ${quality.issues.join("; ")}.\n\nRewrite the cover letter to fix sentence-quality issues only. Keep the same facts, structure, and evidence. Do not add new experience, claims, tools, metrics, or domain knowledge. Make the language plainer, cleaner, and more human. Fix dangling em-dash asides, comma splices before main verbs, and over-stylized AI-sounding phrases. Prefer direct sentences over abstract phrasing. Return the full revised letter as ONLY the JSON described above.`;
@@ -538,12 +592,12 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
             if (rs >= 0 && re > rs) cleanedRetry = cleanedRetry.slice(rs, re + 1);
             const parsedRetry = JSON.parse(cleanedRetry);
             if (parsedRetry && typeof parsedRetry.letter === "string" && parsedRetry.letter.trim()) {
-              parsedRetry.letter = parsedRetry.letter
-                .split(/\n{2,}/)
-                .map((p: string) => humanizeProse(p))
-                .filter((p: string) => p.trim().length > 0)
-                .join("\n\n");
-              const retryQuality = analyzeCoverLetterQuality(parsedRetry.letter, { roleCategory });
+              const preRetryLetter = parsedRetry.letter;
+              parsedRetry.letter = pickLetterWithIntegrity(
+                humanizeLetterBody(parsedRetry.letter),
+                preRetryLetter,
+              );
+              const retryQuality = analyzeCoverLetterQuality(parsedRetry.letter, qualityOptions);
               // Only adopt the rewrite if it is at least as clean as the original.
               if (retryQuality.issues.length <= quality.issues.length) {
                 result = parsedRetry;

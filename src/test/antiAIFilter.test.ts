@@ -222,3 +222,27 @@ describe("antiAIFilter — comma-splice repairs (Phase 9.13)", () => {
     expect(out.toLowerCase()).not.toContain("that is a");
   });
 });
+
+describe("antiAIFilter — time abbreviation safety (Phase 9.14)", () => {
+  it("does not corrupt 2 a.m. or 7 a.m. in technical prose", () => {
+    const input =
+      "Production systems misbehave at 2 a.m. And someone has to own the diagnosis.";
+    const out = antiAIFilter(input);
+    expect(out).toMatch(/2 a\.m\./i);
+    expect(out).not.toMatch(/\bat 2 a\.\s*And\b/i);
+    expect(out).not.toMatch(/^m\. And/m);
+  });
+
+  it("preserves LLM pipelines and agentic orchestration phrases", () => {
+    const input =
+      "I have not built LLM pipelines or agentic orchestration layers, but I debug production AI systems.";
+    const out = antiAIFilter(input);
+    expect(out).toContain("LLM pipelines");
+    expect(out).toContain("agentic orchestration");
+  });
+
+  it("preserves 7 p.m. through the full pipeline", () => {
+    const input = "We shipped the fix before 7 p.m. on Friday.";
+    expect(antiAIFilter(input)).toContain("7 p.m.");
+  });
+});
