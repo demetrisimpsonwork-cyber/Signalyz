@@ -33,6 +33,22 @@ describe("cover letter prompt — human narrative lock (Phase 9.10)", () => {
     expect(PROMPT_SOURCE).toMatch(/this role requires X, I have Y/i);
   });
 
+  it("bans the weak / formulaic phrase patterns (Phase 9.11)", () => {
+    expect(PROMPT_SOURCE).toContain("BANNED WEAK / FORMULAIC PATTERNS");
+    for (const phrase of [
+      "One example reflects",
+      "That pattern",
+      "This demonstrates",
+      "The role demands",
+      "the kind of operational discipline",
+      "environment I'm built for",
+      "model depends on",
+      "where that approach holds up",
+    ]) {
+      expect(PROMPT_SOURCE).toContain(phrase);
+    }
+  });
+
   it("keeps the domain-claim guardrails intact", () => {
     expect(PROMPT_SOURCE).toMatch(
       /appraisal.*inventory.*reconciliation|inventory check-in\/scanning\/reconciliation/i,

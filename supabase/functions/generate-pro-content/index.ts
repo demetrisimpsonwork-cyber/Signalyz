@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { humanizeProse, enforceFirstPersonVoice, HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, COVER_LETTER_STANDARD, LINKEDIN_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
+import { analyzeCoverLetterQuality } from "../_shared/coverLetterQuality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -478,6 +479,7 @@ WRITING RULES:
 - BANNED PHRASES: "track record," "positioned to," "passionate about," "eager to," "proven ability," "results-driven," "strong foundation," "translates to," "directly translates," "mirrors," "taught me," "aligns with," "prepared me," "transferable," "equipped me," "natural next step," "I learned that," "comprehensive," "I am excited to," "I am thrilled," "I would love to," "I look forward to discussing," "my first priority," "I plan to," "I intend to," "utilized," "leveraged," "in order to," "demonstrates," "dynamic," "a wide range of," "synergy," "spearheaded," "dedicated," "seasoned"
 - No empty enthusiasm. Every sentence must either prove capability or create pull toward a meeting.
 - Sound like a real person who happens to write well — not like an AI cover-letter template. No formulaic transitions ("Furthermore," "Moreover," "In conclusion"). Plain words over impressive ones.
+- BANNED WEAK / FORMULAIC PATTERNS — never use these or close variants: "One example reflects", "One example that reflects how I work", "That pattern", "This demonstrates", "The role demands", "the kind of operational discipline", "environment I'm built for", "model depends on", "where that approach holds up". Do NOT announce your evidence ("One example...", "That pattern...") — just tell the story naturally. Do NOT describe the company with polished abstractions; name what it actually does in plain words.
 - NO dramatic punchlines, copywriter one-liners, or rhetorical reversals. Specifically forbidden: em-dash "wasn't X — it was Y" contrasts (e.g. "wasn't a ceiling — it was the floor"), sentence fragments used for punch (e.g. "Both had to land."), and any line written for effect rather than information. Write in clear, complete, recruiter-safe sentences.
 - EVERY sentence must be grammatically complete (subject + verb). Never start a sentence with a bare linking verb ("Was...", "Is...", "Were...", "Are...") — that is a fragment. Do not use an em-dash aside that would read as a fragment if the dash were removed.
 - When a sentence lists two or more skills or strengths as its subject, the list must be grammatical: use "and" before the final item and a plural verb, e.g. "documentation accuracy, process integrity, and real-time judgment under pressure all apply directly to this role" — NEVER a comma splice like "documentation accuracy, process integrity, real-time judgment under pressure, apply directly".
@@ -515,6 +517,36 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
             .join("\n\n");
         }
         result = parsedLetter;
+
+        // Phase 9.11: single corrective rewrite when the quality gate flags weak
+        // patterns. Fully defensive — any failure keeps the original letter.
+        try {
+          const quality = analyzeCoverLetterQuality(parsedLetter?.letter || "");
+          if (!quality.ok) {
+            console.warn(`[generate-pro-content] cover letter quality issues: ${quality.issues.join("; ")}`);
+            const revisionPrompt = `${prompt}\n\nREVISION REQUIRED — a first draft was rejected by the quality gate for: ${quality.issues.join("; ")}. Rewrite the ENTIRE letter from scratch, fully obeying every rule above. Remove the flagged phrases and any close variants, vary how paragraphs open (do NOT start multiple paragraphs with an employer name), keep exactly 4 flowing human paragraphs, and stay grounded with zero fabricated claims. Return ONLY the JSON described above.`;
+            const rawRetry = await callAI(revisionPrompt, 2000, toneTemp, 1);
+            let cleanedRetry = rawRetry.replace(/```json\n?/g, "").replace(/```/g, "").trim();
+            const rs = cleanedRetry.indexOf("{");
+            const re = cleanedRetry.lastIndexOf("}");
+            if (rs >= 0 && re > rs) cleanedRetry = cleanedRetry.slice(rs, re + 1);
+            const parsedRetry = JSON.parse(cleanedRetry);
+            if (parsedRetry && typeof parsedRetry.letter === "string" && parsedRetry.letter.trim()) {
+              parsedRetry.letter = parsedRetry.letter
+                .split(/\n{2,}/)
+                .map((p: string) => humanizeProse(p))
+                .filter((p: string) => p.trim().length > 0)
+                .join("\n\n");
+              const retryQuality = analyzeCoverLetterQuality(parsedRetry.letter);
+              // Only adopt the rewrite if it is at least as clean as the original.
+              if (retryQuality.issues.length <= quality.issues.length) {
+                result = parsedRetry;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`[generate-pro-content] cover letter quality retry skipped: ${e}`);
+        }
         break;
       }
 
