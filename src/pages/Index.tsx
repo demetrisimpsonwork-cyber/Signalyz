@@ -56,7 +56,14 @@ import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import LevelDeterminationBlock from "@/components/LevelDeterminationBlock";
 import DirectorCalibrationBlock, { type DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { supabase } from "@/integrations/supabase/client";
-import { invokeResilient, FRIENDLY_FAIL_MSG } from "@/lib/resilientEdgeFn";
+import { invokeResilient, FRIENDLY_FAIL_MSG, StructuredEdgeError } from "@/lib/resilientEdgeFn";
+import { DIRECTOR_CALIBRATION_TIMEOUT_MS, ALIGNMENT_TIMEOUT_MS } from "@/lib/hiringReportConfig";
+import { compactJdForHiringReport } from "@signalyz/hiringReportJdCompaction";
+import {
+  classifyHiringReportErrorCode,
+  mapHiringReportErrorToUserMessage,
+  HIRING_REPORT_USER_MESSAGE,
+} from "@/lib/hiringReportErrors";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { useResumeRetrievalIngestion } from "@/hooks/useResumeRetrievalIngestion";
@@ -235,8 +242,6 @@ class DirectorCalibrationErrorBoundary extends Component<
 
 // ─── Input normalization (client-side) ─────────────────────────────────────
 const MAX_RESUME_CHARS = 10000;
-/** Client wait budget for director-calibration (multi-step Claude pipeline). */
-const DIRECTOR_CALIBRATION_TIMEOUT_MS = 180_000;
 const MAX_JD_CHARS = 8000;
 
 function normalizeClientInput(text: string, maxChars: number): { text: string; truncated: boolean } {
@@ -357,7 +362,7 @@ function DirectorModeContent({
           {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
           Generate My Hiring Report
         </Button>
-        <p className="text-[11px] text-muted-foreground/70">This usually takes about a minute (up to a few for longer resumes). Built from your real experience • Your data stays private.</p>
+        <p className="text-[11px] text-muted-foreground/70">This usually takes 1–3 minutes for longer reports. Built from your real experience • Your data stays private.</p>
       </div>
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
@@ -889,10 +894,13 @@ const Index = () => {
     let requestSucceeded = false;
 
     try {
+      const rawJd = jd?.trim() || "";
+      const compactedJd = rawJd ? compactJdForHiringReport(rawJd).compacted : undefined;
+
       const data = await invokeResilient(
         "director",
         "director-calibration",
-        { experience: normResume.text, jd: jd?.trim() || undefined, deterministic: false },
+        { experience: normResume.text, jd: compactedJd || undefined, deterministic: false },
         DIRECTOR_CALIBRATION_TIMEOUT_MS,
       );
 
@@ -913,7 +921,7 @@ const Index = () => {
 
       // Validate the result has minimum required fields
       if (!directorData || !directorData.dimensions || !directorData.director_signal_tier) {
-        throw new Error("Your Hiring Report couldn't be generated. This can happen with very long or complex resumes — please click retry.");
+        throw new Error(HIRING_REPORT_USER_MESSAGE);
       }
 
       const enrichmentKey = getDirectorReportEnrichmentKey(
@@ -955,10 +963,29 @@ const Index = () => {
         },
         onApplyEnriched: setDirectorResult,
       });
-    } catch (err: any) {
-      const msg = err.message || FRIENDLY_FAIL_MSG;
-      setDirectorError(msg);
-      trackReliabilityError("edge_function_failed", msg, {
+    } catch (err: unknown) {
+      const errObj = err instanceof Error ? err : new Error(String(err));
+      let userMsg = HIRING_REPORT_USER_MESSAGE;
+      let errorCategory = classifyHiringReportErrorCode(undefined, errObj.message);
+
+      if (err instanceof StructuredEdgeError) {
+        errorCategory = classifyHiringReportErrorCode(err.error_code, err.message);
+        console.debug("[director-calibration error]", {
+          category: errorCategory,
+          error_code: err.error_code,
+          request_id: err.request_id,
+        });
+        userMsg = mapHiringReportErrorToUserMessage(err);
+      } else if (errObj.message === FRIENDLY_FAIL_MSG) {
+        errorCategory = "timeout";
+        userMsg = HIRING_REPORT_USER_MESSAGE;
+      } else if (errObj.message.includes("couldn't be generated")) {
+        errorCategory = "parse_validation";
+        userMsg = errObj.message;
+      }
+
+      setDirectorError(userMsg);
+      trackReliabilityError("edge_function_failed", errorCategory, {
         feature_name: "hiring_report",
         output_type: "report",
         plan_tier: planTier,
@@ -1079,7 +1106,7 @@ const Index = () => {
             missingSignal,
           },
         },
-        120_000, // 120s timeout to accommodate cold starts
+        ALIGNMENT_TIMEOUT_MS, // alignment-only — not extended for Hiring Report
       );
 
     // Track error codes locally (not via React state, which is async)

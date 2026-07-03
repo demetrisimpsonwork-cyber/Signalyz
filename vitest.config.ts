@@ -26,6 +26,10 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/hiringReportIntegrity.ts",
       ),
+      "@signalyz/hiringReportJdCompaction": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/hiringReportJdCompaction.ts",
+      ),
     },
   },
 });

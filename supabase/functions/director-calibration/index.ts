@@ -10,6 +10,7 @@ import {
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 import { applyHiringReportIntegrityGate } from "../_shared/hiringReportIntegrity.ts";
+import { compactJdForHiringReport } from "../_shared/hiringReportJdCompaction.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,31 @@ const PIPELINE_VERSION = "1.2";
 
 // ─── Input limits ────────────────────────────────────────────────────────────
 const MAX_RESUME_CHARS = 10000;
+/** Per-call Anthropic budget for director-calibration only (multi-step pipeline). */
+const DIRECTOR_AI_CALL_TIMEOUT_MS = 180_000;
+
+function logPipelinePhase(requestId: string | undefined, phase: string, startedAt: number): void {
+  console.log(JSON.stringify({
+    event: "pipeline_phase",
+    request_id: requestId ?? null,
+    phase,
+    duration_ms: Date.now() - startedAt,
+  }));
+}
+
+function classifyPipelineErrorCode(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("timed out") || lower.includes("aborted") || lower.includes("too long")) {
+    return "TIMEOUT";
+  }
+  if (lower.includes("parse") || lower.includes("unexpected response")) {
+    return "PARSE_VALIDATION";
+  }
+  if (lower.includes("anthropic") || lower.includes("ai call failed")) {
+    return "MODEL_ERROR";
+  }
+  return "EDGE_EXCEPTION";
+}
 
 function normalizeText(input: string): string {
   return input
@@ -699,9 +725,10 @@ async function callAI(
   apiKey: string,
   systemPrompt: string,
   userContent: string,
+  timeoutMs = DIRECTOR_AI_CALL_TIMEOUT_MS,
 ): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -739,7 +766,9 @@ async function callAI(
     clearTimeout(timeout);
     if (e instanceof Error && e.message.startsWith("Anthropic")) throw e;
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("aborted")) throw new Error("Anthropic request timed out after 120s.");
+    if (msg.includes("aborted")) {
+      throw new Error(`Anthropic request timed out after ${Math.round(timeoutMs / 1000)}s.`);
+    }
     throw new Error(`AI call failed: ${msg}`);
   }
 }
@@ -788,6 +817,7 @@ async function runPipeline(
   experience: string,
   jd: string | undefined,
   deterministic: boolean = true,
+  requestId?: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
   const inputHash = await sha256(
@@ -825,20 +855,24 @@ async function runPipeline(
     .single();
 
   const runId = runRow?.id ?? crypto.randomUUID();
+  const pipelineStartedAt = Date.now();
 
   // ── 1. Normalizer ───────────────────────────────────────────────────────────
   console.log("[1/6] Normalizer");
   let normalized: Record<string, unknown> = {};
+  const normalizerStartedAt = Date.now();
   try {
     const normInput = jd?.trim()
       ? `JOB DESCRIPTION:\n${jd.trim()}\n\nRESUME:\n${experience}`
       : `RESUME:\n${experience}`;
-    const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput, 0);
+    const raw = await callAI(apiKey, `${NORMALIZER_SYSTEM}\n\n${NORMALIZER_SCHEMA}`, normInput);
     normalized = parseJSON<Record<string, unknown>>(raw);
     console.log("  → target_role_title:", normalized.target_role_title);
     await storeArtifact(supabase, runId, "step_1_normalizer", { raw, parsed: normalized });
   } catch (e) {
     console.error("  ✗ Normalizer failed (non-fatal):", e instanceof Error ? e.message : e);
+  } finally {
+    logPipelinePhase(requestId, "normalizer", normalizerStartedAt);
   }
 
   // ── Shared context ──────────────────────────────────────────────────────────
@@ -859,10 +893,12 @@ async function runPipeline(
 
   // ── 2. Signal Classifier + Calibration (parallel) ──────────────────────────
   console.log("[2/6] Signal Classifier + Calibration (parallel)");
+  const parallelStartedAt = Date.now();
   const [calibrationRaw, classifierRaw] = await Promise.all([
-    callAI(apiKey, calibrationPrompt, sharedContext, 0),
-    callAI(apiKey, `${classifierSystem}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext, 0),
+    callAI(apiKey, calibrationPrompt, sharedContext),
+    callAI(apiKey, `${classifierSystem}\n\n${SIGNAL_CLASSIFIER_SCHEMA}`, sharedContext),
   ]);
+  logPipelinePhase(requestId, "calibration_and_classifier", parallelStartedAt);
 
   // Calibration (required)
   let result: Record<string, unknown>;
@@ -912,6 +948,7 @@ async function runPipeline(
   // ── 3. Gap Analyzer ─────────────────────────────────────────────────────────
   console.log("[3/6] Gap Analyzer");
   let gapOutput: GapAnalyzerOutput | null = null;
+  const gapAnalyzerStartedAt = Date.now();
   if (classifierParsed) {
     const gapInput = {
       dimension_scores: classifierParsed.dimension_scores,
@@ -928,7 +965,6 @@ async function runPipeline(
         apiKey,
         `${GAP_ANALYZER_SYSTEM}\n\n${GAP_ANALYZER_SCHEMA}`,
         `INPUT DATA:\n${JSON.stringify(gapInput, null, 2)}`,
-        0,
       );
       gapOutput = parseJSON<GapAnalyzerOutput>(raw);
       result.gap_analyzer = gapOutput;
@@ -941,9 +977,11 @@ async function runPipeline(
   } else {
     result.gap_analyzer = null;
   }
+  logPipelinePhase(requestId, "gap_analyzer", gapAnalyzerStartedAt);
 
   // ── 4. Rewrite Modules (parallel, dual A/B) ────────────────────────────────
   console.log("[4/6] Rewrite Modules (dual A/B)");
+  const rewritesStartedAt = Date.now();
   let rewrittenTargets: RewriteTarget[] = gapOutput?.rewrite_targets ?? [];
 
   if (gapOutput?.rewrite_targets?.length) {
@@ -977,6 +1015,7 @@ async function runPipeline(
     rewrittenTargets = await Promise.all(jobs);
     await storeArtifact(supabase, runId, "step_4_rewrites", rewrittenTargets);
   }
+  logPipelinePhase(requestId, "rewrite_modules", rewritesStartedAt);
 
   // ── 5. Replace bullets ──────────────────────────────────────────────────────
   console.log("[5/6] Replacing bullets");
@@ -987,6 +1026,7 @@ async function runPipeline(
 
   // ── 6. Consistency Validator ────────────────────────────────────────────────
   console.log("[6/7] Consistency Validator");
+  const validatorStartedAt = Date.now();
   try {
     const rewrittenBullets = rewrittenTargets
       .filter((t) => t.version_b || t.version_a || t.rewritten_bullet)
@@ -1000,7 +1040,7 @@ async function runPipeline(
         : "",
     ].filter(Boolean).join("\n\n");
 
-    const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent, 0);
+    const raw = await callAI(apiKey, CONSISTENCY_VALIDATOR_SYSTEM, validatorContent);
     const cvParsed = parseJSON<{ status: string; issues: string[] }>(raw);
     // Convert internal variable names to plain English in issue descriptions
     const upgradeTypeLabels: Record<string, string> = {
@@ -1022,10 +1062,13 @@ async function runPipeline(
   } catch {
     console.error("  ✗ Consistency Validator failed (non-fatal)");
     result.consistency_validator = null;
+  } finally {
+    logPipelinePhase(requestId, "consistency_validator", validatorStartedAt);
   }
 
   // ── 7. Export Builder ──────────────────────────────────────────────────────
   console.log("[7/7] Export Builder");
+  const exportStartedAt = Date.now();
   let exportReady = false;
   try {
     const rewriteContext = rewrittenTargets
@@ -1056,6 +1099,8 @@ async function runPipeline(
   } catch {
     console.error("  ✗ Export Builder failed (non-fatal)");
     result.export_builder = null;
+  } finally {
+    logPipelinePhase(requestId, "export_builder", exportStartedAt);
   }
 
   // ── Finalize run record ─────────────────────────────────────────────────────
@@ -1082,6 +1127,7 @@ async function runPipeline(
   result.run_id = runId;
   result.pipeline_version = PIPELINE_VERSION;
   applyHiringReportIntegrityGate(result, experience, jd?.trim() ?? "");
+  logPipelinePhase(requestId, "pipeline_total", pipelineStartedAt);
   return result;
 }
 
@@ -1181,7 +1227,7 @@ serve(async (req) => {
       const results = [];
       for (const fixture of QA_FIXTURES) {
         try {
-          const r = await runPipeline(apiKey, fixture.experience, fixture.jd, true);
+          const r = await runPipeline(apiKey, fixture.experience, fixture.jd, true, requestId);
           results.push({
             name: fixture.name,
             run_id: r.run_id,
@@ -1228,8 +1274,21 @@ serve(async (req) => {
       });
     }
 
-    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: cleanExperience.length }));
-    const result = await runPipeline(apiKey, cleanExperience, jd, deterministic);
+    let cleanJd = typeof jd === "string" ? jd.trim() : "";
+    if (cleanJd) {
+      const compaction = compactJdForHiringReport(cleanJd);
+      cleanJd = compaction.compacted;
+      console.log(JSON.stringify({
+        event: "jd_compaction",
+        request_id: requestId,
+        original_length: compaction.originalLength,
+        compacted_length: compaction.compactedLength,
+        removed_block_count: compaction.removedBlockCount,
+      }));
+    }
+
+    console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: cleanExperience.length, jd_length: cleanJd.length }));
+    const result = await runPipeline(apiKey, cleanExperience, cleanJd || undefined, deterministic, requestId);
     console.log(JSON.stringify({ event: "pipeline_complete", request_id: requestId }));
 
     if (authenticatedUserId && entitlements && !qa_mode && !entitlements.isProEntitled) {
@@ -1242,25 +1301,28 @@ serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const stack = err instanceof Error ? err.stack || "" : "";
+    const errorCode = classifyPipelineErrorCode(message);
     console.error(JSON.stringify({
       event: "request_error",
       request_id: requestId,
       function: "director-calibration",
+      error_code: errorCode,
       error_message: message,
+      error_stack: stack.slice(0, 500),
       timestamp: new Date().toISOString(),
     }));
     const friendly =
+      errorCode === "TIMEOUT" ? "Analysis took too long. Please retry." :
       message.includes("Rate limits") ? "Too many requests. Please wait a moment and try again." :
       message.includes("unavailable") ? "AI service is temporarily busy. Please try again." :
-      message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
-      message.includes("aborted") ? "Analysis took too long. Please retry." :
+      errorCode === "PARSE_VALIDATION" ? "The AI returned an unexpected response. Please try again." :
+      errorCode === "MODEL_ERROR" ? "Analysis engine temporarily unavailable. Please try again." :
       "Analysis engine temporarily unavailable. Please try again.";
     return new Response(JSON.stringify({
       status: "error",
       request_id: requestId,
-      error_code: "EDGE_EXCEPTION",
+      error_code: errorCode,
       message: friendly,
-      details: { error_message: message, error_stack: stack.slice(0, 500) },
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
