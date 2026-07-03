@@ -75,6 +75,8 @@ import {
 } from "@/services/rag/groundedCalibrationClient";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useReportRunAccess } from "@/hooks/useReportRunAccess";
+import { withReportRunFields } from "@/lib/reportRunSession";
 import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
@@ -425,15 +427,19 @@ const Index = () => {
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
   const [alignmentError, setAlignmentError] = useState<DebugInfo | null>(null);
   const [inputTruncated, setInputTruncated] = useState(false);
-  const creditConsumedRef = useRef(false);
   const lastClickRef = useRef(0);
   const directorEnrichmentKeyRef = useRef<string | null>(null);
 
   const { user } = useAuth();
-  const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
+  const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
   const isAdmin = useIsAdmin();
-  const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
-  const planTier: PlanTier = isPro || isAdmin ? "pro" : hasOneTimeCredit ? "one_time" : "free";
+  const { activeRunMatch, reportRunFields, rememberActiveRun } = useReportRunAccess(
+    user?.id,
+    bullet.trim(),
+    jd.trim(),
+  );
+  const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit || activeRunMatch;
+  const planTier: PlanTier = isPro || isAdmin ? "pro" : (hasOneTimeCredit || activeRunMatch) ? "one_time" : "free";
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   useResumeRetrievalIngestion(bullet, inputSource);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -900,7 +906,14 @@ const Index = () => {
       const data = await invokeResilient(
         "director",
         "director-calibration",
-        { experience: normResume.text, jd: compactedJd || undefined, deterministic: false },
+        withReportRunFields(
+          {
+            experience: normResume.text,
+            jd: compactedJd || undefined,
+            deterministic: false,
+          },
+          reportRunFields,
+        ),
         DIRECTOR_CALIBRATION_TIMEOUT_MS,
       );
 
@@ -933,6 +946,7 @@ const Index = () => {
 
       setDirectorResult(directorData);
       setDirectorLoading(false);
+      void rememberActiveRun();
       logDirectorRawRenderedMs(requestStartMs, enrichmentKey);
       requestSucceeded = true;
       trackEvent("report_generated", {
@@ -1093,19 +1107,22 @@ const Index = () => {
       invokeResilient(
         isCalibratedRerun ? "alignment-calibrated" : (attempt === 1 ? "alignment" : "alignment-retry"),
         "optimize-bullet",
-        {
-          bullet: bulletWithContext,
-          jd: normJd.text,
-          userId: user?.id ?? null,
-          mode: engineMode,
-          sessionToken,
-          runType: isCalibratedRerun ? "calibrated" : "original",
-          evidencePackage,
-          calibrationContext: {
-            originalBullet,
-            missingSignal,
+        withReportRunFields(
+          {
+            bullet: bulletWithContext,
+            jd: normJd.text,
+            userId: user?.id ?? null,
+            mode: engineMode,
+            sessionToken,
+            runType: isCalibratedRerun ? "calibrated" : "original",
+            evidencePackage,
+            calibrationContext: {
+              originalBullet,
+              missingSignal,
+            },
           },
-        },
+          reportRunFields,
+        ),
         ALIGNMENT_TIMEOUT_MS, // alignment-only — not extended for Hiring Report
       );
 
@@ -1167,6 +1184,7 @@ const Index = () => {
       });
       setResult(res);
       setResultRunType(runType);
+      if (user) void rememberActiveRun();
       setAssemblySessionKey((k) => k + 1);
       setAnalysisSessionKey((k) => k + 1);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
@@ -1250,9 +1268,8 @@ const Index = () => {
         }));
       } catch {}
       increment();
-      // One-time credit consumption moved to Pro-gated tab access
+      // Server-side edge functions consume one-time credits; refresh subscription state after runs.
       if (user) {
-        try { await supabase.rpc("increment_run_count", { p_user_id: user.id }); } catch {}
         refreshSub();
       }
       saveToHistory(res);
@@ -1545,11 +1562,6 @@ const Index = () => {
                     });
                     return;
                   }
-                  // Consume one-time credit on first Pro-gated tab access
-                  if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
-                    creditConsumedRef.current = true;
-                    consumeOneTimeCredit().catch(() => {});
-                  }
                   const scrollY = window.scrollY;
                   setMode(tab.id);
                   requestAnimationFrame(() => window.scrollTo(0, scrollY));
@@ -1584,11 +1596,6 @@ const Index = () => {
                       output_type: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
                     });
                     return;
-                  }
-                  // Consume one-time credit on first Pro-gated tab access
-                  if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
-                    creditConsumedRef.current = true;
-                    consumeOneTimeCredit().catch(() => {});
                   }
                   const scrollY = window.scrollY;
                   setMode(tab.id);
@@ -1643,6 +1650,7 @@ const Index = () => {
               isPro={effectiveIsPro}
               onUpgrade={() => openUpgradeModal()}
               alignmentResult={result as unknown as Record<string, unknown> || {}}
+              reportRunFields={reportRunFields}
             />
           </div>
         )}
@@ -1656,6 +1664,7 @@ const Index = () => {
             directorResult={directorResult}
             originalResume={bullet}
             jdText={jd}
+            reportRunFields={reportRunFields}
             onSwitchToReport={() => setMode("director")}
             hasCurrentSessionAlignment={!!result}
             onRunAlignment={() => setMode("alignment")}
@@ -1692,6 +1701,7 @@ const Index = () => {
             inferredRole={result?.inferred_role_title || ""}
             hasCurrentSessionAlignment={!!result}
             onRunAlignment={() => setMode("alignment")}
+            reportRunFields={reportRunFields}
           />
         )}
 
@@ -2339,6 +2349,7 @@ const Index = () => {
                           jd={jd}
                           isPro={effectiveIsPro}
                           onUpgrade={() => openUpgradeModal()}
+                          reportRunFields={reportRunFields}
                         />
 
                         {/* Signal Gap Actions */}
@@ -2348,6 +2359,7 @@ const Index = () => {
                           alignmentResult={result as any}
                           isPro={effectiveIsPro}
                           onUpgrade={() => openUpgradeModal()}
+                          reportRunFields={reportRunFields}
                         />
 
                         {result.identity_strength_index && (
@@ -2365,6 +2377,7 @@ const Index = () => {
                           jd={jd}
                           isPro={effectiveIsPro}
                           onUpgrade={() => openUpgradeModal()}
+                          reportRunFields={reportRunFields}
                         />
 
                         {(result.alignment_notes || result.gap_suggestions) && (
@@ -2390,6 +2403,7 @@ const Index = () => {
                       alignmentResult={result as any}
                       isPro={effectiveIsPro}
                       onUpgrade={() => openUpgradeModal()}
+                      reportRunFields={reportRunFields}
                     />
 
                     {/* Terminal Conversion Block — free users only */}

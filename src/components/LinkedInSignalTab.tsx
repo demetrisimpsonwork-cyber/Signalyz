@@ -11,6 +11,7 @@ import {
   loadLinkedInOutputCache,
   saveLinkedInOutputCache,
 } from "@/lib/linkedInOutputCache";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -24,6 +25,7 @@ interface LinkedInSignalTabProps {
   isPro?: boolean;
   onUpgrade?: () => void;
   alignmentResult?: Record<string, unknown>;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 interface LinkedInOutput {
@@ -94,6 +96,7 @@ const LinkedInSignalTab = ({
   isPro = false,
   onUpgrade,
   alignmentResult,
+  reportRunFields,
 }: LinkedInSignalTabProps) => {
   const [headline, setHeadline] = useState("");
   const [aboutSection, setAboutSection] = useState("");
@@ -129,11 +132,16 @@ const LinkedInSignalTab = ({
     ];
 
     try {
+      const canonicalBase = withReportRunFields(
+        { experience, jd: jdText || "" },
+        reportRunFields,
+      );
+
       // 1. Headline (always generated — free)
       const headlineRes = await supabase.functions.invoke("generate-pro-content", {
         body: {
+          ...canonicalBase,
           type: "linkedin_headline",
-          experience,
           currentHeadline: headline,
           inferredRole,
           alignmentResult: alignmentResult || {},
@@ -152,8 +160,8 @@ const LinkedInSignalTab = ({
         const [aboutRes, expRes] = await Promise.all([
           supabase.functions.invoke("generate-pro-content", {
             body: {
+              ...canonicalBase,
               type: "linkedin_about_guidance",
-              experience,
               currentAbout: aboutSection,
               inferredRole,
               alignmentResult: alignmentResult || {},
@@ -161,8 +169,8 @@ const LinkedInSignalTab = ({
           }),
           supabase.functions.invoke("generate-pro-content", {
             body: {
+              ...canonicalBase,
               type: "linkedin_experience_notes",
-              experience,
               inferredRole,
               alignmentResult: alignmentResult || {},
             },

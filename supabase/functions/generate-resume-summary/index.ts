@@ -10,6 +10,11 @@ import {
   guestEntitlements,
   loadUserEntitlements,
 } from "../_shared/entitlements.ts";
+import {
+  extractCanonicalRunContext,
+  reportRunAccessJsonResponse,
+  resolveReportRunAccess,
+} from "../_shared/reportRunAccess.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -130,7 +135,33 @@ serve(async (req) => {
       ? await loadUserEntitlements(sb, verifiedUserId)
       : guestEntitlements();
 
-    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements);
+    const body = await req.json();
+    const { roles, jd, matchScore, existingSummary, skills, certifications } = body;
+
+    let reportRunAccess = false;
+    if (verifiedUserId) {
+      const runAccess = await resolveReportRunAccess(
+        sb,
+        verifiedUserId,
+        entitlements,
+        extractCanonicalRunContext(body as Record<string, unknown>),
+        { requireCanonical: true },
+      );
+      if (!runAccess.ok) {
+        return new Response(JSON.stringify({
+          status: "error",
+          request_id: requestId,
+          error_code: runAccess.error_code,
+          message: runAccess.message,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      reportRunAccess = runAccess.reportRunAccess;
+    }
+
+    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements, { reportRunAccess });
     if (proGate) {
       const errorBody = buildEntitlementErrorBody(proGate, requestId);
       return new Response(JSON.stringify(errorBody), {
@@ -138,9 +169,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const body = await req.json();
-    const { roles, jd, matchScore, existingSummary, skills, certifications } = body;
 
     // Structured logging
     const rolesLen = JSON.stringify(roles || []).length;

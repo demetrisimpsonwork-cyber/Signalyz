@@ -11,9 +11,16 @@ import {
   loadUserEntitlements,
 } from "../_shared/entitlements.ts";
 import {
+  extractCanonicalRunContext,
+  reportRunAccessJsonResponse,
+  resolveReportRunAccess,
+} from "../_shared/reportRunAccess.ts";
+import {
   buildAlignmentUsageIdentity,
   entitlementJsonResponse,
+  evaluateGuestAlignmentSession,
   evaluateOptimizeBulletAccess,
+  shouldConsumeOneTimeCredit,
 } from "../_shared/entitlementGuard.ts";
 import {
   buildCalibratedBulletRecords,
@@ -593,6 +600,7 @@ serve(async (req) => {
   const requestStartedAt = Date.now();
 
   try {
+    const body = await req.json();
     const {
       bullet,
       jd,
@@ -602,7 +610,7 @@ serve(async (req) => {
       runType = "original",
       evidencePackage,
       calibrationContext,
-    } = await req.json();
+    } = body;
 
     // --- Input validation (always 200) ---
     if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
@@ -660,13 +668,56 @@ serve(async (req) => {
     const isProAlignment = entitlements.isProEntitled;
     const userPlan = isProAlignment ? "pro" : "free";
 
+    let reportRunAccess = false;
+    if (verifiedUserId && mode === "multi_bullet") {
+      const runAccess = await resolveReportRunAccess(
+        sb,
+        verifiedUserId,
+        entitlements,
+        extractCanonicalRunContext(body as Record<string, unknown>),
+        { requireCanonical: shouldConsumeOneTimeCredit(entitlements) },
+      );
+      if (!runAccess.ok) {
+        return reportRunAccessJsonResponse(runAccess, corsHeaders, requestId);
+      }
+      reportRunAccess = runAccess.reportRunAccess;
+    }
+
     const modeGate = evaluateOptimizeBulletAccess({
       verifiedUserId,
       mode,
       entitlements,
+      reportRunAccess,
     });
     if (modeGate) {
       return entitlementJsonResponse(modeGate, corsHeaders, requestId);
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const usageIdentity = buildAlignmentUsageIdentity(
+      verifiedUserId,
+      sessionToken,
+      isValidSessionToken,
+    );
+
+    if (!isProAlignment) {
+      const guestGate = evaluateGuestAlignmentSession(verifiedUserId, sessionToken, isValidSessionToken);
+      if (guestGate) {
+        return entitlementJsonResponse(guestGate, corsHeaders, requestId);
+      }
+      const usage = await getAlignmentUsageCount(sb, usageIdentity, today);
+      if (usage.alignmentCount >= DAILY_FREE_ALIGNMENT_LIMIT) {
+        return new Response(JSON.stringify({
+          status: "error",
+          request_id: requestId,
+          error_code: "RATE_LIMIT",
+          message: `Daily free limit reached (${DAILY_FREE_ALIGNMENT_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
+          limit_reached: true,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const normalizedEvidence = normalizeEvidencePackage(
@@ -698,44 +749,23 @@ serve(async (req) => {
       grounding_enabled: groundingEnabled,
     }));
 
-    // --- Cache check ---
+    // --- Cache check (Pro only — free tier must not bypass usage limits) ---
     const evidenceCachePart = normalizedEvidence.length > 0
       ? normalizedEvidence.map((item) => item.evidence_id).join(",")
       : originalBulletForGrounding.slice(0, 64);
     const cacheKey = await hashInputs(cleanBullet, cleanJd, `${userPlan}:${runType}:${evidenceCachePart}`);
-    const cached = getCached(cacheKey);
-    if (cached) {
-      console.log("Cache HIT for", cacheKey.slice(0, 12));
-      return new Response(JSON.stringify({ status: "success", request_id: requestId, cached: true, ...cached }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (isProAlignment) {
+      const cached = getCached(cacheKey);
+      if (cached) {
+        console.log("Cache HIT for", cacheKey.slice(0, 12));
+        return new Response(JSON.stringify({ status: "success", request_id: requestId, cached: true, ...cached }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-    if (!isProAlignment) {
-      const today = new Date().toISOString().slice(0, 10);
-      const usageIdentity = buildAlignmentUsageIdentity(
-        verifiedUserId,
-        sessionToken,
-        isValidSessionToken,
-      );
-      const usage = await getAlignmentUsageCount(sb, usageIdentity, today);
-      if (usage.alignmentCount >= DAILY_FREE_ALIGNMENT_LIMIT) {
-        return new Response(JSON.stringify({
-          status: "error",
-          request_id: requestId,
-          error_code: "RATE_LIMIT",
-          message: `Daily free limit reached (${DAILY_FREE_ALIGNMENT_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
-          limit_reached: true,
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      await incrementAlignmentUsage(sb, usageIdentity, today);
-    }
 
     const maxTokens = isProAlignment ? PRO_TIER_MAX_TOKENS : FREE_TIER_MAX_TOKENS;
     let prompt = buildSlimAlignmentPrompt(cleanBullet, cleanJd, isProAlignment);
@@ -1047,8 +1077,14 @@ serve(async (req) => {
       alt_b: altB,
     }).throwOnError();
 
-    // Cache the result for repeat analyses
-    setCache(cacheKey, result);
+    if (!isProAlignment) {
+      await incrementAlignmentUsage(sb, usageIdentity, today);
+    }
+
+    // Cache the result for repeat analyses (Pro only)
+    if (isProAlignment) {
+      setCache(cacheKey, result);
+    }
 
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

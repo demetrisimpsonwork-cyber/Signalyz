@@ -15,6 +15,7 @@ import {
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
 import { trackEvent, trackExportEvents } from "@/lib/analytics";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -23,6 +24,7 @@ interface CoverLetterEngineProps {
   inferredRole: string;
   isPro: boolean;
   onUpgrade: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 type Tone = "confident" | "strategic" | "direct";
@@ -115,7 +117,7 @@ function segmentCoverLetterBody(text: string): string {
     .join("\n\n");
 }
 
-const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade }: CoverLetterEngineProps) => {
+const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPro, onUpgrade, reportRunFields }: CoverLetterEngineProps) => {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [editedLetter, setEditedLetter] = useState("");
@@ -157,7 +159,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
         throw new Error("Missing resume or job description content.");
       }
       const { data, error: fnError } = await supabase.functions.invoke("generate-pro-content", {
-        body: {
+        body: withReportRunFields({
           type: "cover_letter",
           experience: experience.trim(),
           jd: jd.trim(),
@@ -165,7 +167,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           inferredRole: inferredRole || "",
           companyName: companyName || "",
           tone,
-        },
+        }, reportRunFields),
       });
 
       stepTimers.forEach(clearTimeout);

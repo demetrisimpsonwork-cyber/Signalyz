@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sparkles, AlertTriangle } from "lucide-react";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
+import type { ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface CoverLetterTabProps {
   isPro: boolean;
@@ -12,6 +13,7 @@ interface CoverLetterTabProps {
   inferredRole: string;
   hasCurrentSessionAlignment?: boolean;
   onRunAlignment?: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 const CoverLetterTab = ({
@@ -23,6 +25,7 @@ const CoverLetterTab = ({
   inferredRole,
   hasCurrentSessionAlignment = false,
   onRunAlignment,
+  reportRunFields,
 }: CoverLetterTabProps) => {
   // Gate CTA handles upgrade prompting inline — no auto-trigger modal
 
@@ -59,6 +62,7 @@ const CoverLetterTab = ({
         inferredRole={inferredRole}
         isPro={isPro}
         onUpgrade={onUpgrade}
+        reportRunFields={reportRunFields}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { antiAIFilter } from "@/lib/antiAIFilter";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface Variant {
   name: string;
@@ -18,9 +19,10 @@ interface CalibratedSummaryProps {
   jd: string;
   isPro: boolean;
   onUpgrade: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
-const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSummaryProps) => {
+const CalibratedSummary = ({ experience, jd, isPro, onUpgrade, reportRunFields }: CalibratedSummaryProps) => {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -31,7 +33,7 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade }: CalibratedSumma
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "calibrated_summary", experience, jd },
+        body: withReportRunFields({ type: "calibrated_summary", experience, jd }, reportRunFields),
       })
       .then(({ data, error }) => {
         if (error) throw error;

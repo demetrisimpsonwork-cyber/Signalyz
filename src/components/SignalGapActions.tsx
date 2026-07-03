@@ -7,6 +7,16 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
+
+interface SignalGapActionsProps {
+  experience: string;
+  jd: string;
+  alignmentResult: Record<string, unknown>;
+  isPro: boolean;
+  onUpgrade: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
+}
 
 interface GapAction {
   gap_name: string;
@@ -15,21 +25,13 @@ interface GapAction {
   impact: "High" | "Medium" | "Low";
 }
 
-interface SignalGapActionsProps {
-  experience: string;
-  jd: string;
-  alignmentResult: Record<string, unknown>;
-  isPro: boolean;
-  onUpgrade: () => void;
-}
-
 const IMPACT_STYLES: Record<string, string> = {
   High: "bg-destructive text-destructive-foreground",
   Medium: "bg-orange-500 text-white",
   Low: "bg-muted text-muted-foreground",
 };
 
-const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }: SignalGapActionsProps) => {
+const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade, reportRunFields }: SignalGapActionsProps) => {
   const [gaps, setGaps] = useState<GapAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -41,7 +43,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade }:
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "gap_actions", experience, jd, alignmentResult },
+        body: withReportRunFields({ type: "gap_actions", experience, jd, alignmentResult }, reportRunFields),
       })
       .then(({ data, error }) => {
         if (error) throw error;

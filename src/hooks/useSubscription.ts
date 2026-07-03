@@ -153,7 +153,6 @@ export function useSubscription(): SubscriptionState {
     // Use SECURITY DEFINER RPC to consume credit server-side (bypasses RLS)
     const { data: consumed, error } = await supabase.rpc(
       "consume_one_time_credit" as any,
-      { p_user_id: user.id } as any
     );
 
     if (error) {

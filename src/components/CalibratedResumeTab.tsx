@@ -21,6 +21,7 @@ import { trackEvent, trackExportEvents } from "@/lib/analytics";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
+import type { ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 /** Convert structured resume data to plain text for scoring */
 function resumeDataToText(r: CalibratedResumeData): string {
@@ -69,6 +70,7 @@ interface CalibratedResumeTabProps {
   onResumeTextReplaced?: (text: string) => void;
   onRerunSignalAnalysis?: (calibratedText: string) => void;
   originalResumeBeforeCalibration?: string | null;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 const CalibratedResumeTab = ({
@@ -86,6 +88,7 @@ const CalibratedResumeTab = ({
   onResumeTextReplaced,
   onRerunSignalAnalysis,
   originalResumeBeforeCalibration,
+  reportRunFields,
 }: CalibratedResumeTabProps) => {
   const {
     assembledResume, loading, error, step, assemble,
@@ -123,7 +126,7 @@ const CalibratedResumeTab = ({
     if (assemblyBusy) return;
     const resumeText = overrideResume || originalResume;
     const contact = overrideResume ? extractContactFromText(overrideResume) : preExtractedContact;
-    assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>, jdText);
+    assemble(directorResult, resumeText, contact, alignmentResult as Record<string, unknown>, jdText, reportRunFields);
   };
 
   // When confidence is low AND input was PDF, show fallback instead of confirm step
@@ -201,7 +204,7 @@ const CalibratedResumeTab = ({
     onResumeTextReplaced?.(text);
     // Re-assemble with the clean text
     const contact = extractContactFromText(text);
-    assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>, jdText);
+    assemble(directorResult, text, contact, alignmentResult as Record<string, unknown>, jdText, reportRunFields);
   };
 
   const handleContinueWithEditMode = () => {

@@ -20,6 +20,11 @@ import {
   guestEntitlements,
   loadUserEntitlements,
 } from "../_shared/entitlements.ts";
+import {
+  extractCanonicalRunContext,
+  reportRunAccessJsonResponse,
+  resolveReportRunAccess,
+} from "../_shared/reportRunAccess.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -2472,11 +2477,6 @@ Deno.serve(async (req) => {
     ? await loadUserEntitlements(adminSupabase, verifiedUserId)
     : guestEntitlements();
 
-  const proGate = evaluateProGatedAccess(verifiedUserId, entitlements);
-  if (proGate) {
-    return entitlementJsonResponse(proGate, corsHeaders, request_id);
-  }
-
   let currentStep = "input_received";
 
   try {
@@ -2490,9 +2490,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[assemble] [${request_id}] Input received: resume=${!!body.originalResume}, director=${!!body.directorResult}, alignment=${!!body.alignmentResult}, jd=${!!body.jd}`);
-
     const { directorResult, originalResume, alignmentResult, jd } = body;
+
+    let reportRunAccess = false;
+    if (verifiedUserId) {
+      const runAccess = await resolveReportRunAccess(
+        adminSupabase,
+        verifiedUserId,
+        entitlements,
+        extractCanonicalRunContext(body as Record<string, unknown>),
+        { requireCanonical: true },
+      );
+      if (!runAccess.ok) {
+        return reportRunAccessJsonResponse(runAccess, corsHeaders, request_id);
+      }
+      reportRunAccess = runAccess.reportRunAccess;
+    }
+
+    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements, { reportRunAccess });
+    if (proGate) {
+      return entitlementJsonResponse(proGate, corsHeaders, request_id);
+    }
+
+    console.log(`[assemble] [${request_id}] Input received: resume=${!!body.originalResume}, director=${!!body.directorResult}, alignment=${!!body.alignmentResult}, jd=${!!body.jd}`);
 
     // Allow assembly with just alignment result (no director/positioning report required)
     const signalContext = directorResult || alignmentResult || null;

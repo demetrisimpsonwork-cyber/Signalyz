@@ -5,8 +5,29 @@
 
 export type EntitlementErrorCode = "AUTH_REQUIRED" | "PRO_REQUIRED";
 
+export type EntitlementSource = "subscription" | "admin" | "one_time_credit" | "free";
+
 export interface EntitlementView {
   isProEntitled: boolean;
+}
+
+export interface EntitlementViewExtended extends EntitlementView {
+  isAdmin?: boolean;
+  isProSubscriber?: boolean;
+  entitlementSource?: EntitlementSource;
+}
+
+export function shouldConsumeOneTimeCredit(entitlements: EntitlementViewExtended): boolean {
+  return (
+    entitlements.isProEntitled &&
+    !entitlements.isAdmin &&
+    !entitlements.isProSubscriber &&
+    entitlements.entitlementSource === "one_time_credit"
+  );
+}
+
+export function validateRpcCallerScope(callerUserId: string | null, targetUserId: string): boolean {
+  return callerUserId !== null && callerUserId === targetUserId;
 }
 
 export interface EntitlementErrorBody {
@@ -50,26 +71,38 @@ export function entitlementJsonResponse(
 /** Pro-gated outputs (cover letter, assembly, resume summary, etc.). */
 export function evaluateProGatedAccess(
   verifiedUserId: string | null,
-  entitlements: EntitlementView,
+  entitlements: EntitlementViewExtended,
+  options?: { reportRunAccess?: boolean },
 ): EntitlementErrorCode | null {
   if (!verifiedUserId) return "AUTH_REQUIRED";
-  if (!entitlements.isProEntitled) return "PRO_REQUIRED";
+  const proAllowed =
+    entitlements.isProEntitled ||
+    entitlements.isProSubscriber ||
+    entitlements.isAdmin ||
+    options?.reportRunAccess === true;
+  if (!proAllowed) return "PRO_REQUIRED";
   return null;
 }
 
 /**
  * optimize-bullet: never trust body userId for entitlement.
- * multi_bullet requires verified Pro entitlement; single_bullet allows guest with rate limits.
+ * multi_bullet requires verified Pro entitlement or an active report-run redemption.
  */
 export function evaluateOptimizeBulletAccess(input: {
   verifiedUserId: string | null;
   mode: string;
-  entitlements: EntitlementView;
+  entitlements: EntitlementViewExtended;
+  reportRunAccess?: boolean;
 }): EntitlementErrorCode | null {
   const mode = input.mode || "single_bullet";
   if (mode !== "multi_bullet") return null;
   if (!input.verifiedUserId) return "AUTH_REQUIRED";
-  if (!input.entitlements.isProEntitled) return "PRO_REQUIRED";
+  const proAllowed =
+    input.entitlements.isProEntitled ||
+    input.entitlements.isProSubscriber ||
+    input.entitlements.isAdmin ||
+    input.reportRunAccess === true;
+  if (!proAllowed) return "PRO_REQUIRED";
   return null;
 }
 
@@ -90,4 +123,15 @@ export function buildAlignmentUsageIdentity(
 /** Returns true when the handler should proceed to expensive AI work. */
 export function shouldProceedToAnthropic(gate: EntitlementErrorCode | null): boolean {
   return gate === null;
+}
+
+/** Guest free alignment requires a stable session token — not body userId. */
+export function evaluateGuestAlignmentSession(
+  verifiedUserId: string | null,
+  sessionToken: unknown,
+  isValidSessionToken: (token: unknown) => token is string,
+): EntitlementErrorCode | null {
+  if (verifiedUserId) return null;
+  if (isValidSessionToken(sessionToken)) return null;
+  return "AUTH_REQUIRED";
 }

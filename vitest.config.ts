@@ -30,6 +30,10 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/hiringReportJdCompaction.ts",
       ),
+      "@signalyz/reportRunFingerprint": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/reportRunFingerprint.ts",
+      ),
     },
   },
 });

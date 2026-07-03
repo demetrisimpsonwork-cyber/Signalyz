@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface ATSData {
   missing_keywords: string[];
@@ -19,6 +20,7 @@ interface ATSSignalPanelProps {
   jd: string;
   isPro: boolean;
   onUpgrade: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 const RISK_STYLES: Record<string, string> = {
@@ -33,7 +35,7 @@ const RISK_BADGE_STYLES: Record<string, string> = {
   Low: "bg-green-500/15 text-green-600 dark:text-green-400",
 };
 
-const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProps) => {
+const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade, reportRunFields }: ATSSignalPanelProps) => {
   const [data, setData] = useState<ATSData | null>(null);
   const [loading, setLoading] = useState(false);
   const [copiedKw, setCopiedKw] = useState<string | null>(null);
@@ -44,7 +46,7 @@ const ATSSignalPanel = ({ experience, jd, isPro, onUpgrade }: ATSSignalPanelProp
     setLoading(true);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "ats_panel", experience, jd },
+        body: withReportRunFields({ type: "ats_panel", experience, jd }, reportRunFields),
       })
       .then(({ data: res, error }) => {
         if (error) throw error;

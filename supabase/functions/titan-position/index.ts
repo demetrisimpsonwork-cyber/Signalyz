@@ -127,6 +127,17 @@ serve(async (req) => {
 
   const requestId = crypto.randomUUID();
 
+  // Legacy endpoint — disabled to prevent unauthenticated AI cost abuse.
+  return new Response(JSON.stringify({
+    status: "error",
+    request_id: requestId,
+    error_code: "FORBIDDEN",
+    message: "This endpoint is no longer available.",
+  }), {
+    status: 403,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
   try {
     const { experience, jd, existing_alignment_score } = await req.json();
 
@@ -300,7 +311,7 @@ JOB DESCRIPTION: ${cleanJd}`;
       message.includes("parse") ? "The AI returned an unexpected response. Please try again." :
       message.includes("aborted") ? "Analysis took too long. Please retry." :
       "Analysis engine temporarily unavailable. Please try again.";
-    return new Response(JSON.stringify({ status: "error", error: friendly, detail: message }), {
+    return new Response(JSON.stringify({ status: "error", error: friendly }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface IAnswerFramework {
   situation: string;
@@ -25,6 +26,7 @@ interface InterviewIntelligenceProps {
   alignmentResult: Record<string, unknown>;
   isPro: boolean;
   onUpgrade: () => void;
+  reportRunFields?: ReportRunInvokeFields | null;
 }
 
 const QuestionCard = ({ q, idx, copiedIdx, onCopy }: { q: IQuestion; idx: number; copiedIdx: number | null; onCopy: (q: IQuestion, idx: number) => void }) => (
@@ -67,7 +69,7 @@ const QuestionCard = ({ q, idx, copiedIdx, onCopy }: { q: IQuestion; idx: number
   </div>
 );
 
-const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgrade }: InterviewIntelligenceProps) => {
+const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgrade, reportRunFields }: InterviewIntelligenceProps) => {
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [loading, setLoading] = useState(!!(experience && jd));
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -80,7 +82,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
     setErrored(false);
     supabase.functions
       .invoke("generate-pro-content", {
-        body: { type: "interview_intelligence", experience, jd, alignmentResult },
+        body: withReportRunFields({ type: "interview_intelligence", experience, jd, alignmentResult }, reportRunFields),
       })
       .then(({ data, error }) => {
         if (error) throw error;

@@ -21,6 +21,11 @@ import {
   guestEntitlements,
   loadUserEntitlements,
 } from "../_shared/entitlements.ts";
+import {
+  extractCanonicalRunContext,
+  reportRunAccessJsonResponse,
+  resolveReportRunAccess,
+} from "../_shared/reportRunAccess.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,11 +97,6 @@ serve(async (req) => {
       ? await loadUserEntitlements(adminSupabase, verifiedUserId)
       : guestEntitlements();
 
-    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements);
-    if (proGate) {
-      return entitlementJsonResponse(proGate, corsHeaders, requestId);
-    }
-
     const body = await req.json();
     const type = body.type as string;
     const experience = sanitize(body.experience || "");
@@ -105,6 +105,26 @@ serve(async (req) => {
     const currentHeadline = sanitize(body.currentHeadline || "");
     const currentAbout = sanitize(body.currentAbout || "");
     const inferredRole = sanitize(body.inferredRole || "");
+
+    let reportRunAccess = false;
+    if (verifiedUserId) {
+      const runAccess = await resolveReportRunAccess(
+        adminSupabase,
+        verifiedUserId,
+        entitlements,
+        extractCanonicalRunContext(body as Record<string, unknown>),
+        { requireCanonical: true },
+      );
+      if (!runAccess.ok) {
+        return reportRunAccessJsonResponse(runAccess, corsHeaders, requestId);
+      }
+      reportRunAccess = runAccess.reportRunAccess;
+    }
+
+    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements, { reportRunAccess });
+    if (proGate) {
+      return entitlementJsonResponse(proGate, corsHeaders, requestId);
+    }
 
     let result: unknown;
 

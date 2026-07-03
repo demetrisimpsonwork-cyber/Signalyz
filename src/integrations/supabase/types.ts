@@ -251,6 +251,38 @@ export type Database = {
         }
         Relationships: []
       }
+      one_time_report_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          purchase_id: string
+          run_fingerprint: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          purchase_id: string
+          run_fingerprint: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          purchase_id?: string
+          run_fingerprint?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "one_time_report_redemptions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "one_time_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       optimizations: {
         Row: {
           alt_a: string
@@ -550,7 +582,10 @@ export type Database = {
     }
     Functions: {
       calibration_analytics: { Args: never; Returns: Json }
-      consume_one_time_credit: { Args: { p_user_id: string }; Returns: boolean }
+      consume_one_time_credit:
+        | { Args: Record<string, never>; Returns: boolean }
+        | { Args: { p_user_id: string }; Returns: boolean }
+      consume_one_time_credit_for_user: { Args: { p_user_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -567,6 +602,11 @@ export type Database = {
         Returns: boolean
       }
       increment_run_count: { Args: { p_user_id: string }; Returns: undefined }
+      increment_run_count_for_user: { Args: { p_user_id: string }; Returns: undefined }
+      redeem_one_time_credit_for_run: {
+        Args: { p_run_fingerprint: string; p_user_id: string }
+        Returns: Json
+      }
       match_document_chunks: {
         Args: {
           query_embedding: string

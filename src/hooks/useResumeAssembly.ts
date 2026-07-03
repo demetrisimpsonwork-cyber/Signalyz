@@ -7,6 +7,7 @@ import { handleUsageLimitError } from "@/lib/usageLimitError";
 import { evaluateAssemblyParseGate, PARSE_GATE_MESSAGE } from "@/lib/resumeIntake";
 import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
 import { trackEvent, trackReliabilityError } from "@/lib/analytics";
+import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 export interface CalibratedResumeData {
   header: {
@@ -51,7 +52,14 @@ interface UseResumeAssemblyReturn {
   pendingResume: CalibratedResumeData | null;
   confirmResume: (corrected: CalibratedResumeData) => void;
   skipConfirmation: () => void;
-  assemble: (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => Promise<void>;
+  assemble: (
+    directorResult: DirectorCalibrationResult | null,
+    originalResume: string,
+    preExtractedContact?: ExtractedContactInfo,
+    alignmentResult?: Record<string, unknown>,
+    jdText?: string,
+    reportRunFields?: ReportRunInvokeFields | null,
+  ) => Promise<void>;
   /** Clear all assembled state — use when a new alignment run begins */
   reset: () => void;
   /** Increments on each assemble attempt — clears stale editor state */
@@ -137,7 +145,14 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setStep(0);
   }, []);
 
-  const assemble = useCallback(async (directorResult: DirectorCalibrationResult | null, originalResume: string, preExtractedContact?: ExtractedContactInfo, alignmentResult?: Record<string, unknown>, jdText?: string) => {
+  const assemble = useCallback(async (
+    directorResult: DirectorCalibrationResult | null,
+    originalResume: string,
+    preExtractedContact?: ExtractedContactInfo,
+    alignmentResult?: Record<string, unknown>,
+    jdText?: string,
+    reportRunFields?: ReportRunInvokeFields | null,
+  ) => {
     if (assemblingRef.current || isInFlight("assembly")) return;
 
     // ── Parser confidence gate ──
@@ -185,7 +200,15 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         data = await invokeResilient(
           "assembly",
           "assemble-calibrated-resume",
-          { directorResult: directorResult || undefined, originalResume, alignmentResult: alignmentResult || undefined, jd: jdText || undefined },
+          withReportRunFields(
+            {
+              directorResult: directorResult || undefined,
+              originalResume,
+              alignmentResult: alignmentResult || undefined,
+              jd: jdText || undefined,
+            },
+            reportRunFields,
+          ),
           120_000,
         );
         break;

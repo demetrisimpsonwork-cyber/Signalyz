@@ -7,10 +7,16 @@ import {
   incrementDailyRunCount,
   loadUserEntitlements,
 } from "../_shared/entitlements.ts";
+import {
+  extractCanonicalRunContext,
+  reportRunAccessJsonResponse,
+  resolveReportRunAccess,
+} from "../_shared/reportRunAccess.ts";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
 import { applyHiringReportIntegrityGate } from "../_shared/hiringReportIntegrity.ts";
 import { compactJdForHiringReport } from "../_shared/hiringReportJdCompaction.ts";
+import { shouldConsumeOneTimeCredit } from "../_shared/entitlementGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1185,17 +1191,49 @@ serve(async (req) => {
     }
 
     let entitlements = null;
+    let reportRunAccess = false;
     if (authenticatedUserId) {
       entitlements = await loadUserEntitlements(sb, authenticatedUserId);
-      if (!qa_mode && !entitlements.isProEntitled) {
-        const dailyRuns = await getDailyRunCount(sb, authenticatedUserId);
-        if (dailyRuns >= DAILY_FREE_RUN_LIMIT) {
+      if (!qa_mode) {
+        const runAccess = await resolveReportRunAccess(
+          sb,
+          authenticatedUserId,
+          entitlements,
+          extractCanonicalRunContext(body as Record<string, unknown>),
+          { requireCanonical: shouldConsumeOneTimeCredit(entitlements) },
+        );
+        if (!runAccess.ok) {
+          return reportRunAccessJsonResponse(runAccess, corsHeaders, requestId);
+        }
+        reportRunAccess = runAccess.reportRunAccess;
+        const proOrReportAccess =
+          entitlements.isProSubscriber ||
+          entitlements.isAdmin ||
+          entitlements.isProEntitled ||
+          reportRunAccess;
+        if (!proOrReportAccess) {
+          const dailyRuns = await getDailyRunCount(sb, authenticatedUserId);
+          if (dailyRuns >= DAILY_FREE_RUN_LIMIT) {
+            return new Response(JSON.stringify({
+              status: "error",
+              request_id: requestId,
+              error_code: "RATE_LIMIT",
+              message: `Daily free limit reached (${DAILY_FREE_RUN_LIMIT} runs per day). Upgrade to Signalyz Pro for unlimited access.`,
+              limit_reached: true,
+            }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else if (
+          shouldConsumeOneTimeCredit(entitlements) &&
+          !reportRunAccess
+        ) {
           return new Response(JSON.stringify({
             status: "error",
             request_id: requestId,
-            error_code: "RATE_LIMIT",
-            message: `Daily free limit reached (${DAILY_FREE_RUN_LIMIT} runs per day). Upgrade to Signalyz Pro for unlimited access.`,
-            limit_reached: true,
+            error_code: "PRO_REQUIRED",
+            message: "Signalyz Pro or an active report credit is required.",
           }), {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
