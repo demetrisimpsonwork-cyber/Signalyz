@@ -1,14 +1,39 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import {
+  DAILY_FREE_ALIGNMENT_LIMIT,
+  getAlignmentUsageCount,
+  getUserIdFromRequest,
+  guestEntitlements,
+  incrementAlignmentUsage,
+  isValidSessionToken,
+  loadUserEntitlements,
+} from "../_shared/entitlements.ts";
+import {
+  buildAlignmentUsageIdentity,
+  entitlementJsonResponse,
+  evaluateOptimizeBulletAccess,
+} from "../_shared/entitlementGuard.ts";
+import {
+  buildCalibratedBulletRecords,
+  buildEvidencePromptBlock,
+  normalizeEvidencePackage,
+  type EvidencePackageItem,
+} from "../_shared/groundedCalibration.ts";
+import {
+  buildSlimAlignmentPrompt,
+  FREE_TIER_MAX_TOKENS,
+  PRO_TIER_MAX_TOKENS,
+  splitScoreRationale,
+} from "../_shared/optimizeBulletSlimContract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DAILY_FREE_LIMIT = 3;
-
-// ─── Input limits ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Input limits â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MAX_RESUME_CHARS = 10000;
 const MAX_JD_CHARS = 8000;
 const MAX_COMBINED_CHARS = 16000;
@@ -33,13 +58,17 @@ OUTPUT RULES:
 - Return only valid JSON. No markdown, no code fences, no preamble, no explanation.
 - Start your response with { and end with }.`;
 
-async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSystemNote?: string): Promise<string> {
+interface CallAIResult {
+  content: string;
+  stop_reason: string | null;
+  output_tokens: number | null;
+  input_tokens: number | null;
+}
+
+async function callAI(apiKey: string, prompt: string, maxTokens = 3500): Promise<CallAIResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 120000); // 120s for cold starts
   try {
-    const systemContent = extraSystemNote
-      ? `${DETERMINISTIC_SYSTEM}\n\n${extraSystemNote}`
-      : DETERMINISTIC_SYSTEM;
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       signal: controller.signal,
@@ -49,10 +78,10 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: maxTokens,
         temperature: 0,
-        system: systemContent,
+        system: DETERMINISTIC_SYSTEM,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -61,7 +90,14 @@ async function callAI(apiKey: string, prompt: string, maxTokens = 3500, extraSys
     if (aiRes.ok) {
       const data = await aiRes.json();
       const content = data.content?.[0]?.text || "";
-      if (content) return content;
+      if (content) {
+        return {
+          content,
+          stop_reason: typeof data.stop_reason === "string" ? data.stop_reason : null,
+          output_tokens: typeof data.usage?.output_tokens === "number" ? data.usage.output_tokens : null,
+          input_tokens: typeof data.usage?.input_tokens === "number" ? data.usage.input_tokens : null,
+        };
+      }
       throw new Error("Anthropic returned empty content.");
     }
     const errBody = await aiRes.text();
@@ -105,7 +141,7 @@ function extractJSON(raw: string): Record<string, unknown> {
   }
 }
 
-// ─── Input normalization ─────────────────────────────────────────────────────
+// â”€â”€â”€ Input normalization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function normalizeText(input: string): string {
   return input
@@ -257,7 +293,7 @@ function tokenize(text: string): string[] {
   return text.toLowerCase().match(/[a-z0-9]+(?:[+#/&-][a-z0-9]+)*/g) || [];
 }
 
-/** Naive English stemmer — strips common suffixes for fuzzy JD keyword matching */
+/** Naive English stemmer â€” strips common suffixes for fuzzy JD keyword matching */
 function stem(word: string): string {
   return word
     .replace(/ies$/, "i")
@@ -356,7 +392,7 @@ function computeRecalibratedScore(input: {
   // Exact keyword matches
   const jdKeywordHitsExact = jdModel.keywords.reduce((sum, token) => sum + (resumeTokenSet.has(token) ? 1 : 0), 0);
 
-  // Stemmed keyword matches (fuzzy — catches "managing" matching "management", etc.)
+  // Stemmed keyword matches (fuzzy â€” catches "managing" matching "management", etc.)
   const resumeStemSet = new Set(resumeTokens.map(stem).filter(s => s.length >= 3));
   const jdKeywordHitsStemmed = jdModel.stemmedKeywords.reduce((sum, stemmed) => sum + (resumeStemSet.has(stemmed) ? 1 : 0), 0);
 
@@ -381,11 +417,11 @@ function computeRecalibratedScore(input: {
   const accountabilityHits = countPhraseHits(resumeLower, ACCOUNTABILITY_PHRASES);
   const outcomeLanguageHits = countPhraseHits(resumeLower, OUTCOME_TERMS);
   const toolHits = countPhraseHits(resumeLower, TOOL_SIGNAL_PHRASES);
-  const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[x×]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
+  const quantifiedOutcomeHits = (resumeLower.match(/(?:\$\s?\d+[\d,.]*\s?[kmb]?|\b\d+(?:\.\d+)?\s?%|\b\d+[xÃ—]|\b\d+\s?(?:customers|clients|teams|projects|accounts|locations|regions|departments|stakeholders|hours|days|weeks|months|years))\b/gi) || []).length;
 
   const jdPhraseCoverage = jdPhraseHits / Math.max(jdModel.phrases.length, 1);
 
-  // ── RECALIBRATED quality computations ──
+  // â”€â”€ RECALIBRATED quality computations â”€â”€
   // Density targets lowered to match real resume profiles (~0.3-0.6 per 100 words)
   const jdMirrorQuality = clamp01((effectiveKeywordCoverage * 0.65) + (jdPhraseCoverage * 0.35));
 
@@ -421,7 +457,7 @@ function computeRecalibratedScore(input: {
 
   const passivePenalty = clamp01(qualityFromDensity(passiveHits, resumeTokens.length, 0.60) * 0.5);
 
-  // ── Signal Vocabulary Bonus ──
+  // â”€â”€ Signal Vocabulary Bonus â”€â”€
   // Rewards calibrated language: high strong-ownership density + low passive density
   const strongOwnershipDensity = toDensityPer100Words(ownershipStrongHits, resumeTokens.length);
   const passiveDensity = toDensityPer100Words(passiveHits, resumeTokens.length);
@@ -429,7 +465,7 @@ function computeRecalibratedScore(input: {
   // Bonus scales 0-0.18: full bonus when ownership ratio > 0.7 and strong density > 0.4
   const vocabBonus = clamp01(ownershipRatio * 1.3) * clamp01(strongOwnershipDensity / 0.35) * 0.18;
 
-  // ── Dimension scores with recalibrated weights ──
+  // â”€â”€ Dimension scores with recalibrated weights â”€â”€
   const roleOutcomesAlignment = Math.floor(100 * clamp01(
     (ownershipQuality * 0.28) +
       (measurableOutcomesQuality * 0.25) +
@@ -522,7 +558,7 @@ function computeRecalibratedScore(input: {
   };
 }
 
-// ─── In-memory result cache (SHA-256, 30min TTL, 50 entries) ──────────────────
+// â”€â”€â”€ In-memory result cache (SHA-256, 30min TTL, 50 entries) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const resultCache = new Map<string, { data: Record<string, unknown>; ts: number }>();
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const CACHE_MAX = 50;
@@ -554,22 +590,19 @@ serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID();
+  const requestStartedAt = Date.now();
 
   try {
-    const { bullet, jd, userId, mode = "single_bullet", sessionToken, runType = "original" } = await req.json();
-    const userPlan = mode === "multi_bullet" ? "pro" : "free";
-
-    // --- Structured logging ---
-    console.log(JSON.stringify({
-      event: "request_start",
-      request_id: requestId,
-      function: "optimize-bullet",
-      timestamp: new Date().toISOString(),
-      resume_text_length: typeof bullet === "string" ? bullet.length : 0,
-      jd_text_length: typeof jd === "string" ? jd.length : 0,
-      total_payload_length: (typeof bullet === "string" ? bullet.length : 0) + (typeof jd === "string" ? jd.length : 0),
-      user_plan: userPlan,
-    }));
+    const {
+      bullet,
+      jd,
+      userId,
+      mode = "single_bullet",
+      sessionToken,
+      runType = "original",
+      evidencePackage,
+      calibrationContext,
+    } = await req.json();
 
     // --- Input validation (always 200) ---
     if (!bullet || typeof bullet !== "string" || !jd || typeof jd !== "string") {
@@ -616,8 +649,60 @@ serve(async (req) => {
       });
     }
 
-    // ─── Cache check ───────────────────────────────────────────────────────
-    const cacheKey = await hashInputs(cleanBullet, cleanJd, `${userPlan}:${runType}`);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+
+    const verifiedUserId = await getUserIdFromRequest(req);
+    const entitlements = verifiedUserId
+      ? await loadUserEntitlements(sb, verifiedUserId)
+      : guestEntitlements();
+    const isProAlignment = entitlements.isProEntitled;
+    const userPlan = isProAlignment ? "pro" : "free";
+
+    const modeGate = evaluateOptimizeBulletAccess({
+      verifiedUserId,
+      mode,
+      entitlements,
+    });
+    if (modeGate) {
+      return entitlementJsonResponse(modeGate, corsHeaders, requestId);
+    }
+
+    const normalizedEvidence = normalizeEvidencePackage(
+      Array.isArray(evidencePackage) ? (evidencePackage as EvidencePackageItem[]) : [],
+    );
+    const originalBulletForGrounding =
+      typeof calibrationContext?.originalBullet === "string"
+        ? calibrationContext.originalBullet.trim()
+        : "";
+    const missingSignalForGrounding =
+      typeof calibrationContext?.missingSignal === "string"
+        ? calibrationContext.missingSignal.trim() || null
+        : null;
+    const groundingEnabled = originalBulletForGrounding.length > 0 || normalizedEvidence.length > 0;
+
+    console.log(JSON.stringify({
+      event: "request_start",
+      request_id: requestId,
+      function: "optimize-bullet",
+      timestamp: new Date().toISOString(),
+      resume_text_length: typeof bullet === "string" ? bullet.length : 0,
+      jd_text_length: typeof jd === "string" ? jd.length : 0,
+      total_payload_length: (typeof bullet === "string" ? bullet.length : 0) + (typeof jd === "string" ? jd.length : 0),
+      user_plan: userPlan,
+      client_mode: mode,
+      entitlement_source: entitlements.entitlementSource,
+      is_pro_entitled: isProAlignment,
+      evidence_count: normalizedEvidence.length,
+      grounding_enabled: groundingEnabled,
+    }));
+
+    // --- Cache check ---
+    const evidenceCachePart = normalizedEvidence.length > 0
+      ? normalizedEvidence.map((item) => item.evidence_id).join(",")
+      : originalBulletForGrounding.slice(0, 64);
+    const cacheKey = await hashInputs(cleanBullet, cleanJd, `${userPlan}:${runType}:${evidenceCachePart}`);
     const cached = getCached(cacheKey);
     if (cached) {
       console.log("Cache HIT for", cacheKey.slice(0, 12));
@@ -629,268 +714,79 @@ serve(async (req) => {
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
-
-    // --- Server-side rate limiting for free users ---
-    if (userPlan === "free") {
+    if (!isProAlignment) {
       const today = new Date().toISOString().slice(0, 10);
-      let existing: { id: string; alignment_count: number } | null = null;
-
-      if (userId) {
-        const { data } = await sb
-          .from("usage_tracking")
-          .select("id, alignment_count")
-          .eq("user_id", userId)
-          .eq("usage_date", today)
-          .maybeSingle();
-        existing = data;
-      } else if (sessionToken) {
-        const { data } = await sb
-          .from("usage_tracking")
-          .select("id, alignment_count")
-          .eq("session_token", sessionToken)
-          .eq("usage_date", today)
-          .maybeSingle();
-        existing = data;
-      }
-
-      if (existing && existing.alignment_count >= DAILY_FREE_LIMIT) {
+      const usageIdentity = buildAlignmentUsageIdentity(
+        verifiedUserId,
+        sessionToken,
+        isValidSessionToken,
+      );
+      const usage = await getAlignmentUsageCount(sb, usageIdentity, today);
+      if (usage.alignmentCount >= DAILY_FREE_ALIGNMENT_LIMIT) {
         return new Response(JSON.stringify({
           status: "error",
           request_id: requestId,
           error_code: "RATE_LIMIT",
-          message: `Daily free limit reached (${DAILY_FREE_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
+          message: `Daily free limit reached (${DAILY_FREE_ALIGNMENT_LIMIT} alignments per day). Upgrade to Signalyz Pro for unlimited alignments.`,
           limit_reached: true,
         }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // Increment or insert usage
-      if (existing) {
-        await sb
-          .from("usage_tracking")
-          .update({ alignment_count: existing.alignment_count + 1, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-      } else {
-        await sb
-          .from("usage_tracking")
-          .insert({
-            user_id: userId || null,
-            session_token: sessionToken || null,
-            ip_address: null,
-            usage_date: today,
-            alignment_count: 1,
-          });
-      }
+      await incrementAlignmentUsage(sb, usageIdentity, today);
     }
 
-    const prompt = `You are Alignment Engine V2. Analyze resume vs JD. No fabrication. Address user as "you/your" only — never third person.
+    const maxTokens = isProAlignment ? PRO_TIER_MAX_TOKENS : FREE_TIER_MAX_TOKENS;
+    let prompt = buildSlimAlignmentPrompt(cleanBullet, cleanJd, isProAlignment);
+    if (groundingEnabled) {
+      prompt += `\n\n${buildEvidencePromptBlock({
+        evidence: normalizedEvidence,
+        originalBullet: originalBulletForGrounding,
+        jd: cleanJd,
+        missingSignal: missingSignalForGrounding,
+      })}`;
+    }
 
-OUTPUT TONE — DIAGNOSTIC + DIRECTIVE (CRITICAL):
-You are writing like a hiring manager's internal evaluation notes — not a career coach. Every gap must state WHY the candidate would be screened out and WHAT specific action fixes it. Every strength must state WHY it matters for this role. No passive descriptions. No generic advice. No fluff. Be sharp, direct, and specific. The output should feel like a confidential hiring committee debrief, not a resume review.
-
-RULES: Never invent tools/metrics/certs. Only reframe existing experience. Return ONLY valid JSON.
-
-DETERMINISTIC EXTRACTION (CRITICAL — follow exactly):
-Step 1: JD SIGNAL EXTRACTION — Scan the job description from top to bottom. Extract priority signals in the order they appear. For each signal, count how many times it is referenced (frequency) and where it appears (title, first paragraph = high emphasis; later paragraphs = lower). Rank by frequency × emphasis. This extraction must be identical every time for the same JD text.
-
-Step 2: RESUME SIGNAL EXTRACTION — Scan the resume from top to bottom. For each JD priority signal, classify the match into one of three quality tiers:
-  - FULL MATCH (weight 1.0): The resume uses the JD's exact terminology, role-native vocabulary, ownership verbs ("led", "drove", "owned", "architected", "directed"), or quantified impact statements that directly mirror JD language. Example: JD says "stakeholder management" and resume says "stakeholder engagement across cross-functional teams" = FULL MATCH.
-  - PARTIAL MATCH (weight 0.5): The resume describes the same capability but uses generic, passive, or non-role-aligned language. Example: JD says "stakeholder management" and resume says "worked with different teams" = PARTIAL MATCH. Also applies when the resume uses "helped", "assisted", "supported", "participated in" instead of ownership language.
-  - NO MATCH (weight 0.0): The signal is absent from the resume entirely.
-This quality classification is CRITICAL. A calibrated resume that repositions "helped coordinate meetings" into "drove cross-functional alignment across 4 departments" upgrades that signal from PARTIAL to FULL — the same underlying experience produces a higher-quality match because the language maps more clearly to the JD's priority signals. This extraction must be identical every time for the same resume text.
-
-SIGNAL VOCABULARY SENSITIVITY (CRITICAL):
-Two resumes describing identical experience but using different vocabulary MUST produce different scores. This is the core scoring mechanism:
-- Ownership verbs ("led", "drove", "owned", "built", "launched") score as FULL MATCH; passive verbs ("helped", "assisted", "supported", "was involved in") score as PARTIAL MATCH (0.5).
-- JD-mirrored terminology scores as FULL MATCH; generic descriptions of the same work score as PARTIAL MATCH (0.5).
-- Quantified impact ("reduced cycle time by 30%", "managed $2M budget") scores as FULL MATCH; unquantified ("improved efficiency", "managed budget") scores as PARTIAL MATCH (0.5).
-- Role-aligned framing ("P&L ownership", "go-to-market strategy") scores as FULL MATCH; general framing ("responsible for finances", "helped with launches") scores as PARTIAL MATCH (0.5).
-This means a repositioned/calibrated resume with stronger vocabulary WILL score meaningfully higher than the original version — not because the experience changed, but because the signal clarity improved.
-
-Step 3: SCORING — Using the quality-classified signals from Steps 1 and 2, compute match_score as a QUALITY-WEIGHTED sum. For each dimension, sum the quality weights of all matched signals (FULL=1.0, PARTIAL=0.5, ABSENT=0), then divide by total possible signals in that dimension to get a dimension percentage. Apply dimension weights (Role Outcomes 30%, Tools 20%, Domain 20%, Context 15%, Communication 15%), sum to get final score 0-100. This is a mechanical computation from the quality-classified extraction — not an impression. The quality weighting is what makes repositioned language score higher than generic language for the same underlying experience.
-
-SCORING (5 dimensions, weights in parens):
-1) Role Outcomes (30%) 2) Tools & Workflow (20%) 3) Domain (20%) 4) Context & Scale (15%) 5) Communication & Leadership (15%)
-Labels: 0-49=Weak, 50-64=Moderate, 65-79=Solid, 80+=Strong. No inflation. 80+ requires top-2 JD priority match + tool match + ownership signals.
-
-BULLETS: Max 35 words, high-signal verbs, ATS-safe, no semicolons/em-dashes.
-ZERO METRIC FABRICATION: Do NOT invent percentages, dollar amounts, timeframes, accuracy rates, team sizes, or any quantitative claim not in the original resume. If the source has no metric, the calibrated bullet has no metric. Never insert placeholder metrics like "[Insert #]", "[Insert %]", "[Insert $]".
-${userPlan === "pro" ? "3 variants: [0]Impact-Focused [1]Human-Natural [2]Keyword-Maximized" : "1 variant: primary (ATS-weighted to top JD priorities)"}
-
-PRIORITIES: Extract 5-8 from JD with weights (0.05-0.25, sum=1.00). List in consistent priority order based on frequency and emphasis. Same JD must always produce the same priorities in the same order.
-
-JSON SCHEMA:
-{
-  "inferred_role_title": "string",
-  "optimized_bullets": [{"text":"string","variant":"string","used_signals":["string"],"removed_or_softened":["string"]}],
-  "match_score": {"score":number,"label":"Weak|Moderate|Solid|Strong","score_rationale":["string — each item MUST be prefixed with either '[STRENGTH]' or '[GAP]' to indicate whether it describes a present positive signal or an absent/weak signal"]},
-  "missing_keywords": ["string (3-10)"],
-  "suggested_action_verbs": ["string (max 5)"],
-  "alignment_intelligence_summary": "string (${userPlan === "pro" ? "4-6" : "2-3"} sentences)",
-  "strategic_gap_actions": ["string (${userPlan === "pro" ? "up to 5" : "2-3"})"],
-  "weighted_priority_commentary": ${userPlan === "pro" ? '"string (3-5 sentences)"' : 'null'},
-  "strategic_bridge_analysis": ${userPlan === "pro" ? '{"why_it_translates":"string","perception_gaps":["string"],"interview_narrative":"string"}' : 'null'},
-  "identity_strength_index": {
-    "total_score": number,
-    "pillars": [{"name":"Role Signal Clarity|Commercial Framing Power|Risk Compression Strength|Narrative Cohesion","score":number,"explanation":"string","improvement_lever":"string"}]
-  },
-  "jd_signal_extraction": {
-    "role_identity_signals":["string"],"strategic_signals":["string"],"relationship_signals":["string"],
-    "operational_signals":["string"],"leadership_signals":["string"],"priority_summary":"string"
-  },
-  "resume_signal_profile": {
-    "operational_execution":{"strength":"Strong|Moderate|Weak|Missing","evidence":["string"]},
-    "stakeholder_coordination":{"strength":"string","evidence":["string"]},
-    "strategic_influence":{"strength":"string","evidence":["string"]},
-    "performance_improvement":{"strength":"string","evidence":["string"]},
-    "domain_expertise":{"strength":"string","evidence":["string"]}
-  },
-  "signal_alignment_analysis": [{"category":"string","alignment_level":"Strong|Moderate|Weak|Missing","current_signal":"string","perception_gap":"string","threshold_expectation":"string"}],
-  "hiring_pipeline_simulation": [
-    {"stage":"Recruiter Filter","status":"PASS|MODERATE RISK|HIGH RISK","criteria":["string"],"explanation":"string","signal_conversion_insight":"string — If status is MODERATE RISK or HIGH RISK, look for transferable experience in the resume that maps to this risk area. If found, describe what the candidate already has that addresses this requirement. Frame as a PERCEPTION gap, not a capability gap. Example: 'Your escalation handling and stakeholder coordination experience directly maps to the account management signal this stage requires.' If no transferable signal exists, state: 'No directly transferable signal detected — this is a true capability gap.' NEVER fabricate experience.","reposition_strategy":"string — One specific, actionable reframing direction to close this perception gap. Example: 'Reframe your workflow coordination bullets to lead with client-facing outcomes and issue resolution ownership.' Only suggest reframing existing experience. If this is a true gap, suggest adjacency framing or honest positioning instead."},
-    {"stage":"Hiring Manager Review","status":"string","criteria":["string"],"explanation":"string","signal_conversion_insight":"string","reposition_strategy":"string"},
-    {"stage":"Panel Interview Signal","status":"string","criteria":["string"],"explanation":"string","signal_conversion_insight":"string","reposition_strategy":"string"}
-  ],
-  "executive_insight_summary": {"primary_insight":"string — diagnostic: state the core positioning problem in one sentence. This MUST NOT repeat the primary_blocker or any GAP from score_rationale. It is a SYNTHESIS — the meta-level insight about the candidate's overall positioning that ties everything together. Example: 'Your resume signals operational competence but not strategic ownership, which places you below the decision-making threshold for this role.'","primary_strength":"string — the single strongest signal. This is already shown in the Signal Diagnosis card, so keep it to ONE concise sentence with no elaboration.","why_it_matters":"string — why this strength gives them a competitive edge for THIS specific role. Must add NEW information not already implied by primary_strength.","strategic_repositioning_opportunity":"string — one specific reframing move. This MUST NOT repeat any strategic_fix from interview_gap_diagnosis. It should be a higher-level positioning shift, not a tactical resume edit."},
-  "transferable_signal_detection": {"detected_capability":"string","why_it_transfers":"string","elevation_opportunity":"string"},
-  "signal_map": {"role_identity":number,"ownership_framing":number,"commercial_impact":number,"domain_expertise":number,"stakeholder_influence":number,"operational_execution":number} (DETERMINISTIC — CRITICAL: Each dimension is scored 0-25 by counting keyword evidence matches. Given identical inputs, return identical scores every time. Do not vary. Use the counting rubric: 0 matches=0, 1-2=5-10, 3-4=10-15, 5+=15-20, 7+=20-25. Round down when between two values.),
-  "signal_shift_estimates": {"ownership_signal":{"before":number,"after":number},"commercial_impact_signal":{"before":number,"after":number},"role_identity_clarity":{"before":number,"after":number},"domain_alignment":{"before":number,"after":number}} (IMPORTANT: These values are on a 0-100 PERCENTAGE scale — INDEPENDENT from signal_map's /25 scale. "before" = current signal strength percentage for this dimension based on resume evidence analysis. "after" = projected signal strength percentage after repositioning. These are NOT derived from signal_map scores — they are an independent percentage assessment. DETERMINISTIC PER-DIMENSION DELTAS: Language-addressable gaps receive +15 to +28 percentage points improvement. Structural gaps that cannot be fixed through language alone receive +5 to +12 percentage points improvement. Each delta must be calculated independently. HARD CAP: No "after" value can exceed 95 — there will always be remaining gap.),
-  "career_signal_map": {
-    "primary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}],
-    "secondary_alignment":[{"role":"string","score":number,"signals":["string"],"explanation":"string","matched_jd_dimensions":number}]
-  },
-  "hiring_signal_benchmark": {"user_score":number,"median_candidate_score":number,"top_candidate_threshold":number,"dimension_comparison":[{"dimension":"string","user_score":number,"median_score":number,"gap_explanation":"string"}]} (DETERMINISTIC BENCHMARKS: The median_candidate_score and top_candidate_threshold represent the typical applicant pool for this role type and must be consistent across runs. For a given role type, always return the same median and top threshold values. These are population-level constants, not user-specific. Do not vary these values between runs.),
-  "interview_gap_diagnosis": {"primary_blocker":"string — THE SINGLE DOMINANT REASON for rejection. This must be the #1 highest-weight gap. STATE AS A SCREEN-OUT REASON: 'You are being screened out because [cause] — [hiring consequence].' This MUST match the first [GAP] in score_rationale. Do NOT repeat a different issue. The primary_blocker IS the first GAP, restated as a direct screen-out verdict.","what_hiring_managers_see":["string — each item states what the hiring manager CONCLUDES from reading the resume that SUPPORTS the primary_blocker. These are evidence points for the blocker, not independent issues. Example: 'Reads as a senior IC who managed tasks, not a manager who owned outcomes.'"],"what_this_creates":"string — the hiring consequence OF THE PRIMARY BLOCKER specifically. Example: 'Your application is filtered before reaching the hiring manager because ATS keyword gaps and passive framing trigger automatic deprioritization.'","strategic_fixes":["string — EXACTLY 3 items. Fix #1 MUST directly resolve the primary_blocker. Fixes #2-3 address secondary risks from score_rationale GAPs #2-#3. Each states WHAT to change and WHERE in the resume. ABSOLUTE ZERO FABRICATION: Every fix must ONLY reframe or reposition language already present in the resume. NEVER suggest adding, estimating, or inventing metrics, percentages, dollar amounts, team sizes, or scope figures. NEVER use outcome-implying words (improved, increased, reduced, enhanced, boosted, optimized, streamlined) unless that exact word+outcome appears VERBATIM in the resume. Describe repositioning actions only: 'Reframe X to lead with Y'. Only reframe what exists."],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY BLOCKER: Select based on the gap with the highest weight × severity product. For the same gap profile, always select the same primary blocker. The primary_blocker must be semantically identical to score_rationale GAP #1.), for rejection. This must be the #1 highest-weight gap. STATE AS A SCREEN-OUT REASON: 'You are being screened out because [cause] — [hiring consequence].' This MUST match the first [GAP] in score_rationale. Do NOT repeat a different issue. The primary_blocker IS the first GAP, restated as a direct screen-out verdict.","what_hiring_managers_see":["string — each item states what the hiring manager CONCLUDES from reading the resume that SUPPORTS the primary_blocker. These are evidence points for the blocker, not independent issues. Example: 'Reads as a senior IC who managed tasks, not a manager who owned outcomes.'"],"what_this_creates":"string — the hiring consequence OF THE PRIMARY BLOCKER specifically. Example: 'Your application is filtered before reaching the hiring manager because ATS keyword gaps and passive framing trigger automatic deprioritization.'","strategic_fixes":["string — EXACTLY 3 items. Fix #1 MUST directly resolve the primary_blocker. Fixes #2-3 address secondary risks from score_rationale GAPs #2-#3. Each states WHAT to change and WHERE in the resume. ABSOLUTE ZERO FABRICATION: Every fix must ONLY reframe or reposition language already present in the resume. NEVER suggest adding, estimating, or inventing metrics, percentages, dollar amounts, team sizes, or scope figures. NEVER say 'include cost savings', 'even estimates like', or 'quantify your impact'. Only reframe what exists."],"current_score":number,"predicted_score":number} (DETERMINISTIC PRIMARY BLOCKER: Select based on the gap with the highest weight × severity product. For the same gap profile, always select the same primary blocker. The primary_blocker must be semantically identical to score_rationale GAP #1.),
-  "predicted_signal_lift": {"dimensions":[{"dimension":"string","lift":number}],"current_score":number,"predicted_score":number} (DETERMINISTIC PREDICTED SCORE FORMULA — CRITICAL: Each dimension "lift" represents the realistic maximum improvement in percentage points (typically 5-8 per dimension). These lifts are generated independently by the model based on gap severity — NOT derived from the 0.50 formula. The 0.50 formula applies ONLY to the final predicted_score calculation: sum all dimension lift values, multiply by 0.50, add to current_score, round to nearest integer, cap at current_score + 15. The 0.50 rate does NOT affect individual lift values. Example: lifts 7+6+6+7=26, 26×0.50=13, current 58+13=71. The individual lifts must remain realistic model judgments.),
-  "debug": {"mode":"${mode}","user_plan":"${userPlan}","bullet_count_requested":${userPlan === "pro" ? 3 : 1},"extracted_jd_priorities":[{"priority":"string","weight":number,"evidence":"string"}],"scoring_breakdown":{"role_outcomes_alignment":number,"tools_and_workflow_alignment":number,"domain_and_context_alignment":number,"context_and_scale_alignment":number,"communication_and_leadership_alignment":number}}
-}
-
-Identity_strength_index pillars: exactly 4 (Role Signal Clarity, Commercial Framing Power, Risk Compression Strength, Narrative Cohesion), each 0-25, strict evidence-based.
-
-SCORE_RATIONALE CLASSIFICATION (CRITICAL — DIAGNOSTIC + DIRECTIVE FORMAT):
-Each score_rationale bullet MUST be prefixed with exactly '[STRENGTH]' or '[GAP]':
-- '[STRENGTH]' = the candidate's resume demonstrably evidences this signal. Format: State the signal detected, then why it matters for this role. Example: "[STRENGTH] Operational throughput ownership detected — this directly addresses the JD's emphasis on process efficiency and SLA management."
-- '[GAP]' = the resume is missing this signal. Format: State the missing signal, the CONSEQUENCE (why it causes screen-out), and the CORRECTIVE ACTION. Example: "[GAP] No evidence of P&L ownership — hiring managers will read this as inability to operate at budget-accountable scope, which is a primary filter for this role. Add revenue/cost figures to your most senior role bullets."
-Do NOT write passive descriptions like "Missing technical onboarding experience." Instead write cause + consequence + fix: "No technical onboarding signal — this creates a perception that you cannot manage implementation-heavy accounts, which is a dealbreaker for this CSM role. Reframe your training or setup work as onboarding delivery."
-Generate exactly 4 [STRENGTH] bullets. Not 3, not 5. Exactly 4 — the four strongest transferable signals. Always return 4 [STRENGTH] items.
-Generate exactly 4 [GAP] bullets. Not 3, not 5. Exactly 4 — the four most critical screen-out risks, ranked by severity. GAP #1 is the PRIMARY BLOCKER — the single most important reason for rejection. GAPs #2-#4 are SECONDARY RISKS. Each GAP must include: what's missing, why it causes rejection, and one concrete action to fix it. Always return 4 [GAP] items.
-The score_rationale array must contain exactly 8 items total: 4 prefixed with [STRENGTH] followed by 4 prefixed with [GAP]. Both sections are required. Neither can be absent.
- DEDUPLICATION RULE: The interview_gap_diagnosis.primary_blocker MUST be the same issue as score_rationale GAP #1. Do NOT introduce a new issue in primary_blocker that doesn't appear in GAPs. Do NOT repeat the primary_blocker issue in GAPs #2-#4. Each GAP must be a distinct issue.
-CROSS-SECTION DEDUPLICATION (CRITICAL):
-- executive_insight_summary.primary_insight must NOT restate any GAP or the primary_blocker. It is a meta-level synthesis ONLY.
-- executive_insight_summary.strategic_repositioning_opportunity must NOT repeat any strategic_fix. It is a higher-level positioning shift.
-- what_hiring_managers_see items must be EVIDENCE supporting the primary_blocker, not independent issues that duplicate Secondary Risks.
-- strategic_gap_actions must NOT duplicate strategic_fixes. If both exist, strategic_fixes = tactical resume edits, strategic_gap_actions = broader career moves.
-- Each section has ONE job. Do not let sections bleed into each other's purpose.
-VERBOSITY CONTROL: Every sentence must add new information. Cut any sentence that restates what another section already says. Prefer 1 sharp sentence over 2 soft ones. Total output should be ~20-30% shorter than default — achieve this by eliminating redundancy, not by removing insights.
-
-HIRING PIPELINE SIMULATION DETERMINISTIC RISK LEVELS (CRITICAL):
-Assign risk levels based on the extracted signal gaps deterministically. For the same gap profile, always assign the same risk level at each stage. Do not vary risk assessments between runs.
-- Recruiter Filter: PASS only if keyword density covers 70%+ of JD priorities. Otherwise MODERATE RISK or HIGH RISK.
-- Hiring Manager Review: PASS only if ownership language and performance impact signals are present. Otherwise MODERATE RISK or HIGH RISK.
-- Panel Interview Signal: PASS only if cross-functional leadership AND domain expertise signals are both present. If either is missing or weak, assign MODERATE RISK. If both are missing, assign HIGH RISK.
-Use the same mechanical threshold logic every time. Do not use subjective judgment for risk level assignment.
-
-CAREER_SIGNAL_MAP DETERMINISTIC ORDERING:
-For career_signal_map, return EXACTLY 1 role in primary_alignment and EXACTLY 1 role in secondary_alignment (2 roles total, no more). matched_jd_dimensions = count of how many employer priority signal categories (from jd_signal_extraction) the role's signals overlap with. When two roles score within 5 points of each other, rank the one with higher matched_jd_dimensions first; if still tied, use alphabetical order by role name.
-The primary role alignment percentage is calculated from matched signal dimensions only — not from the overall alignment score. Do not use the match_score as a reference for career_signal_map scores. Calculate independently from the signal match data. The primary alignment score should reflect how strongly the candidate's experience naturally signals that role, which can be higher than the overall score when the candidate is a strong natural fit but has structural gaps pulling the overall score down.
-
-DETERMINISTIC SCORING — ALL SUB-SCORES (CRITICAL):
-You are a deterministic scorer. Given identical inputs you must always return identical scores. Do not vary your output. Return the same number every time for the same input. If you are uncertain, anchor to the lower bound of your range and hold it.
-
-PRIMARY SCORE ISOLATION (CRITICAL):
-match_score.score is computed ONLY from the 5-dimension weighted sum (Role Outcomes 30%, Tools & Workflow 20%, Domain 20%, Context & Scale 15%, Communication & Leadership 15%). It is a measurement of CURRENT alignment. It has NOTHING to do with predicted scores, improvement deltas, capture rates, or calibration formulas. Do NOT apply the predicted score formula (sum × 0.60) to match_score.score. The predicted score formula applies ONLY to predicted_signal_lift.predicted_score and interview_gap_diagnosis.predicted_score — two separate fields that are post-processed server-side anyway. match_score.score must reflect the current state of the resume vs JD, not any projected improvement.
-
-SCORING METHOD — USE QUALITY-WEIGHTED COUNTING, NOT IMPRESSION:
-For every numeric score, use explicit QUALITY-WEIGHTED evidence counting:
-- For each JD priority signal, classify the resume's match as FULL (1.0), PARTIAL (0.5), or ABSENT (0).
-  - FULL (1.0): Exact JD terms, ownership verbs, quantified impact, role-native vocabulary.
-  - PARTIAL (0.5): Generic/passive language describing the same capability ("helped", "assisted", "supported", general descriptions without JD-specific framing).
-  - ABSENT (0): Signal not present in resume at all.
-- Sum the quality weights per dimension (not raw counts). A dimension with 4 FULL matches scores higher than one with 4 PARTIAL matches.
-- Map quality-weighted sums to score ranges: 0 weighted = 0, 0.5-1.5 = 5-10, 2.0-3.0 = 10-15, 3.5-5.0 = 15-20, 5.5+ = 20-25 for /25 scales.
-- Do NOT use subjective impression, "feels like", or holistic judgment for any numeric field.
-- Round down when between two values, never up.
-- CRITICAL: This means a resume using "drove cross-functional GTM strategy" scores HIGHER than one saying "helped with product launches" for the same JD signal — because the first is a FULL match (1.0) and the second is a PARTIAL match (0.5).
-
-This applies individually and explicitly to EACH of these numeric fields — score each one deterministically:
-- match_score.score: quality-weighted sum of 5 dimensions, no rounding variance
-- identity_strength_index.total_score AND each pillar score (all 4): assign fixed points based strictly on quality-weighted evidence per pillar
-- signal_map: ALL 6 dimensions — each scored by quality-weighted keyword matches between resume and JD
-- signal_shift_estimates: all before/after pairs on 0-100 percentage scale — independently assessed signal strength percentages, NOT derived from signal_map /25 scores
-- hiring_signal_benchmark: user_score, median_candidate_score, top_candidate_threshold, and all dimension_comparison scores
-- career_signal_map: role scores for both primary and secondary
-- predicted_signal_lift: all dimension lifts and current/predicted scores — lifts must be derived from gap counts, not estimated
-- interview_gap_diagnosis: current_score and predicted_score
-
-For each numeric field: classify match quality, apply quality weights, use scoring rubric mechanically, produce the same output. No randomness, no creativity in scoring, no approximation.
-
-STRATEGIC FIXES COUNT (CRITICAL):
-interview_gap_diagnosis.strategic_fixes must contain EXACTLY 3 items. Not 2, not 4. Exactly 3, ranked by impact on the match score. Each fix must be a SPECIFIC resume edit instruction — not general advice. State what to reframe, where to reframe it, and why it matters.
-
-ABSOLUTE ZERO FABRICATION IN STRATEGIC FIXES — HIGHEST PRIORITY CONSTRAINT:
-Every strategic fix must ONLY reframe, reposition, or restructure language the candidate ALREADY HAS in their resume. You are a positioning engine, not a content generator.
-
-BANNED patterns — if your fix contains ANY of these phrases or patterns, it VIOLATES this rule:
-- "include [any metric type]" — BANNED
-- "add [metrics/numbers/data/figures]" — BANNED
-- "even estimates like..." — BANNED
-- "quantify your impact" — BANNED
-- "include cost savings" — BANNED
-- "efficiency gains" — BANNED
-- "customer satisfaction metrics" — BANNED
-- "reduced [X] by [Y]%" — BANNED (unless that exact stat is in the resume)
-- "saved $[amount]" — BANNED (unless that exact figure is in the resume)
-- "team of [number]" — BANNED (unless that exact team size is in the resume)
-- Any suggestion to add, estimate, approximate, or invent ANY number, percentage, dollar amount, team size, or scope figure NOT already in the resume text — BANNED
-
-OUTCOME-IMPLYING LANGUAGE BAN — CRITICAL:
-The words "improved," "increased," "reduced," "decreased," "enhanced," "boosted," "accelerated," "optimized," "streamlined," "maximized," and "minimized" must NEVER appear in a fix UNLESS that exact word + outcome pair appears VERBATIM in the candidate's source resume. These words imply a measurable result. You cannot claim a result the candidate did not explicitly state.
-- BANNED: "improved customer response times" (unless the resume literally says "improved customer response times")
-- BANNED: "reduced onboarding friction" (unless the resume literally says that)
-- BANNED: "enhanced team productivity" (unless the resume literally says that)
-Instead, describe the REPOSITIONING ACTION: "Reframe X to lead with Y" / "Restructure X to foreground Y" / "Move X into the lead position so Y reads as the focus."
-
-CORRECT pattern — every fix must follow this structure:
-"Reframe [specific existing bullet or phrase from the resume] to lead with [the positioning angle] — change '[current weak phrasing]' to '[repositioned version using only their existing language].'"
-
-Good: "Reframe your process improvement bullet to lead with the operational outcome you already described — 'Drove vendor consolidation that cut redundant contracts' instead of 'Worked with vendors on contract management.'"
-Bad: "Include cost savings, efficiency gains, or customer satisfaction metrics to strengthen this bullet."
-Bad: "Even estimates like 'reduced processing time by 30%' would strengthen this section."
-Bad: "Improved customer response times by restructuring the support workflow." (claims an outcome not in the resume)
-
-STYLE: No "results-driven"/"leveraging synergies"/"passionate about". Lead with evidence. Operational language. Vary cadence. No markdown/code fences.
-
-EXPERIENCE_INPUT: ${cleanBullet}
-
-JOB_DESCRIPTION: ${cleanJd}
-
-USER_PLAN: ${userPlan}`;
-
+    const aiResult = await callAI(apiKey, prompt, maxTokens);
+    const { content } = aiResult;
     let titan: Record<string, unknown>;
-    
-    // First attempt
-    let content = await callAI(apiKey, prompt, 5000);
     try {
       titan = extractJSON(content);
-    } catch (firstErr) {
-      console.error("First parse attempt failed. Preview:", content.slice(0, 300));
-      
-      // Retry with strict JSON instruction
-      console.log("Retrying with strict JSON instruction...");
-      const strictNote = "CRITICAL: Return only a valid JSON object. No markdown, no code fences, no preamble, no explanation. Start your response with { and end with }.";
-      const retryContent = await callAI(apiKey, prompt, 5000, strictNote);
-      try {
-        titan = extractJSON(retryContent);
-      } catch (secondErr) {
-        console.error("Second parse attempt also failed. Preview:", retryContent.slice(0, 300));
-        throw new Error("Signal calibration response could not be processed. Please try again.");
-      }
+      console.log(JSON.stringify({
+        event: "alignment_observability",
+        request_id: requestId,
+        user_plan: userPlan,
+        content_length: content.length,
+        stop_reason: aiResult.stop_reason,
+        output_tokens: aiResult.output_tokens,
+        input_tokens: aiResult.input_tokens,
+        parse_success: true,
+        total_duration_ms: Date.now() - requestStartedAt,
+        anthropic_calls: 1,
+        evidence_count: normalizedEvidence.length,
+        grounding_enabled: groundingEnabled,
+        timestamp: new Date().toISOString(),
+      }));
+    } catch {
+      console.error(JSON.stringify({
+        event: "alignment_observability",
+        request_id: requestId,
+        user_plan: userPlan,
+        content_length: content.length,
+        stop_reason: aiResult.stop_reason,
+        output_tokens: aiResult.output_tokens,
+        input_tokens: aiResult.input_tokens,
+        parse_success: false,
+        total_duration_ms: Date.now() - requestStartedAt,
+        anthropic_calls: 1,
+        evidence_count: normalizedEvidence.length,
+        grounding_enabled: groundingEnabled,
+        content_preview: content.slice(0, 300),
+        content_tail: content.slice(-800),
+        timestamp: new Date().toISOString(),
+      }));
+      throw new Error("Signal calibration response could not be processed. Please try again.");
     }
 
     const recalibrationDiagnostics = computeRecalibratedScore({
@@ -934,8 +830,36 @@ USER_PLAN: ${userPlan}`;
       (titan.predicted_signal_lift as Record<string, unknown>).current_score = deterministicMatchScore;
     }
 
-    // Map Titan contract to the shape the frontend expects
-    const optimizedBullet = titan.optimized_bullets?.[0]?.text || "";
+    const optimizedBulletsRaw = Array.isArray(titan.optimized_bullets)
+      ? (titan.optimized_bullets as Array<{ text?: string; variant?: string }>)
+      : [];
+
+    const calibratedBullets = groundingEnabled
+      ? buildCalibratedBulletRecords({
+        optimizedBullets: optimizedBulletsRaw,
+        originalBullet: originalBulletForGrounding,
+        evidence: normalizedEvidence,
+        jd: cleanJd,
+      })
+      : [];
+
+    const groundingContext = {
+      evidence_count: normalizedEvidence.length,
+      original_bullet: originalBulletForGrounding || null,
+      missing_signal: missingSignalForGrounding,
+    };
+
+    // Map slim contract to the shape the frontend expects
+    let optimizedBullet = optimizedBulletsRaw[0]?.text || "";
+    let altA = optimizedBulletsRaw[1]?.text || optimizedBullet;
+    let altB = optimizedBulletsRaw[2]?.text || optimizedBullet;
+
+    if (calibratedBullets.length > 0) {
+      optimizedBullet = calibratedBullets[0]?.text || optimizedBullet;
+      altA = calibratedBullets[1]?.text || altA;
+      altB = calibratedBullets[2]?.text || altB;
+    }
+
     const matchScore = titan.match_score?.score ?? 0;
     const confidenceLevel = titan.match_score?.label || "";
     const missingKeywords = titan.missing_keywords || [];
@@ -945,15 +869,15 @@ USER_PLAN: ${userPlan}`;
       ? titan.strategic_gap_actions.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
       : null;
 
-    const altA = titan.optimized_bullets?.[1]?.text || optimizedBullet;
-    const altB = titan.optimized_bullets?.[2]?.text || optimizedBullet;
-
     const priorities = titan.debug?.extracted_jd_priorities || [];
     const topMatchedSignal = priorities.length > 0 ? priorities[0].priority : null;
     const topMissingSignal = missingKeywords.length > 0 ? missingKeywords[0] : null;
 
     const breakdown = titan.debug?.scoring_breakdown || {};
     const scoreRationale = titan.match_score?.score_rationale || [];
+    const parsedRationale = splitScoreRationale(
+      Array.isArray(scoreRationale) ? (scoreRationale as string[]) : [],
+    );
 
     const weightedPriorityCommentary = titan.weighted_priority_commentary || null;
     const strategicBridgeAnalysis = titan.strategic_bridge_analysis || null;
@@ -972,14 +896,12 @@ USER_PLAN: ${userPlan}`;
         performance: priorities.find((p: any) => /perform|impact|outcome/i.test(p.priority))?.weight || 0.25,
         domain: priorities.find((p: any) => /domain|industry|sector/i.test(p.priority))?.weight || 0.25,
       },
-      strengths: (titan.resume_signal_profile
-        ? Object.entries(titan.resume_signal_profile as Record<string, any>)
-            .filter(([, v]) => v?.strength === "Strong" || v?.strength === "Moderate")
-            .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v.evidence?.[0] || v.strength}`)
-        : []),
-      gaps: (titan.signal_alignment_analysis as any[] || [])
-        .filter((a: any) => a.alignment_level === "Weak" || a.alignment_level === "Missing")
-        .map((a: any) => a.perception_gap || a.category),
+      strengths: parsedRationale.strengths.length > 0
+        ? parsedRationale.strengths
+        : [],
+      gaps: parsedRationale.gaps.length > 0
+        ? parsedRationale.gaps
+        : [],
       under_signaled_keywords: missingKeywords as string[],
       evidence_ledger: [
         ...(titan.resume_signal_profile
@@ -1043,18 +965,17 @@ USER_PLAN: ${userPlan}`;
       })(),
       hiring_signal_benchmark: titan.hiring_signal_benchmark || null,
       interview_gap_diagnosis: (() => {
-        const igd = titan.interview_gap_diagnosis as any;
-        if (!igd) return null;
-        // Use the same mechanical formula for predicted_score
-        const psl = titan.predicted_signal_lift as any;
-        const currentScore = igd.current_score ?? (titan.match_score as any)?.score ?? 0;
-        if (psl && Array.isArray(psl.dimensions)) {
-          const totalLift = psl.dimensions.reduce((sum: number, d: any) => sum + (d.lift ?? 0), 0);
-          const captured = Math.round(totalLift * 0.50);
-          const predictedScore = Math.min(currentScore + captured, currentScore + 15);
-          return { ...igd, current_score: currentScore, predicted_score: predictedScore };
-        }
-        return igd;
+        if (parsedRationale.gaps.length === 0) return null;
+        const gapActions = Array.isArray(titan.strategic_gap_actions)
+          ? (titan.strategic_gap_actions as string[]).slice(0, 3)
+          : [];
+        return {
+          primary_blocker: parsedRationale.gaps[0],
+          what_hiring_managers_see: [],
+          strategic_fixes: gapActions,
+          current_score: matchScore,
+          predicted_score: matchScore,
+        };
       })(),
       predicted_signal_lift: (() => {
         const psl = titan.predicted_signal_lift as any;
@@ -1109,11 +1030,13 @@ USER_PLAN: ${userPlan}`;
       signal_model: signalModel,
       // Diagnostics passthrough for client-side trace logging
       debug: titan.debug || null,
+      grounding_context: groundingContext,
+      calibrated_bullets: calibratedBullets.length > 0 ? calibratedBullets : null,
     };
 
     // Save to database
     await sb.from("optimizations").insert({
-      user_id: userId || null,
+      user_id: verifiedUserId || null,
       input_bullet: cleanBullet,
       input_jd: cleanJd,
       optimized_bullet: optimizedBullet,

@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
+import {
+  buildEntitlementErrorBody,
+  evaluateProGatedAccess,
+} from "../_shared/entitlementGuard.ts";
+import {
+  getUserIdFromRequest,
+  guestEntitlements,
+  loadUserEntitlements,
+} from "../_shared/entitlements.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,11 +26,14 @@ function err(
   message: string,
   details?: Record<string, unknown>,
 ) {
+  const entitlementCodes = ["AUTH_REQUIRED", "PRO_REQUIRED"];
+  const errorField = entitlementCodes.includes(errorCode) ? errorCode : undefined;
   return new Response(
     JSON.stringify({
       status: "error",
       request_id: requestId,
       error_code: errorCode,
+      ...(errorField ? { error: errorField } : {}),
       message,
       ...(details ? { details } : {}),
     }),
@@ -107,6 +120,25 @@ serve(async (req) => {
   const requestId = makeRequestId();
 
   try {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const verifiedUserId = await getUserIdFromRequest(req);
+    const entitlements = verifiedUserId
+      ? await loadUserEntitlements(sb, verifiedUserId)
+      : guestEntitlements();
+
+    const proGate = evaluateProGatedAccess(verifiedUserId, entitlements);
+    if (proGate) {
+      const errorBody = buildEntitlementErrorBody(proGate, requestId);
+      return new Response(JSON.stringify(errorBody), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json();
     const { roles, jd, matchScore, existingSummary, skills, certifications } = body;
 

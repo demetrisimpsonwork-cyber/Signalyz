@@ -11,6 +11,15 @@ import { curateCompetencies } from "../_shared/competencyCuration.ts";
 import { enforceSummaryVoice } from "../_shared/summaryVoice.ts";
 import { scrubAiTells } from "../_shared/aiTellScrubber.ts";
 import { HUMAN_WRITING_RULES, NARRATIVE_PRINCIPLE, SUMMARY_STANDARD, BULLET_STANDARD, RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
+import {
+  entitlementJsonResponse,
+  evaluateProGatedAccess,
+} from "../_shared/entitlementGuard.ts";
+import {
+  getUserIdFromRequest,
+  guestEntitlements,
+  loadUserEntitlements,
+} from "../_shared/entitlements.ts";
 
 /** Security preamble injected into every prompt that embeds untrusted user text. */
 const UNTRUSTED_DATA_RULE =
@@ -2451,66 +2460,23 @@ Return ONLY valid JSON array:
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // ── Authentication & Usage Enforcement ──
-  const authHeader = req.headers.get("Authorization");
-  let authenticatedUserId: string | null = null;
+  const request_id = crypto.randomUUID();
 
   const adminSupabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  if (authHeader?.startsWith("Bearer ")) {
-    const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: { user } } = await supabaseAuth.auth.getUser(
-      authHeader.replace("Bearer ", "")
-    );
-    if (user) authenticatedUserId = user.id;
+  const verifiedUserId = await getUserIdFromRequest(req);
+  const entitlements = verifiedUserId
+    ? await loadUserEntitlements(adminSupabase, verifiedUserId)
+    : guestEntitlements();
+
+  const proGate = evaluateProGatedAccess(verifiedUserId, entitlements);
+  if (proGate) {
+    return entitlementJsonResponse(proGate, corsHeaders, request_id);
   }
 
-  if (!authenticatedUserId) {
-    // Enforce daily limit for unauthenticated users via IP
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-      || req.headers.get("cf-connecting-ip")
-      || "unknown";
-    const today = new Date().toISOString().slice(0, 10);
-
-    const { data: usageRows } = await adminSupabase
-      .from("usage_tracking")
-      .select("alignment_count")
-      .eq("ip_address", clientIp)
-      .eq("usage_date", today)
-      .is("user_id", null)
-      .limit(1);
-
-    const currentCount = usageRows?.[0]?.alignment_count ?? 0;
-    if (currentCount >= 3) {
-      return new Response(
-        JSON.stringify({ status: "error", error_code: "USAGE_LIMIT_REACHED", message: "Daily limit reached. Sign up to continue." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Upsert usage count
-    if (usageRows && usageRows.length > 0) {
-      await adminSupabase
-        .from("usage_tracking")
-        .update({ alignment_count: currentCount + 1, updated_at: new Date().toISOString() })
-        .eq("ip_address", clientIp)
-        .eq("usage_date", today)
-        .is("user_id", null);
-    } else {
-      await adminSupabase
-        .from("usage_tracking")
-        .insert({ ip_address: clientIp, usage_date: today, alignment_count: 1, user_id: null });
-    }
-  }
-
-  const request_id = crypto.randomUUID();
   let currentStep = "input_received";
 
   try {

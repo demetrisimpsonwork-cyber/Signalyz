@@ -304,6 +304,16 @@ const ResumeBuilder = ({
       let rawText = "";
       let statusCode = 200;
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setResumeError({
+          error_code: "AUTH_REQUIRED",
+          message: "Sign in required to generate a calibrated resume summary.",
+          status_code: 401,
+        });
+        return;
+      }
+
       try {
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-resume-summary`,
@@ -311,7 +321,7 @@ const ResumeBuilder = ({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              "Authorization": `Bearer ${session.access_token}`,
               "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             },
             body: JSON.stringify(payload),
