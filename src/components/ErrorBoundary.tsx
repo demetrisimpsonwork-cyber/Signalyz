@@ -1,5 +1,6 @@
 import { Component, type ReactNode, type ErrorInfo } from "react";
 import { Button } from "@/components/ui/button";
+import { trackReliabilityError } from "@/lib/analytics";
 
 interface Props {
   children: ReactNode;
@@ -7,6 +8,15 @@ interface Props {
 
 interface State {
   hasError: boolean;
+}
+
+function sanitizeComponentHint(info: ErrorInfo): string | undefined {
+  const line = info.componentStack
+    ?.split("\n")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith("at ") && !entry.includes("ErrorBoundary"));
+  if (!line) return undefined;
+  return line.slice(0, 160);
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -20,8 +30,21 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Log only error name, not full stack or user data
-    console.error("Application error:", error.name);
+    const componentHint = sanitizeComponentHint(info);
+    console.error(
+      "Application error:",
+      error.name,
+      error.message,
+      componentHint ? `(near ${componentHint})` : "",
+    );
+    try {
+      trackReliabilityError("unexpected_error", error.name, {
+        feature_name: "error_boundary",
+        output_type: componentHint,
+      });
+    } catch {
+      /* analytics must never throw */
+    }
   }
 
   render() {

@@ -1,6 +1,8 @@
 /** Normalize resume/JD text for deterministic run fingerprinting. */
-export function normalizeReportRunText(text: string): string {
-  return text
+export function normalizeReportRunText(text: string | null | undefined): string {
+  const input =
+    typeof text === "string" ? text : text == null ? "" : String(text);
+  return input
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
     .replace(/[^\S\n]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
@@ -66,10 +68,17 @@ export async function buildReportRunFingerprint(
   resumeText: string,
   jdText: string,
 ): Promise<string> {
-  const payload = buildReportRunFingerprintInput(userId, resumeText, jdText);
-  const data = new TextEncoder().encode(payload);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  if (!userId?.trim()) return "";
+  try {
+    const subtle = globalThis.crypto?.subtle;
+    if (!subtle?.digest) return "";
+    const payload = buildReportRunFingerprintInput(userId, resumeText, jdText);
+    const data = new TextEncoder().encode(payload);
+    const hash = await subtle.digest("SHA-256", data);
+    return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return "";
+  }
 }
 
 /** In-memory simulator for redemption semantics tests (no I/O). */

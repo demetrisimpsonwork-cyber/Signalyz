@@ -9,6 +9,7 @@ import {
 } from "../../supabase/functions/_shared/reportRunFingerprint.ts";
 
 const STORAGE_KEY = "signalyz_active_report_run_v1";
+const STORAGE_PROBE_KEY = "__signalyz_report_run_probe__";
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 export interface ReportRunInvokeFields {
@@ -23,12 +24,61 @@ interface StoredActiveReportRun {
   expiresAt: number;
 }
 
+/** Coerce unknown input to trimmed text without throwing during render. */
+export function safeTrimText(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (value == null) return "";
+  try {
+    return String(value).trim();
+  } catch {
+    return "";
+  }
+}
+
+function isSessionStorageAvailable(): boolean {
+  try {
+    if (typeof sessionStorage === "undefined") return false;
+    sessionStorage.setItem(STORAGE_PROBE_KEY, "1");
+    sessionStorage.removeItem(STORAGE_PROBE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function parseStoredActiveRun(raw: string): StoredActiveReportRun | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredActiveReportRun>;
+    if (
+      typeof parsed?.fingerprint !== "string" ||
+      !parsed.fingerprint ||
+      typeof parsed.userId !== "string" ||
+      !parsed.userId ||
+      typeof parsed.expiresAt !== "number" ||
+      !Number.isFinite(parsed.expiresAt)
+    ) {
+      return null;
+    }
+    return {
+      fingerprint: parsed.fingerprint,
+      userId: parsed.userId,
+      expiresAt: parsed.expiresAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function readStored(): StoredActiveReportRun | null {
+  if (!isSessionStorageAvailable()) return null;
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as StoredActiveReportRun;
-    if (!parsed?.fingerprint || !parsed.userId || !parsed.expiresAt) return null;
+    const parsed = parseStoredActiveRun(raw);
+    if (!parsed) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     if (Date.now() > parsed.expiresAt) {
       sessionStorage.removeItem(STORAGE_KEY);
       return null;
@@ -40,6 +90,7 @@ function readStored(): StoredActiveReportRun | null {
 }
 
 export function clearActiveReportRun(): void {
+  if (!isSessionStorageAvailable()) return;
   try {
     sessionStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -48,7 +99,7 @@ export function clearActiveReportRun(): void {
 }
 
 export function rememberActiveReportRun(userId: string, fingerprint: string): void {
-  if (!userId || !fingerprint) return;
+  if (!userId || !fingerprint || !isSessionStorageAvailable()) return;
   try {
     const payload: StoredActiveReportRun = {
       fingerprint,
@@ -63,51 +114,70 @@ export function rememberActiveReportRun(userId: string, fingerprint: string): vo
 
 export async function buildReportRunInvokeFields(
   userId: string,
-  originalResumeText: string,
-  jdText: string,
+  originalResumeText: unknown,
+  jdText: unknown,
 ): Promise<ReportRunInvokeFields | null> {
-  const resume = originalResumeText?.trim() ?? "";
-  const jd = jdText?.trim() ?? "";
-  if (!userId || !resume || !jd) return null;
-  if (normalizeReportRunText(resume).length < 100 || normalizeReportRunText(jd).length < 20) {
+  try {
+    const resume = safeTrimText(originalResumeText);
+    const jd = safeTrimText(jdText);
+    if (!userId || !resume || !jd) return null;
+    if (
+      normalizeReportRunText(resume).length < 100 ||
+      normalizeReportRunText(jd).length < 20
+    ) {
+      return null;
+    }
+    const reportRunFingerprint = await buildReportRunFingerprint(userId, resume, jd);
+    if (!reportRunFingerprint) return null;
+    return { originalResumeText: resume, jdText: jd, reportRunFingerprint };
+  } catch {
     return null;
   }
-  const reportRunFingerprint = await buildReportRunFingerprint(userId, resume, jd);
-  return { originalResumeText: resume, jdText: jd, reportRunFingerprint };
 }
 
 export async function rememberActiveReportRunForInputs(
   userId: string,
-  originalResumeText: string,
-  jdText: string,
+  originalResumeText: unknown,
+  jdText: unknown,
 ): Promise<string | null> {
-  const fields = await buildReportRunInvokeFields(userId, originalResumeText, jdText);
-  if (!fields?.reportRunFingerprint) return null;
-  rememberActiveReportRun(userId, fields.reportRunFingerprint);
-  return fields.reportRunFingerprint;
+  try {
+    const fields = await buildReportRunInvokeFields(userId, originalResumeText, jdText);
+    if (!fields?.reportRunFingerprint) return null;
+    rememberActiveReportRun(userId, fields.reportRunFingerprint);
+    return fields.reportRunFingerprint;
+  } catch {
+    return null;
+  }
 }
 
 export async function isActiveReportRunForInputs(
   userId: string,
-  originalResumeText: string,
-  jdText: string,
+  originalResumeText: unknown,
+  jdText: unknown,
 ): Promise<boolean> {
-  const stored = readStored();
-  if (!stored || stored.userId !== userId) return false;
-  const fields = await buildReportRunInvokeFields(userId, originalResumeText, jdText);
-  if (!fields?.reportRunFingerprint) return false;
-  return stored.fingerprint === fields.reportRunFingerprint;
+  try {
+    const stored = readStored();
+    if (!stored || stored.userId !== userId) return false;
+    const fields = await buildReportRunInvokeFields(userId, originalResumeText, jdText);
+    if (!fields?.reportRunFingerprint) return false;
+    return stored.fingerprint === fields.reportRunFingerprint;
+  } catch {
+    return false;
+  }
 }
 
 export function withReportRunFields<T extends Record<string, unknown>>(
   body: T,
   fields: ReportRunInvokeFields | null | undefined,
 ): T & Partial<ReportRunInvokeFields> {
-  if (!fields?.originalResumeText || !fields?.jdText) return body;
+  if (!fields) return body;
+  const resume = safeTrimText(fields.originalResumeText);
+  const jd = safeTrimText(fields.jdText);
+  if (!resume || !jd) return body;
   return {
     ...body,
-    originalResumeText: fields.originalResumeText,
-    jdText: fields.jdText,
+    originalResumeText: resume,
+    jdText: jd,
     ...(fields.reportRunFingerprint
       ? { reportRunFingerprint: fields.reportRunFingerprint }
       : {}),

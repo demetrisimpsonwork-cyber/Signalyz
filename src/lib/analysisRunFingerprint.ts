@@ -11,8 +11,9 @@ export interface AnalysisRunFingerprint {
 }
 
 /** Normalize text into a stable, non-reversible fingerprint prefix. */
-export function fingerprintText(text: string, maxLen = 150): string {
-  return text.replace(/\s+/g, " ").trim().toLowerCase().slice(0, maxLen);
+export function fingerprintText(text: string | null | undefined, maxLen = 150): string {
+  const input = typeof text === "string" ? text : text == null ? "" : String(text);
+  return input.replace(/\s+/g, " ").trim().toLowerCase().slice(0, maxLen);
 }
 
 export function buildAnalysisRunFingerprint(params: {

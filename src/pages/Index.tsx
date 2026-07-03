@@ -435,8 +435,8 @@ const Index = () => {
   const isAdmin = useIsAdmin();
   const { activeRunMatch, reportRunFields, rememberActiveRun } = useReportRunAccess(
     user?.id,
-    bullet.trim(),
-    jd.trim(),
+    bullet,
+    jd,
   );
   const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit || activeRunMatch;
   const planTier: PlanTier = isPro || isAdmin ? "pro" : (hasOneTimeCredit || activeRunMatch) ? "one_time" : "free";
@@ -629,8 +629,8 @@ const Index = () => {
       setShowRestoredBanner(true);
       trackEvent("prior_run_restored", { plan_tier: planTier });
       setResult(parsed.result);
-      setBullet(parsed.bullet);
-      setJd(parsed.jd);
+      setBullet(typeof parsed.bullet === "string" ? parsed.bullet : String(parsed.bullet ?? ""));
+      setJd(typeof parsed.jd === "string" ? parsed.jd : String(parsed.jd ?? ""));
       if (parsed.runType === "calibrated") setResultRunType("calibrated");
       if (parsed.originalBaseline && !originalResumeBeforeCalibration) {
         setOriginalResumeBeforeCalibration(parsed.originalBaseline);
