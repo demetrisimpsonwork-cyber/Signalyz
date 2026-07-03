@@ -77,6 +77,7 @@ const Auth = () => {
         toast.error(error.message);
       } else {
         trackEvent("signup_completed", { source: "email" });
+        trackEvent("sign_up", { source: "email", method: "email" });
         toast.success("Check your email to confirm your account!");
       }
     } else {
@@ -84,6 +85,7 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        trackEvent("login", { method: "email" });
         // Mark as fresh login so Index.tsx won't auto-restore stale input
         try {
           localStorage.setItem("signalyz_fresh_login", String(Date.now()));

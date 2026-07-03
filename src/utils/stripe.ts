@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackReliabilityError } from "@/lib/analytics";
 
 export async function initiateCheckout(mode: "subscription" | "one_time" = "subscription") {
   const {
@@ -19,6 +19,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
 
   try {
     trackEvent("checkout_started", { payment_mode: mode });
+    trackEvent("begin_checkout", { payment_mode: mode });
     trackEvent("payment_started", { payment_mode: mode });
     console.log("[Checkout] Invoking create-checkout edge function… mode:", mode);
     const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -58,6 +59,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
     console.log("[Checkout] Response:", data);
 
     if (data?.url) {
+      trackEvent("checkout_redirected", { payment_mode: mode, success: true });
       window.location.href = data.url;
     } else {
       console.error("[Checkout] No URL returned from edge function", data);
@@ -71,6 +73,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
   } catch (err) {
     console.error("[Checkout] Exception:", err);
     trackEvent("checkout_failed", { payment_mode: mode, error_code: "EXCEPTION", success: false });
+    trackReliabilityError("unexpected_error", "CHECKOUT_EXCEPTION", { payment_mode: mode });
     toast({
       title: "Checkout unavailable",
       description: "Something went wrong. Please try again.",

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { trackEvent } from "@/lib/analytics";
 import {
   loadLinkedInOutputCache,
   saveLinkedInOutputCache,
@@ -113,6 +114,7 @@ const LinkedInSignalTab = ({
   const handleCopy = useCallback(async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedIdx(key);
+    trackEvent("linkedin_copied", { output_type: "linkedin", copy_target: key });
     toast.success("Copied to clipboard");
     setTimeout(() => setCopiedIdx(null), 1500);
   }, []);
@@ -185,6 +187,7 @@ const LinkedInSignalTab = ({
       };
       setOutput(newOutput);
       saveLinkedInOutputCache(newOutput, cacheParams);
+      trackEvent("linkedin_generated", { output_type: "linkedin", success: true });
     } catch (e) {
       if (handleUsageLimitError(e)) { setLoading(false); return; }
       toast.error("Failed to calibrate LinkedIn signal.");

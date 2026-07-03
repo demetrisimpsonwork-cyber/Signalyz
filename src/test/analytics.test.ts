@@ -2,8 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   sanitizeEventMetadata,
   scoreBucket,
+  ga4ScoreBucket,
   trackEvent,
+  trackExportEvents,
+  trackReliabilityError,
 } from "@/lib/analytics";
+import {
+  bucketReferrer,
+  durationBucket,
+  ga4ScoreBucket as helperGa4ScoreBucket,
+  safeErrorCode,
+} from "@/lib/analyticsHelpers";
 import { sendGa4Event } from "@/lib/ga4";
 
 vi.mock("@/lib/ga4", () => ({
@@ -26,6 +35,8 @@ describe("analytics — metadata safety", () => {
       jd_text: "SECRET JD",
       bullet: "should not pass",
       experience: "long experience block",
+      body: "full letter body",
+      text: "raw text payload",
       plan_tier: "pro",
     });
     expect(safe.output_type).toBe("calibrated_resume");
@@ -34,6 +45,19 @@ describe("analytics — metadata safety", () => {
     expect(safe).not.toHaveProperty("jd_text");
     expect(safe).not.toHaveProperty("bullet");
     expect(safe).not.toHaveProperty("experience");
+    expect(safe).not.toHaveProperty("body");
+    expect(safe).not.toHaveProperty("text");
+  });
+
+  it("blocks keys containing unsafe substrings", () => {
+    const safe = sanitizeEventMetadata({
+      original_resume_hash: "abc",
+      full_letter_preview: "secret",
+      output_type: "cover_letter",
+    });
+    expect(safe.output_type).toBe("cover_letter");
+    expect(safe).not.toHaveProperty("original_resume_hash");
+    expect(safe).not.toHaveProperty("full_letter_preview");
   });
 
   it("drops overly long string values", () => {
@@ -45,17 +69,57 @@ describe("analytics — metadata safety", () => {
     expect(safe).not.toHaveProperty("cta_label");
   });
 
-  it("maps scores to buckets without raw content", () => {
+  it("sanitizes error_code values", () => {
+    const safe = sanitizeEventMetadata({
+      error_code: "Error: stack trace at foo\nbar",
+    });
+    expect(safe.error_code).toBe("SANITIZED_ERROR");
+  });
+});
+
+describe("analytics — score buckets", () => {
+  it("maps legacy qualitative buckets", () => {
     expect(scoreBucket(82)).toBe("strong");
     expect(scoreBucket(70)).toBe("moderate");
     expect(scoreBucket(55)).toBe("developing");
     expect(scoreBucket(40)).toBe("weak");
+  });
+
+  it("maps GA4 numeric score bands", () => {
+    expect(ga4ScoreBucket(90)).toBe("85_plus");
+    expect(ga4ScoreBucket(75)).toBe("70_84");
+    expect(ga4ScoreBucket(60)).toBe("50_69");
+    expect(ga4ScoreBucket(40)).toBe("30_49");
+    expect(ga4ScoreBucket(10)).toBe("0_29");
+    expect(helperGa4ScoreBucket(90)).toBe("85_plus");
+  });
+});
+
+describe("analytics — referrer bucketing", () => {
+  it("buckets known referrers safely", () => {
+    expect(bucketReferrer("")).toBe("direct");
+    expect(bucketReferrer("https://www.reddit.com/r/jobs")).toBe("reddit");
+    expect(bucketReferrer("https://www.linkedin.com/feed/")).toBe("linkedin");
+    expect(bucketReferrer("https://www.google.com/search?q=signalyz")).toBe("google");
+    expect(bucketReferrer("https://chatgpt.com/")).toBe("chatgpt");
+    expect(bucketReferrer("https://news.ycombinator.com/")).toBe("other");
+  });
+});
+
+describe("analytics — duration buckets", () => {
+  it("maps elapsed seconds to buckets", () => {
+    expect(durationBucket(5)).toBe("under_15s");
+    expect(durationBucket(20)).toBe("15_30s");
+    expect(durationBucket(45)).toBe("30_60s");
+    expect(durationBucket(90)).toBe("60_120s");
+    expect(durationBucket(200)).toBe("over_120s");
   });
 });
 
 describe("analytics — trackEvent", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.mocked(sendGa4Event).mockClear();
   });
 
   afterEach(() => {
@@ -78,8 +142,77 @@ describe("analytics — trackEvent", () => {
     );
   });
 
+  it("trackExportEvents fires legacy and granular events with export_format", () => {
+    trackExportEvents({
+      legacyEvent: "pdf_export_clicked",
+      specificEvent: "cover_letter_pdf_export_clicked",
+      output_type: "cover_letter",
+      format: "pdf",
+      source_tab: "coverletter",
+    });
+    expect(sendGa4Event).toHaveBeenCalledWith(
+      "cover_letter_pdf_export_clicked",
+      expect.objectContaining({
+        output_type: "cover_letter",
+        export_format: "pdf",
+        format: "pdf",
+      }),
+    );
+  });
+
+  it("paywall events include feature metadata without raw content", () => {
+    trackEvent("paywall_viewed", {
+      feature_name: "cover_letter",
+      output_type: "cover_letter",
+      resume_text: "SHOULD NOT SEND",
+      plan_tier: "free",
+    });
+    expect(sendGa4Event).toHaveBeenCalledWith(
+      "paywall_viewed",
+      expect.objectContaining({
+        feature_name: "cover_letter",
+        output_type: "cover_letter",
+        plan_tier: "free",
+      }),
+    );
+    const payload = vi.mocked(sendGa4Event).mock.calls.at(-1)?.[1] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("resume_text");
+  });
+
   it("does not crash when gtag is unavailable", () => {
     expect(() => sendGa4Event("pricing_viewed", { plan_tier: "free" })).not.toThrow();
+  });
+});
+
+describe("analytics — reliability errors", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.mocked(sendGa4Event).mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("tracks safe error codes only", () => {
+    trackReliabilityError("edge_function_failed", "STACK trace secret api_key", {
+      feature_name: "alignment",
+    });
+    expect(sendGa4Event).toHaveBeenCalledWith(
+      "edge_function_failed",
+      expect.objectContaining({
+        error_code: "SANITIZED_ERROR",
+        success: false,
+        feature_name: "alignment",
+      }),
+    );
+  });
+});
+
+describe("analytics — safeErrorCode", () => {
+  it("normalizes safe codes", () => {
+    expect(safeErrorCode("RATE_LIMIT")).toBe("RATE_LIMIT");
+    expect(safeErrorCode("")).toBe("UNKNOWN");
   });
 });
 

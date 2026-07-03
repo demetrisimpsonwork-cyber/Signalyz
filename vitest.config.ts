@@ -11,6 +11,17 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@signalyz/scoring": path.resolve(__dirname, "./supabase/functions/_shared/scoring"),
+      "@signalyz/groundedCalibration": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/groundedCalibration.ts",
+      ),
+      "@signalyz/coverLetterRoleStyle": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/coverLetterRoleStyle.ts",
+      ),
+    },
   },
 });

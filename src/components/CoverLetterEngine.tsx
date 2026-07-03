@@ -14,7 +14,7 @@ import {
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackExportEvents } from "@/lib/analytics";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -133,8 +133,12 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   // The active letter content (edited or original)
   const activeLetter = editedLetter || letter;
 
-  const generate = async () => {
-    if (!isPro) { onUpgrade(); return; }
+  const generate = async (options?: { isRegeneration?: boolean; toneChanged?: boolean }) => {
+    if (!isPro) {
+      trackEvent("pro_feature_blocked", { feature_name: "cover_letter", output_type: "cover_letter" });
+      onUpgrade();
+      return;
+    }
     setLoading(true);
     setError(null);
     setLetter("");
@@ -180,6 +184,10 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       setLetter(finalLetter || filteredLetter);
       setHasGenerated(true);
       setStep(4);
+      trackEvent(options?.isRegeneration ? "cover_letter_regenerated" : "cover_letter_generated", {
+        output_type: "cover_letter",
+        success: true,
+      });
     } catch (e: any) {
       stepTimers.forEach(clearTimeout);
       if (handleUsageLimitError(e)) { setLoading(false); return; }
@@ -195,7 +203,11 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   const prevToneRef = useRef(tone);
   useEffect(() => {
     if (prevToneRef.current !== tone && hasGenerated && !loading) {
-      generate();
+      trackEvent("cover_letter_mode_changed", {
+        cover_letter_mode: tone,
+        output_type: "cover_letter",
+      });
+      generate({ isRegeneration: true, toneChanged: true });
     }
     prevToneRef.current = tone;
   }, [tone]);
@@ -235,6 +247,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
 
   const handleCopy = async () => {
     trackEvent("copy_clicked", { output_type: "cover_letter", source_tab: "coverletter" });
+    trackEvent("cover_letter_copied", { output_type: "cover_letter", source_tab: "coverletter" });
     await navigator.clipboard.writeText(fullLetterText);
     setCopied(true);
     toast.success("Copied to clipboard");
@@ -242,7 +255,13 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   };
 
   const handleDownloadDocx = async () => {
-    trackEvent("docx_export_clicked", { output_type: "cover_letter", format: "docx", source_tab: "coverletter" });
+    trackExportEvents({
+      legacyEvent: "docx_export_clicked",
+      specificEvent: "cover_letter_docx_export_clicked",
+      output_type: "cover_letter",
+      format: "docx",
+      source_tab: "coverletter",
+    });
     const lines = fullLetterText.split("\n");
     const paragraphs = lines.map((line, i) => {
       const isName = i === 0 && contact.name && line === contact.name;
@@ -344,7 +363,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5 text-xs">
+              <Button variant="outline" size="sm" onClick={() => generate({ isRegeneration: true })} disabled={loading} className="gap-1.5 text-xs">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 <span className="hidden sm:inline">Regenerate</span>
               </Button>
@@ -369,7 +388,13 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 <span className="sm:hidden">.docx</span>
               </Button>
               <Button variant="outline" size="sm" onClick={() => {
-                trackEvent("pdf_export_clicked", { output_type: "cover_letter", format: "pdf", source_tab: "coverletter" });
+                trackExportEvents({
+                  legacyEvent: "pdf_export_clicked",
+                  specificEvent: "cover_letter_pdf_export_clicked",
+                  output_type: "cover_letter",
+                  format: "pdf",
+                  source_tab: "coverletter",
+                });
                 exportCoverLetterPdf({
                   contactName: contact.name || undefined,
                   contactEmail: contact.email || undefined,

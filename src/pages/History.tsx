@@ -10,6 +10,7 @@ import { Copy, ChevronDown, ChevronUp } from "lucide-react";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import {
   SCORE_BREAKDOWN_DIMENSIONS,
@@ -386,6 +387,7 @@ const History = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setLoading(false); return; }
+    trackEvent("history_viewed", { auth_state: "signed_in", plan_tier: isPro ? "pro" : "free" });
     supabase
       .from("alignment_history")
       .select("id, created_at, inferred_role, score, strength_label, top_gap, resume_built")
@@ -404,7 +406,7 @@ const History = () => {
         setFailedCount(failed);
         setLoading(false);
       });
-  }, [user, authLoading]);
+  }, [user, authLoading, isPro]);
 
   // Use mock data for non-pro users to show blurred preview
   const displayEntries = isPro ? entries : MOCK_ENTRIES;
@@ -441,6 +443,7 @@ const History = () => {
 
   const handleViewResult = async (entry: HistoryEntry) => {
     if (expandedId === entry.id) { setExpandedId(null); setExpandedResult(null); return; }
+    trackEvent("history_item_opened", { plan_tier: isPro ? "pro" : "free" });
     const { data } = await supabase
       .from("alignment_history")
       .select("full_result_json")

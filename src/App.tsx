@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AuthCallbackHandler from "@/components/AuthCallbackHandler";
+import AnalyticsBootstrap from "@/components/AnalyticsBootstrap";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,7 @@ const App = () => (
         <Sonner position="bottom-center" />
         <BrowserRouter>
           <AuthCallbackHandler />
+          <AnalyticsBootstrap />
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <div className="flex-1">

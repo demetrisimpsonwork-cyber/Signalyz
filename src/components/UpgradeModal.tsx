@@ -17,6 +17,8 @@ interface UpgradeModalProps {
   isAuthenticated?: boolean;
   hasConsumedOneTimeCredit?: boolean;
   hasOneTimeCredit?: boolean;
+  featureName?: string;
+  outputType?: string;
 }
 
 const UpgradeModal = ({
@@ -25,12 +27,20 @@ const UpgradeModal = ({
   isAuthenticated = true,
   hasConsumedOneTimeCredit = false,
   hasOneTimeCredit = false,
+  featureName,
+  outputType,
 }: UpgradeModalProps) => {
 
   // Track paywall view
   useEffect(() => {
-    if (open) trackEvent("paywall_viewed");
-  }, [open]);
+    if (!open) return;
+    const paywallMeta = {
+      feature_name: featureName,
+      output_type: outputType,
+    };
+    trackEvent("paywall_viewed", paywallMeta);
+    trackEvent("upgrade_modal_opened", paywallMeta);
+  }, [open, featureName, outputType]);
 
   if (!isAuthenticated) {
     return (
@@ -122,6 +132,13 @@ const UpgradeModal = ({
               className="w-full gap-2"
               onClick={() => {
                 trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "upgrade_modal" });
+                trackEvent("paywall_cta_clicked", {
+                  cta_name: "unlock_pro_subscription",
+                  payment_mode: "subscription",
+                  source: "upgrade_modal",
+                  feature_name: featureName,
+                  output_type: outputType,
+                });
                 trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/mo", source: "upgrade_modal" });
                 initiateCheckout("subscription");
               }}
@@ -141,6 +158,13 @@ const UpgradeModal = ({
               className="w-full gap-2"
               onClick={() => {
                 trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "upgrade_modal" });
+                trackEvent("paywall_cta_clicked", {
+                  cta_name: "one_time_report",
+                  payment_mode: "one_time",
+                  source: "upgrade_modal",
+                  feature_name: featureName,
+                  output_type: outputType,
+                });
                 trackEvent("cta_clicked", { cta_label: hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9", source: "upgrade_modal" });
                 initiateCheckout("one_time");
               }}

@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { trackEvent } from "@/lib/analytics";
 import ResultSection from "@/components/ResultSection";
 import { ChevronDown, ChevronRight, Shield } from "lucide-react";
 
@@ -38,6 +39,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) return;
+    trackEvent("dashboard_viewed", { auth_state: "signed_in", plan_tier: isPro ? "pro" : "free" });
     const fetch = async () => {
       const { data } = await supabase
         .from("optimizations")

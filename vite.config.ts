@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => ({
         __dirname,
         "./supabase/functions/_shared/groundedCalibration.ts",
       ),
+      "@signalyz/coverLetterRoleStyle": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/coverLetterRoleStyle.ts",
+      ),
     },
   },
 }));

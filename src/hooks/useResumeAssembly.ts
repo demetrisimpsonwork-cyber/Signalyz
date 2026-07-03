@@ -6,6 +6,7 @@ import { evaluateConfidence, type ConfidenceResult } from "@/lib/resumeConfidenc
 import { handleUsageLimitError } from "@/lib/usageLimitError";
 import { evaluateAssemblyParseGate, PARSE_GATE_MESSAGE } from "@/lib/resumeIntake";
 import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
+import { trackEvent, trackReliabilityError } from "@/lib/analytics";
 
 export interface CalibratedResumeData {
   header: {
@@ -105,6 +106,10 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
     setAssembledResume(resume);
     setPendingResume(null);
     setStep(3);
+    trackEvent("calibrated_resume_generated", {
+      output_type: "calibrated_resume",
+      success: true,
+    });
     try {
       localStorage.setItem("signalyz_calibrated_resume_data", JSON.stringify(resume));
     } catch {}
@@ -144,6 +149,9 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
       const gate = evaluateAssemblyParseGate(originalResume);
       if (gate.blocked) {
         console.warn("[useResumeAssembly] Parse gate blocked assembly:", gate.reason);
+        trackReliabilityError("parser_failed", gate.reason || "PARSE_GATE", {
+          output_type: "calibrated_resume",
+        });
         setError(gate.detail || PARSE_GATE_MESSAGE);
         setStep(0);
         setLoading(false);
@@ -199,6 +207,10 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
           ? err.formatAssemblyMessage()
           : (isFriendly ? FRIENDLY_FAIL_MSG : (err.message || FRIENDLY_FAIL_MSG));
         setError(errMsg);
+        trackReliabilityError("edge_function_failed", err instanceof StructuredEdgeError ? err.error_code : errMsg, {
+          output_type: "calibrated_resume",
+          feature_name: "calibrated_resume",
+        });
         setLoading(false);
         assemblingRef.current = false;
         return;

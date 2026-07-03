@@ -14,9 +14,16 @@ export type ResumeInputSource = "paste" | "pdf" | "docx";
 interface ResumeUploadProps {
   onTextExtracted: (text: string, source?: ResumeInputSource) => void;
   onClear?: () => void;
+  onUploadStarted?: (fileType: ResumeInputSource) => void;
+  onUploadFailed?: (errorCode: string, fileType: ResumeInputSource) => void;
 }
 
-const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
+const ResumeUpload = ({
+  onTextExtracted,
+  onClear,
+  onUploadStarted,
+  onUploadFailed,
+}: ResumeUploadProps) => {
   const [extracting, setExtracting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +96,9 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
     }
 
     const ext = file.name.split(".").pop()?.toLowerCase();
+    const fileType: ResumeInputSource = ext === "docx" ? "docx" : "pdf";
 
+    onUploadStarted?.(fileType);
     setExtracting(true);
     setFileName(file.name);
 
@@ -105,9 +114,12 @@ const ResumeUpload = ({ onTextExtracted, onClear }: ResumeUploadProps) => {
         throw new Error("Could not extract meaningful text from this file.");
       }
 
-      onTextExtracted(text, ext === "docx" ? "docx" : "pdf");
+      onTextExtracted(text, fileType);
       toast.success("Resume text extracted successfully.");
     } catch (err: any) {
+      const errorCode =
+        err?.message?.includes("image-based") ? "SCANNED_PDF" : "PARSE_FAILED";
+      onUploadFailed?.(errorCode, fileType);
       toast.error(err.message || "Failed to extract text from file.");
       setFileName(null);
     } finally {

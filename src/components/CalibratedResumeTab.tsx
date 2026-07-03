@@ -17,7 +17,7 @@ import ResumeStructureConfirm from "@/components/ResumeStructureConfirm";
 import PdfFallbackState from "@/components/PdfFallbackState";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackExportEvents } from "@/lib/analytics";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
@@ -156,15 +156,43 @@ const CalibratedResumeTab = ({
 
   const handleExportDocx = () => {
     if (!currentResume) return;
-    trackEvent("docx_export_clicked", { output_type: "calibrated_resume", format: "docx", source_tab: "calibrated" });
-    exportCalibratedDocx(currentResume, exportSanitizeOptions);
-    toast.success("ATS resume exported");
+    try {
+      trackExportEvents({
+        legacyEvent: "docx_export_clicked",
+        specificEvent: "calibrated_resume_docx_export_clicked",
+        output_type: "calibrated_resume",
+        format: "docx",
+        source_tab: "calibrated",
+      });
+      exportCalibratedDocx(currentResume, exportSanitizeOptions);
+      toast.success("ATS resume exported");
+    } catch {
+      trackEvent("export_failed", {
+        output_type: "calibrated_resume",
+        export_format: "docx",
+        success: false,
+      });
+    }
   };
 
   const handleExportPdf = () => {
     if (!currentResume) return;
-    trackEvent("pdf_export_clicked", { output_type: "calibrated_resume", format: "pdf", source_tab: "calibrated" });
-    exportCalibratedPdf(currentResume, exportSanitizeOptions);
+    try {
+      trackExportEvents({
+        legacyEvent: "pdf_export_clicked",
+        specificEvent: "calibrated_resume_pdf_export_clicked",
+        output_type: "calibrated_resume",
+        format: "pdf",
+        source_tab: "calibrated",
+      });
+      exportCalibratedPdf(currentResume, exportSanitizeOptions);
+    } catch {
+      trackEvent("export_failed", {
+        output_type: "calibrated_resume",
+        export_format: "pdf",
+        success: false,
+      });
+    }
   };
 
   const handleCleanTextProvided = (text: string) => {

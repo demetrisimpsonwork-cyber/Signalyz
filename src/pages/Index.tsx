@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
-import { trackEvent, scoreBucket, type PlanTier } from "@/lib/analytics";
+import { trackEvent, ga4ScoreBucket, trackReliabilityError, type PlanTier } from "@/lib/analytics";
+import {
+  durationBucket,
+  signalStrengthEvent,
+} from "@/lib/analyticsHelpers";
+import { detectRoleCategory } from "@signalyz/coverLetterRoleStyle";
 import { clearLinkedInOutputCache } from "@/lib/linkedInOutputCache";
 import { sanitizeResumeText } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
@@ -431,6 +436,10 @@ const Index = () => {
   const [assemblySessionKey, setAssemblySessionKey] = useState(0);
   const runSessionKey = `${analysisSessionKey}-${assemblySessionKey}`;
   const jdInputTrackedRef = useRef(false);
+  const jdPastedTrackedRef = useRef(false);
+  const resumePasteTrackedRef = useRef(false);
+  const lastInputStrengthRef = useRef<PasteQuality | null>(null);
+  const [upgradeContext, setUpgradeContext] = useState<{ feature_name?: string; output_type?: string }>({});
   const [showRestoredBanner, setShowRestoredBanner] = useState(false);
   const prevUserRef = useRef<typeof user>(undefined);
 
@@ -460,6 +469,9 @@ const Index = () => {
     calibratedRunPendingRef.current = false;
     overrideResumeRef.current = null;
     jdInputTrackedRef.current = false;
+    jdPastedTrackedRef.current = false;
+    resumePasteTrackedRef.current = false;
+    lastInputStrengthRef.current = null;
     clearLinkedInOutputCache();
     setAnalysisSessionKey((k) => k + 1);
   }, []);
@@ -509,7 +521,8 @@ const Index = () => {
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
-      trackEvent("payment_completed", { payment_mode: "subscription" });
+      trackEvent("payment_completed", { payment_mode: "subscription", success: true });
+      trackEvent("purchase", { payment_mode: "subscription" });
       toast("Your exact fix is now unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
@@ -524,7 +537,8 @@ const Index = () => {
       }, 500);
     }
     if (searchParams.get("purchase") === "success") {
-      trackEvent("payment_completed", { payment_mode: "one_time" });
+      trackEvent("payment_completed", { payment_mode: "one_time", success: true });
+      trackEvent("purchase", { payment_mode: "one_time" });
       toast("Your exact fix is now unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
@@ -602,6 +616,7 @@ const Index = () => {
       // Mark as restored so we can invalidate if user edits
       sessionRestoredRef.current = true;
       setShowRestoredBanner(true);
+      trackEvent("prior_run_restored", { plan_tier: planTier });
       setResult(parsed.result);
       setBullet(parsed.bullet);
       setJd(parsed.jd);
@@ -631,6 +646,7 @@ const Index = () => {
   // Invalidate stale restored results when user edits input
   const invalidateStaleSession = useCallback(() => {
     if (sessionRestoredRef.current) {
+      trackEvent("new_analysis_started_after_history", { plan_tier: planTier });
       // User changed input after a restore — clear old results
       sessionRestoredRef.current = false;
       setShowRestoredBanner(false);
@@ -645,16 +661,51 @@ const Index = () => {
 
   // Tab view analytics — fires when user switches output surfaces
   useEffect(() => {
-    if (mode === "director" && result) {
-      trackEvent("report_tab_viewed", { source_tab: "director", plan_tier: planTier });
-    } else if (mode === "calibrated" && result) {
-      trackEvent("calibrated_resume_viewed", { source_tab: "calibrated", plan_tier: planTier });
-    } else if (mode === "coverletter" && result) {
-      trackEvent("cover_letter_viewed", { source_tab: "coverletter", plan_tier: planTier });
-    } else if (mode === "linkedin" && result) {
-      trackEvent("linkedin_viewed", { source_tab: "linkedin", plan_tier: planTier });
+    if (!result) return;
+    const base = { plan_tier: planTier, auth_state: user ? "signed_in" as const : "anonymous" as const };
+    if (mode === "director") {
+      trackEvent("report_tab_viewed", { ...base, source_tab: "director" });
+      trackEvent("hiring_report_viewed", { ...base, output_type: "report" });
+      trackEvent("report_viewed", { ...base, output_type: "report" });
+    } else if (mode === "calibrated") {
+      trackEvent("calibrated_resume_viewed", { ...base, source_tab: "calibrated", output_type: "calibrated_resume" });
+    } else if (mode === "coverletter") {
+      trackEvent("cover_letter_viewed", { ...base, source_tab: "coverletter", output_type: "cover_letter" });
+    } else if (mode === "linkedin") {
+      trackEvent("linkedin_viewed", { ...base, source_tab: "linkedin", output_type: "linkedin" });
+    } else if (mode === "alignment") {
+      trackEvent("resume_analysis_viewed", { ...base, source_tab: "alignment", output_type: "resume" });
     }
-  }, [mode, result, planTier]);
+  }, [mode, result, planTier, user]);
+
+  const inputStrength = useMemo(() => {
+    if (bullet.trim().length <= 20) return null;
+    return getPasteQuality(parseResumeIntake(bullet));
+  }, [bullet]);
+
+  useEffect(() => {
+    if (!inputStrength || inputStrength === lastInputStrengthRef.current) return;
+    lastInputStrengthRef.current = inputStrength;
+    trackEvent("input_strength_changed", {
+      input_strength: inputStrength,
+      plan_tier: planTier,
+    });
+  }, [inputStrength, planTier]);
+
+  const openUpgradeModal = useCallback(
+    (ctx?: { feature_name?: string; output_type?: string }) => {
+      if (ctx?.feature_name) {
+        trackEvent("pro_feature_blocked", {
+          feature_name: ctx.feature_name,
+          output_type: ctx.output_type,
+          plan_tier: planTier,
+        });
+      }
+      setUpgradeContext(ctx ?? {});
+      setShowUpgrade(true);
+    },
+    [planTier],
+  );
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
@@ -876,6 +927,11 @@ const Index = () => {
       setDirectorLoading(false);
       logDirectorRawRenderedMs(requestStartMs, enrichmentKey);
       requestSucceeded = true;
+      trackEvent("report_generated", {
+        output_type: "report",
+        plan_tier: planTier,
+        success: true,
+      });
 
       void runBackgroundDirectorEvidenceEnrichment({
         directorData,
@@ -901,6 +957,11 @@ const Index = () => {
     } catch (err: any) {
       const msg = err.message || FRIENDLY_FAIL_MSG;
       setDirectorError(msg);
+      trackReliabilityError("edge_function_failed", msg, {
+        feature_name: "hiring_report",
+        output_type: "report",
+        plan_tier: planTier,
+      });
     } finally {
       const requestEndedAt = new Date().toISOString();
       const totalDurationMs = Date.now() - requestStartMs;
@@ -948,7 +1009,12 @@ const Index = () => {
     if (!validate()) return;
     clearLinkedInOutputCache();
     trackEvent("analyze_clicked", { source: "alignment", plan_tier: planTier });
-    trackEvent("analysis_started", { target_role: result?.inferred_role_title, source: "alignment", plan_tier: planTier });
+    const roleCategory = detectRoleCategory(jd.trim(), result?.inferred_role_title || "");
+    trackEvent("analysis_started", {
+      source: "alignment",
+      plan_tier: planTier,
+      role_category: roleCategory,
+    });
     setLoading(true);
     // Don't clear result/directorResult/sessionResumeAssembled eagerly —
     // preserve last successful state as fallback if this run fails.
@@ -1076,12 +1142,29 @@ const Index = () => {
       setAssemblySessionKey((k) => k + 1);
       setAnalysisSessionKey((k) => k + 1);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
+      const elapsedSec = Math.round((Date.now() - startTime) / 1000);
+      const durBucket = durationBucket(elapsedSec);
+      const ga4Bucket = ga4ScoreBucket(res.match_score);
+      const completedRoleCategory = detectRoleCategory(normJd.text, res.inferred_role_title || "");
+      const signalEvt = signalStrengthEvent(res.match_score);
+
       trackEvent("analysis_completed", {
-        signal_score: res.match_score,
-        score_bucket: scoreBucket(res.match_score),
-        target_role: res.inferred_role_title,
+        score_bucket: ga4Bucket,
+        ga4_score_bucket: ga4Bucket,
+        role_category: completedRoleCategory,
+        plan_tier: planTier,
+        success: true,
+        duration_bucket: durBucket,
+      });
+      trackEvent("analysis_duration_bucketed", { duration_bucket: durBucket, plan_tier: planTier });
+      trackEvent("score_bucket_recorded", {
+        score_bucket: ga4Bucket,
+        ga4_score_bucket: ga4Bucket,
         plan_tier: planTier,
       });
+      if (signalEvt) {
+        trackEvent(signalEvt, { score_bucket: ga4Bucket, plan_tier: planTier });
+      }
 
       // Session persistence: save last analysis for returning users
       try {
@@ -1163,7 +1246,14 @@ const Index = () => {
       const isIntentionalBlock = localErrorCode === "DAILY_LIMIT" || localErrorCode === "CREDENTIAL_MISMATCH";
       if (isIntentionalBlock) {
         console.info("[Alignment] Intentional block, not retrying:", localErrorCode);
-        // Already set by processResult, just stop
+        if (localErrorCode === "DAILY_LIMIT") {
+          trackReliabilityError("rate_limit_reached", "DAILY_LIMIT", { plan_tier: planTier });
+        }
+        trackEvent("analysis_failed", {
+          error_code: localErrorCode || "BLOCKED",
+          plan_tier: planTier,
+          success: false,
+        });
       } else {
         // Silent retry once for cold-start / transient failures
         console.warn("[Alignment] Attempt 1 failed — retrying silently.", {
@@ -1196,6 +1286,10 @@ const Index = () => {
             plan_tier: planTier,
             success: false,
           });
+          trackReliabilityError("edge_function_failed", localErrorCode || retryErr.message, {
+            plan_tier: planTier,
+            feature_name: "alignment",
+          });
         }
       }
     } finally {
@@ -1207,6 +1301,7 @@ const Index = () => {
   const fillSample = (roleIndex = selectedSampleRole) => {
     const role = SAMPLE_ROLES[roleIndex];
     sampleLoadedRef.current = true;
+    trackEvent("sample_jd_clicked", { plan_tier: planTier });
     setBullet(role.bullet);
     setJd(role.jd);
     setErrors({});
@@ -1415,7 +1510,13 @@ const Index = () => {
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  if (tab.proOnly && !effectiveIsPro) {
+                    openUpgradeModal({
+                      feature_name: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
+                      output_type: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
+                    });
+                    return;
+                  }
                   // Consume one-time credit on first Pro-gated tab access
                   if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
                     creditConsumedRef.current = true;
@@ -1449,7 +1550,13 @@ const Index = () => {
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.proOnly && !effectiveIsPro) { setShowUpgrade(true); return; }
+                  if (tab.proOnly && !effectiveIsPro) {
+                    openUpgradeModal({
+                      feature_name: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
+                      output_type: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
+                    });
+                    return;
+                  }
                   // Consume one-time credit on first Pro-gated tab access
                   if (hasOneTimeCredit && !isPro && !isAdmin && !creditConsumedRef.current && (tab.id === "calibrated" || tab.id === "coverletter" || tab.id === "director")) {
                     creditConsumedRef.current = true;
@@ -1506,7 +1613,7 @@ const Index = () => {
               }
               onRunAlignment={() => setMode("alignment")}
               isPro={effectiveIsPro}
-              onUpgrade={() => setShowUpgrade(true)}
+              onUpgrade={() => openUpgradeModal()}
               alignmentResult={result as unknown as Record<string, unknown> || {}}
             />
           </div>
@@ -1517,7 +1624,7 @@ const Index = () => {
           <CalibratedResumeTab
             key={runSessionKey}
             isPro={effectiveIsPro}
-            onUpgrade={() => setShowUpgrade(true)}
+            onUpgrade={() => openUpgradeModal()}
             directorResult={directorResult}
             originalResume={bullet}
             jdText={jd}
@@ -1550,7 +1657,7 @@ const Index = () => {
           <CoverLetterTab
             key={runSessionKey}
             isPro={effectiveIsPro}
-            onUpgrade={() => setShowUpgrade(true)}
+            onUpgrade={() => openUpgradeModal()}
             experience={bullet}
             jd={jd}
             alignmentResult={result as any || {}}
@@ -1573,7 +1680,7 @@ const Index = () => {
               onRunAlignment={() => setMode("alignment")}
               onRunDirector={handleDirectorCalibrate}
               isPro={effectiveIsPro}
-              onUpgrade={() => setShowUpgrade(true)}
+              onUpgrade={() => openUpgradeModal()}
               isAuthenticated={!!user}
             />
         )}
@@ -1587,32 +1694,80 @@ const Index = () => {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Your Resume</label>
                   <ResumeUpload
+                    onUploadStarted={(fileType) => {
+                      trackEvent("resume_upload_started", { file_type: fileType, plan_tier: planTier });
+                    }}
                     onTextExtracted={(text, source) => {
                       invalidateStaleSession();
                       setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
-                      trackEvent("resume_uploaded", { input_source: source || "file", plan_tier: planTier });
+                      trackEvent("resume_uploaded", { input_source: source || "file", file_type: source, plan_tier: planTier });
+                    }}
+                    onUploadFailed={(errorCode, fileType) => {
+                      trackEvent("resume_upload_failed", {
+                        error_code: errorCode,
+                        file_type: fileType,
+                        plan_tier: planTier,
+                        success: false,
+                      });
+                      trackReliabilityError("parser_failed", errorCode, {
+                        file_type: fileType,
+                        plan_tier: planTier,
+                      });
                     }}
                     onClear={() => {
                       invalidateStaleSession();
                       setBullet("");
                       setInputSource("paste");
                       setErrors((p) => ({ ...p, bullet: undefined }));
+                      trackEvent("input_cleared", { input_type: "resume", plan_tier: planTier });
                     }}
                   />
                   <div className="relative mt-2">
                     <Textarea
                       placeholder="Paste your full resume here — or upload it above. Include your experience, titles, dates, and bullet points."
                       value={bullet}
-                      onChange={(e) => { invalidateStaleSession(); setBullet(e.target.value); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); }}
+                      onChange={(e) => {
+                        invalidateStaleSession();
+                        setBullet(e.target.value);
+                        setInputSource("paste");
+                        setIsResumeFromCalibrated(false);
+                        setOriginalResumeBeforeCalibration(null);
+                        setOriginalBaselineScore(null);
+                        try {
+                          localStorage.removeItem("signalyz_original_resume_baseline");
+                          localStorage.removeItem("signalyz_original_baseline_score");
+                        } catch {}
+                        setErrors((p) => ({ ...p, bullet: undefined }));
+                        if (!resumePasteTrackedRef.current && e.target.value.trim().length >= 50) {
+                          resumePasteTrackedRef.current = true;
+                          trackEvent("resume_text_pasted", { input_source: "paste", plan_tier: planTier });
+                        }
+                      }}
                       rows={4}
                       className={`${errors.bullet ? "border-destructive" : ""} ${bullet ? "pr-8" : ""}`}
                     />
                     {bullet && (
                       <button
                         type="button"
-                        onClick={() => { invalidateStaleSession(); setBullet(""); setInputSource("paste"); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {} setErrors((p) => ({ ...p, bullet: undefined })); setResult(null); setDirectorResult(null); setSessionResumeAssembled(false); }}
+                        onClick={() => {
+                          invalidateStaleSession();
+                          setBullet("");
+                          setInputSource("paste");
+                          setIsResumeFromCalibrated(false);
+                          setOriginalResumeBeforeCalibration(null);
+                          setOriginalBaselineScore(null);
+                          try {
+                            localStorage.removeItem("signalyz_original_resume_baseline");
+                            localStorage.removeItem("signalyz_original_baseline_score");
+                          } catch {}
+                          setErrors((p) => ({ ...p, bullet: undefined }));
+                          setResult(null);
+                          setDirectorResult(null);
+                          setSessionResumeAssembled(false);
+                          trackEvent("input_cleared", { input_type: "resume", plan_tier: planTier });
+                        }}
                         className="absolute top-2 right-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         title="Clear resume input"
                         aria-label="Clear resume input"
@@ -1641,6 +1796,10 @@ const Index = () => {
                         jdInputTrackedRef.current = true;
                         trackEvent("jd_input_started", { plan_tier: planTier });
                       }
+                      if (!jdPastedTrackedRef.current && e.target.value.trim().length >= 50) {
+                        jdPastedTrackedRef.current = true;
+                        trackEvent("jd_pasted", { plan_tier: planTier });
+                      }
                     }}
                     rows={6}
                     className={errors.jd ? "border-destructive" : ""}
@@ -1653,7 +1812,7 @@ const Index = () => {
                     <div className="w-full space-y-2">
                       {user ? (
                         <>
-                           <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                           <Button onClick={() => openUpgradeModal()} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
                              Unlock Full Signal Intelligence →
                            </Button>
                             <p className="text-xs text-muted-foreground">
@@ -1761,7 +1920,7 @@ const Index = () => {
                          <Button
                           size="sm"
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-                          onClick={() => setShowUpgrade(true)}
+                          onClick={() => openUpgradeModal()}
                         >
                           Unlock Full Signal Intelligence →
                         </Button>
@@ -1820,7 +1979,7 @@ const Index = () => {
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
                             <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
                             <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
-                            <Button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto">Unlock Full Signal Intelligence →</Button>
+                            <Button onClick={() => openUpgradeModal()} className="w-full sm:w-auto">Unlock Full Signal Intelligence →</Button>
                           </div>
                         )}
                       </>
@@ -1979,7 +2138,7 @@ const Index = () => {
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent-foreground/70">Your top repositioning move</p>
                                     <p className="text-[13px] text-foreground leading-relaxed">{topMove}</p>
                                     <button
-                                      onClick={() => user ? setShowUpgrade(true) : undefined}
+                                      onClick={() => user ? openUpgradeModal() : undefined}
                                       {...(!user ? { } : {})}
                                       className="text-xs text-primary hover:underline cursor-pointer mt-1 text-left"
                                     >
@@ -2000,7 +2159,7 @@ const Index = () => {
                                     See exactly how your experience gets repositioned to match this role.
                                   </p>
                                  {user ? (
-                                   <Button onClick={() => setShowUpgrade(true)} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                                   <Button onClick={() => openUpgradeModal()} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
                                       <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
                                     </Button>
                                 ) : (
@@ -2061,7 +2220,7 @@ const Index = () => {
                         scoring_breakdown: result.scoring_breakdown,
                         score_rationale: result.score_rationale,
                         isPro: effectiveIsPro,
-                        onUpgrade: () => setShowUpgrade(true),
+                        onUpgrade: () => openUpgradeModal(),
                       }}
                       matchScore={result.match_score}
                       isCalibratedRun={resultRunType === "calibrated"}
@@ -2072,7 +2231,7 @@ const Index = () => {
                       bullet={bullet}
                       result={result}
                       effectiveIsPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
+                      onUpgrade={() => openUpgradeModal()}
                     />
 
                     {/* Signal Action Plan preview + unified Pro gate for non-Pro users */}
@@ -2125,7 +2284,7 @@ const Index = () => {
                                <p className="text-xs text-muted-foreground">You're closer than you think — the gap is positioning, not experience.</p>
                                <p className="text-xs text-muted-foreground italic">Your full action plan shows exactly what to change and why.</p>
                               {user ? (
-                                <Button onClick={() => setShowUpgrade(true)} className="w-full" size="sm">
+                                <Button onClick={() => openUpgradeModal()} className="w-full" size="sm">
                                   Unlock Full Signal Intelligence →
                                 </Button>
                               ) : (
@@ -2151,7 +2310,7 @@ const Index = () => {
                           experience={bullet}
                           jd={jd}
                           isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
+                          onUpgrade={() => openUpgradeModal()}
                         />
 
                         {/* Signal Gap Actions */}
@@ -2160,14 +2319,14 @@ const Index = () => {
                           jd={jd}
                           alignmentResult={result as any}
                           isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
+                          onUpgrade={() => openUpgradeModal()}
                         />
 
                         {result.identity_strength_index && (
                           <IdentityStrengthIndex
                             data={result.identity_strength_index}
                             isPro={effectiveIsPro}
-                            onUpgrade={() => setShowUpgrade(true)}
+                            onUpgrade={() => openUpgradeModal()}
                             inferredRoleTitle={result.inferred_role_title}
                           />
                         )}
@@ -2177,7 +2336,7 @@ const Index = () => {
                           experience={bullet}
                           jd={jd}
                           isPro={effectiveIsPro}
-                          onUpgrade={() => setShowUpgrade(true)}
+                          onUpgrade={() => openUpgradeModal()}
                         />
 
                         {(result.alignment_notes || result.gap_suggestions) && (
@@ -2189,7 +2348,7 @@ const Index = () => {
                             inferredRoleTitle={result.inferred_role_title}
                             isPro={effectiveIsPro}
                             isAuthenticated={!!user}
-                            onUpgrade={() => setShowUpgrade(true)}
+                            onUpgrade={() => openUpgradeModal()}
                           />
                         )}
 
@@ -2202,7 +2361,7 @@ const Index = () => {
                       jd={jd}
                       alignmentResult={result as any}
                       isPro={effectiveIsPro}
-                      onUpgrade={() => setShowUpgrade(true)}
+                      onUpgrade={() => openUpgradeModal()}
                     />
 
                     {/* Terminal Conversion Block — free users only */}
@@ -2219,7 +2378,7 @@ const Index = () => {
                           Unlock the full Signal Action Plan, calibrated bullets, and role-specific positioning.
                         </p>
                         {user ? (
-                          <Button onClick={() => setShowUpgrade(true)} size="lg" className="gap-2 w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                          <Button onClick={() => openUpgradeModal()} size="lg" className="gap-2 w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
                             <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
                           </Button>
                         ) : (
@@ -2316,6 +2475,8 @@ const Index = () => {
         isAuthenticated={!!user}
         hasConsumedOneTimeCredit={hasConsumedOneTimeCredit}
         hasOneTimeCredit={hasOneTimeCredit}
+        featureName={upgradeContext.feature_name}
+        outputType={upgradeContext.output_type}
       />
 
     </div>
