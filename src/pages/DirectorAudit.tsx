@@ -227,7 +227,7 @@ const DirectorAudit = () => {
           Signal Positioning Report
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          Diagnoses where your signal breaks down across every hiring stage and rebuilds your positioning from the threshold up. 11-section output. Zero fabrication.
+          Diagnoses where your signal breaks down across every hiring stage and rebuilds your positioning from the threshold up. 11-section output. Built from your real experience — designed to avoid unsupported claims.
         </p>
       </div>
 

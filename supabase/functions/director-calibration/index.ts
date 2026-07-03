@@ -1,7 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  DAILY_FREE_RUN_LIMIT,
+  getDailyRunCount,
+  getUserIdFromRequest,
+  incrementDailyRunCount,
+  loadUserEntitlements,
+} from "../_shared/entitlements.ts";
 import { ANTHROPIC_SONNET_MODEL } from "../_shared/anthropicModel.ts";
 import { RECRUITER_PSYCHOLOGY } from "../_shared/humanWritingEngine.ts";
+import { applyHiringReportIntegrityGate } from "../_shared/hiringReportIntegrity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1073,6 +1081,7 @@ async function runPipeline(
   result._normalized = normalized;
   result.run_id = runId;
   result.pipeline_version = PIPELINE_VERSION;
+  applyHiringReportIntegrityGate(result, experience, jd?.trim() ?? "");
   return result;
 }
 
@@ -1084,8 +1093,70 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
+    const authenticatedUserId = await getUserIdFromRequest(req);
     const body = await req.json();
     const { experience, jd, deterministic = true, qa_mode = false } = body;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+
+    if (qa_mode) {
+      if (!authenticatedUserId) {
+        return new Response(JSON.stringify({
+          status: "error",
+          request_id: requestId,
+          error_code: "AUTH_REQUIRED",
+          message: "Sign in is required to run director QA mode.",
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const qaEntitlements = await loadUserEntitlements(sb, authenticatedUserId);
+      if (!qaEntitlements.isAdmin) {
+        return new Response(JSON.stringify({
+          status: "error",
+          request_id: requestId,
+          error_code: "FORBIDDEN",
+          message: "Director QA mode is restricted to administrators.",
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (!authenticatedUserId) {
+      return new Response(JSON.stringify({
+        status: "error",
+        request_id: requestId,
+        error_code: "AUTH_REQUIRED",
+        message: "Sign in to generate your Signal Positioning Report.",
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let entitlements = null;
+    if (authenticatedUserId) {
+      entitlements = await loadUserEntitlements(sb, authenticatedUserId);
+      if (!qa_mode && !entitlements.isProEntitled) {
+        const dailyRuns = await getDailyRunCount(sb, authenticatedUserId);
+        if (dailyRuns >= DAILY_FREE_RUN_LIMIT) {
+          return new Response(JSON.stringify({
+            status: "error",
+            request_id: requestId,
+            error_code: "RATE_LIMIT",
+            message: `Daily free limit reached (${DAILY_FREE_RUN_LIMIT} runs per day). Upgrade to Signalyz Pro for unlimited access.`,
+            limit_reached: true,
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
 
     // --- Structured logging ---
     console.log(JSON.stringify({
@@ -1096,6 +1167,9 @@ serve(async (req) => {
       resume_text_length: typeof experience === "string" ? experience.length : 0,
       jd_text_length: typeof jd === "string" ? jd.length : 0,
       total_payload_length: (typeof experience === "string" ? experience.length : 0) + (typeof jd === "string" ? jd.length : 0),
+      authenticated: !!authenticatedUserId,
+      entitlement_source: entitlements?.entitlementSource ?? null,
+      qa_mode,
     }));
 
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -1157,6 +1231,10 @@ serve(async (req) => {
     console.log(JSON.stringify({ event: "pipeline_start", request_id: requestId, experience_length: cleanExperience.length }));
     const result = await runPipeline(apiKey, cleanExperience, jd, deterministic);
     console.log(JSON.stringify({ event: "pipeline_complete", request_id: requestId }));
+
+    if (authenticatedUserId && entitlements && !qa_mode && !entitlements.isProEntitled) {
+      await incrementDailyRunCount(sb, authenticatedUserId);
+    }
 
     return new Response(JSON.stringify({ status: "success", request_id: requestId, ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -22,6 +22,10 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/coverLetterRoleStyle.ts",
       ),
+      "@signalyz/hiringReportIntegrity": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/hiringReportIntegrity.ts",
+      ),
     },
   },
 });

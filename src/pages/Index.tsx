@@ -372,7 +372,7 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} isAuthenticated={isAuthenticated} targetRoleTitle={result.inferred_role_title} />
+            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} isAuthenticated={isAuthenticated} targetRoleTitle={result.inferred_role_title} resumeText={bullet} jdText={jd} />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
@@ -943,6 +943,7 @@ const Index = () => {
           sessionId: getResumeSessionId(),
           isAuthenticated: !!user,
           jdText: jd?.trim() || undefined,
+          originalResumeText: normResume.text,
           alignmentGaps: {
             top_missing_signal: result?.top_missing_signal,
             missing_keywords: result?.missing_keywords,

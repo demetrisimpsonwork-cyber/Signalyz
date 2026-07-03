@@ -1,10 +1,7 @@
 import { Copy, Check, Download, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { GroundedRecommendation, GroundedRecommendationInsights } from "@/lib/groundedRecommendationTypes";
-import { GroundedNextStepsPanel } from "@/components/GroundedNextStepsPanel";
-import { resolveHiringReportRoleLabel } from "@/lib/hiringReportRoleLabel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +86,12 @@ export interface ExportBuilderResult {
     revised_bullet: string;
     gap_fixed: string;
   }>;
+  rejected_changes?: Array<{
+    original_bullet: string;
+    revised_bullet: string;
+    gap_fixed: string;
+    rejection_reason: string;
+  }>;
 }
 
 export interface DirectorCalibrationResult {
@@ -148,7 +151,8 @@ const KNOWN_LABELS: Record<string, string> = {
 
 function humanizeLabel(raw: string): string {
   if (!raw) return raw;
-  const known = KNOWN_LABELS[raw];
+  const atomic = normalizeAtomicGapLabel(raw);
+  const known = KNOWN_LABELS[atomic];
   if (known) return known;
   // Auto-convert snake_case / kebab-case to Title Case
   if (/[_-]/.test(raw)) {
@@ -343,10 +347,29 @@ function normalizeResult(raw: DirectorCalibrationResult): DirectorCalibrationRes
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, isAuthenticated = true, targetRoleTitle }: { result: DirectorCalibrationResult; isPro?: boolean; onUpgrade?: () => void; isAuthenticated?: boolean; targetRoleTitle?: string | null }) => {
+const DirectorCalibrationBlock = ({
+  result: rawResult,
+  isPro = true,
+  onUpgrade,
+  isAuthenticated = true,
+  targetRoleTitle,
+  resumeText = "",
+  jdText = "",
+}: {
+  result: DirectorCalibrationResult;
+  isPro?: boolean;
+  onUpgrade?: () => void;
+  isAuthenticated?: boolean;
+  targetRoleTitle?: string | null;
+  resumeText?: string;
+  jdText?: string;
+}) => {
   const [copied, setCopied] = useState(false);
 
-  const result = normalizeResult(rawResult);
+  const result = useMemo(() => {
+    const normalized = normalizeResult(rawResult);
+    return applyHiringReportIntegrityGate(normalized, resumeText, jdText);
+  }, [rawResult, resumeText, jdText]);
 
   // Log debug info to console only — never render to DOM
   if (result.run_id) {
@@ -804,6 +827,11 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Calibrated</p>
                       <p className="text-xs text-foreground leading-relaxed">{target.rewritten_bullet}</p>
                     </div>
+                  ) : (target as { validator_status?: string; rejection_reason?: string }).validator_status === "rejected" ? (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 space-y-1">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/80">Rejected — needs source confirmation</p>
+                      <p className="text-[10px] text-destructive/90">{(target as { rejection_reason?: string }).rejection_reason}</p>
+                    </div>
                   ) : null}
                 </div>
               ));
@@ -852,7 +880,7 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
             {result.export_builder.changes_diff.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                  Changes ({result.export_builder.changes_diff.length})
+                  Approved changes ({result.export_builder.changes_diff.length})
                 </p>
                 <div className="space-y-2">
                   {result.export_builder.changes_diff.map((diff, i) => (
@@ -866,6 +894,23 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
                         <p className="text-xs text-foreground leading-relaxed">{diff.revised_bullet}</p>
                       </div>
                       <p className="text-[10px] text-muted-foreground/70 pl-4">Gap fixed: {humanizeLabel(diff.gap_fixed)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(result.export_builder.rejected_changes?.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive/80">
+                  Rejected — needs source confirmation ({result.export_builder.rejected_changes!.length})
+                </p>
+                <div className="space-y-2">
+                  {result.export_builder.rejected_changes!.map((diff, i) => (
+                    <div key={`rej-${i}`} className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 space-y-1.5">
+                      <p className="text-[10px] text-destructive/90 font-medium">{diff.rejection_reason}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-through">{diff.original_bullet}</p>
+                      <p className="text-xs text-foreground/70 leading-relaxed">{diff.revised_bullet}</p>
                     </div>
                   ))}
                 </div>
@@ -909,6 +954,10 @@ const DirectorCalibrationBlock = ({ result: rawResult, isPro = true, onUpgrade, 
           Your calibrated assets are ready in the Resume and Letter tabs.
         </p>
       )}
+
+      <p className="text-[11px] text-muted-foreground/80 text-center leading-relaxed px-2">
+        {HIRING_REPORT_TRUST_COPY}
+      </p>
 
       <div className="flex justify-end">
         <button

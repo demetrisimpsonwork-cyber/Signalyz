@@ -21,6 +21,11 @@ import {
   TRANSFERABILITY_CONFIDENCE_THRESHOLD,
 } from "@/lib/groundedRecommendationTypes";
 import { classifyGapType, detectRequirementTier } from "@/lib/gapTaxonomy";
+import {
+  hasSupportedTechnicalPresence,
+  isTechnicalHardSkillSignal,
+  normalizeAtomicGapLabel,
+} from "@signalyz/hiringReportIntegrity";
 
 const MAX_RECOMMENDATIONS = 10;
 const MIN_KEYWORD_CHARS = 2;
@@ -118,12 +123,13 @@ const CALL_CENTER_EVIDENCE_MARKERS = [
 ];
 
 function humanizeGapLabel(raw: string): string {
-  const key = raw.trim().toLowerCase();
+  const atomic = normalizeAtomicGapLabel(raw);
+  const key = atomic.trim().toLowerCase();
   if (GAP_LABEL_PHRASES[key]) return GAP_LABEL_PHRASES[key];
-  if (/[_-]/.test(raw)) {
-    return raw.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  if (/[_-]/.test(atomic)) {
+    return atomic.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }
-  return raw.trim();
+  return atomic.trim();
 }
 
 function dedupeSignals(values: string[]): string[] {
@@ -280,6 +286,7 @@ export function classifySignalEvidence(
   signal: string,
   evidence: RetrievedEvidence[],
   retrievalVerified: boolean,
+  resumeText = "",
 ): SignalClassificationResult {
   if (!retrievalVerified) {
     return {
@@ -339,8 +346,19 @@ export function classifySignalEvidence(
     );
   }
 
+  let classification = defensibility.classification;
+  if (
+    classification === "present" &&
+    isTechnicalHardSkillSignal(signal) &&
+    resumeText &&
+    !hasSupportedTechnicalPresence(signal, resumeText)
+  ) {
+    classification = "missing";
+    classification_reason = CLASSIFICATION_REASON.weakDomainMatch;
+  }
+
   return {
-    classification: defensibility.classification,
+    classification,
     classification_reason,
     evidence_confidence: evidenceConfidence,
     transferability_confidence: effectiveTransferability,
@@ -427,14 +445,22 @@ export async function buildGroundedRecommendations(params: {
   retrieveForSignal: (signal: string) => Promise<RetrievedEvidence[]>;
   /** Optional JD text — enables requirement-tier detection for the gap taxonomy. */
   jdText?: string | null;
+  /** Full resume text — technical hard-skill transfer guardrails. */
+  resumeText?: string | null;
 }): Promise<GroundedRecommendation[]> {
   const signals = buildGapRegistry(params.director, params.alignmentGaps);
   const recommendations: GroundedRecommendation[] = [];
+  const resumeText = params.resumeText ?? "";
 
   for (let rank = 0; rank < signals.length; rank++) {
     const signal = signals[rank];
     const evidence = await params.retrieveForSignal(signal);
-    const classification = classifySignalEvidence(signal, evidence, params.retrievalVerified);
+    const classification = classifySignalEvidence(
+      signal,
+      evidence,
+      params.retrievalVerified,
+      resumeText,
+    );
     const { recommendation, grounded } = buildGroundedRecommendationText(signal, classification);
 
     // Phase A: label the gap (present/partial/missing → Direct/Transferable/
@@ -446,6 +472,8 @@ export async function buildGroundedRecommendations(params: {
       transferabilityConfidence: classification.transferability_confidence,
       toolDomainSpecificity: classification.defensibility_factors?.tool_domain_specificity,
       requirementTier: requirement_tier,
+      resumeText,
+      jdText: params.jdText,
     });
 
     recommendations.push({

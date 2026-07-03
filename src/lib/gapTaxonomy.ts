@@ -15,6 +15,12 @@
  * Pure and dependency-free so it runs identically in the browser and in tests.
  */
 
+import {
+  canTechnicalSignalTransferFromResume,
+  hasSupportedTechnicalPresence,
+  isTechnicalHardSkillSignal,
+} from "@signalyz/hiringReportIntegrity";
+
 export type GapType = "direct" | "transferable" | "preferred" | "domain";
 
 /** Whether the JD treats a signal as core, optional, or unclear. */
@@ -235,6 +241,9 @@ export interface ClassifyGapTypeInput {
   /** 0–100 defensibility tool/domain specificity; LOW for unevidenced specific signals. */
   toolDomainSpecificity?: number;
   requirementTier?: RequirementTier;
+  /** Resume corpus — enables technical hard-skill transfer guardrails. */
+  resumeText?: string | null;
+  jdText?: string | null;
 }
 
 export interface GapTypeResult {
@@ -252,10 +261,24 @@ export interface GapTypeResult {
  */
 export function classifyGapType(input: ClassifyGapTypeInput): GapTypeResult {
   if (input.classification === "present") {
+    if (
+      input.resumeText &&
+      isTechnicalHardSkillSignal(input.signal) &&
+      !hasSupportedTechnicalPresence(input.signal, input.resumeText)
+    ) {
+      return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };
+    }
     return { gap_type: null, gap_type_rationale: "" };
   }
 
   const tier = input.requirementTier ?? "unknown";
+  const resumeText = input.resumeText ?? "";
+
+  if (isTechnicalHardSkillSignal(input.signal)) {
+    if (!canTechnicalSignalTransferFromResume(input.signal, resumeText)) {
+      return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };
+    }
+  }
 
   // Domain / product / tool knowledge — trainable gap; preferred tier softens the label.
   if (isDomainOrToolSpecificSignal(input.signal)) {
@@ -266,6 +289,9 @@ export function classifyGapType(input: ClassifyGapTypeInput): GapTypeResult {
   }
 
   if (input.classification === "partial") {
+    if (isTechnicalHardSkillSignal(input.signal) && !canTechnicalSignalTransferFromResume(input.signal, resumeText)) {
+      return { gap_type: "direct", gap_type_rationale: GAP_TYPE_COPY.direct };
+    }
     if (isSalesRetailSignal(input.signal)) {
       if (tier === "preferred") {
         return { gap_type: "preferred", gap_type_rationale: GAP_TYPE_COPY.preferred };

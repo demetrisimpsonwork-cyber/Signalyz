@@ -9,6 +9,7 @@ import type { AlignmentGapsInput } from "@/lib/groundedRecommendationTypes";
 import { buildGroundedRecommendations } from "@/lib/groundedRecommendations";
 import { buildGroundedRecommendationInsights } from "@/lib/groundedRecommendationInsights";
 import { capEvidenceExcerpt } from "@/lib/evidenceDisplay";
+import { applyHiringReportIntegrityGate } from "@signalyz/hiringReportIntegrity";
 
 /** Retrieved resume evidence chunk with stable display fields. */
 export interface RetrievedEvidence {
@@ -28,6 +29,8 @@ export interface EvidenceRetrievalContext {
   alignmentGaps?: AlignmentGapsInput | null;
   /** Raw JD text — enables requirement-tier detection for the gap taxonomy. */
   jdText?: string | null;
+  /** Full resume text — technical gap guardrails + integrity gate. */
+  originalResumeText?: string | null;
 }
 
 export interface GroundedNarrativeResult {
@@ -434,6 +437,7 @@ export async function enrichPositioningReportWithEvidence(
     retrievalVerified: isRetrievalVerified(context),
     retrieveForSignal: (signal) => cache.forSignal(signal),
     jdText: context.jdText,
+    resumeText: context.originalResumeText,
   });
 
   const grounded_recommendation_insights = buildGroundedRecommendationInsights(rawRecommendations);
@@ -449,7 +453,7 @@ export async function enrichPositioningReportWithEvidence(
     ...grounded_recommendation_insights.additional_gaps,
   ];
 
-  return {
+  const enriched = {
     ...result,
     dimensions: enrichedDimensions,
     signal_classifier,
@@ -463,6 +467,12 @@ export async function enrichPositioningReportWithEvidence(
       evidence_confidence: tierGrounded.confidence,
     },
   };
+
+  return applyHiringReportIntegrityGate(
+    enriched,
+    context.originalResumeText ?? "",
+    context.jdText ?? "",
+  );
 }
 
 /** Stable key for correlating raw render with background enrichment. */
