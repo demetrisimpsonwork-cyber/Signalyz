@@ -43,7 +43,7 @@ describe("P1 security — migration RPC contracts", () => {
     expect(migrationSql).toMatch(/CREATE OR REPLACE FUNCTION public\.increment_run_count\(p_user_id uuid\)/);
   });
 
-  it("service-role RPCs are not granted to authenticated users", () => {
+  it("service-role RPCs are not granted to authenticated users in base migration", () => {
     expect(migrationSql).toMatch(
       /GRANT EXECUTE ON FUNCTION public\.redeem_one_time_credit_for_run\(uuid, text\) TO service_role/,
     );
