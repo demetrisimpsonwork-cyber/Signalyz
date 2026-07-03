@@ -17,6 +17,7 @@ import ResumeStructureConfirm from "@/components/ResumeStructureConfirm";
 import PdfFallbackState from "@/components/PdfFallbackState";
 import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
+import { trackEvent } from "@/lib/analytics";
 import { extractContactFromText } from "@/lib/contactExtractor";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
@@ -155,12 +156,14 @@ const CalibratedResumeTab = ({
 
   const handleExportDocx = () => {
     if (!currentResume) return;
+    trackEvent("docx_export_clicked", { output_type: "calibrated_resume", format: "docx", source_tab: "calibrated" });
     exportCalibratedDocx(currentResume, exportSanitizeOptions);
     toast.success("ATS resume exported");
   };
 
   const handleExportPdf = () => {
     if (!currentResume) return;
+    trackEvent("pdf_export_clicked", { output_type: "calibrated_resume", format: "pdf", source_tab: "calibrated" });
     exportCalibratedPdf(currentResume, exportSanitizeOptions);
   };
 

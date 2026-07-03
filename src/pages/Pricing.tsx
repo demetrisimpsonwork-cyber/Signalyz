@@ -3,11 +3,16 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
 import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 
 const Pricing = () => {
   const { user } = useAuth();
   const isAuthenticated = !!user;
   const [showSticky, setShowSticky] = useState(false);
+
+  useEffect(() => {
+    trackEvent("pricing_viewed");
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,7 +107,10 @@ const Pricing = () => {
             <Button
               className="mt-3 w-full"
               variant="default"
-              onClick={() => initiateCheckout("subscription")}
+              onClick={() => {
+                trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "pricing" });
+                initiateCheckout("subscription");
+              }}
             >
                Unlock Full Signal Intelligence → $19/mo
             </Button>
@@ -145,7 +153,10 @@ const Pricing = () => {
             <Button
               className="mt-4 w-full"
               variant="outline"
-              onClick={() => initiateCheckout("one_time")}
+              onClick={() => {
+                trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "pricing" });
+                initiateCheckout("one_time");
+              }}
             >
               One-time full report — $9
             </Button>
@@ -162,17 +173,23 @@ const Pricing = () => {
       </p>
 
       <p className="mt-4 text-center text-xs text-muted-foreground leading-relaxed">
-        Every insight is grounded in real resume + job description signals — zero fabrication.
+        Every insight is grounded in real resume + job description signals — designed to avoid unsupported claims.
       </p>
 
       {/* Sticky mobile CTA */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border px-4 py-3 transition-transform duration-300 ${showSticky ? "translate-y-0" : "translate-y-full"}`}>
         {isAuthenticated ? (
           <div className="space-y-2">
-            <Button className="w-full" size="lg" onClick={() => initiateCheckout("subscription")}>
+            <Button className="w-full" size="lg" onClick={() => {
+              trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "pricing_sticky" });
+              initiateCheckout("subscription");
+            }}>
               Unlock Full Signal Intelligence → $19/mo
             </Button>
-            <Button className="w-full" size="sm" variant="outline" onClick={() => initiateCheckout("one_time")}>
+            <Button className="w-full" size="sm" variant="outline" onClick={() => {
+              trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "pricing_sticky" });
+              initiateCheckout("one_time");
+            }}>
               One-time full report — $9
             </Button>
           </div>

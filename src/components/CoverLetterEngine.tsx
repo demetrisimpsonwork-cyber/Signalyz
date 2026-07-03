@@ -14,6 +14,7 @@ import {
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import { trackEvent } from "@/lib/analytics";
 
 interface CoverLetterEngineProps {
   experience: string;
@@ -233,6 +234,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   }, [activeLetter, contact, addresseeLine, salutation]);
 
   const handleCopy = async () => {
+    trackEvent("copy_clicked", { output_type: "cover_letter", source_tab: "coverletter" });
     await navigator.clipboard.writeText(fullLetterText);
     setCopied(true);
     toast.success("Copied to clipboard");
@@ -240,6 +242,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
   };
 
   const handleDownloadDocx = async () => {
+    trackEvent("docx_export_clicked", { output_type: "cover_letter", format: "docx", source_tab: "coverletter" });
     const lines = fullLetterText.split("\n");
     const paragraphs = lines.map((line, i) => {
       const isName = i === 0 && contact.name && line === contact.name;
@@ -365,15 +368,18 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
                 <span className="hidden sm:inline">ATS (.docx)</span>
                 <span className="sm:hidden">.docx</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => exportCoverLetterPdf({
-                contactName: contact.name || undefined,
-                contactEmail: contact.email || undefined,
-                contactPhone: contact.phone || undefined,
-                date: formatDate(),
-                addressee: addresseeLine,
-                salutation,
-                bodyParagraphs: splitParagraphs(activeLetter),
-              })} className="gap-1.5 text-xs">
+              <Button variant="outline" size="sm" onClick={() => {
+                trackEvent("pdf_export_clicked", { output_type: "cover_letter", format: "pdf", source_tab: "coverletter" });
+                exportCoverLetterPdf({
+                  contactName: contact.name || undefined,
+                  contactEmail: contact.email || undefined,
+                  contactPhone: contact.phone || undefined,
+                  date: formatDate(),
+                  addressee: addresseeLine,
+                  salutation,
+                  bodyParagraphs: splitParagraphs(activeLetter),
+                });
+              }} className="gap-1.5 text-xs">
                 <Download className="h-3 w-3" />
                 <span className="hidden sm:inline">PDF (.pdf)</span>
                 <span className="sm:hidden">.pdf</span>

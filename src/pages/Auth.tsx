@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { isPasswordLeaked } from "@/lib/passwordCheck";
+import { trackEvent } from "@/lib/analytics";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -75,6 +76,7 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        trackEvent("signup_completed", { source: "email" });
         toast.success("Check your email to confirm your account!");
       }
     } else {

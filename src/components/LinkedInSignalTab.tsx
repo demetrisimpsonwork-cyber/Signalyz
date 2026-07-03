@@ -6,12 +6,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
+import {
+  loadLinkedInOutputCache,
+  saveLinkedInOutputCache,
+} from "@/lib/linkedInOutputCache";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
 interface LinkedInSignalTabProps {
   experience: string;
   inferredRole: string;
+  jdText?: string;
+  runSessionKey?: string;
   signalKeywords?: string[];
   onRunAlignment?: () => void;
   isPro?: boolean;
@@ -37,43 +43,12 @@ interface ExperienceNoteItem {
   note: string;
 }
 
-const STORAGE_KEY = "signalyz_linkedin_output";
-
 const CALIBRATION_STEPS = [
   "Reading your role and target keywords…",
   "Rewriting your headline for recruiters…",
   "Drafting your About section guidance…",
   "Building your experience framing notes…",
 ];
-
-/* ─── Persistence helpers ────────────────────────────────────────── */
-
-function saveLinkedInOutput(output: LinkedInOutput) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, ...output, ts: Date.now() }));
-  } catch {}
-}
-
-function loadLinkedInOutput(): LinkedInOutput | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.v !== 1) return null;
-    // Expire after 24 hours
-    if (Date.now() - (parsed.ts || 0) > 86400000) {
-      localStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-    return {
-      headline: parsed.headline || null,
-      aboutGuidance: parsed.aboutGuidance || null,
-      experienceNotes: parsed.experienceNotes || null,
-    };
-  } catch {
-    return null;
-  }
-}
 
 /* ─── Pro Gate Card (reused pattern) ─────────────────────────────── */
 
@@ -111,6 +86,8 @@ function CopyButton({ text, id, copiedId, onCopy }: { text: string; id: string; 
 const LinkedInSignalTab = ({
   experience,
   inferredRole,
+  jdText = "",
+  runSessionKey = "",
   signalKeywords = [],
   onRunAlignment,
   isPro = false,
@@ -125,11 +102,13 @@ const LinkedInSignalTab = ({
   const [step, setStep] = useState(0);
   const { user } = useAuth();
 
-  // Restore persisted output on mount
+  const cacheParams = { jdText, resumeText: experience, runSessionKey };
+
+  // Restore persisted output only when fingerprint matches current run
   useEffect(() => {
-    const saved = loadLinkedInOutput();
-    if (saved) setOutput(saved);
-  }, []);
+    const saved = loadLinkedInOutputCache(cacheParams);
+    setOutput(saved ?? { headline: null, aboutGuidance: null, experienceNotes: null });
+  }, [jdText, experience, runSessionKey]);
 
   const handleCopy = useCallback(async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
@@ -205,7 +184,7 @@ const LinkedInSignalTab = ({
         experienceNotes: expData,
       };
       setOutput(newOutput);
-      saveLinkedInOutput(newOutput);
+      saveLinkedInOutputCache(newOutput, cacheParams);
     } catch (e) {
       if (handleUsageLimitError(e)) { setLoading(false); return; }
       toast.error("Failed to calibrate LinkedIn signal.");

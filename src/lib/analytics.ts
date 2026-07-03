@@ -1,70 +1,118 @@
 /**
- * Lightweight analytics layer for tracking conversion and usage events.
- * Events are logged to the database (for authenticated users) and console.
- * No third-party analytics SDK required — extend later as needed.
+ * Analytics layer — console, optional GA4, and DB persistence for authenticated users.
+ * Never sends raw resume/JD text or other PII.
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { sendGa4Event } from "@/lib/ga4";
 
 export type AnalyticsEvent =
   | "analysis_started"
   | "analysis_completed"
+  | "analysis_failed"
   | "cta_clicked"
   | "paywall_viewed"
   | "payment_started"
-  | "payment_completed";
+  | "payment_completed"
+  | "resume_uploaded"
+  | "jd_input_started"
+  | "analyze_clicked"
+  | "report_tab_viewed"
+  | "calibrated_resume_viewed"
+  | "cover_letter_viewed"
+  | "linkedin_viewed"
+  | "pdf_export_clicked"
+  | "docx_export_clicked"
+  | "copy_clicked"
+  | "pricing_viewed"
+  | "upgrade_clicked"
+  | "one_time_report_clicked"
+  | "checkout_started"
+  | "checkout_failed"
+  | "signup_completed";
 
-interface EventMetadata {
+export type PlanTier = "free" | "pro" | "one_time" | "unknown";
+
+export interface EventMetadata {
   signal_score?: number;
+  score_bucket?: string;
   target_role?: string;
+  role_category?: string;
   cta_label?: string;
   payment_mode?: string;
   source?: string;
+  source_tab?: string;
+  output_type?: string;
+  format?: string;
+  plan_tier?: PlanTier;
+  success?: boolean;
+  error_code?: string;
+  input_source?: string;
   [key: string]: unknown;
+}
+
+const BLOCKED_METADATA_KEYS =
+  /^(resume|jd|bullet|experience|letter|headline|about|body|text|content|email|password|name|phone|address)$/i;
+
+const BLOCKED_METADATA_SUBSTRINGS = /resume_text|jd_text|original_resume|full_letter|raw_/i;
+
+/** Strip unsafe metadata before logging or forwarding to GA4. */
+export function sanitizeEventMetadata(metadata: EventMetadata = {}): EventMetadata {
+  const out: EventMetadata = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (BLOCKED_METADATA_KEYS.test(key) || BLOCKED_METADATA_SUBSTRINGS.test(key)) continue;
+    if (typeof value === "string" && value.length > 120) continue;
+    if (value !== undefined && value !== null) {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+export function scoreBucket(score: number): string {
+  if (!Number.isFinite(score)) return "unknown";
+  if (score >= 80) return "strong";
+  if (score >= 65) return "moderate";
+  if (score >= 50) return "developing";
+  return "weak";
 }
 
 /**
  * Track an analytics event with optional metadata.
- * Logs to console and persists to run_artifacts for authenticated users.
  */
 export function trackEvent(event: AnalyticsEvent, metadata: EventMetadata = {}) {
+  const safe = sanitizeEventMetadata(metadata);
   const payload = {
     event,
-    ...metadata,
+    ...safe,
     timestamp: new Date().toISOString(),
   };
 
-  // Always log to console for debugging
   console.log(`[Analytics] ${event}`, payload);
-
-  // Persist to database for authenticated users (fire-and-forget)
+  sendGa4Event(event, payload as Record<string, unknown>);
   persistEvent(event, payload);
 }
 
 async function persistEvent(event: string, payload: Record<string, unknown>) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return; // Only persist for authenticated users
+    if (!user) return;
 
-    // Store analytics events as run artifacts with a special step_name
-    // This avoids needing a new table and leverages existing RLS
     await supabase.from("run_artifacts").insert({
       run_id: getOrCreateAnalyticsRunId(user.id),
       step_name: `analytics:${event}`,
       payload_json: payload as any,
     } as any);
   } catch {
-    // Analytics should never block UX — silently fail
+    // Analytics should never block UX
   }
 }
 
-// Use a session-scoped "analytics run" to group events
 let analyticsRunId: string | null = null;
 
 function getOrCreateAnalyticsRunId(userId: string): string {
   if (analyticsRunId) return analyticsRunId;
 
-  // Create a deterministic run ID for this session
   const sessionKey = `signalyz_analytics_run_${new Date().toISOString().slice(0, 10)}`;
   const cached = sessionStorage.getItem(sessionKey);
   if (cached) {
@@ -72,12 +120,10 @@ function getOrCreateAnalyticsRunId(userId: string): string {
     return cached;
   }
 
-  // We need an actual run row for the FK constraint — create async and cache
   const id = crypto.randomUUID();
   analyticsRunId = id;
   sessionStorage.setItem(sessionKey, id);
 
-  // Fire-and-forget: create a lightweight analytics run
   (async () => {
     try {
       await supabase.from("runs").insert({
@@ -87,9 +133,7 @@ function getOrCreateAnalyticsRunId(userId: string): string {
         status: "analytics",
         deterministic: true,
       } as any);
-    } catch {
-      // If insert fails (e.g. duplicate), that's fine
-    }
+    } catch {}
   })();
 
   return id;

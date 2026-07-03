@@ -121,6 +121,7 @@ const UpgradeModal = ({
               size="lg"
               className="w-full gap-2"
               onClick={() => {
+                trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "upgrade_modal" });
                 trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/mo", source: "upgrade_modal" });
                 initiateCheckout("subscription");
               }}
@@ -139,6 +140,7 @@ const UpgradeModal = ({
               size="sm"
               className="w-full gap-2"
               onClick={() => {
+                trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "upgrade_modal" });
                 trackEvent("cta_clicked", { cta_label: hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9", source: "upgrade_modal" });
                 initiateCheckout("one_time");
               }}

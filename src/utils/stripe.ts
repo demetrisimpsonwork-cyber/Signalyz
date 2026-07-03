@@ -18,6 +18,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
   const cancelParam = isOneTime ? "purchase=cancelled" : "upgrade=cancelled";
 
   try {
+    trackEvent("checkout_started", { payment_mode: mode });
     trackEvent("payment_started", { payment_mode: mode });
     console.log("[Checkout] Invoking create-checkout edge function… mode:", mode);
     const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -30,6 +31,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
 
     if (error) {
       console.error("[Checkout] Edge function error:", error);
+      trackEvent("checkout_failed", { payment_mode: mode, error_code: "EDGE_ERROR", success: false });
       toast({
         title: "Checkout unavailable",
         description: "We couldn't start checkout right now. Please try again in a moment.",
@@ -40,6 +42,11 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
 
     if (data?.error) {
       console.error("[Checkout] Stripe error:", data.error, "type:", data.type, "status:", data.statusCode);
+      trackEvent("checkout_failed", {
+        payment_mode: mode,
+        error_code: String(data.type || data.statusCode || "STRIPE_ERROR"),
+        success: false,
+      });
       toast({
         title: "Checkout unavailable",
         description: "We couldn't start checkout right now. Please try again, or contact support@signalyz.ai if it continues.",
@@ -54,6 +61,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
       window.location.href = data.url;
     } else {
       console.error("[Checkout] No URL returned from edge function", data);
+      trackEvent("checkout_failed", { payment_mode: mode, error_code: "NO_CHECKOUT_URL", success: false });
       toast({
         title: "Checkout unavailable",
         description: "We couldn't start the checkout process. Please try again in a moment.",
@@ -62,6 +70,7 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
     }
   } catch (err) {
     console.error("[Checkout] Exception:", err);
+    trackEvent("checkout_failed", { payment_mode: mode, error_code: "EXCEPTION", success: false });
     toast({
       title: "Checkout unavailable",
       description: "Something went wrong. Please try again.",

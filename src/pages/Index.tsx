@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, scoreBucket, type PlanTier } from "@/lib/analytics";
+import { clearLinkedInOutputCache } from "@/lib/linkedInOutputCache";
 import { sanitizeResumeText } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
 import DebugPanel, { EngineErrorCard, type DebugInfo } from "@/components/DebugPanel";
@@ -320,7 +321,7 @@ function DirectorModeContent({
           <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Hiring Report</p>
           <h2 className="text-base font-semibold text-foreground mb-1">See exactly how recruiters and hiring managers read your resume</h2>
           <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-            Find out where you get screened out and how to fix it — using only the experience you already have. Zero fabrication. Private analysis.
+            Find out where you get screened out and how to fix it — using only the experience you already have. Built from your real experience — no invented employers, titles, or credentials. Private analysis.
           </p>
 
           {/* Confirmed inputs cards */}
@@ -351,7 +352,7 @@ function DirectorModeContent({
           {directorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span style={{ color: "inherit" }}>✦</span>}
           Generate My Hiring Report
         </Button>
-        <p className="text-[11px] text-muted-foreground/70">This usually takes about a minute (up to a few for longer resumes). Zero fabrication • Your data stays private.</p>
+        <p className="text-[11px] text-muted-foreground/70">This usually takes about a minute (up to a few for longer resumes). Built from your real experience • Your data stays private.</p>
       </div>
       <div className="space-y-4 min-w-0 overflow-hidden">
         {directorLoading && <PositioningLoader minHeight="300px" />}
@@ -422,11 +423,14 @@ const Index = () => {
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub, consumeOneTimeCredit } = useSubscription();
   const isAdmin = useIsAdmin();
   const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit;
+  const planTier: PlanTier = isPro || isAdmin ? "pro" : hasOneTimeCredit ? "one_time" : "free";
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   useResumeRetrievalIngestion(bullet, inputSource);
   const [searchParams, setSearchParams] = useSearchParams();
   const [analysisSessionKey, setAnalysisSessionKey] = useState(0);
   const [assemblySessionKey, setAssemblySessionKey] = useState(0);
+  const runSessionKey = `${analysisSessionKey}-${assemblySessionKey}`;
+  const jdInputTrackedRef = useRef(false);
   const [showRestoredBanner, setShowRestoredBanner] = useState(false);
   const prevUserRef = useRef<typeof user>(undefined);
 
@@ -455,6 +459,8 @@ const Index = () => {
     setInputSource("paste");
     calibratedRunPendingRef.current = false;
     overrideResumeRef.current = null;
+    jdInputTrackedRef.current = false;
+    clearLinkedInOutputCache();
     setAnalysisSessionKey((k) => k + 1);
   }, []);
 
@@ -633,8 +639,22 @@ const Index = () => {
       setSessionResumeAssembled(false);
       setAlignmentError(null);
     }
+    clearLinkedInOutputCache();
     userDirtyRef.current = true;
   }, []);
+
+  // Tab view analytics — fires when user switches output surfaces
+  useEffect(() => {
+    if (mode === "director" && result) {
+      trackEvent("report_tab_viewed", { source_tab: "director", plan_tier: planTier });
+    } else if (mode === "calibrated" && result) {
+      trackEvent("calibrated_resume_viewed", { source_tab: "calibrated", plan_tier: planTier });
+    } else if (mode === "coverletter" && result) {
+      trackEvent("cover_letter_viewed", { source_tab: "coverletter", plan_tier: planTier });
+    } else if (mode === "linkedin" && result) {
+      trackEvent("linkedin_viewed", { source_tab: "linkedin", plan_tier: planTier });
+    }
+  }, [mode, result, planTier]);
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
@@ -926,7 +946,9 @@ const Index = () => {
     lastClickRef.current = now;
 
     if (!validate()) return;
-    trackEvent("analysis_started", { target_role: result?.inferred_role_title, source: "alignment" });
+    clearLinkedInOutputCache();
+    trackEvent("analyze_clicked", { source: "alignment", plan_tier: planTier });
+    trackEvent("analysis_started", { target_role: result?.inferred_role_title, source: "alignment", plan_tier: planTier });
     setLoading(true);
     // Don't clear result/directorResult/sessionResumeAssembled eagerly —
     // preserve last successful state as fallback if this run fails.
@@ -1052,8 +1074,14 @@ const Index = () => {
       setResult(res);
       setResultRunType(runType);
       setAssemblySessionKey((k) => k + 1);
+      setAnalysisSessionKey((k) => k + 1);
       setAnalysisTime(Math.round((Date.now() - startTime) / 1000));
-      trackEvent("analysis_completed", { signal_score: res.match_score, target_role: res.inferred_role_title });
+      trackEvent("analysis_completed", {
+        signal_score: res.match_score,
+        score_bucket: scoreBucket(res.match_score),
+        target_role: res.inferred_role_title,
+        plan_tier: planTier,
+      });
 
       // Session persistence: save last analysis for returning users
       try {
@@ -1067,7 +1095,7 @@ const Index = () => {
           ts: Date.now(),
         }));
         // Invalidate LinkedIn output — it was based on a previous alignment result
-        localStorage.removeItem("signalyz_linkedin_output");
+        clearLinkedInOutputCache();
       } catch {}
 
       // ─── Internal delta logging for calibration runs ──────────────────────
@@ -1163,6 +1191,11 @@ const Index = () => {
           } else {
             setAlignmentError({ message: msg, error_code: localErrorCode || undefined });
           }
+          trackEvent("analysis_failed", {
+            error_code: localErrorCode || "UNKNOWN",
+            plan_tier: planTier,
+            success: false,
+          });
         }
       }
     } finally {
@@ -1236,7 +1269,7 @@ const Index = () => {
           {[
             { title: "Signal Diagnosis", body: "A scored read of how hiring systems and managers actually interpret your experience — not how you intended it." },
             { title: "Gap Map", body: "The exact signals preventing callbacks, ranked by impact. Specific, not general." },
-            { title: "Reframed Bullets", body: "Your own language repositioned to hit what the role actually weights. Zero fabrication." },
+            { title: "Reframed Bullets", body: "Your own language repositioned to hit what the role actually weights. Designed to avoid unsupported claims." },
             { title: "Calibrated Resume", body: "A submission-ready version built from your signal map — not a template rewrite." },
           ].map((card) => (
             <div key={card.title} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-5 space-y-2">
@@ -1458,10 +1491,12 @@ const Index = () => {
 
         {/* LinkedIn Signal Tab */}
         {mode === "linkedin" && (
-          <div key={analysisSessionKey} className="max-w-4xl md:max-w-content mx-auto">
+          <div key={runSessionKey} className="max-w-4xl md:max-w-content mx-auto">
             <LinkedInSignalTab
               experience={bullet}
               inferredRole={result?.inferred_role_title || ""}
+              jdText={jd}
+              runSessionKey={runSessionKey}
               signalKeywords={
                 (result?.missing_keywords as string[] || []).length > 0
                   ? (result?.missing_keywords as string[])
@@ -1480,7 +1515,7 @@ const Index = () => {
         {/* Calibrated Resume Tab */}
         {mode === "calibrated" && (
           <CalibratedResumeTab
-            key={`${analysisSessionKey}-${assemblySessionKey}`}
+            key={runSessionKey}
             isPro={effectiveIsPro}
             onUpgrade={() => setShowUpgrade(true)}
             directorResult={directorResult}
@@ -1513,7 +1548,7 @@ const Index = () => {
         {/* Cover Letter Tab */}
         {mode === "coverletter" && (
           <CoverLetterTab
-            key={analysisSessionKey}
+            key={runSessionKey}
             isPro={effectiveIsPro}
             onUpgrade={() => setShowUpgrade(true)}
             experience={bullet}
@@ -1528,7 +1563,7 @@ const Index = () => {
       {/* Executive Signal Audit Mode */}
         {mode === "director" && (
             <DirectorModeContent
-              key={analysisSessionKey}
+              key={runSessionKey}
               result={result}
               bullet={bullet}
               jd={jd}
@@ -1557,6 +1592,7 @@ const Index = () => {
                       setBullet(text); setIsResumeFromCalibrated(false); setOriginalResumeBeforeCalibration(null); setOriginalBaselineScore(null); try { localStorage.removeItem("signalyz_original_resume_baseline"); localStorage.removeItem("signalyz_original_baseline_score"); } catch {}
                       if (source) setInputSource(source);
                       setErrors((p) => ({ ...p, bullet: undefined }));
+                      trackEvent("resume_uploaded", { input_source: source || "file", plan_tier: planTier });
                     }}
                     onClear={() => {
                       invalidateStaleSession();
@@ -1597,7 +1633,15 @@ const Index = () => {
                   <Textarea
                     placeholder="Paste the full job description for the role you're targeting..."
                     value={jd}
-                    onChange={(e) => { invalidateStaleSession(); setJd(e.target.value); setErrors((p) => ({ ...p, jd: undefined })); }}
+                    onChange={(e) => {
+                      invalidateStaleSession();
+                      setJd(e.target.value);
+                      setErrors((p) => ({ ...p, jd: undefined }));
+                      if (!jdInputTrackedRef.current && e.target.value.trim().length >= 20) {
+                        jdInputTrackedRef.current = true;
+                        trackEvent("jd_input_started", { plan_tier: planTier });
+                      }
+                    }}
                     rows={6}
                     className={errors.jd ? "border-destructive" : ""}
                   />
@@ -1652,7 +1696,7 @@ const Index = () => {
                     1 free analysis remaining today
                   </span>
                 )}
-                <p className="text-[11px] text-muted-foreground/70">Zero fabrication — we only work with what you give us.</p>
+                <p className="text-[11px] text-muted-foreground/70">Built only from what you provide — no invented employers, titles, or credentials.</p>
               </div>
 
               {/* Right — Results */}
@@ -1806,7 +1850,7 @@ const Index = () => {
                       <h2 className="text-lg font-semibold tracking-tight text-foreground">Signal Diagnosis</h2>
                       {analysisTime > 0 && (
                         <p className="text-xs text-muted-foreground">
-                          Analyzed in {analysisTime}s · Zero fabrication · Your data stays private
+                          Analyzed in {analysisTime}s · Built from your real experience · Your data stays private
                         </p>
                       )}
                     </div>
