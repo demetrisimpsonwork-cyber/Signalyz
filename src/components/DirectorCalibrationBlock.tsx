@@ -14,6 +14,8 @@ import {
   isDegradedHiringReportResponse,
   sanitizeHiringReportResponseForRender,
 } from "@/lib/hiringReportResponseSanitizer";
+import { ReportFeedbackPanel } from "@/components/ReportFeedbackPanel";
+import type { PlanTier } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -394,6 +396,9 @@ const DirectorCalibrationBlock = ({
   targetRoleTitle,
   resumeText = "",
   jdText = "",
+  requestId,
+  reportRunFingerprint,
+  planTier,
 }: {
   result: DirectorCalibrationResult;
   isPro?: boolean;
@@ -402,6 +407,9 @@ const DirectorCalibrationBlock = ({
   targetRoleTitle?: string | null;
   resumeText?: string;
   jdText?: string;
+  requestId?: string;
+  reportRunFingerprint?: string;
+  planTier?: PlanTier;
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -1028,6 +1036,14 @@ const DirectorCalibrationBlock = ({
       <p className="text-[11px] text-muted-foreground/80 text-center leading-relaxed px-2">
         {HIRING_REPORT_TRUST_COPY}
       </p>
+
+      <ReportFeedbackPanel
+        source="hiring_report"
+        requestId={requestId}
+        reportRunFingerprint={reportRunFingerprint}
+        pipelineVersion={result.pipeline_version}
+        planTier={planTier}
+      />
 
       <div className="flex justify-end">
         <button

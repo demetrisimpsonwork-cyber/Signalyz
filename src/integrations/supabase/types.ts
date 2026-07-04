@@ -558,6 +558,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feedback: {
+        Row: {
+          applied_with_resume: boolean | null
+          comment: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          outcome: string | null
+          pipeline_version: string | null
+          plan_tier: string | null
+          report_run_fingerprint: string | null
+          request_id: string | null
+          session_id: string | null
+          source: string
+          useful: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          applied_with_resume?: boolean | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          outcome?: string | null
+          pipeline_version?: string | null
+          plan_tier?: string | null
+          report_run_fingerprint?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          source?: string
+          useful?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          applied_with_resume?: boolean | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          outcome?: string | null
+          pipeline_version?: string | null
+          plan_tier?: string | null
+          report_run_fingerprint?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          source?: string
+          useful?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

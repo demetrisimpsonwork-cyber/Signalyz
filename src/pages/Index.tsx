@@ -300,6 +300,9 @@ function DirectorModeContent({
   isPro,
   onUpgrade,
   isAuthenticated,
+  directorRequestId,
+  reportRunFingerprint,
+  planTier,
 }: {
   result: OptimizationResult | null;
   bullet: string;
@@ -312,6 +315,9 @@ function DirectorModeContent({
   isPro: boolean;
   onUpgrade: () => void;
   isAuthenticated: boolean;
+  directorRequestId?: string;
+  reportRunFingerprint?: string;
+  planTier?: PlanTier;
 }) {
   // HARD GATE: If no current-session alignment result, render ONLY the empty state
   if (!result) {
@@ -379,7 +385,18 @@ function DirectorModeContent({
         )}
         {directorResult && !directorLoading && !directorError && (
           <DirectorCalibrationErrorBoundary onRetry={onRunDirector}>
-            <DirectorCalibrationBlock result={directorResult} isPro={isPro} onUpgrade={onUpgrade} isAuthenticated={isAuthenticated} targetRoleTitle={result.inferred_role_title} resumeText={bullet} jdText={jd} />
+            <DirectorCalibrationBlock
+              result={directorResult}
+              isPro={isPro}
+              onUpgrade={onUpgrade}
+              isAuthenticated={isAuthenticated}
+              targetRoleTitle={result.inferred_role_title}
+              resumeText={bullet}
+              jdText={jd}
+              requestId={directorRequestId}
+              reportRunFingerprint={reportRunFingerprint}
+              planTier={planTier}
+            />
           </DirectorCalibrationErrorBoundary>
         )}
       </div>
@@ -422,6 +439,7 @@ const Index = () => {
   // Executive Audit state
   const [directorExperience, setDirectorExperience] = useState("");
   const [directorResult, setDirectorResult] = useState<DirectorCalibrationResult | null>(null);
+  const [directorRequestId, setDirectorRequestId] = useState<string | undefined>(undefined);
   const [directorLoading, setDirectorLoading] = useState(false);
   const [directorError, setDirectorError] = useState<string | null>(null);
   const [lastDebug, setLastDebug] = useState<DebugInfo | null>(null);
@@ -463,6 +481,7 @@ const Index = () => {
     setJd("");
     setResult(null);
     setDirectorResult(null);
+    setDirectorRequestId(undefined);
     setDirectorExperience("");
     setDirectorLoading(false);
     setDirectorError(null);
@@ -663,6 +682,7 @@ const Index = () => {
       setShowRestoredBanner(false);
       setResult(null);
       setDirectorResult(null);
+      setDirectorRequestId(undefined);
       setSessionResumeAssembled(false);
       setAlignmentError(null);
     }
@@ -945,6 +965,7 @@ const Index = () => {
       directorEnrichmentKeyRef.current = enrichmentKey;
 
       setDirectorResult(directorData);
+      setDirectorRequestId(data?.request_id);
       setDirectorLoading(false);
       void rememberActiveRun();
       logDirectorRawRenderedMs(requestStartMs, enrichmentKey);
@@ -953,6 +974,8 @@ const Index = () => {
         output_type: "report",
         plan_tier: planTier,
         success: true,
+        request_id: data?.request_id,
+        pipeline_version: directorData.pipeline_version,
       });
 
       void runBackgroundDirectorEvidenceEnrichment({
@@ -999,6 +1022,13 @@ const Index = () => {
       }
 
       setDirectorError(userMsg);
+      trackEvent("report_failed", {
+        output_type: "report",
+        plan_tier: planTier,
+        success: false,
+        error_code: errorCategory,
+        request_id: err instanceof StructuredEdgeError ? err.request_id : undefined,
+      });
       trackReliabilityError("edge_function_failed", errorCategory, {
         feature_name: "hiring_report",
         output_type: "report",
@@ -1170,6 +1200,7 @@ const Index = () => {
       }
       // Clear previous state now that we have a successful new result
       setDirectorResult(null);
+      setDirectorRequestId(undefined);
       setSessionResumeAssembled(false);
       res.match_score = detScore.finalScore;
       res.scoring_breakdown = detScore.breakdown;
@@ -1720,6 +1751,9 @@ const Index = () => {
               isPro={effectiveIsPro}
               onUpgrade={() => openUpgradeModal()}
               isAuthenticated={!!user}
+              directorRequestId={directorRequestId}
+              reportRunFingerprint={reportRunFields?.reportRunFingerprint}
+              planTier={planTier}
             />
         )}
 
@@ -1803,6 +1837,7 @@ const Index = () => {
                           setErrors((p) => ({ ...p, bullet: undefined }));
                           setResult(null);
                           setDirectorResult(null);
+                          setDirectorRequestId(undefined);
                           setSessionResumeAssembled(false);
                           trackEvent("input_cleared", { input_type: "resume", plan_tier: planTier });
                         }}

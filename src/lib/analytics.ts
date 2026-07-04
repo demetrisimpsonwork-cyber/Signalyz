@@ -66,7 +66,11 @@ export type AnalyticsEvent =
   | "linkedin_generated"
   | "linkedin_copied"
   | "report_generated"
+  | "report_failed"
   | "report_viewed"
+  | "resume_downloaded"
+  | "feedback_submitted"
+  | "applied_clicked"
   // Conversion intent
   | "pricing_viewed"
   | "upgrade_modal_opened"
@@ -209,6 +213,9 @@ export function trackExportEvents(input: {
   };
   trackEvent(input.legacyEvent, base);
   trackEvent(input.specificEvent, base);
+  if (input.output_type === "calibrated_resume") {
+    trackEvent("resume_downloaded", base);
+  }
 }
 
 export function trackReliabilityError(

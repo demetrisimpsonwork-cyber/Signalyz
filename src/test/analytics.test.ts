@@ -160,6 +160,23 @@ describe("analytics — trackEvent", () => {
     );
   });
 
+  it("trackExportEvents fires resume_downloaded for calibrated resume exports", () => {
+    trackExportEvents({
+      legacyEvent: "pdf_export_clicked",
+      specificEvent: "calibrated_resume_pdf_export_clicked",
+      output_type: "calibrated_resume",
+      format: "pdf",
+      source_tab: "calibrated",
+    });
+    expect(sendGa4Event).toHaveBeenCalledWith(
+      "resume_downloaded",
+      expect.objectContaining({
+        output_type: "calibrated_resume",
+        export_format: "pdf",
+      }),
+    );
+  });
+
   it("paywall events include feature metadata without raw content", () => {
     trackEvent("paywall_viewed", {
       feature_name: "cover_letter",

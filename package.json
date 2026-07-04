@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "export:feedback": "node scripts/export-user-feedback.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
