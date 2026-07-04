@@ -219,8 +219,8 @@ class DirectorCalibrationErrorBoundary extends Component<
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(error: Error, _info: ErrorInfo) {
-    // Error boundary caught render error
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[DirectorCalibrationErrorBoundary]", error.message, info.componentStack);
   }
   render() {
     if (this.state.hasError) {

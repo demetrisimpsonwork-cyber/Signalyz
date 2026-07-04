@@ -5,7 +5,7 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
@@ -30,9 +30,25 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/hiringReportJdCompaction.ts",
       ),
+      "@signalyz/hiringReportSharedContext": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/hiringReportSharedContext.ts",
+      ),
+      "@signalyz/hiringReportCalibrationHardening": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/hiringReportCalibrationHardening.ts",
+      ),
+      "@signalyz/hiringReportPipelineBudget": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/hiringReportPipelineBudget.ts",
+      ),
       "@signalyz/reportRunFingerprint": path.resolve(
         __dirname,
         "./supabase/functions/_shared/reportRunFingerprint.ts",
+      ),
+      "@signalyz/calibrationEngine": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/calibrationEngine",
       ),
     },
   },

@@ -2,6 +2,18 @@ import { Copy, Check, Download, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import type { GroundedRecommendation, GroundedRecommendationInsights } from "@/lib/groundedRecommendationTypes";
+import { GroundedNextStepsPanel } from "@/components/GroundedNextStepsPanel";
+import { resolveHiringReportRoleLabel } from "@/lib/hiringReportRoleLabel";
+import {
+  applyHiringReportIntegrityGate,
+  normalizeAtomicGapLabel,
+  HIRING_REPORT_TRUST_COPY,
+} from "@signalyz/hiringReportIntegrity";
+import {
+  isDegradedHiringReportResponse,
+  sanitizeHiringReportResponseForRender,
+} from "@/lib/hiringReportResponseSanitizer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +138,11 @@ export interface DirectorCalibrationResult {
   run_id?: string;
   pipeline_version?: string;
   _replay?: boolean;
+  /** Patch 1 pipeline metadata — optional, display-only */
+  _pipeline_degraded?: boolean;
+  _report_completeness_pct?: number;
+  _omitted_sections?: string[];
+  _calibration_status?: string;
 }
 
 // ─── Label humanizer ──────────────────────────────────────────────────────────
@@ -179,6 +196,28 @@ const classificationStyle: Record<GroundedRecommendation["classification"], stri
   partial: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40",
   missing: "text-muted-foreground bg-muted/30 border-border/60",
 };
+
+const DEFAULT_UPGRADE_STYLE =
+  "text-muted-foreground bg-muted/30 border-border/60";
+
+function upgradeTypeStyle(upgradeType: string | undefined): string {
+  if (!upgradeType) return DEFAULT_UPGRADE_STYLE;
+  return UPGRADE_TYPE_STYLE[upgradeType as UpgradeType] ?? DEFAULT_UPGRADE_STYLE;
+}
+
+function upgradeTypeLabel(upgradeType: string | undefined): string {
+  if (!upgradeType) return "Upgrade";
+  return UPGRADE_TYPE_LABELS[upgradeType as UpgradeType] ?? humanizeLabel(upgradeType);
+}
+
+function recommendationClassificationStyle(
+  classification: GroundedRecommendation["classification"] | string | undefined,
+): string {
+  if (classification === "present" || classification === "partial" || classification === "missing") {
+    return classificationStyle[classification];
+  }
+  return classificationStyle.missing;
+}
 
 const UPGRADE_TYPE_STYLE: Record<UpgradeType, string> = {
   commercial_injection: "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40",
@@ -367,9 +406,22 @@ const DirectorCalibrationBlock = ({
   const [copied, setCopied] = useState(false);
 
   const result = useMemo(() => {
-    const normalized = normalizeResult(rawResult);
+    const sanitized = sanitizeHiringReportResponseForRender(rawResult);
+    const normalized = normalizeResult(sanitized);
     return applyHiringReportIntegrityGate(normalized, resumeText, jdText);
   }, [rawResult, resumeText, jdText]);
+
+  const pipelineMetadata = useMemo(
+    () => ({
+      pipeline_version: result.pipeline_version,
+      _pipeline_degraded: result._pipeline_degraded,
+      _report_completeness_pct: result._report_completeness_pct,
+      _omitted_sections: result._omitted_sections,
+      _calibration_status: result._calibration_status,
+    }),
+    [result],
+  );
+  const showDegradedNotice = isDegradedHiringReportResponse(pipelineMetadata);
 
   // Log debug info to console only — never render to DOM
   if (result.run_id) {
@@ -426,6 +478,22 @@ const DirectorCalibrationBlock = ({
 
   return (
     <div className="space-y-10 w-full min-w-0 overflow-hidden">
+      {showDegradedNotice && (
+        <div className="rounded-lg border border-amber-300/60 bg-amber-50/80 dark:bg-amber-950/20 px-4 py-3 space-y-1">
+          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+            Partial report
+            {typeof pipelineMetadata._report_completeness_pct === "number"
+              ? ` (${pipelineMetadata._report_completeness_pct}% complete)`
+              : ""}
+          </p>
+          {pipelineMetadata._omitted_sections && pipelineMetadata._omitted_sections.length > 0 && (
+            <p className="text-[11px] text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+              Omitted sections: {pipelineMetadata._omitted_sections.join(", ")}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Debug info logged to console only */}
 
       {/* 1 — Signal Tier */}
@@ -454,7 +522,7 @@ const DirectorCalibrationBlock = ({
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xs font-semibold text-foreground">{rec.signal_name}</p>
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${classificationStyle[rec.classification]}`}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${recommendationClassificationStyle(rec.classification)}`}
                     >
                       {rec.classification}
                     </span>
@@ -464,7 +532,7 @@ const DirectorCalibrationBlock = ({
                   </div>
                   <p className="text-[10px] text-muted-foreground">{rec.classification_reason}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{rec.recommendation}</p>
-                  {rec.evidence_used.length > 0 && (
+                  {Array.isArray(rec.evidence_used) && rec.evidence_used.length > 0 && (
                     <div className="space-y-1 pt-1">
                       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
                         Evidence
@@ -632,17 +700,19 @@ const DirectorCalibrationBlock = ({
           <div className="divide-y divide-border/50">
             {(Object.keys(DIMENSION_LABELS) as Array<keyof SignalClassifierResult["dimension_scores"]>).map((key) => {
               const dim = signal_classifier!.dimension_scores[key];
-              const pct = Math.min(100, (dim.score / 25) * 100);
+              if (!dim) return null;
+              const score = typeof dim.score === "number" && Number.isFinite(dim.score) ? dim.score : 0;
+              const pct = Math.min(100, (score / 25) * 100);
               return (
                 <div key={key} className="px-4 py-4 space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold text-foreground">{DIMENSION_LABELS[key]}</p>
-                    <span className={`text-xs font-bold tabular-nums ${scoreColor(dim.score)}`}>
-                      {dim.score}<span className="text-muted-foreground font-normal">/25</span>
+                    <span className={`text-xs font-bold tabular-nums ${scoreColor(score)}`}>
+                      {score}<span className="text-muted-foreground font-normal">/25</span>
                     </span>
                   </div>
                   <div className="h-1 w-full rounded-full bg-muted">
-                    <div className={`h-1 rounded-full transition-all ${scoreBarColor(dim.score)}`} style={{ width: `${pct}%` }} />
+                    <div className={`h-1 rounded-full transition-all ${scoreBarColor(score)}`} style={{ width: `${pct}%` }} />
                   </div>
                   {/* Rationale (new v2 field) */}
                   {(dim.grounded_rationale || dim.rationale) && (
@@ -670,7 +740,7 @@ const DirectorCalibrationBlock = ({
                       ))}
                     </div>
                   )}
-                  {dim.missing.length > 0 && (
+                  {Array.isArray(dim.missing) && dim.missing.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-0.5">
                       {dim.missing.map((m, i) => (
                         <span key={i} className="text-[10px] px-1.5 py-0.5 rounded border border-border/60 text-muted-foreground bg-muted/40">{m}</span>
@@ -779,8 +849,8 @@ const DirectorCalibrationBlock = ({
                       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Original Bullet</p>
                       <p className="text-xs text-foreground leading-relaxed break-words">{target.bullet_reference}</p>
                     </div>
-                    <span className={`shrink-0 self-start text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${UPGRADE_TYPE_STYLE[target.upgrade_type as UpgradeType]}`}>
-                      {UPGRADE_TYPE_LABELS[target.upgrade_type as UpgradeType]}
+                    <span className={`shrink-0 self-start text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${upgradeTypeStyle(target.upgrade_type)}`}>
+                      {upgradeTypeLabel(target.upgrade_type)}
                     </span>
                   </div>
 
