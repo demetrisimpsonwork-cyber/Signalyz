@@ -44,10 +44,11 @@ writeFileSync(outPath, JSON.stringify(dashboard, null, 2));
 
 console.log("=== SIGNALYZED STANDARD DASHBOARD ===");
 console.log(`Window: ${days} days · Sample: ${rows.length} events`);
+const pct = (r: number | null) => (r == null ? "n/a" : `${Math.round(r * 100)}%`);
 console.log(`\nAverage Signalyzed score: ${metrics.average_signalyzed_score ?? "n/a"}`);
-console.log(`Ready %: ${metrics.ready_pct ?? "n/a"}`);
-console.log(`Needs review %: ${metrics.needs_review_pct ?? "n/a"}`);
-console.log(`Unsafe %: ${metrics.unsafe_pct ?? "n/a"}`);
+console.log(`Ready %: ${pct(metrics.ready_pct)}`);
+console.log(`Needs review %: ${pct(metrics.needs_review_pct)}`);
+console.log(`Unsafe %: ${pct(metrics.unsafe_pct)}`);
 
 console.log("\n--- Top Diagnostic Codes ---");
 for (const item of metrics.top_diagnostic_codes.slice(0, 10)) {

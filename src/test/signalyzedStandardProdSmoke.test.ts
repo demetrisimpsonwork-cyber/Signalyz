@@ -26,17 +26,44 @@ import {
   PDF_RENDERER,
   isPdfValidationAvailable,
 } from "@/lib/exportValidation";
+import { evaluateSignalyzedStandard } from "@/lib/signalyzedStandard/evaluateSignalyzedStandard";
 import {
-  evaluateSignalyzedStandard,
   toSignalyzedStandardEventRow,
   buildSignalyzedStandardReport,
   assertNoPiiInStandardPayload,
+} from "@/lib/signalyzedStandard/sanitizeStandardAudit";
+import {
   toAstShadowSummary,
   toQaShadowSummary,
   toLinkPreservationSummary,
-  type ExportValidationSummary,
-} from "@/lib/signalyzedStandard";
-import { toExportValidationSummary } from "@/lib/signalyzedStandardShadow";
+} from "@/lib/signalyzedStandard/adapters";
+import type { ExportValidationSummary } from "@/lib/signalyzedStandard/types";
+import type { ExportValidationReport } from "@/lib/exportValidation";
+
+function toExportValidationSummary(
+  report: ExportValidationReport,
+  diagnosticCodes?: string[],
+): ExportValidationSummary {
+  return {
+    event: "resume_export_validation_report",
+    request_id: report.request_id,
+    export_id: report.export_id,
+    export_type: report.export_type,
+    template_version: report.template_version,
+    validation_passed: report.validation_passed,
+    validation_warning_count: report.validation_warning_count,
+    validation_error_count: report.validation_error_count,
+    link_count: report.link_count,
+    broken_link_count: report.broken_link_count,
+    missing_expected_link_count: report.missing_expected_link_count,
+    duplicate_link_count: report.duplicate_link_count,
+    section_count: report.section_count,
+    bullet_count: report.bullet_count,
+    page_count: report.page_count,
+    error_class: report.error_class,
+    diagnostic_codes: diagnosticCodes,
+  };
+}
 import {
   calibratedResumeToPlainText,
   runResumeQaShadow,
