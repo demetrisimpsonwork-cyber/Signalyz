@@ -21,7 +21,10 @@
     "resumeast:prod-smoke": "node --experimental-strip-types scripts/resumeast/prod-link-preservation-smoke.mjs",
     "exportqa:dashboard": "node --experimental-strip-types scripts/exportqa/dashboard.ts",
     "exportqa:validate": "vitest run src/test/exportValidationRun.test.ts",
-    "exportqa:prod-smoke": "vitest run src/test/exportValidationProdSmoke.test.ts"
+    "exportqa:prod-smoke": "vitest run src/test/exportValidationProdSmoke.test.ts",
+    "standard:dashboard": "node --experimental-strip-types scripts/standard/dashboard.ts",
+    "standard:validate": "vitest run src/test/signalyzedStandardRun.test.ts",
+    "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

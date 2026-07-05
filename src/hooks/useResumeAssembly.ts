@@ -14,6 +14,12 @@ import {
   applyLinkPreservationGuard,
   logLinkPreservationReport,
 } from "@signalyz/resumeAst/linkPreservation";
+import { rememberSignalyzedSourceReports } from "@/lib/signalyzedStandardContext";
+import {
+  toAstShadowSummary,
+  toLinkPreservationSummary,
+  toQaShadowSummary,
+} from "@/lib/signalyzedStandard/adapters";
 
 export interface CalibratedResumeData {
   header: {
@@ -501,6 +507,10 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         });
         resume = linkPreservation.resume;
         logLinkPreservationReport(linkPreservation.report);
+        rememberSignalyzedSourceReports(
+          typeof data?.request_id === "string" ? data.request_id : undefined,
+          { link: toLinkPreservationSummary(linkPreservation.report) },
+        );
       } catch (linkErr) {
         console.warn(
           JSON.stringify({
@@ -511,7 +521,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         );
       }
 
-      runClientResumeQaShadow({
+      const qaLog = runClientResumeQaShadow({
         sourceResumeText: originalResume,
         jobDescriptionText: jdText || "",
         generatedResume: resume,
@@ -522,13 +532,25 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         runId: typeof data?.request_id === "string" ? data.request_id : undefined,
         requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
       });
+      if (qaLog) {
+        rememberSignalyzedSourceReports(
+          typeof data?.request_id === "string" ? data.request_id : undefined,
+          { qa: toQaShadowSummary(qaLog) },
+        );
+      }
 
-      runClientResumeAstShadow({
+      const astLog = runClientResumeAstShadow({
         sourceResumeText: originalResume,
         generatedResume: resume,
         runId: typeof data?.request_id === "string" ? data.request_id : undefined,
         requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
       });
+      if (astLog) {
+        rememberSignalyzedSourceReports(
+          typeof data?.request_id === "string" ? data.request_id : undefined,
+          { ast: toAstShadowSummary(astLog) },
+        );
+      }
 
       // ── Confidence check ──
       const conf = evaluateConfidence(resume);

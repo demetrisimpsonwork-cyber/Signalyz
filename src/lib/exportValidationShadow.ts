@@ -80,6 +80,12 @@ export async function runExportValidationShadow(input: RunExportValidationShadow
       astFingerprint: input.astFingerprint,
       sanitizerVersion: EXPORT_SANITIZER_VERSION,
     });
+
+    const { runSignalyzedStandardShadow } = await import("@/lib/signalyzedStandardShadow");
+    runSignalyzedStandardShadow({
+      exportReport: report,
+      exportDiagnosticCodes: result.diagnostics.map((d) => d.code),
+    });
   } catch {
     /* shadow must never block or surface */
   }
