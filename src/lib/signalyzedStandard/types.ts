@@ -57,6 +57,7 @@ export interface QaShadowSummary {
     confidence: string;
     severity: string;
     matched_terms?: string[];
+    contamination_subtype?: string;
   }>;
 }
 

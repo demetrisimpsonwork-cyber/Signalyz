@@ -13,6 +13,7 @@ import {
   FIXTURE_AI_SANDBOX_CONTAMINATION,
   FIXTURE_BROKEN_PLACEHOLDER,
   FIXTURE_CLEAN_DEMETRI,
+  FIXTURE_CLEAN_CUSTOMER_SUCCESS,
   FIXTURE_JSON_ARTIFACT,
   FIXTURE_MISSING_GITHUB,
   FIXTURE_PDF_WEAK_LINKS,
@@ -49,6 +50,76 @@ describe("signalyzedStandard evaluator", () => {
     const result = evaluateSignalyzedStandard(FIXTURE_AI_SANDBOX_CONTAMINATION);
     expect(result.verdict).toBe("unsafe");
     expect(result.diagnostic_codes).toContain(STANDARD_CODES.QA_CROSS_JOB_CONTAMINATION);
+  });
+
+  it("NJ summary founding artifact does NOT produce unsafe", () => {
+    const result = evaluateSignalyzedStandard({
+      requestId: "req-nj-artifact",
+      exportId: "exp-nj-artifact",
+      exportType: "docx",
+      ast: FIXTURE_CLEAN_DEMETRI.ast,
+      qa: {
+        event: "resume_qa_shadow_report",
+        qa_score: 75,
+        verdict: "needs_review",
+        critical_issue_count: 0,
+        warning_count: 1,
+        issue_categories: { contamination: 1 },
+        issue_logs: [
+          {
+            rule_id: "contamination.section_artifact",
+            code: "cross_jd_contamination",
+            confidence: "low",
+            severity: "medium",
+            matched_terms: ["nj summary founding"],
+            contamination_subtype: "summary_artifact",
+          },
+        ],
+      },
+      link: FIXTURE_CLEAN_DEMETRI.link,
+      export: FIXTURE_CLEAN_DEMETRI.export,
+    });
+    expect(result.verdict).not.toBe("unsafe");
+    expect(result.diagnostic_codes).toContain(STANDARD_CODES.QA_CONTAMINATION_ARTIFACT);
+    expect(result.diagnostic_codes).not.toContain(STANDARD_CODES.QA_CROSS_JOB_CONTAMINATION);
+  });
+
+  it("IL summary customer artifact does NOT produce unsafe", () => {
+    const result = evaluateSignalyzedStandard({
+      ...FIXTURE_CLEAN_CUSTOMER_SUCCESS,
+      qa: {
+        event: "resume_qa_shadow_report",
+        qa_score: 75,
+        verdict: "needs_review",
+        critical_issue_count: 0,
+        warning_count: 1,
+        issue_categories: { contamination: 1 },
+        issue_logs: [
+          {
+            rule_id: "contamination.section_artifact",
+            code: "cross_jd_contamination",
+            confidence: "low",
+            severity: "medium",
+            matched_terms: ["il summary customer"],
+            contamination_subtype: "summary_artifact",
+          },
+        ],
+      },
+    });
+    expect(result.verdict).not.toBe("unsafe");
+    expect(result.hard_blocker_count).toBe(0);
+  });
+
+  it("clean Demetri export stays ready", () => {
+    const result = evaluateSignalyzedStandard(FIXTURE_CLEAN_DEMETRI);
+    expect(["ready", "needs_review"]).toContain(result.verdict);
+    expect(result.hard_blocker_count).toBe(0);
+  });
+
+  it("clean Customer Success export stays ready", () => {
+    const result = evaluateSignalyzedStandard(FIXTURE_CLEAN_CUSTOMER_SUCCESS);
+    expect(["ready", "needs_review"]).toContain(result.verdict);
+    expect(result.hard_blocker_count).toBe(0);
   });
 
   it("severe bullet regression gets unsafe", () => {

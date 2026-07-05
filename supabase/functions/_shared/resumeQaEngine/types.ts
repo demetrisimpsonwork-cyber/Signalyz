@@ -2,7 +2,14 @@
 
 export type QaSeverity = "critical" | "high" | "medium" | "low";
 
+export type QaConfidence = "very_high" | "high" | "medium" | "low";
+
 export type QaVerdict = "pass" | "needs_review" | "block_regeneration";
+
+export type QaIssueSource =
+  | "source_resume"
+  | "job_description"
+  | "generated_resume";
 
 export interface QaIssue {
   code: string;
@@ -11,6 +18,54 @@ export interface QaIssue {
   evidence?: string;
   section?: string;
   suggestedFix?: string;
+  ruleId?: string;
+  detector?: string;
+  confidence?: QaConfidence;
+  evidenceCount?: number;
+  matchedTerms?: string[];
+  source?: QaIssueSource;
+  /** Phase 3D — contamination precision taxonomy. */
+  contaminationSubtype?: string;
+}
+
+export interface QaIssueLog {
+  rule_id: string;
+  detector: string;
+  confidence: QaConfidence;
+  evidence_count: number;
+  matched_terms: string[];
+  severity: QaSeverity;
+  source: QaIssueSource;
+  code: string;
+  /** Phase 3D — contamination precision taxonomy (sanitized). */
+  contamination_subtype?: string;
+}
+
+export interface RulePrecisionEstimate {
+  rule_id: string;
+  precision_estimate: number;
+}
+
+export interface RuleAnalyticsSummary {
+  false_positive_candidates: Array<{ rule_id: string; clean_critical_hits: number }>;
+  top_triggering_rules: Array<{ rule_id: string; count: number; precision_estimate: number }>;
+  contamination_frequency: Array<{ term: string; count: number }>;
+  rule_precision_estimates: RulePrecisionEstimate[];
+}
+
+export interface ShadowDashboardSummary {
+  top_rules: Array<{
+    rule_id: string;
+    trigger_count: number;
+    average_confidence_rank: number;
+    critical_count: number;
+  }>;
+  average_confidence_rank: number;
+  critical_rate: number;
+  likely_false_positives: Array<{ rule_id: string; clean_critical_hits: number }>;
+  rule_analytics: RuleAnalyticsSummary;
+  run_count: number;
+  total_issues: number;
 }
 
 export interface ResumeQaInput {
@@ -35,6 +90,8 @@ export interface ResumeQaResult {
   identityDrift: QaIssue[];
   suggestedFixes: string[];
   observabilitySummary: ResumeQaObservabilitySummary;
+  issueLogs: QaIssueLog[];
+  shadowDashboard?: ShadowDashboardSummary;
 }
 
 export interface ResumeQaObservabilitySummary {
@@ -53,6 +110,8 @@ export interface ResumeQaObservabilitySummary {
   sourceCharCount: number;
   generatedCharCount: number;
   jdCharCount: number;
+  confusionLogCount: number;
+  ruleAnalytics?: RuleAnalyticsSummary;
 }
 
 export interface ResumeSection {

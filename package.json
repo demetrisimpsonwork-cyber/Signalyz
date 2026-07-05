@@ -24,6 +24,7 @@
     "exportqa:prod-smoke": "vitest run src/test/exportValidationProdSmoke.test.ts",
     "standard:dashboard": "node --experimental-strip-types scripts/standard/dashboard.ts",
     "standard:validate": "vitest run src/test/signalyzedStandardRun.test.ts",
+    "standard:phase3d": "vitest run src/test/signalyzedStandardPhase3dValidation.test.ts src/test/resumeQaContaminationCalibration.test.ts src/test/contaminationArtifactClassifier.test.ts",
     "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts"
   },
   "dependencies": {

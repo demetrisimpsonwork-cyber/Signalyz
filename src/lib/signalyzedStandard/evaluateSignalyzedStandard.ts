@@ -16,11 +16,57 @@ import type {
   SignalyzedStandardResult,
   RecommendedAction,
   SignalyzedVerdict,
+  QaShadowSummary,
 } from "./types";
 import { SIGNALYZED_STANDARD_VERSION } from "./types";
+import {
+  isArtifactContaminationSubtype,
+  matchedTermLooksLikeArtifact,
+} from "@signalyz/resumeQaEngine/contaminationArtifactClassifier";
 
 function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+type QaIssueLogEntry = NonNullable<QaShadowSummary["issue_logs"]>[number];
+
+function isTrueContaminationHardBlocker(issue: QaIssueLogEntry): boolean {
+  if (issue.code !== "cross_jd_contamination") return false;
+  if (!isHighConfidence(issue.confidence)) return false;
+
+  if (issue.rule_id === "contamination.known_signature") return true;
+  if (issue.contamination_subtype === "known_signature") return true;
+
+  if (issue.rule_id === "contamination.section_artifact" || issue.rule_id === "contamination.advisory_phrase") {
+    return false;
+  }
+
+  if (issue.contamination_subtype && isArtifactContaminationSubtype(issue.contamination_subtype as Parameters<typeof isArtifactContaminationSubtype>[0])) {
+    return false;
+  }
+
+  if (issue.matched_terms?.some((t) => matchedTermLooksLikeArtifact(t))) {
+    return false;
+  }
+
+  return (
+    issue.contamination_subtype === "true_contamination" ||
+    issue.rule_id === "contamination.ungrounded_phrase"
+  );
+}
+
+function isContaminationArtifactWarning(issue: QaIssueLogEntry): boolean {
+  if (issue.code !== "cross_jd_contamination") return false;
+
+  if (issue.rule_id === "contamination.section_artifact" || issue.rule_id === "contamination.advisory_phrase") {
+    return true;
+  }
+
+  if (issue.contamination_subtype && isArtifactContaminationSubtype(issue.contamination_subtype as Parameters<typeof isArtifactContaminationSubtype>[0])) {
+    return true;
+  }
+
+  return issue.matched_terms?.some((t) => matchedTermLooksLikeArtifact(t)) ?? false;
 }
 
 function isHighConfidence(confidence?: string): boolean {
@@ -101,10 +147,16 @@ function collectFindings(input: SignalyzedStandardInput): DiagnosticFinding[] {
   if (qa?.issue_logs?.length) {
     for (const issue of qa.issue_logs) {
       const high = isHighConfidence(issue.confidence);
-      if (issue.code === "cross_jd_contamination" && high) {
+      if (isTrueContaminationHardBlocker(issue)) {
         findings.push({
           code: STANDARD_CODES.QA_CROSS_JOB_CONTAMINATION,
           severity: "hard_blocker",
+          category: "grounding",
+        });
+      } else if (isContaminationArtifactWarning(issue)) {
+        findings.push({
+          code: STANDARD_CODES.QA_CONTAMINATION_ARTIFACT,
+          severity: "warning",
           category: "grounding",
         });
       } else if (issue.code === "role_contamination" && high) {

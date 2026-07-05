@@ -38,6 +38,7 @@ export function toQaShadowSummary(log: ResumeQaShadowLog): QaShadowSummary {
       confidence: issue.confidence,
       severity: issue.severity,
       matched_terms: issue.matched_terms,
+      contamination_subtype: issue.contamination_subtype,
     })),
   };
 }
