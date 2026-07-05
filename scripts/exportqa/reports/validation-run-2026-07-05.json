@@ -1,0 +1,135 @@
+{
+  "pdf_validation_available": true,
+  "summaries": [
+    {
+      "fixture_id": "demetri_ai_engineer",
+      "label": "Demetri AI Engineer",
+      "docx": {
+        "passed": true,
+        "artifact_bytes": 8647,
+        "render_ms": 146,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 2,
+        "missing_expected_link_count": 0,
+        "duplicate_link_count": 0,
+        "error_codes": []
+      },
+      "pdf": {
+        "pdf_validation_available": true,
+        "passed": true,
+        "page_count": 1,
+        "artifact_bytes": 6877,
+        "render_ms": 41,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 2,
+        "error_codes": []
+      }
+    },
+    {
+      "fixture_id": "customer_success",
+      "label": "Customer Success",
+      "docx": {
+        "passed": true,
+        "artifact_bytes": 8441,
+        "render_ms": 38,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 0,
+        "missing_expected_link_count": 0,
+        "duplicate_link_count": 0,
+        "error_codes": []
+      },
+      "pdf": {
+        "pdf_validation_available": true,
+        "passed": true,
+        "page_count": 1,
+        "artifact_bytes": 5659,
+        "render_ms": 12,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 0,
+        "error_codes": []
+      }
+    },
+    {
+      "fixture_id": "technical_links",
+      "label": "Technical with GitHub/portfolio",
+      "docx": {
+        "passed": true,
+        "artifact_bytes": 8477,
+        "render_ms": 43,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 4,
+        "missing_expected_link_count": 0,
+        "duplicate_link_count": 0,
+        "error_codes": []
+      },
+      "pdf": {
+        "pdf_validation_available": true,
+        "passed": true,
+        "page_count": 1,
+        "artifact_bytes": 5715,
+        "render_ms": 8,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 4,
+        "error_codes": []
+      }
+    },
+    {
+      "fixture_id": "non_technical",
+      "label": "Non-technical resume",
+      "docx": {
+        "passed": true,
+        "artifact_bytes": 8434,
+        "render_ms": 29,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 1,
+        "missing_expected_link_count": 0,
+        "duplicate_link_count": 0,
+        "error_codes": []
+      },
+      "pdf": {
+        "pdf_validation_available": true,
+        "passed": true,
+        "page_count": 1,
+        "artifact_bytes": 5662,
+        "render_ms": 9,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 1,
+        "error_codes": []
+      }
+    },
+    {
+      "fixture_id": "link_dropped",
+      "label": "Previously link-dropped resume",
+      "docx": {
+        "passed": true,
+        "artifact_bytes": 8323,
+        "render_ms": 33,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 0,
+        "missing_expected_link_count": 0,
+        "duplicate_link_count": 0,
+        "error_codes": []
+      },
+      "pdf": {
+        "pdf_validation_available": true,
+        "passed": true,
+        "page_count": 1,
+        "artifact_bytes": 5267,
+        "render_ms": 5,
+        "warnings": 0,
+        "errors": 0,
+        "link_count": 0,
+        "error_codes": []
+      }
+    }
+  ]
+}

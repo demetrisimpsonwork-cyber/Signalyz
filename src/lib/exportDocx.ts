@@ -115,10 +115,11 @@ function educationParagraph(edu: { degree: string; institution: string; year: st
   });
 }
 
-export async function exportCalibratedDocx(
+export async function buildCalibratedDocxBlob(
   resume: CalibratedResumeData,
   sanitizeOptions?: CalibratedResumeSanitizeOptions,
-) {
+): Promise<{ blob: Blob; model: ReturnType<typeof normalizeResumeForExport>; renderMs: number }> {
+  const started = performance.now();
   const model = normalizeResumeForExport(resume, sanitizeOptions);
 
   const doc = new Document({
@@ -294,5 +295,22 @@ export async function exportCalibratedDocx(
   });
 
   const blob = await Packer.toBlob(doc);
+  return { blob, model, renderMs: Math.round(performance.now() - started) };
+}
+
+export async function exportCalibratedDocx(
+  resume: CalibratedResumeData,
+  sanitizeOptions?: CalibratedResumeSanitizeOptions,
+) {
+  const { blob, model, renderMs } = await buildCalibratedDocxBlob(resume, sanitizeOptions);
+  const arrayBuffer = await blob.arrayBuffer();
+  void import("@/lib/exportValidationShadow").then(({ runExportValidationShadow }) =>
+    runExportValidationShadow({
+      exportType: "docx",
+      bytes: arrayBuffer,
+      model,
+      renderMs,
+    }),
+  );
   saveAs(blob, "Calibrated_Resume_ATS.docx");
 }

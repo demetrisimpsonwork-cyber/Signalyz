@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import {
@@ -179,7 +180,7 @@ function drawExperienceRole(
   ctx.y += 4;
 }
 
-function renderPdfLayout(model: ExportResumeModel, doc: JsPdfDoc): PdfLayoutContext {
+export function renderPdfLayout(model: ExportResumeModel, doc: JsPdfDoc): PdfLayoutContext {
   const ctx: PdfLayoutContext = { doc, y: MT };
 
   drawWrapped(ctx, model.header.name, 18, { bold: true, align: "center", color: "#1A1A2E" });
@@ -313,6 +314,25 @@ function renderPdfLayout(model: ExportResumeModel, doc: JsPdfDoc): PdfLayoutCont
   return ctx;
 }
 
+export async function buildCalibratedPdfBlob(
+  resume: CalibratedResumeData,
+  sanitizeOptions?: CalibratedResumeSanitizeOptions,
+): Promise<{ blob: Blob; model: ExportResumeModel; renderMs: number; pageCount: number | null }> {
+  const started = performance.now();
+  const model = normalizeResumeForExport(resume, sanitizeOptions);
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  renderPdfLayout(model, doc);
+  const arrayBuffer = doc.output("arraybuffer") as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+  const { extractPdfPageCount } = await import("@/lib/exportValidation/extractPdfMeta");
+  return {
+    blob,
+    model,
+    renderMs: Math.round(performance.now() - started),
+    pageCount: extractPdfPageCount(arrayBuffer),
+  };
+}
+
 /**
  * Export the calibrated resume as a designed PDF using jsPDF.
  */
@@ -327,10 +347,17 @@ export async function exportCalibratedPdf(
 
   try {
     toast.info("Generating PDF…");
-    const model = normalizeResumeForExport(resume, sanitizeOptions);
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    renderPdfLayout(model, doc);
-    doc.save("Calibrated_Resume.pdf");
+    const { blob, model, renderMs } = await buildCalibratedPdfBlob(resume, sanitizeOptions);
+    const arrayBuffer = await blob.arrayBuffer();
+    void import("@/lib/exportValidationShadow").then(({ runExportValidationShadow }) =>
+      runExportValidationShadow({
+        exportType: "pdf",
+        bytes: arrayBuffer,
+        model,
+        renderMs,
+      }),
+    );
+    saveAs(blob, "Calibrated_Resume.pdf");
     toast.success("PDF exported");
   } catch (err) {
     console.error("PDF export error:", err);
