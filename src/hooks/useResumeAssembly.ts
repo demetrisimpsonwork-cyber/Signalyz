@@ -8,6 +8,7 @@ import { evaluateAssemblyParseGate, PARSE_GATE_MESSAGE } from "@/lib/resumeIntak
 import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
 import { trackEvent, trackReliabilityError } from "@/lib/analytics";
 import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
+import { runClientResumeQaShadow } from "@/lib/resumeQaShadow";
 
 export interface CalibratedResumeData {
   header: {
@@ -482,6 +483,18 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         jdText: jdText || "",
         originalResumeText: originalResume,
       }).resume;
+
+      runClientResumeQaShadow({
+        sourceResumeText: originalResume,
+        jobDescriptionText: jdText || "",
+        generatedResume: resume,
+        targetRoleLabel:
+          (typeof alignmentResult?.inferred_role_title === "string" && alignmentResult.inferred_role_title) ||
+          resume.header.title ||
+          "unknown",
+        runId: typeof data?.request_id === "string" ? data.request_id : undefined,
+        requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
+      });
 
       // ── Confidence check ──
       const conf = evaluateConfidence(resume);

@@ -50,6 +50,10 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/calibrationEngine",
       ),
+      "@signalyz/resumeQaEngine": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/resumeQaEngine",
+      ),
     },
   },
 });

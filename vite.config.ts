@@ -32,6 +32,14 @@ export default defineConfig(({ mode }) => ({
         __dirname,
         "./supabase/functions/_shared/hiringReportJdCompaction.ts",
       ),
+      "@signalyz/calibrationEngine": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/calibrationEngine",
+      ),
+      "@signalyz/resumeQaEngine": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/resumeQaEngine",
+      ),
     },
   },
 }));
