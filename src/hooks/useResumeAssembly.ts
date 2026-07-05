@@ -10,6 +10,10 @@ import { trackEvent, trackReliabilityError } from "@/lib/analytics";
 import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 import { runClientResumeQaShadow } from "@/lib/resumeQaShadow";
 import { runClientResumeAstShadow } from "@/lib/resumeAstShadow";
+import {
+  applyLinkPreservationGuard,
+  logLinkPreservationReport,
+} from "@signalyz/resumeAst/linkPreservation";
 
 export interface CalibratedResumeData {
   header: {
@@ -18,6 +22,8 @@ export interface CalibratedResumeData {
     email: string;
     phone: string;
     linkedin: string;
+    github: string;
+    website: string;
     location: string;
   };
   summary: string;
@@ -262,7 +268,7 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         setRewriteStatus(null);
       }
 
-      const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", location: "" };
+      const rawHeader = data.header || { name: "", title: "", email: "", phone: "", linkedin: "", github: "", website: "", location: "" };
 
       // ── Strict field validation helpers ──
 
@@ -337,6 +343,8 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         email: rawHeader.email || preExtractedContact?.email || "",
         phone: rawHeader.phone || preExtractedContact?.phone || "",
         linkedin: rawHeader.linkedin || preExtractedContact?.linkedin || "",
+        github: rawHeader.github || "",
+        website: rawHeader.website || "",
         location: cleanLocation,
       };
 
@@ -484,6 +492,24 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
         jdText: jdText || "",
         originalResumeText: originalResume,
       }).resume;
+
+      try {
+        const linkPreservation = applyLinkPreservationGuard({
+          sourceResumeText: originalResume,
+          resume,
+          requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
+        });
+        resume = linkPreservation.resume;
+        logLinkPreservationReport(linkPreservation.report);
+      } catch (linkErr) {
+        console.warn(
+          JSON.stringify({
+            event: "resume_link_preservation_failed",
+            request_id: data?.request_id,
+            error: linkErr instanceof Error ? linkErr.name : "Error",
+          }),
+        );
+      }
 
       runClientResumeQaShadow({
         sourceResumeText: originalResume,

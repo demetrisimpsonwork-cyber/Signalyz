@@ -18,10 +18,13 @@ export {
   logResumeAstObservability,
   assertObservabilitySafe,
 } from "./observability.ts";
+export { applyLinkPreservationGuard, logLinkPreservationReport, assertLinkPreservationReportSafe } from "./linkPreservation.ts";
+export { extractStructuredLinks, isImportantLinkType, normalizeLinkValue, classifyUrl } from "./linkExtraction.ts";
 export { RESUME_AST_PARSE_VERSION } from "./types.ts";
 export type {
   ResumeAst,
   AstBullet,
+  AstLinkType,
   ResumeHeader,
   ProfessionalSummary,
   ExperienceEntry,
@@ -36,6 +39,7 @@ export type {
   ValidationResult,
   ParseResumeAstResult,
   ResumeAstObservabilitySummary,
+  ResumeLinkPreservationReport,
   AstConfidence,
   BulletSource,
 } from "./types.ts";

@@ -95,6 +95,8 @@ export function normalizeResumeForExport(
     cleaned.header.email,
     cleaned.header.phone,
     cleaned.header.linkedin,
+    cleaned.header.github,
+    cleaned.header.website,
   ]
     .map((s) => (s || "").trim())
     .filter(Boolean);

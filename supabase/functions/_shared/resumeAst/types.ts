@@ -1,6 +1,15 @@
 /** Signalyzed Standard™ — Canonical Resume AST (Phase 1). Pure types, no I/O. */
 
-export const RESUME_AST_PARSE_VERSION = "1.0.0";
+export const RESUME_AST_PARSE_VERSION = "1.1.0";
+
+export type AstLinkType =
+  | "email"
+  | "phone"
+  | "linkedin"
+  | "github"
+  | "portfolio"
+  | "website"
+  | "other";
 
 export type BulletSource =
   | "experience"
@@ -106,9 +115,29 @@ export interface CertificationEntry {
 
 export interface LinkEntry {
   id: string;
+  type: AstLinkType;
   label: string;
+  value: string;
+  normalizedValue: string;
+  sourceSection: string;
+  confidence: AstConfidence;
+  /** @deprecated use type/value — kept for validator compatibility */
   url: string;
   valid: boolean;
+}
+
+export interface ResumeLinkPreservationReport {
+  event: "resume_link_preservation_report";
+  request_id?: string;
+  source_link_count: number;
+  generated_link_count_before: number;
+  generated_link_count_after: number;
+  restored_link_count: number;
+  link_types_restored: AstLinkType[];
+  duplicate_link_count: number;
+  broken_link_count: number;
+  preservation_ok: boolean;
+  run_time_ms: number;
 }
 
 export interface AwardEntry {

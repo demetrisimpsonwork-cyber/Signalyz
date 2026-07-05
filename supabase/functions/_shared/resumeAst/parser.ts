@@ -4,6 +4,7 @@ import {
   fingerprintResume,
   fingerprintSection,
 } from "./fingerprint.ts";
+import { extractStructuredLinks } from "./linkExtraction.ts";
 import { normalizeResumeText } from "./normalizer.ts";
 import {
   collapseWhitespace,
@@ -66,7 +67,12 @@ export function parseResumeAst(rawText: string): ParseResumeAstResult {
   }
 
   const header = parseHeader(headerLines);
-  const links = extractLinks(headerLines.join("\n"));
+  const links = extractStructuredLinks(text);
+
+  for (const link of links) {
+    if (link.type === "email" && !header.email) header.email = link.value;
+    if (link.type === "phone" && !header.phone) header.phone = link.value;
+  }
 
   const ast: ResumeAst = {
     metadata: {
@@ -123,10 +129,23 @@ export function parseResumeAst(rawText: string): ParseResumeAstResult {
   flushBuffer();
 
   ast.bullets = collectAllBullets(ast);
+  ast.links = dedupeAstLinks([...ast.links, ...extractStructuredLinks(text)]);
   attachFingerprints(ast);
 
   const parseTimeMs = Math.round(performance.now() - started);
   return { ast, diagnostics, parseTimeMs };
+}
+
+function dedupeAstLinks(links: LinkEntry[]): LinkEntry[] {
+  const seen = new Set<string>();
+  const out: LinkEntry[] = [];
+  for (const link of links) {
+    const key = `${link.type}:${link.normalizedValue}`;
+    if (!link.normalizedValue || seen.has(key)) continue;
+    seen.add(key);
+    out.push(link);
+  }
+  return out;
 }
 
 function parseHeader(lines: string[]): ResumeHeader {
@@ -150,16 +169,6 @@ function parseHeader(lines: string[]): ResumeHeader {
   if (locationMatch) header.location = locationMatch[1];
 
   return header;
-}
-
-function extractLinks(text: string): LinkEntry[] {
-  const urls = text.match(new RegExp(URL_RX.source, "gi")) ?? [];
-  return [...new Set(urls)].map((url, index) => ({
-    id: nextId(`link-${index}`),
-    label: url.includes("github") ? "github" : url.includes("linkedin") ? "linkedin" : "link",
-    url: url.trim(),
-    valid: /^https?:\/\//i.test(url) || /^(github|linkedin)\.com\//i.test(url),
-  }));
 }
 
 function ingestSection(
@@ -186,6 +195,9 @@ function ingestSection(
       break;
     case "Certifications":
       ast.certifications.push(...parseCertifications(lines));
+      break;
+    case "Links":
+      ast.links.push(...extractStructuredLinks(lines.join("\n"), { sourceSections: ["links"] }));
       break;
     case "Awards":
       ast.awards.push(

@@ -7,6 +7,7 @@ import {
   normalizeUnicode,
   titleCaseSection,
 } from "./textUtils.ts";
+import { isValidLink, normalizeLinkValue } from "./linkExtraction.ts";
 
 /** Normalize AST in place — whitespace, bullets, section names, unicode, links. Does not rewrite content. */
 export function normalizeResumeAst(ast: ResumeAst): ResumeAst {
@@ -61,8 +62,10 @@ export function normalizeResumeAst(ast: ResumeAst): ResumeAst {
   clone.links = clone.links.map((l) => ({
     ...l,
     label: collapseWhitespace(l.label),
-    url: normalizeHyperlink(l.url),
-    valid: isValidUrl(normalizeHyperlink(l.url)),
+    value: collapseWhitespace(l.value),
+    normalizedValue: normalizeLinkValue(l.type, l.value),
+    url: l.type === "email" || l.type === "phone" ? l.value : normalizeHyperlink(l.url || l.value),
+    valid: isValidLink(l.type, l.value),
   }));
 
   clone.awards = clone.awards.map((a) => ({

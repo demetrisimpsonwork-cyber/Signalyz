@@ -1,4 +1,9 @@
 import { runResumeQa, type ResumeQaInput, type ResumeQaResult } from "./resumeQaEngine.ts";
+import { buildShadowDashboardSummary } from "./shadowDashboard.ts";
+
+/** Rolling shadow dashboard buffer (in-memory, per browser session). */
+let shadowDashboardBuffer: Array<{ result: ResumeQaResult; label?: "clean" | "contaminated" }> = [];
+const SHADOW_DASHBOARD_WINDOW = 20;
 
 /** Parse ENABLE_RESUME_QA_SHADOW — default false. */
 export function isResumeQaShadowEnabled(flagValue?: string | boolean | null): boolean {
@@ -24,6 +29,13 @@ export interface ResumeQaShadowLog {
   bullet_regression_count: number;
   formatting_issue_count: number;
   identity_drift_count: number;
+  issue_logs?: ResumeQaResult["issueLogs"];
+  confusion_log_count?: number;
+  dashboard_summary?: {
+    top_rules: Array<{ rule_id: string; trigger_count: number; critical_count: number }>;
+    critical_rate: number;
+    likely_false_positives: Array<{ rule_id: string; clean_critical_hits: number }>;
+  };
   error?: { name: string; message: string };
 }
 
@@ -34,6 +46,8 @@ export interface CalibratedResumePlainShape {
     email?: string;
     phone?: string;
     linkedin?: string;
+    github?: string;
+    website?: string;
     location?: string;
   };
   summary?: string;
@@ -75,7 +89,7 @@ export function calibratedResumeToPlainText(resume: CalibratedResumePlainShape):
 
   if (header.name) lines.push(header.name);
   if (header.title) lines.push(header.title);
-  const contact = [header.email, header.phone, header.linkedin, header.location].filter(Boolean);
+  const contact = [header.email, header.phone, header.linkedin, header.github, header.website, header.location].filter(Boolean);
   if (contact.length) lines.push(contact.join(" | "));
 
   if (resume.summary) {
@@ -139,6 +153,7 @@ export function calibratedResumeToPlainText(resume: CalibratedResumePlainShape):
 export function buildSanitizedQaLog(
   input: Pick<ResumeQaInput, "runId" | "requestId" | "targetRoleLabel">,
   result: ResumeQaResult,
+  dashboard?: ReturnType<typeof buildShadowDashboardSummary>,
 ): ResumeQaShadowLog {
   const highWarnings = result.warnings.filter((i) => i.severity === "high");
 
@@ -166,6 +181,19 @@ export function buildSanitizedQaLog(
     bullet_regression_count: result.bulletRegressions.length,
     formatting_issue_count: result.formattingIssues.length,
     identity_drift_count: result.identityDrift.length,
+    issue_logs: result.issueLogs,
+    confusion_log_count: result.issueLogs.length,
+    dashboard_summary: dashboard
+      ? {
+          top_rules: dashboard.top_rules.slice(0, 20).map((r) => ({
+            rule_id: r.rule_id,
+            trigger_count: r.trigger_count,
+            critical_count: r.critical_count,
+          })),
+          critical_rate: dashboard.critical_rate,
+          likely_false_positives: dashboard.likely_false_positives.slice(0, 10),
+        }
+      : undefined,
   };
 }
 
@@ -187,7 +215,7 @@ function sanitizeErrorMessage(message: string): string {
 }
 
 const BLOCKED_LOG_SUBSTRINGS =
-  /resume_text|jd_text|original_resume|generated_resume|bullet|@|\.com|github\.com|linkedin/i;
+  /resume_text|jd_text|original_resume_text|generated_resume_text|@|\.com|github\.com|linkedin/i;
 
 /** Ensure log payload never includes raw resume/JD content. */
 export function assertSanitizedShadowLog(log: ResumeQaShadowLog): void {
@@ -221,7 +249,11 @@ export function runResumeQaShadow(input: RunResumeQaShadowInput): RunResumeQaSha
 
   try {
     const result = runResumeQa(input);
-    const log = buildSanitizedQaLog(input, result);
+    shadowDashboardBuffer = [...shadowDashboardBuffer, { result, label: "clean" }].slice(
+      -SHADOW_DASHBOARD_WINDOW,
+    );
+    const dashboard = buildShadowDashboardSummary(shadowDashboardBuffer);
+    const log = buildSanitizedQaLog(input, result, dashboard);
     assertSanitizedShadowLog(log);
     console.log(JSON.stringify(log));
     return { log, result };

@@ -16,7 +16,9 @@
     "resumeqa:weekly": "node --experimental-strip-types scripts/resumeqa/weekly-report.ts",
     "resumeqa:drift": "node --experimental-strip-types scripts/resumeqa/drift-check.ts",
     "resumeast:dashboard": "node --experimental-strip-types scripts/resumeast/dashboard.ts",
-    "resumeast:validate-shadow": "node --experimental-strip-types scripts/resumeast/validate-shadow.ts"
+    "resumeast:validate-shadow": "node --experimental-strip-types scripts/resumeast/validate-shadow.ts",
+    "resumeast:validate-links": "node --experimental-strip-types scripts/resumeast/validate-link-preservation.ts",
+    "resumeast:prod-smoke": "node --experimental-strip-types scripts/resumeast/prod-link-preservation-smoke.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
