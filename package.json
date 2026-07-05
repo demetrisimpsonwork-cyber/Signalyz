@@ -11,7 +11,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "export:feedback": "node scripts/export-user-feedback.mjs"
+    "export:feedback": "node scripts/export-user-feedback.mjs",
+    "resumeqa:dashboard": "node --experimental-strip-types scripts/resumeqa/dashboard.ts",
+    "resumeqa:weekly": "node --experimental-strip-types scripts/resumeqa/weekly-report.ts",
+    "resumeqa:drift": "node --experimental-strip-types scripts/resumeqa/drift-check.ts",
+    "resumeast:dashboard": "node --experimental-strip-types scripts/resumeast/dashboard.ts",
+    "resumeast:validate-shadow": "node --experimental-strip-types scripts/resumeast/validate-shadow.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -9,6 +9,7 @@ import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
 import { trackEvent, trackReliabilityError } from "@/lib/analytics";
 import { withReportRunFields, type ReportRunInvokeFields } from "@/lib/reportRunSession";
 import { runClientResumeQaShadow } from "@/lib/resumeQaShadow";
+import { runClientResumeAstShadow } from "@/lib/resumeAstShadow";
 
 export interface CalibratedResumeData {
   header: {
@@ -492,6 +493,13 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
           (typeof alignmentResult?.inferred_role_title === "string" && alignmentResult.inferred_role_title) ||
           resume.header.title ||
           "unknown",
+        runId: typeof data?.request_id === "string" ? data.request_id : undefined,
+        requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
+      });
+
+      runClientResumeAstShadow({
+        sourceResumeText: originalResume,
+        generatedResume: resume,
         runId: typeof data?.request_id === "string" ? data.request_id : undefined,
         requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
       });

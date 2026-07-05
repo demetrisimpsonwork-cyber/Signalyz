@@ -54,6 +54,10 @@ export default defineConfig({
         __dirname,
         "./supabase/functions/_shared/resumeQaEngine",
       ),
+      "@signalyz/resumeAst": path.resolve(
+        __dirname,
+        "./supabase/functions/_shared/resumeAst",
+      ),
     },
   },
 });

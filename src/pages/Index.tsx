@@ -77,6 +77,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useReportRunAccess } from "@/hooks/useReportRunAccess";
 import { withReportRunFields } from "@/lib/reportRunSession";
+import { runClientSourceResumeAstShadow } from "@/lib/resumeAstShadow";
 import { ProGate } from "@/components/ProGate";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
@@ -909,6 +910,7 @@ const Index = () => {
     }
     if (normResume.truncated) setInputTruncated(true);
     setDirectorExperience(normResume.text);
+    runClientSourceResumeAstShadow({ sourceResumeText: normResume.text });
     setDirectorLoading(true);
     // Don't clear directorResult eagerly — preserve as fallback if this run fails
     setDirectorError(null);
@@ -1108,6 +1110,7 @@ const Index = () => {
     const bulletWithContext = additionalContext.trim()
       ? `${normResume.text}\n\nAdditional context: ${additionalContext.trim()}`
       : normResume.text;
+    runClientSourceResumeAstShadow({ sourceResumeText: normResume.text });
     const sessionToken = user ? undefined : getSessionToken();
 
     const isCalibratedRerun = calibratedRunPendingRef.current;

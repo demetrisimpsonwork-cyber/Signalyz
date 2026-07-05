@@ -1,0 +1,270 @@
+{
+  "generated_at": "2026-07-05T20:32:53.346Z",
+  "shadow_reports": [
+    {
+      "label": "demetri_ai_engineer",
+      "log": {
+        "event": "resume_ast_shadow_report",
+        "request_id": "ast-shadow-demetri_ai_engineer",
+        "run_id": "run-demetri_ai_engineer",
+        "ast_version": "1.0.0",
+        "source_parse_ok": true,
+        "generated_parse_ok": true,
+        "source_sections": 5,
+        "generated_sections": 4,
+        "source_bullets": 7,
+        "generated_bullets": 6,
+        "source_skills": 14,
+        "generated_skills": 4,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0.2857,
+        "keyword_preservation_score": 0.486,
+        "missing_section_count": 1,
+        "added_section_count": 0,
+        "parse_time_ms": 19,
+        "fingerprint_changed": true
+      },
+      "comparison": {
+        "source_section_count": 5,
+        "generated_section_count": 4,
+        "source_bullet_count": 7,
+        "generated_bullet_count": 6,
+        "source_skill_count": 14,
+        "generated_skill_count": 4,
+        "missing_sections": [
+          "links"
+        ],
+        "added_sections": [],
+        "malformed_section_count": 0,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0.2857,
+        "keyword_preservation_score": 0.486,
+        "fingerprint_changed": true,
+        "top_validation_codes": []
+      }
+    },
+    {
+      "label": "contaminated_calibrated",
+      "log": {
+        "event": "resume_ast_shadow_report",
+        "request_id": "ast-shadow-contaminated_calibrated",
+        "run_id": "run-contaminated_calibrated",
+        "ast_version": "1.0.0",
+        "source_parse_ok": true,
+        "generated_parse_ok": true,
+        "source_sections": 5,
+        "generated_sections": 4,
+        "source_bullets": 7,
+        "generated_bullets": 2,
+        "source_skills": 14,
+        "generated_skills": 4,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0,
+        "keyword_preservation_score": 0.2336,
+        "missing_section_count": 1,
+        "added_section_count": 0,
+        "parse_time_ms": 3,
+        "fingerprint_changed": true
+      },
+      "comparison": {
+        "source_section_count": 5,
+        "generated_section_count": 4,
+        "source_bullet_count": 7,
+        "generated_bullet_count": 2,
+        "source_skill_count": 14,
+        "generated_skill_count": 4,
+        "missing_sections": [
+          "links"
+        ],
+        "added_sections": [],
+        "malformed_section_count": 0,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0,
+        "keyword_preservation_score": 0.2336,
+        "fingerprint_changed": true,
+        "top_validation_codes": []
+      }
+    },
+    {
+      "label": "customer_success",
+      "log": {
+        "event": "resume_ast_shadow_report",
+        "request_id": "ast-shadow-customer_success",
+        "run_id": "run-customer_success",
+        "ast_version": "1.0.0",
+        "source_parse_ok": true,
+        "generated_parse_ok": true,
+        "source_sections": 4,
+        "generated_sections": 4,
+        "source_bullets": 2,
+        "generated_bullets": 2,
+        "source_skills": 5,
+        "generated_skills": 5,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1,
+        "missing_section_count": 0,
+        "added_section_count": 0,
+        "parse_time_ms": 1,
+        "fingerprint_changed": false
+      },
+      "comparison": {
+        "source_section_count": 4,
+        "generated_section_count": 4,
+        "source_bullet_count": 2,
+        "generated_bullet_count": 2,
+        "source_skill_count": 5,
+        "generated_skill_count": 5,
+        "missing_sections": [],
+        "added_sections": [],
+        "malformed_section_count": 0,
+        "validation_error_count": 0,
+        "warning_count": 0,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1,
+        "fingerprint_changed": false,
+        "top_validation_codes": []
+      }
+    },
+    {
+      "label": "malformed",
+      "log": {
+        "event": "resume_ast_shadow_report",
+        "request_id": "ast-shadow-malformed",
+        "run_id": "run-malformed",
+        "ast_version": "1.0.0",
+        "source_parse_ok": true,
+        "generated_parse_ok": true,
+        "source_sections": 3,
+        "generated_sections": 3,
+        "source_bullets": 3,
+        "generated_bullets": 3,
+        "source_skills": 3,
+        "generated_skills": 3,
+        "validation_error_count": 4,
+        "warning_count": 8,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1,
+        "missing_section_count": 0,
+        "added_section_count": 0,
+        "parse_time_ms": 3,
+        "fingerprint_changed": false
+      },
+      "comparison": {
+        "source_section_count": 3,
+        "generated_section_count": 3,
+        "source_bullet_count": 3,
+        "generated_bullet_count": 3,
+        "source_skill_count": 3,
+        "generated_skill_count": 3,
+        "missing_sections": [],
+        "added_sections": [],
+        "malformed_section_count": 3,
+        "validation_error_count": 4,
+        "warning_count": 8,
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1,
+        "fingerprint_changed": false,
+        "top_validation_codes": [
+          "header.missing",
+          "experience.malformed_header",
+          "chronology.invalid_dates",
+          "bullet.malformed",
+          "bullet.empty"
+        ]
+      }
+    }
+  ],
+  "dashboard_sample": {
+    "parse_success_rate": 1,
+    "average_section_count": 3.75,
+    "average_bullet_count": 3.25,
+    "average_round_trip_fidelity": 1,
+    "average_bullet_preservation_score": 0.5714,
+    "average_keyword_preservation_score": 0.6799,
+    "average_parse_time_ms": 6.5,
+    "malformed_resume_rate": 0.25,
+    "top_validation_errors": [
+      {
+        "code": "bullet_preservation.low",
+        "count": 2
+      },
+      {
+        "code": "validation_error.high",
+        "count": 1
+      },
+      {
+        "code": "validation_warning",
+        "count": 1
+      }
+    ],
+    "missing_section_frequency": [
+      {
+        "section_kind": "missing_1",
+        "count": 2
+      }
+    ],
+    "worst_fidelity_cases": [
+      {
+        "request_id": "ast-shadow-demetri_ai_engineer",
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0.2857,
+        "keyword_preservation_score": 0.486
+      },
+      {
+        "request_id": "ast-shadow-contaminated_calibrated",
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 0,
+        "keyword_preservation_score": 0.2336
+      },
+      {
+        "request_id": "ast-shadow-customer_success",
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1
+      },
+      {
+        "request_id": "ast-shadow-malformed",
+        "round_trip_fidelity": 1,
+        "bullet_preservation_score": 1,
+        "keyword_preservation_score": 1
+      }
+    ]
+  },
+  "top_parsing_problems": [
+    {
+      "case": "malformed",
+      "code": "header.missing"
+    },
+    {
+      "case": "malformed",
+      "code": "experience.malformed_header"
+    },
+    {
+      "case": "malformed",
+      "code": "chronology.invalid_dates"
+    },
+    {
+      "case": "malformed",
+      "code": "bullet.malformed"
+    },
+    {
+      "case": "malformed",
+      "code": "bullet.empty"
+    }
+  ],
+  "production_shadow_safe": true
+}
