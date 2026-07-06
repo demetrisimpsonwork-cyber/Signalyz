@@ -26,6 +26,10 @@ export interface QaIssue {
   source?: QaIssueSource;
   /** Phase 3D — contamination precision taxonomy. */
   contaminationSubtype?: string;
+  /** Phase 3E — unsupported claim precision taxonomy. */
+  unsupportedClaimSubtype?: string;
+  /** Phase 3E — identity drift precision taxonomy. */
+  identityDriftSubtype?: string;
 }
 
 export interface QaIssueLog {
@@ -39,6 +43,10 @@ export interface QaIssueLog {
   code: string;
   /** Phase 3D — contamination precision taxonomy (sanitized). */
   contamination_subtype?: string;
+  /** Phase 3E — unsupported claim precision taxonomy (sanitized). */
+  unsupported_claim_subtype?: string;
+  /** Phase 3E — identity drift precision taxonomy (sanitized). */
+  identity_drift_subtype?: string;
 }
 
 export interface RulePrecisionEstimate {

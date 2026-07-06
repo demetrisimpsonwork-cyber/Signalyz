@@ -15,8 +15,12 @@ export interface BuildIssueInput {
   evidence?: string;
   /** Proposed severity before confidence calibration. */
   proposedSeverity?: QaSeverity;
-  /** Phase 3D — contamination precision taxonomy (no raw text). */
+  /** Phase 3D — contamination precision taxonomy. */
   contaminationSubtype?: import("./contaminationArtifactClassifier.ts").ContaminationSubtype;
+  /** Phase 3E — unsupported claim precision taxonomy. */
+  unsupportedClaimSubtype?: import("./unsupportedClaimClassifier.ts").UnsupportedClaimSubtype;
+  /** Phase 3E — identity drift precision taxonomy. */
+  identityDriftSubtype?: import("./identityDriftClassifier.ts").IdentityDriftSubtype;
 }
 
 const BLOCKER_CODES = new Set([
@@ -67,6 +71,8 @@ export function buildIssue(input: BuildIssueInput): QaIssue {
     matchedTerms: input.matchedTerms,
     source: input.source,
     contaminationSubtype: input.contaminationSubtype,
+    unsupportedClaimSubtype: input.unsupportedClaimSubtype,
+    identityDriftSubtype: input.identityDriftSubtype,
   };
 }
 

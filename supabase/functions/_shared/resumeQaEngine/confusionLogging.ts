@@ -12,5 +12,7 @@ export function buildConfusionLogs(issues: QaIssue[]): QaIssueLog[] {
     source: issue.source ?? "generated_resume",
     code: issue.code,
     contamination_subtype: issue.contaminationSubtype,
+    unsupported_claim_subtype: issue.unsupportedClaimSubtype,
+    identity_drift_subtype: issue.identityDriftSubtype,
   }));
 }
