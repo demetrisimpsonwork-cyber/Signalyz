@@ -5,7 +5,26 @@ import { phraseMatchesCorpus } from "./synonymGraph.ts";
 import {
   classifyUnsupportedClaim,
   isAdvisoryUnsupportedClaimSubtype,
+  isHardBlockerUnsupportedClaimSubtype,
+  type UnsupportedClaimSubtype,
 } from "./unsupportedClaimClassifier.ts";
+
+function resolveUnsupportedClaimConfidence(
+  subtype: UnsupportedClaimSubtype,
+  ruleId: string,
+): import("./types.ts").QaConfidence {
+  if (isHardBlockerUnsupportedClaimSubtype(subtype)) {
+    return ruleId === "hallucination.unsupported_metric" ? "very_high" : "high";
+  }
+  return "medium";
+}
+
+function isAdvisoryUnsupportedIssue(subtype: UnsupportedClaimSubtype): boolean {
+  return (
+    isAdvisoryUnsupportedClaimSubtype(subtype) ||
+    subtype === "protected_claim_regression"
+  );
+}
 
 const SAFE_TRANSFER_TERMS =
   /\b(collaborat|cross-functional|stakeholder|documentation|workflow|automation|integration|scalable|reliable|maintainable|production|deployed|monitoring|testing|agile|scrum)\w*\b/i;
@@ -28,13 +47,14 @@ export function detectUnsupportedClaims(ctx: DetectorContext): QaIssue[] {
           sourceCorpus: ctx.sourceCorpus,
           evidence: bullet,
         });
-        const advisory = isAdvisoryUnsupportedClaimSubtype(subtype);
+        const advisory = isAdvisoryUnsupportedIssue(subtype);
+        const confidence = resolveUnsupportedClaimConfidence(subtype, "hallucination.unsupported_metric");
         issues.push(
           buildIssue({
             ruleId: "hallucination.unsupported_metric",
             detector: "hallucination",
             code: "unsupported_claim",
-            confidence: advisory ? "medium" : "very_high",
+            confidence,
             matchedTerms: [metric],
             source: "generated_resume",
             message: advisory
@@ -70,13 +90,14 @@ export function detectUnsupportedClaims(ctx: DetectorContext): QaIssue[] {
         sourceCorpus: ctx.sourceCorpus,
         evidence: bullet,
       });
-      const advisory = isAdvisoryUnsupportedClaimSubtype(subtype);
+      const advisory = isAdvisoryUnsupportedIssue(subtype);
+      const confidence = resolveUnsupportedClaimConfidence(subtype, "hallucination.untracked_terms");
       issues.push(
         buildIssue({
           ruleId: "hallucination.untracked_terms",
           detector: "hallucination",
           code: "unsupported_claim",
-          confidence: advisory ? "medium" : "high",
+          confidence,
           matchedTerms,
           source: "generated_resume",
           message: advisory
@@ -86,7 +107,7 @@ export function detectUnsupportedClaims(ctx: DetectorContext): QaIssue[] {
           suggestedFix: advisory
             ? "Monitor in shadow mode; terms are likely transferable role language."
             : "Rewrite bullet using only source-resume facts or JD-aligned transferable language.",
-          proposedSeverity: advisory ? "medium" : "high",
+          proposedSeverity: isHardBlockerUnsupportedClaimSubtype(subtype) ? "high" : "medium",
           unsupportedClaimSubtype: subtype,
         }),
       );
