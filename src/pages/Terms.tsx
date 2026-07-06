@@ -23,7 +23,7 @@ const Terms = () => (
     </Section>
 
     <Section title="4. Subscription & Billing">
-      <p>Full Signal Intelligence costs <strong>$19 per month</strong> and provides full access to premium features including calibrated resumes, signal analysis, and LinkedIn optimization. All payments are securely processed by Stripe.</p>
+      <p>Active Job Search costs <strong>$19 per month</strong> and provides full access to premium features including calibrated resume exports, full Hiring Reports, and LinkedIn optimization. Final Apply Check is available for <strong>$9 one-time</strong> per target role. All payments are securely processed by Stripe.</p>
     </Section>
 
     <Section title="5. Cancellation">

@@ -3,7 +3,7 @@ import { Check, ShieldCheck } from "lucide-react";
 const STEPS = [
   "Pulling your strongest, evidence-backed points…",
   "Refining the writing so it reads naturally…",
-  "Building your optimized resume…",
+  "Building your calibrated resume…",
 ];
 
 interface ResumeAssemblyLoaderProps {
@@ -18,7 +18,7 @@ const ResumeAssemblyLoader = ({ currentStep }: ResumeAssemblyLoaderProps) => {
       style={{ minHeight: "200px" }}
       role="status"
       aria-live="polite"
-      aria-label="Building your optimized resume"
+      aria-label="Building your calibrated resume"
     >
       <span className="sr-only">{currentStep >= 3 ? "Optimized resume generated." : activeLabel}</span>
       <div className="space-y-4 mb-4">

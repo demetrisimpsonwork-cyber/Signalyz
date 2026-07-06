@@ -837,7 +837,7 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibr
                 <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground/70 italic">Unlock Full Signal Intelligence to see the exact changes.</p>
+            <p className="text-[10px] text-muted-foreground/70 italic">Unlock calibrated export with Active Job Search to see the exact changes.</p>
           </div>
         )
       )}

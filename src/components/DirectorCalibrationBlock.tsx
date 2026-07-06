@@ -613,7 +613,7 @@ const DirectorCalibrationBlock = ({
             {isAuthenticated ? (
               <div className="space-y-3">
                 <Button onClick={onUpgrade} className="w-full gap-2" size="lg">
-                  Unlock Full Signal Intelligence →
+                  Active Job Search — $19/mo
                 </Button>
                 
               </div>
@@ -1024,7 +1024,7 @@ const DirectorCalibrationBlock = ({
             className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-[0.97]"
             style={{ backgroundColor: "hsl(174, 62%, 47%)" }}
           >
-            <span>✦</span> Unlock Full Signal Intelligence →
+            <span>✦</span> Active Job Search — $19/mo
           </button>
         </div>
       ) : (

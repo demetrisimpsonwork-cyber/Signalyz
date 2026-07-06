@@ -12,16 +12,16 @@ const ProInsightsTeaser = () => {
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-primary">Full Signal Intelligence</h3>
+          <h3 className="text-sm font-semibold text-primary">Active Job Search</h3>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Full signal calibration engine — unlimited alignments, all diagnostic modules.
+          Unlimited analyses, calibrated exports, and full diagnostic modules.
         </p>
       </div>
 
       <div className="px-5 pb-5 space-y-4">
         <ul className="space-y-1.5 text-sm text-muted-foreground">
-          <li className="flex items-center gap-2"><span className="text-primary">•</span> Unlimited alignments</li>
+          <li className="flex items-center gap-2"><span className="text-primary">•</span> Unlimited signal previews</li>
           <li className="flex items-center gap-2"><span className="text-primary">•</span> Full Identity Strength Index™ (all 4 pillars)</li>
           <li className="flex items-center gap-2"><span className="text-primary">•</span> Complete Signal Risk Projection (all 5 stages)</li>
           <li className="flex items-center gap-2"><span className="text-primary">•</span> Multi-variant repositioned bullets</li>
@@ -39,7 +39,7 @@ const ProInsightsTeaser = () => {
               className="w-full gap-2 shadow-md hover:brightness-110 transition-all text-sm"
             >
               <Lock className="h-3.5 w-3.5" />
-              See My Exact Fix — $19/mo
+              Active Job Search — $19/mo
             </Button>
           ) : (
             <Button
@@ -51,7 +51,7 @@ const ProInsightsTeaser = () => {
           )}
 
           <p className="text-center text-[11px] text-muted-foreground">
-            {user ? "See exactly what to reposition for this role." : "3 free analyses included."}
+            {user ? "See exactly what to reposition for this role." : "3 free signal previews per day included."}
           </p>
         </div>
       </div>

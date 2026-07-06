@@ -70,7 +70,7 @@ function useCountUp(target: number, duration = 1200) {
 const LockedPillarsCard = () => (
   <div className="rounded-md border border-border bg-card p-5 text-center space-y-2">
     <Lock className="h-4 w-4 text-muted-foreground mx-auto" />
-    <p className="text-xs font-medium text-foreground">3 additional identity dimensions available with Pro</p>
+    <p className="text-xs font-medium text-foreground">3 additional identity dimensions available with Active Job Search</p>
   </div>
 );
 
@@ -120,7 +120,7 @@ const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: Id
             <h3 className="text-sm font-semibold text-foreground mt-2">Identity Strength Index™</h3>
             {!isPro && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
-                Pro
+                Paid
               </span>
             )}
           </div>
@@ -161,12 +161,12 @@ function IdentityGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div className="pt-1 flex flex-col items-start gap-2">
       <p className="text-[11px] text-muted-foreground">
-        3 identity dimensions are restricted to Full Signal Intelligence.
+        3 identity dimensions unlock with Active Job Search.
       </p>
       {user ? (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" onClick={onUpgrade}>
           <Lock className="h-3 w-3" />
-          See My Exact Fix
+          Active Job Search — $19/mo
         </Button>
       ) : (
         <Button size="sm" className="gap-1.5 text-xs h-8 px-3" asChild>

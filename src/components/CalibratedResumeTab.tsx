@@ -221,7 +221,7 @@ const CalibratedResumeTab = ({
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
           <AlertTriangle className="h-8 w-8" style={{ color: "#F59E0B" }} />
-          <h3 className="text-base font-semibold text-foreground">Your optimized resume starts with an analysis</h3>
+          <h3 className="text-base font-semibold text-foreground">Your calibrated export starts with a signal preview</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
             Your Calibrated Resume is rewritten from your real experience and tuned to this specific job — so first we need to see both. Paste your resume and a job description in Resume Analysis to get started.
           </p>
@@ -381,7 +381,7 @@ const CalibratedResumeTab = ({
 function CalibratedResumeGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
   
-  const ctaLabel = "Unlock Full Signal Intelligence →";
+  const ctaLabel = "Active Job Search — $19/mo";
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">

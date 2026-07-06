@@ -32,7 +32,7 @@ const KeywordChips = ({ keywords }: KeywordChipsProps) => {
               <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-[220px]">
-              <p className="text-xs">Pro analyzes keyword clusters and weighting, not just presence.</p>
+              <p className="text-xs">Active Job Search analyzes keyword clusters and weighting, not just presence.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

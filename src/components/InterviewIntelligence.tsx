@@ -148,7 +148,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
             className="w-full text-center text-sm font-medium py-2.5 rounded-lg transition-colors"
             style={{ color: "hsl(174, 62%, 47%)", backgroundColor: "hsl(174, 62%, 47%, 0.08)" }}
           >
-            See all 5 interview questions tailored to your gaps → Unlock Full Signal Intelligence
+            See all 5 interview questions tailored to your gaps → Active Job Search
           </button>
         )}
         {!isPro && questions.length > 1 && (
@@ -166,7 +166,7 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
             {user ? (
               <div className="space-y-2 w-full max-w-xs mx-auto pt-1">
                 <Button size="lg" onClick={onUpgrade} className="gap-2 w-full">
-                  Unlock Full Signal Intelligence →
+                  Active Job Search — $19/mo
                 </Button>
               </div>
             ) : (

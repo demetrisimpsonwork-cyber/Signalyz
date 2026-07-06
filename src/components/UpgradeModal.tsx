@@ -51,7 +51,7 @@ const UpgradeModal = ({
               Create Your Free Account
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Sign up to run your own alignment — 3 free analyses included.
+              Sign up to run your own signal preview — 3 free previews per day included.
             </DialogDescription>
           </DialogHeader>
           <div className="pt-4">
@@ -77,7 +77,7 @@ const UpgradeModal = ({
               See exactly what's holding your signal back.
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Your experience isn't the problem. Your positioning is.
+              Your experience isn't the problem. Your positioning is. Paid exports are checked against the Signalyzed Standard before you apply.
             </DialogDescription>
           </DialogHeader>
 
@@ -88,8 +88,8 @@ const UpgradeModal = ({
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">What you see now</p>
               <ul className="space-y-2">
                 {[
-                  "Your signal score and primary blocker",
-                  "High-level blocker",
+                  "Signal preview: score and primary blocker",
+                  "Limited insights — no calibrated export",
                   "Your diagnosis summary",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -104,9 +104,9 @@ const UpgradeModal = ({
               <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">What you unlock</p>
               <ul className="space-y-2">
                 {[
-                  "Exact resume changes to fix your blocker",
+                  "Full Hiring Report for this role",
+                  "Calibrated export checked against Signalyzed Standard",
                   "Repositioned bullets aligned to this role",
-                  "Clear positioning strategy hiring managers respond to",
                   "Interview questions based on your gaps",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-foreground">
@@ -123,7 +123,7 @@ const UpgradeModal = ({
           <div className="space-y-3">
             {hasOneTimeCredit && !hasConsumedOneTimeCredit && (
               <p className="text-xs text-center text-primary/80 font-medium">
-                You have 1 unused report credit available.
+                You have 1 unused Final Apply Check credit available.
               </p>
             )}
 
@@ -139,11 +139,11 @@ const UpgradeModal = ({
                   feature_name: featureName,
                   output_type: outputType,
                 });
-                trackEvent("cta_clicked", { cta_label: "Unlock Full Signal Intelligence → $19/mo", source: "upgrade_modal" });
+                trackEvent("cta_clicked", { cta_label: "Active Job Search — $19/mo", source: "upgrade_modal" });
                 initiateCheckout("subscription");
               }}
             >
-              Unlock Full Signal Intelligence → $19/mo
+              Active Job Search — $19/mo
             </Button>
 
             <div className="relative flex items-center justify-center">
@@ -165,11 +165,14 @@ const UpgradeModal = ({
                   feature_name: featureName,
                   output_type: outputType,
                 });
-                trackEvent("cta_clicked", { cta_label: hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9", source: "upgrade_modal" });
+                const ctaLabel = hasConsumedOneTimeCredit
+                  ? "Buy Another Final Apply Check — $9"
+                  : "Final Apply Check — $9";
+                trackEvent("cta_clicked", { cta_label: ctaLabel, source: "upgrade_modal" });
                 initiateCheckout("one_time");
               }}
             >
-              {hasConsumedOneTimeCredit ? "Buy Another Single Report — $9" : "One-time full report — $9"}
+              {hasConsumedOneTimeCredit ? "Buy Another Final Apply Check — $9" : "Final Apply Check — $9"}
             </Button>
           </div>
         </div>

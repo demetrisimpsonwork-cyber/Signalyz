@@ -66,12 +66,12 @@ const Navbar = () => {
                     onClick={() => setShowUpgrade(true)}
                     className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-[#f59e0b]/15 text-[#f59e0b]"
                   >
-                    +Pro
+                    Upgrade
                   </button>
                 )}
                 {isPro && (
                   <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
-                    Pro
+                    Paid
                   </span>
                 )}
                 <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
@@ -98,7 +98,7 @@ const Navbar = () => {
                 onClick={() => setShowUpgrade(true)}
                 className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-[#f59e0b]/15 text-[#f59e0b]"
               >
-                +Pro
+                Upgrade
               </button>
             )}
             <button
@@ -131,7 +131,7 @@ const Navbar = () => {
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
                   {isPro && (
                     <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
-                      Pro
+                      Paid
                     </span>
                   )}
                   <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>

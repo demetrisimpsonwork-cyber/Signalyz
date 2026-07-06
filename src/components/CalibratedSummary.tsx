@@ -72,10 +72,10 @@ const CalibratedSummary = ({ experience, jd, isPro, onUpgrade, reportRunFields }
         </div>
         <div className="rounded-lg border border-border bg-card p-5 text-center space-y-3">
           <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
-           <p className="text-sm font-semibold text-foreground">Unlock Calibrated Summary — Full Signal Intelligence</p>
+           <p className="text-sm font-semibold text-foreground">Unlock Calibrated Summary — Active Job Search</p>
            <p className="text-xs text-muted-foreground">Your professional identity, repositioned for this role.</p>
            {user ? (
-             <Button size="sm" onClick={onUpgrade}>See My Exact Fix</Button>
+             <Button size="sm" onClick={onUpgrade}>Active Job Search — $19/mo</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}

@@ -46,7 +46,7 @@ export function ProGate({
                 onClick={() => initiateCheckout("subscription")}
                 className="text-primary hover:underline font-medium"
               >
-                See My Exact Fix — unlimited analyses for $19/mo
+                Active Job Search — unlimited analyses for $19/mo
               </button>
             </p>
           </div>
@@ -97,7 +97,9 @@ export function ProGate({
                 {isAuthenticated ? "See the exact repositioning moves for this role" : "Create Your Free Account"}
              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-               {isAuthenticated ? "You're closer than you think — but missing positioning, not experience." : "Sign up to access this feature — 3 free analyses included."}
+               {isAuthenticated
+                 ? "Unlock a calibrated export checked against the Signalyzed Standard."
+                 : "Sign up to access this feature — 3 free signal previews included."}
              </p>
              {isAuthenticated && (
                <p className="text-[11px] font-semibold text-muted-foreground">See the exact repositioning moves that close this gap.</p>
@@ -107,10 +109,7 @@ export function ProGate({
           {isAuthenticated ? (
             <div className="space-y-3">
               <div className="space-y-1">
-                <p className="text-2xl font-bold text-foreground">
-                  $19<span className="text-sm font-normal text-muted-foreground">/month</span>
-                </p>
-                <p className="text-xs text-muted-foreground">Cancel anytime · Instant access</p>
+                <p className="text-sm font-medium text-foreground">Active Job Search — $19/mo · Cancel anytime</p>
               </div>
 
 
@@ -126,7 +125,7 @@ export function ProGate({
                 ) : (
                   <span style={{ color: "inherit" }}>✦</span>
                 )}
-                Unlock Full Signal Intelligence →
+                Active Job Search — $19/mo
               </Button>
 
               <div className="relative flex items-center justify-center">
@@ -141,7 +140,7 @@ export function ProGate({
                 variant="outline"
                 className="w-full gap-2"
               >
-                One-time full report — $9
+                Final Apply Check — $9
               </Button>
               
             </div>

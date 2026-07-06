@@ -497,7 +497,7 @@ const History = () => {
               </div>
               <Button onClick={() => setShowUpgrade(true)} className="gap-2" size="lg">
                 <span style={{ color: "inherit" }}>✦</span>
-                Unlock History — Full Signal Intelligence
+                Unlock History — Active Job Search
               </Button>
             </div>
           </div>

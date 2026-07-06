@@ -86,7 +86,7 @@ const SignalGapActions = ({ experience, jd, alignmentResult, isPro, onUpgrade, r
           <p className="text-xs text-muted-foreground">You're closer than you think — but missing positioning, not experience.</p>
           <p className="text-[11px] text-muted-foreground/80 italic">See the exact repositioning moves that close this gap.</p>
           {user ? (
-            <Button size="sm" onClick={onUpgrade}>Unlock Full Signal Intelligence →</Button>
+            <Button size="sm" onClick={onUpgrade}>Active Job Search — $19/mo</Button>
           ) : (
             <Button size="sm" asChild><a href="/auth">Get Started Free</a></Button>
           )}

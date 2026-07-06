@@ -98,7 +98,7 @@ describe("reportRunFields optional safety in Pro tabs", () => {
         hasCurrentSessionAlignment={false}
       />,
     );
-    expect(screen.getByText(/Unlock Full Signal Intelligence/i)).toBeInTheDocument();
+    expect(screen.getByText(/Active Job Search/i)).toBeInTheDocument();
   });
 
   it("LinkedInSignalTab renders without reportRunFields", () => {

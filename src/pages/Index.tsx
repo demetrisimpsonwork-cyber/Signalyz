@@ -554,7 +554,7 @@ const Index = () => {
     if (searchParams.get("upgrade") === "success") {
       trackEvent("payment_completed", { payment_mode: "subscription", success: true });
       trackEvent("purchase", { payment_mode: "subscription" });
-      toast("Your exact fix is now unlocked — scroll to see your changes", {
+      toast("Your calibrated export is unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
@@ -570,7 +570,7 @@ const Index = () => {
     if (searchParams.get("purchase") === "success") {
       trackEvent("payment_completed", { payment_mode: "one_time", success: true });
       trackEvent("purchase", { payment_mode: "one_time" });
-      toast("Your exact fix is now unlocked — scroll to see your changes", {
+      toast("Your calibrated export is unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
         style: { background: "linear-gradient(135deg, hsl(174, 62%, 47%), hsl(174, 62%, 35%))", color: "white", border: "none" },
@@ -1410,20 +1410,20 @@ const Index = () => {
       <section className="py-20 bg-[#0F1C2E] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1C2E] via-[#132438] to-[#0F1C2E] opacity-80" />
         <div className="container max-w-5xl md:max-w-content text-center relative z-10">
-          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Resume optimization for people who already qualify</p>
+          <p className="text-sm text-white/60 tracking-wide uppercase mb-3">Resume positioning for people who already qualify</p>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl leading-tight">
             You already qualify. You just don't <span className="text-primary">read like it</span> yet.
           </h1>
           
           <p className="mt-4 text-base text-white/70 leading-relaxed max-w-xl mx-auto">
-            Upload your resume and paste a job description. Signalyz shows you exactly why you're getting interviews — or why you're not — then gives you a rewritten resume built only from your real experience.
+            Signalyz compares your resume to the role, finds the blocker, and shows what needs to change. Unlock a calibrated export checked against the Signalyzed Standard before you apply.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/55">
             <span>1 · Upload your resume</span>
             <span className="text-white/25">→</span>
             <span>2 · Paste a job description</span>
             <span className="text-white/25">→</span>
-            <span>3 · Get your score + optimized resume</span>
+            <span>3 · Get your score + signal diagnosis</span>
           </div>
           <Button
             size="lg"
@@ -1431,7 +1431,7 @@ const Index = () => {
             onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            Analyze My Resume — Free
+            Run Free Signal Preview
           </Button>
         </div>
       </section>
@@ -1441,10 +1441,10 @@ const Index = () => {
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-8 text-center">What you walk away with.</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
-            { title: "Signal Diagnosis", body: "A scored read of how hiring systems and managers actually interpret your experience — not how you intended it." },
-            { title: "Gap Map", body: "The exact signals preventing callbacks, ranked by impact. Specific, not general." },
-            { title: "Reframed Bullets", body: "Your own language repositioned to hit what the role actually weights. Designed to avoid unsupported claims." },
-            { title: "Calibrated Resume", body: "A submission-ready version built from your signal map — not a template rewrite." },
+            { title: "Signal Diagnosis", body: "Free preview: a scored read of how hiring systems and managers interpret your experience — not how you intended it." },
+            { title: "Gap Map", body: "Your top blocker free; full gap map unlocked with Final Apply Check or Active Job Search." },
+            { title: "Reframed Bullets", body: "One example free; full repositioned set unlocked on paid plans. Designed to avoid unsupported claims." },
+            { title: "Calibrated Resume", body: "Unlock to export — DOCX checked against the Signalyzed Standard before you apply." },
           ].map((card) => (
             <div key={card.title} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-5 space-y-2">
               <p className="text-sm font-semibold text-foreground">{card.title}</p>
@@ -1455,7 +1455,7 @@ const Index = () => {
         <div className="flex justify-center mt-10">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Analyze My Resume →
+            Run Free Signal Preview
           </Button>
         </div>
       </section>
@@ -1504,7 +1504,7 @@ const Index = () => {
         <div className="flex justify-center mt-4">
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-150 hover:-translate-y-px active:translate-y-0 hover:scale-[1.03] active:scale-[0.97]" onClick={() => document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" })}>
             <Sparkles className="h-4 w-4 mr-2" />
-            Analyze My Resume →
+            Run Free Signal Preview
           </Button>
         </div>
       </section>
@@ -1653,7 +1653,7 @@ const Index = () => {
           const tabDescriptions: Record<string, string> = {
             alignment: "Paste your resume and a job description to see your match score and your biggest gaps.",
             director: "A deep read of how recruiters and hiring managers interpret your resume — and where you get screened out.",
-            calibrated: "Your resume rewritten from your real experience, optimized for this specific role.",
+            calibrated: "Your calibrated export for this role — checked against the Signalyzed Standard before you apply.",
             coverletter: "A matching cover letter, grounded in your actual experience.",
             linkedin: "Optimize your LinkedIn profile to send the same strong signal as your resume.",
           };
@@ -1889,12 +1889,12 @@ const Index = () => {
                       {user ? (
                         <>
                            <Button onClick={() => openUpgradeModal()} className="w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                             Unlock Full Signal Intelligence →
+                             Active Job Search — $19/mo
                            </Button>
                             <p className="text-xs text-muted-foreground">
                              {hasConsumedOneTimeCredit
-                               ? "Your Single Report has been used. Upgrade for unlimited analyses."
-                               : "You've used your 3 free analyses today."}
+                               ? "Your Final Apply Check has been used. Upgrade for unlimited analyses."
+                               : "You've used your 3 free signal previews today."}
                             </p>
                            
                         </>
@@ -1904,7 +1904,7 @@ const Index = () => {
                             <a href="/auth">Get Started Free</a>
                           </Button>
                           <p className="text-xs text-muted-foreground">
-                            Sign up to get 3 free analyses.
+                            Sign up to get 3 free signal previews per day.
                           </p>
                         </>
                       )}
@@ -1986,9 +1986,9 @@ const Index = () => {
                           <p className="text-sm text-muted-foreground">
                             {user
                               ? hasConsumedOneTimeCredit
-                                ? "Your Single Report has been used. Upgrade to Full Signal Intelligence for unlimited runs."
-                                : "You've used your 3 free analyses. Upgrade to continue with unlimited alignments."
-                              : "Sign up to get 3 free analyses."}
+                                ? "Your Final Apply Check has been used. Upgrade to Active Job Search for unlimited runs."
+                                : "You've used your 3 free signal previews. Upgrade to continue."
+                              : "Sign up to get 3 free signal previews per day."}
                           </p>
                         </div>
                       </div>
@@ -1998,7 +1998,7 @@ const Index = () => {
                           className="w-full gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
                           onClick={() => openUpgradeModal()}
                         >
-                          Unlock Full Signal Intelligence →
+                          Active Job Search — $19/mo
                         </Button>
                       ) : (
                         <Button size="sm" className="w-full gap-2" asChild>
@@ -2055,13 +2055,13 @@ const Index = () => {
                           <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
                             <p className="text-sm font-semibold text-foreground">See All Repositioned Variants</p>
                             <p className="text-xs text-muted-foreground">Additional repositioned versions are available with full access.</p>
-                            <Button onClick={() => openUpgradeModal()} className="w-full sm:w-auto">Unlock Full Signal Intelligence →</Button>
+                            <Button onClick={() => openUpgradeModal()} className="w-full sm:w-auto">Active Job Search — $19/mo</Button>
                           </div>
                         )}
                       </>
                     ) : (
                       <div className="rounded-xl border border-primary/20 bg-card p-5 text-center space-y-3">
-                        <p className="text-sm font-medium text-foreground">Create a free account to run your own alignment — 3 free analyses included.</p>
+                        <p className="text-sm font-medium text-foreground">Create a free account to run your own signal preview — 3 free previews per day included.</p>
                         <Button asChild className="w-full sm:w-auto"><a href="/auth">Get Started Free</a></Button>
                       </div>
                     )}
@@ -2236,7 +2236,7 @@ const Index = () => {
                                   </p>
                                  {user ? (
                                    <Button onClick={() => openUpgradeModal()} size="sm" className="gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                                      <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
+                                      <span style={{ color: "inherit" }}>✦</span> Active Job Search — $19/mo
                                     </Button>
                                 ) : (
                                   <Button size="sm" className="gap-2" asChild>
@@ -2361,7 +2361,7 @@ const Index = () => {
                                <p className="text-xs text-muted-foreground italic">Your full action plan shows exactly what to change and why.</p>
                               {user ? (
                                 <Button onClick={() => openUpgradeModal()} className="w-full" size="sm">
-                                  Unlock Full Signal Intelligence →
+                                  Active Job Search — $19/mo
                                 </Button>
                               ) : (
                                 <Button size="sm" className="w-full" asChild>
@@ -2459,7 +2459,7 @@ const Index = () => {
                         </p>
                         {user ? (
                           <Button onClick={() => openUpgradeModal()} size="lg" className="gap-2 w-full sm:w-auto transition-transform hover:scale-[1.03] active:scale-[0.97]">
-                            <span style={{ color: "inherit" }}>✦</span> Unlock Full Signal Intelligence →
+                            <span style={{ color: "inherit" }}>✦</span> Active Job Search — $19/mo
                           </Button>
                         ) : (
                           <Button size="lg" className="gap-2" asChild>
@@ -2523,13 +2523,13 @@ const Index = () => {
             <AccordionItem value="full-analysis">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">What does a full analysis give me?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                A match score showing exactly where your resume breaks down across the hiring process, your biggest reasons for getting rejected, and rewritten bullet examples. On Full Signal Intelligence, you also get the complete Hiring Report — gap-by-gap strategy, fully rewritten bullets, interview questions tied to your gaps, a matching cover letter, and a projected new score. All from your actual experience. Nothing invented.
+                A signal preview with match score, primary blocker, and limited insights. With Final Apply Check ($9) or Active Job Search ($19/mo), you unlock the full Hiring Report, calibrated export checked against the Signalyzed Standard, repositioned bullets, interview questions tied to your gaps, and a matching cover letter — all from your actual experience. Nothing invented.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="pricing">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">How much does Signalyz cost?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                You can run up to 3 free resume analyses per day at no cost. Full Signal Intelligence is $19/mo and unlocks unlimited analyses, the full Hiring Report, the Calibrated Resume builder, and all advanced features. Need just one application? A single full report is available for $9 — one-time, no subscription. You can cancel anytime — no contracts, no commitments.
+                Free users get 3 signal previews per day: match score, primary blocker, and limited insights. Final Apply Check ($9) unlocks one full role run — full report and calibrated export for that resume + job description; return anytime with the same inputs. Active Job Search ($19/mo) unlocks unlimited analyses, exports, and saved history. Cancel anytime.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="data-privacy">
@@ -2541,7 +2541,7 @@ const Index = () => {
             <AccordionItem value="cancel">
               <AccordionTrigger className="text-sm text-foreground hover:no-underline">Can I cancel my subscription?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Yes. You can cancel anytime and your Pro access will remain active through the end of your billing period. No refunds are issued for partial months, but you will never be charged again after cancellation.
+                Yes. You can cancel anytime and your Active Job Search access will remain active through the end of your billing period. No refunds are issued for partial months, but you will never be charged again after cancellation.
               </AccordionContent>
             </AccordionItem>
           </Accordion>

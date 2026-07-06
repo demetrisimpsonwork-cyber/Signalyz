@@ -71,7 +71,7 @@ const CoverLetterTab = ({
 function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
   
-  const ctaLabel = "Unlock Full Signal Intelligence →";
+  const ctaLabel = "Active Job Search — $19/mo";
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">

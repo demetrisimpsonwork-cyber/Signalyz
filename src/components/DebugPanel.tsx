@@ -163,7 +163,7 @@ function DailyLimitCard() {
         <div className="space-y-1 flex-1">
           <p className="text-sm font-semibold text-foreground">Daily limit reached</p>
           <p className="text-sm text-muted-foreground">
-            {user ? "You've used your 3 free alignments for today. Upgrade to continue with unlimited alignments." : "Sign up to get 3 free analyses."}
+            {user ? "You've used your 3 free signal previews for today. Upgrade to continue." : "Sign up to get 3 free signal previews per day."}
           </p>
         </div>
       </div>
@@ -173,7 +173,7 @@ function DailyLimitCard() {
           className="w-full gap-2"
           asChild
         >
-          <a href="/pricing">Unlock Full Signal Intelligence →</a>
+          <a href="/pricing">Active Job Search — $19/mo</a>
         </Button>
       ) : (
         <Button size="sm" className="w-full gap-2" asChild>

@@ -15,11 +15,11 @@ const RefundPolicy = () => (
     </Section>
 
     <Section title="Subscription Billing">
-      <p>Full Signal Intelligence is billed at <strong>$19 per month</strong>. Your subscription grants full access to the platform's advanced resume optimization, signal analysis, and calibrated resume features.</p>
+      <p>Active Job Search is billed at <strong>$19 per month</strong>. Your subscription grants full access to unlimited analyses, calibrated resume exports, full Hiring Reports, and saved history. Final Apply Check is billed at <strong>$9 one-time</strong> per resume + job description unlock.</p>
     </Section>
 
     <Section title="Cancellation">
-      <p>You may cancel your subscription at any time. Upon cancellation, you will retain access to all Pro features until the end of your current billing period. No further charges will be made after cancellation.</p>
+      <p>You may cancel your subscription at any time. Upon cancellation, you will retain access to Active Job Search features until the end of your current billing period. No further charges will be made after cancellation.</p>
     </Section>
 
     <Section title="Refund Policy">

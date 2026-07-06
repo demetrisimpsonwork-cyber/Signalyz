@@ -67,7 +67,7 @@ function ProGateCard({ title, description, onUpgrade }: { title: string; descrip
       </div>
       {onUpgrade && (
         <Button onClick={onUpgrade} size="sm" className="gap-1.5">
-          Unlock Full Signal Intelligence →
+          Active Job Search — $19/mo
         </Button>
       )}
     </div>

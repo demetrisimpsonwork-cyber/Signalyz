@@ -150,7 +150,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
             <p className="text-sm font-medium text-foreground">Repositioned bullet variants calibrated to this role</p>
             <p className="text-xs text-muted-foreground">Unlock repositioned bullet variants calibrated to this role&apos;s hiring signal.</p>
             {onUpgrade && (
-              <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence →</Button>
+              <Button size="sm" onClick={onUpgrade} className="mt-1">Active Job Search — $19/mo</Button>
             )}
           </div>
         )}
@@ -255,7 +255,7 @@ const CalibratedBulletsSection = ({ bullet, result, effectiveIsPro, onUpgrade }:
           <p className="text-sm font-medium text-foreground">Alternative repositioned phrasings for this role</p>
           <p className="text-xs text-muted-foreground">Unlock additional variants calibrated to this role&apos;s hiring signal.</p>
           {onUpgrade && (
-            <Button size="sm" onClick={onUpgrade} className="mt-1">Unlock Full Signal Intelligence →</Button>
+            <Button size="sm" onClick={onUpgrade} className="mt-1">Active Job Search — $19/mo</Button>
           )}
         </div>
       )}

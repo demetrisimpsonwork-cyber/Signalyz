@@ -32,7 +32,7 @@ const Pricing = () => {
           <p className="text-base font-medium text-foreground leading-relaxed">Get the repositioned version of your resume — same experience, stronger signal.</p>
         </div>
         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Most candidates optimize wording. Strategic candidates optimize perception.
+          Every paid export is checked against the Signalyzed Standard — grounded in your resume and the role, not generic AI rewrite.
         </p>
       </div>
 
@@ -40,18 +40,19 @@ const Pricing = () => {
         {/* Free tier */}
         <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-foreground">Free</h3>
-            <p className="mt-1 text-sm text-muted-foreground">See your match score and top gap — free.</p>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Free Signal Preview</h3>
+            <p className="mt-1 text-sm text-muted-foreground">See your score and #1 blocker — no card required.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-foreground">$0</span>
           </div>
           <ul className="mt-6 space-y-3 flex-1">
             {[
-              "3 resume analyses per day",
-              "Your overall match score",
-              "Your #1 reason for getting rejected",
-              "1 rewritten bullet example",
+              "3 signal previews per day",
+              "Match score + risk read",
+              "Your #1 rejection reason",
+              "1 reframed bullet example",
+              "No calibrated export",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
@@ -61,23 +62,23 @@ const Pricing = () => {
           </ul>
           {isAuthenticated ? (
             <Button className="mt-8 w-full" variant="outline" asChild>
-              <a href="/">Get started</a>
+              <a href="/">Start Free Preview</a>
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="outline" asChild>
-              <a href="/auth">Get started</a>
+              <a href="/auth">Start Free Preview</a>
             </Button>
           )}
         </div>
 
-        {/* Pro $19/mo — highlighted as best value */}
+        {/* Active Job Search $19/mo — highlighted as best value */}
         <div className="rounded-xl border border-primary p-6 sm:p-8 flex flex-col bg-[#0F1C2E] text-white shadow-lg relative">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full tracking-wide uppercase">
             Best Value
           </div>
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-white">Full Signal Intelligence</h3>
-            <p className="mt-1 text-sm text-white/60">Everything you need to fix your resume and land interviews.</p>
+            <h3 className="text-base font-semibold tracking-tight text-white">Active Job Search</h3>
+            <p className="mt-1 text-sm text-white/60">Multiple roles, full exports, saved progress.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-white">$19</span>
@@ -86,14 +87,10 @@ const Pricing = () => {
           <ul className="mt-6 space-y-3 flex-1">
             {[
               "Unlimited resume analyses",
-              "Full Hiring Report — see exactly how recruiters and hiring managers read you, and where you get screened out",
-              "See what changed and why your score improved",
-              "Multiple rewritten versions of every bullet",
-              "Full rewritten resume (DOCX download)",
-              "Interview questions tailored to your gaps",
-              "Matching cover letter",
-              "LinkedIn profile optimization",
+              "Full Hiring Report + calibrated resume exports",
+              "Cover letter, LinkedIn, interview prep",
               "Saved analysis history",
+              "Full Signalyzed Standard on every paid export",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-white/90">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
@@ -112,7 +109,7 @@ const Pricing = () => {
                 initiateCheckout("subscription");
               }}
             >
-               Unlock Full Signal Intelligence → $19/mo
+              Active Job Search — $19/mo
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
@@ -122,11 +119,11 @@ const Pricing = () => {
 
         </div>
 
-        {/* One-time $9 */}
+        {/* Final Apply Check $9 */}
         <div className="rounded-xl border p-6 sm:p-8 flex flex-col bg-card">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-foreground">Single Report</h3>
-            <p className="mt-1 text-sm text-muted-foreground">One full report for a single application.</p>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Final Apply Check</h3>
+            <p className="mt-1 text-sm text-muted-foreground">One target role. Full Standard check. Export-ready resume.</p>
           </div>
           <div className="mt-4">
             <span className="text-4xl font-bold text-foreground">$9</span>
@@ -134,11 +131,11 @@ const Pricing = () => {
           </div>
           <ul className="mt-6 space-y-3 flex-1">
             {[
-              "1 complete resume analysis",
-              "Full breakdown of why you're getting rejected",
-              "Full rewritten resume (DOCX download)",
-              "Matching cover letter",
-              "Full Hiring Report",
+              "1 resume + job description",
+              "Full Hiring Report for that role",
+              "Calibrated resume DOCX download",
+              "Cover letter for that role",
+              "Return to the same resume + role anytime with the same inputs",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
@@ -147,7 +144,7 @@ const Pricing = () => {
             ))}
           </ul>
           <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-            Perfect for a single job application. Unlocks one full run — no recurring charges.
+            One application, one unlock. New role = new check.
           </p>
           {isAuthenticated ? (
             <Button
@@ -158,7 +155,7 @@ const Pricing = () => {
                 initiateCheckout("one_time");
               }}
             >
-              One-time full report — $9
+              Final Apply Check — $9
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
@@ -184,13 +181,13 @@ const Pricing = () => {
               trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "pricing_sticky" });
               initiateCheckout("subscription");
             }}>
-              Unlock Full Signal Intelligence → $19/mo
+              Active Job Search — $19/mo
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => {
               trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "pricing_sticky" });
               initiateCheckout("one_time");
             }}>
-              One-time full report — $9
+              Final Apply Check — $9
             </Button>
           </div>
         ) : (
