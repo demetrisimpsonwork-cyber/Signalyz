@@ -40,7 +40,7 @@ const allRows = (events ?? []) as StandardEventRowWithMeta[];
 const currentWindowRows = filterStandardEventRows(allRows, {
   ...options,
   last: options.last,
-  excludeLegacy: false,
+  excludeLegacy: options.excludeLegacy,
   sinceVersion: options.sinceVersion,
   onlyNewStandardVersion: options.onlyNewStandardVersion,
 });
