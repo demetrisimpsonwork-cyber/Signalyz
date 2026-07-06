@@ -33,6 +33,7 @@
     "repairq:validate": "vitest run src/test/repairCandidatePhase3g.test.ts src/test/repairCandidatePhase3g1.test.ts src/test/repairCandidatePhase3g1b.test.ts src/test/unsupportedClaimPhase3g2.test.ts",
     "repairsandbox:validate": "vitest run src/test/repairSandboxPhase3h.test.ts",
     "repairsandbox:dashboard": "node --experimental-strip-types scripts/repairsandbox/dashboard.ts",
+    "repairsandbox:reconcile": "node --experimental-strip-types scripts/repairsandbox/reconcile.ts",
     "unsupported:dashboard": "node --experimental-strip-types scripts/unsupported/dashboard.ts"
   },
   "dependencies": {

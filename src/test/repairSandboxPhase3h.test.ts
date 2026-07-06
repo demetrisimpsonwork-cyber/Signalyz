@@ -21,6 +21,10 @@ import {
   buildAllRepairTypeReadinessGates,
   REPAIR_SANDBOX_PILOT_MIN_SAMPLE,
 } from "@/lib/signalyzedStandard/repairSandbox/readinessGate";
+import {
+  buildReconciliationReport,
+  expectsSandboxRow,
+} from "@/lib/signalyzedStandard/repairSandbox/reconcile";
 import { buildAndLogRepairSandbox } from "@/lib/signalyzedStandard/repairSandbox/observability";
 import type {
   AstShadowSummary,
@@ -672,5 +676,109 @@ describe("Phase 3H.1 repair sandbox volume readiness gate", () => {
     expect(link?.sample_count).toBe(0);
     expect(link?.readiness_status).toBe("not_enough_data");
     expect(link?.readiness_note).toBe("no production samples in window");
+  });
+});
+
+describe("Phase 3H.2 repair queue / sandbox reconciliation", () => {
+  const deployAt = "2026-07-06T16:41:00.000Z";
+
+  it("monitor_only rows do not expect sandbox events", () => {
+    expect(
+      expectsSandboxRow({
+        request_id: "r1",
+        export_id: "e1",
+        candidate: false,
+        candidate_type: "none",
+        recommended_future_action: "monitor_only",
+      }),
+    ).toBe(false);
+  });
+
+  it("pre-sandbox eligible rows explain missing sandbox events", () => {
+    const report = buildReconciliationReport({
+      repairRows: [
+        {
+          request_id: "r1",
+          export_id: "e1",
+          candidate: true,
+          candidate_type: "preserve_high_value_bullet",
+          recommended_future_action: "safe_future_repair",
+          created_at: "2026-07-06T15:00:00.000Z",
+        },
+        {
+          request_id: "r2",
+          export_id: "e2",
+          candidate: false,
+          candidate_type: "none",
+          recommended_future_action: "monitor_only",
+          created_at: "2026-07-06T15:00:00.000Z",
+        },
+      ],
+      sandboxRows: [],
+      sandboxDeployAt: deployAt,
+      windowDays: 7,
+      last: 50,
+    });
+
+    expect(report.verdict).toBe("expected");
+    expect(report.sandbox_rows_missing).toBe(1);
+    expect(report.skipped_reason_counts.pre_sandbox_row).toBe(1);
+    expect(report.skipped_reason_counts.monitor_only).toBe(1);
+    expect(report.preserve_high_value_bullet.missing_post_deploy_eligible).toBe(0);
+  });
+
+  it("counts post_deploy_era using sandbox event time when repair row predates deploy by milliseconds", () => {
+    const productionDeployAt = "2026-07-06T16:41:08.801017+00:00";
+    const report = buildReconciliationReport({
+      repairRows: [
+        {
+          request_id: "r1",
+          export_id: "e1",
+          candidate: true,
+          candidate_type: "preserve_high_value_bullet",
+          recommended_future_action: "safe_future_repair",
+          created_at: "2026-07-06T16:41:08.673498+00:00",
+        },
+      ],
+      sandboxRows: [
+        {
+          request_id: "r1",
+          export_id: "e1",
+          candidate_type: "preserve_high_value_bullet",
+          sandbox_repair_type: "preserve_high_value_bullet",
+          created_at: "2026-07-06T16:41:38.044098+00:00",
+        },
+      ],
+      sandboxDeployAt: productionDeployAt,
+      windowDays: 7,
+      last: 50,
+    });
+
+    expect(report.preserve_high_value_bullet.post_deploy_era).toBe(1);
+    expect(report.preserve_high_value_bullet.with_sandbox_row).toBe(1);
+    expect(report.preserve_high_value_bullet.pre_deploy_repair_with_sandbox_row).toBe(1);
+  });
+
+  it("flags post-deploy preserve_high_value_bullet rows missing sandbox events", () => {
+    const report = buildReconciliationReport({
+      repairRows: [
+        {
+          request_id: "r1",
+          export_id: "e1",
+          candidate: true,
+          candidate_type: "preserve_high_value_bullet",
+          recommended_future_action: "safe_future_repair",
+          created_at: "2026-07-06T17:00:00.000Z",
+        },
+      ],
+      sandboxRows: [],
+      sandboxDeployAt: deployAt,
+      windowDays: 7,
+      last: 50,
+    });
+
+    expect(report.verdict).toBe("bug_suspected");
+    expect(report.preserve_high_value_bullet.missing_post_deploy_eligible).toBe(1);
+    expect(report.skipped_reason_counts.missing_sandbox_row).toBe(1);
   });
 });
