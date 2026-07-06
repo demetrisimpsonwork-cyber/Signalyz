@@ -23,9 +23,11 @@
     "exportqa:validate": "vitest run src/test/exportValidationRun.test.ts",
     "exportqa:prod-smoke": "vitest run src/test/exportValidationProdSmoke.test.ts",
     "standard:dashboard": "node --experimental-strip-types scripts/standard/dashboard.ts",
+    "standard:internal-review": "node --experimental-strip-types scripts/standard/internal-review.ts",
     "standard:validate": "vitest run src/test/signalyzedStandardRun.test.ts",
     "standard:phase3d": "vitest run src/test/signalyzedStandardPhase3dValidation.test.ts src/test/resumeQaContaminationCalibration.test.ts src/test/contaminationArtifactClassifier.test.ts",
     "standard:phase3e": "vitest run src/test/signalyzedStandardPhase3eValidation.test.ts src/test/resumeQaPhase3eCalibration.test.ts src/test/bulletPreservation.test.ts",
+    "standard:phase3f": "vitest run src/test/signalyzedStandardPhase3f.test.ts",
     "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts"
   },
   "dependencies": {

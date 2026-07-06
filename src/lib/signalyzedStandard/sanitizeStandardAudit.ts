@@ -3,8 +3,8 @@ import type {
   SignalyzedStandardReport,
   SignalyzedStandardResult,
   SignalyzedStandardInput,
-} from "./types";
-import { STANDARD_SANITIZER_VERSION, SIGNALYZED_STANDARD_VERSION } from "./types";
+} from "./types.ts";
+import { STANDARD_SANITIZER_VERSION, SIGNALYZED_STANDARD_VERSION } from "./types.ts";
 
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const URL_RE = /https?:\/\/[^\s|]+/gi;
