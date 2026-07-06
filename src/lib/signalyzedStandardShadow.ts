@@ -3,6 +3,7 @@ import {
   type ExportValidationSummary,
 } from "@/lib/signalyzedStandard";
 import { buildAndLogSignalyzedStandard } from "@/lib/signalyzedStandard/observability";
+import { buildAndLogRepairCandidate } from "@/lib/signalyzedStandard/repairCandidates/observability";
 import type { ExportValidationReport } from "@/lib/exportValidation";
 import {
   getSignalyzedSourceReports,
@@ -73,14 +74,16 @@ export function runSignalyzedStandardShadow(input: RunSignalyzedStandardShadowIn
     };
 
     const result = evaluateSignalyzedStandard(evaluatorInput);
-    buildAndLogSignalyzedStandard({
+    const persistInput = {
       result,
       sourceReports: evaluatorInput,
       requestId,
       exportId: exportSummary.export_id,
       exportType: exportSummary.export_type,
       templateVersion: exportSummary.template_version,
-    });
+    };
+    buildAndLogSignalyzedStandard(persistInput);
+    buildAndLogRepairCandidate(persistInput);
   } catch {
     /* shadow must never block */
   }

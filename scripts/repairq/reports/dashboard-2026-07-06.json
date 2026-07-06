@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-07-06T00:57:44.004Z",
+  "filters": {
+    "days": 7,
+    "last": 50
+  },
+  "window": {
+    "start": "2026-06-29T00:57:44.004Z",
+    "end": "2026-07-06T00:57:44.004Z"
+  },
+  "metrics": {
+    "sample_size": 10,
+    "candidate_rate": 0.5,
+    "candidate_count": 5,
+    "candidate_count_by_type": [
+      {
+        "candidate_type": "preserve_high_value_bullet",
+        "count": 4
+      },
+      {
+        "candidate_type": "restore_source_link",
+        "count": 1
+      }
+    ],
+    "risk_breakdown": [
+      {
+        "risk_level": "low",
+        "count": 10
+      }
+    ],
+    "safe_future_repair_count": 5,
+    "needs_human_review_count": 0,
+    "do_not_repair_count": 0,
+    "monitor_only_count": 5,
+    "top_reason_codes": [
+      {
+        "reason_code": "low_bullet_preservation_guard_verified",
+        "count": 4
+      },
+      {
+        "reason_code": "ready_no_diagnostics",
+        "count": 3
+      },
+      {
+        "reason_code": "no_actionable_diagnostics",
+        "count": 2
+      },
+      {
+        "reason_code": "missing_link_restorable_from_source",
+        "count": 1
+      }
+    ],
+    "export_type_breakdown": [
+      {
+        "export_type": "pdf",
+        "candidate_count": 3,
+        "total": 5
+      },
+      {
+        "export_type": "docx",
+        "candidate_count": 2,
+        "total": 5
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "request_id": "d3e77a11-cdf9-4930-9b75-53b7601bf383",
+      "export_id": "prod-3e-pdf-std-5-link-dropped-d3e77a11",
+      "export_type": "pdf",
+      "source_diagnostic_codes": [
+        "STANDARD.AST.LOW_BULLET_PRESERVATION"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": true,
+      "candidate_type": "preserve_high_value_bullet",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "safe_future_repair",
+      "reason_code": "low_bullet_preservation_guard_verified"
+    },
+    {
+      "request_id": "d3e77a11-cdf9-4930-9b75-53b7601bf383",
+      "export_id": "prod-3e-std-5-link-dropped-d3e77a11",
+      "export_type": "docx",
+      "source_diagnostic_codes": [
+        "STANDARD.AST.LOW_BULLET_PRESERVATION"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": true,
+      "candidate_type": "preserve_high_value_bullet",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "safe_future_repair",
+      "reason_code": "low_bullet_preservation_guard_verified"
+    },
+    {
+      "request_id": "de1e1aba-1210-4dca-a2fa-3220adc121db",
+      "export_id": "prod-3e-pdf-std-4-non-technical-de1e1aba",
+      "export_type": "pdf",
+      "source_diagnostic_codes": [
+        "STANDARD.LINKS.MISSING_EXPECTED",
+        "STANDARD.PDF.LINK_EXTRACTION_WEAK"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": true,
+      "candidate_type": "restore_source_link",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "safe_future_repair",
+      "reason_code": "missing_link_restorable_from_source"
+    },
+    {
+      "request_id": "de1e1aba-1210-4dca-a2fa-3220adc121db",
+      "export_id": "prod-3e-std-4-non-technical-de1e1aba",
+      "export_type": "docx",
+      "source_diagnostic_codes": [],
+      "sanitizer_version": "1.0",
+      "candidate": false,
+      "candidate_type": "none",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "monitor_only",
+      "reason_code": "ready_no_diagnostics"
+    },
+    {
+      "request_id": "49846be2-2c5e-48e4-9382-04bac2337ad6",
+      "export_id": "prod-3e-pdf-std-3-technical-49846be2",
+      "export_type": "pdf",
+      "source_diagnostic_codes": [
+        "STANDARD.QA.ADVISORY_WARNING"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": false,
+      "candidate_type": "none",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "monitor_only",
+      "reason_code": "no_actionable_diagnostics"
+    },
+    {
+      "request_id": "49846be2-2c5e-48e4-9382-04bac2337ad6",
+      "export_id": "prod-3e-std-3-technical-49846be2",
+      "export_type": "docx",
+      "source_diagnostic_codes": [
+        "STANDARD.QA.ADVISORY_WARNING"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": false,
+      "candidate_type": "none",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "monitor_only",
+      "reason_code": "no_actionable_diagnostics"
+    },
+    {
+      "request_id": "95465a09-a2b7-43ee-b4fd-ca7300bbfda1",
+      "export_id": "prod-3e-pdf-std-2-customer-success-95465a09",
+      "export_type": "pdf",
+      "source_diagnostic_codes": [],
+      "sanitizer_version": "1.0",
+      "candidate": false,
+      "candidate_type": "none",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "monitor_only",
+      "reason_code": "ready_no_diagnostics"
+    },
+    {
+      "request_id": "95465a09-a2b7-43ee-b4fd-ca7300bbfda1",
+      "export_id": "prod-3e-std-2-customer-success-95465a09",
+      "export_type": "docx",
+      "source_diagnostic_codes": [],
+      "sanitizer_version": "1.0",
+      "candidate": false,
+      "candidate_type": "none",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "monitor_only",
+      "reason_code": "ready_no_diagnostics"
+    },
+    {
+      "request_id": "18c54b62-cbe8-477b-adb4-7ca886b837ef",
+      "export_id": "prod-3e-pdf-std-1-ai-engineer-18c54b62",
+      "export_type": "pdf",
+      "source_diagnostic_codes": [
+        "STANDARD.QA.ADVISORY_WARNING",
+        "STANDARD.AST.LOW_BULLET_PRESERVATION"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": true,
+      "candidate_type": "preserve_high_value_bullet",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "safe_future_repair",
+      "reason_code": "low_bullet_preservation_guard_verified"
+    },
+    {
+      "request_id": "18c54b62-cbe8-477b-adb4-7ca886b837ef",
+      "export_id": "prod-3e-std-1-ai-engineer-18c54b62",
+      "export_type": "docx",
+      "source_diagnostic_codes": [
+        "STANDARD.QA.ADVISORY_WARNING",
+        "STANDARD.AST.LOW_BULLET_PRESERVATION"
+      ],
+      "sanitizer_version": "1.0",
+      "candidate": true,
+      "candidate_type": "preserve_high_value_bullet",
+      "risk_level": "low",
+      "confidence": "high",
+      "recommended_future_action": "safe_future_repair",
+      "reason_code": "low_bullet_preservation_guard_verified"
+    }
+  ]
+}

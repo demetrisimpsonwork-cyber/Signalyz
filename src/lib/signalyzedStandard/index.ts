@@ -12,3 +12,4 @@ export * from "./diagnosticGrouping";
 export * from "./operatorActions";
 export * from "./internalWarningSummary";
 export * from "./readinessEvaluator";
+export * from "./repairCandidates";

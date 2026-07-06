@@ -39,6 +39,12 @@ import {
   toBulletPreservationSummary,
 } from "@/lib/signalyzedStandard/adapters";
 import { STANDARD_CODES } from "@/lib/signalyzedStandard/diagnosticCodes";
+import { classifyRepairCandidate } from "@/lib/signalyzedStandard/repairCandidates/classifyRepairCandidate";
+import {
+  buildRepairCandidateReport,
+  toRepairCandidateEventRow,
+  assertNoPiiInRepairCandidatePayload,
+} from "@/lib/signalyzedStandard/repairCandidates/sanitizeRepairCandidate";
 import type { ExportValidationSummary } from "@/lib/signalyzedStandard/types";
 import type { ExportValidationReport } from "@/lib/exportValidation";
 
@@ -194,7 +200,7 @@ function toResumeShape(raw: Record<string, unknown>): CalibratedResumeData {
   };
 }
 
-describe("Phase 3E production Signalyzed Standard smoke", () => {
+describe("Phase 3G production repair candidate smoke", () => {
   it(
     "assembles, exports, evaluates standard, and persists events for five fixtures",
     async () => {
@@ -217,6 +223,8 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
       const bulletGuard = /resume_bullet_preservation_report|bullet_preservation/i.test(js);
       const evaluatorBaked = /signalyzed_standard_report|SIGNALYZED_STANDARD|STANDARD\.EXPORT/i.test(js);
 
+      const repairCandidateBaked = /signalyzed_repair_candidate_report|repair_candidate/i.test(js);
+
       console.log(
         JSON.stringify(
           {
@@ -228,6 +236,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
             qa_shadow_flag: qaFlag,
             link_preservation_baked: linkGuard,
             bullet_preservation_baked: bulletGuard,
+            repair_candidate_baked: repairCandidateBaked,
             evaluator_baked: evaluatorBaked,
           },
           null,
@@ -241,6 +250,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
       expect(qaFlag).toBe(true);
       expect(evaluatorBaked).toBe(true);
       expect(bulletGuard).toBe(true);
+      expect(repairCandidateBaked).toBe(true);
 
       const { execSync } = await import("node:child_process");
       const getServiceRoleKey = async () => {
@@ -410,7 +420,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
         const docxResult = await validateDocxExport(docxBytes, ctx);
         const docxSummaryVal = summarizeValidation(docxResult);
         const docxSha = await fingerprintExportBytes(docxBytes);
-        const exportId = `prod-3e-${c.id}-${requestId.slice(0, 8)}`;
+        const exportId = `prod-3g-${c.id}-${requestId.slice(0, 8)}`;
 
         const docxReport = buildExportValidationReport({
           requestId,
@@ -483,6 +493,31 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
         });
         console.log(`[signalyzed_standard_report] ${JSON.stringify(docxStandardReport)}`);
 
+        const repairCandidate = classifyRepairCandidate({
+          request_id: requestId,
+          export_id: exportId,
+          export_type: "docx",
+          verdict: docxStandard.verdict,
+          hard_blocker_count: docxStandard.hard_blocker_count,
+          diagnostic_codes: docxStandard.diagnostic_codes,
+          qa: qaSummary,
+          link: linkSummary,
+          bullet: bulletSummary,
+        });
+        const repairReport = buildRepairCandidateReport(repairCandidate);
+        console.log(`[signalyzed_repair_candidate_report] ${JSON.stringify(repairReport)}`);
+        const repairRow = toRepairCandidateEventRow({
+          result: repairCandidate,
+          standard_score: docxStandard.signalyzed_score,
+          standard_verdict: docxStandard.verdict,
+          hard_blocker_count: docxStandard.hard_blocker_count,
+        });
+        expect(assertNoPiiInRepairCandidatePayload(repairRow as unknown as Record<string, unknown>)).toBe(true);
+        const { error: repairInsertErr } = await serviceClient
+          .from("signalyzed_repair_candidate_events")
+          .upsert(repairRow, { onConflict: "export_id" });
+        expect(repairInsertErr).toBeNull();
+
         // PDF path (if available) — separate export id and standard event
         let pdfBlock: Record<string, unknown> = { pdf_validation_available: false };
         if (pdfAvailable) {
@@ -491,7 +526,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
           const pdfResult = await validatePdfExport(pdfBytes, ctx);
           const pdfSummaryVal = summarizeValidation(pdfResult);
           const pdfSha = await fingerprintExportBytes(pdfBytes);
-          const pdfExportId = `prod-3e-pdf-${c.id}-${requestId.slice(0, 8)}`;
+          const pdfExportId = `prod-3g-pdf-${c.id}-${requestId.slice(0, 8)}`;
           const pdfReport = buildExportValidationReport({
             requestId,
             exportId: pdfExportId,
@@ -581,8 +616,15 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
           .eq("request_id", requestId)
           .maybeSingle();
 
+        const { data: repairRowDb } = await serviceClient
+          .from("signalyzed_repair_candidate_events")
+          .select("*")
+          .eq("export_id", exportId)
+          .maybeSingle();
+
         const stdSerialized = JSON.stringify(stdRow ?? {});
-        const piiLeaks = PII_BLOCKED.filter((rx) => rx.test(stdSerialized));
+        const repairSerialized = JSON.stringify(repairRowDb ?? {});
+        const piiLeaks = PII_BLOCKED.filter((rx) => rx.test(stdSerialized) || rx.test(repairSerialized));
 
         summaries.push({
           case: c.id,
@@ -599,8 +641,10 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
           recommended_action: docxStandard.recommended_action,
           category_scores: docxStandard.categories,
           bullet_preservation: bulletSummary,
+          repair_candidate: repairCandidate,
           pdf: pdfBlock,
           standard_event_persisted: !!stdRow,
+          repair_candidate_persisted: !!repairRowDb,
           export_audit_persisted: !!exportRow,
           qa_shadow_persisted: !!qaRow,
           ast_shadow_persisted: !!astRow,
@@ -609,7 +653,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
         });
       }
 
-      console.log("\n=== Phase 3E production Signalyzed Standard validation ===");
+      console.log("\n=== Phase 3G production repair candidate validation ===");
       console.log(JSON.stringify({ bundle, summaries }, null, 2));
 
       expect(summaries.length).toBe(5);
@@ -617,6 +661,7 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
       expect(summaries.every((s) => s.standard_event_persisted)).toBe(true);
       expect(summaries.every((s) => s.export_audit_persisted)).toBe(true);
       expect(summaries.every((s) => s.qa_shadow_persisted && s.ast_shadow_persisted)).toBe(true);
+      expect(summaries.every((s) => s.repair_candidate_persisted)).toBe(true);
       expect(summaries.every((s) => s.no_pii_in_standard_row)).toBe(true);
       expect(summaries.every((s) => s.link_preservation_ok !== false)).toBe(true);
 
@@ -628,6 +673,16 @@ describe("Phase 3E production Signalyzed Standard smoke", () => {
       expect((customerSuccess?.diagnostic_codes as string[]) ?? []).not.toContain(
         STANDARD_CODES.QA_UNSUPPORTED_CLAIM,
       );
+      expect((customerSuccess?.repair_candidate as { candidate: boolean })?.candidate).toBe(false);
+      const aiRepair = aiEngineer?.repair_candidate as { recommended_future_action?: string; candidate_type?: string } | undefined;
+      if (aiRepair?.candidate_type === "preserve_high_value_bullet") {
+        expect(aiRepair.recommended_future_action).toBe("safe_future_repair");
+      }
+      expect(
+        summaries
+          .filter((s) => (s.hard_blocker_count as number) === 0)
+          .every((s) => (s.repair_candidate as { recommended_future_action?: string })?.recommended_future_action !== "do_not_repair"),
+      ).toBe(true);
       expect(summaries.every((s) => s.verdict !== "unsafe" || (s.hard_blocker_count as number) > 0)).toBe(true);
       expect(
         summaries.filter((s) => {

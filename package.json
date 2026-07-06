@@ -28,7 +28,9 @@
     "standard:phase3d": "vitest run src/test/signalyzedStandardPhase3dValidation.test.ts src/test/resumeQaContaminationCalibration.test.ts src/test/contaminationArtifactClassifier.test.ts",
     "standard:phase3e": "vitest run src/test/signalyzedStandardPhase3eValidation.test.ts src/test/resumeQaPhase3eCalibration.test.ts src/test/bulletPreservation.test.ts",
     "standard:phase3f": "vitest run src/test/signalyzedStandardPhase3f.test.ts",
-    "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts"
+    "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts",
+    "repairq:dashboard": "node --experimental-strip-types scripts/repairq/dashboard.ts",
+    "repairq:validate": "vitest run src/test/repairCandidatePhase3g.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
