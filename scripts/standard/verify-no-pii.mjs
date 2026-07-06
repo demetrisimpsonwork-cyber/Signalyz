@@ -16,7 +16,9 @@ const key =
     execSync("npx supabase projects api-keys --project-ref hzsswurcqaxrsacseknz", { encoding: "utf8" }),
   ).keys.find((k) => k.id === "service_role").api_key;
 
-const sb = createClient(process.env.VITE_SUPABASE_URL, key, { auth: { persistSession: false } });
+const sb = createClient(process.env.VITE_SUPABASE_URL, key, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 const { data, error } = await sb
   .from("signalyzed_standard_events")
   .select("*")
@@ -37,17 +39,21 @@ const PII = [
 const serialized = JSON.stringify(data);
 const leaks = PII.filter((rx) => rx.test(serialized));
 
-console.log(JSON.stringify(
-  {
-    rows_inspected: data.length,
-    columns,
-    verdicts: data.map((r) => r.verdict),
-    scores: data.map((r) => r.signalyzed_score),
-    export_types: [...new Set(data.map((r) => r.export_type))],
-    pii_patterns_matched: leaks.map((r) => r.source),
-    no_pii: leaks.length === 0,
-  },
-  null,
-  2,
-));
-process.exit(leaks.length === 0 ? 0 : 1);
+console.log(
+  JSON.stringify(
+    {
+      rows_inspected: data.length,
+      columns,
+      verdicts: data.map((r) => r.verdict),
+      scores: data.map((r) => r.signalyzed_score),
+      export_types: [...new Set(data.map((r) => r.export_type))],
+      pii_patterns_matched: leaks.map((r) => r.source),
+      no_pii: leaks.length === 0,
+    },
+    null,
+    2,
+  ),
+);
+
+// Let Node drain client handles on Windows instead of forcing process.exit().
+process.exitCode = leaks.length === 0 ? 0 : 1;
