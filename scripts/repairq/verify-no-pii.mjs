@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "../resumeqa/lib/env.ts";
 
 function parseLimitArg(argv) {
   const limitFlag = argv.find((a) => a.startsWith("--limit="));
@@ -18,23 +16,7 @@ function parseLimitArg(argv) {
 
 const rowLimit = parseLimitArg(process.argv.slice(2));
 
-for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
-  const m = line.match(/^([^#=]+)=(.*)$/);
-  if (!m) continue;
-  let v = m[2].trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
-  process.env[m[1].trim()] ??= v;
-}
-
-const key =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  JSON.parse(
-    execSync("npx supabase projects api-keys --project-ref hzsswurcqaxrsacseknz", { encoding: "utf8" }),
-  ).keys.find((k) => k.id === "service_role").api_key;
-
-const sb = createClient(process.env.VITE_SUPABASE_URL, key, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const sb = createServiceClient();
 
 const tables = [
   "signalyzed_repair_candidate_events",
