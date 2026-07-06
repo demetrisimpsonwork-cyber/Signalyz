@@ -58,6 +58,8 @@ export interface QaShadowSummary {
     severity: string;
     matched_terms?: string[];
     contamination_subtype?: string;
+    unsupported_claim_subtype?: string;
+    identity_drift_subtype?: string;
   }>;
 }
 
@@ -73,6 +75,19 @@ export interface LinkPreservationSummary {
   duplicate_link_count: number;
   broken_link_count: number;
   preservation_ok: boolean;
+}
+
+/** Sanitized bullet preservation summary — no raw bullet text. */
+export interface BulletPreservationSummary {
+  event: "resume_bullet_preservation_report";
+  request_id?: string;
+  protected_bullet_count: number;
+  weakened_bullet_count: number;
+  restored_bullet_count: number;
+  duplicate_bullet_count: number;
+  hallucination_guard_passed: boolean;
+  preservation_ok: boolean;
+  affected_sections: string[];
 }
 
 /** Sanitized export validation summary. */
@@ -104,6 +119,7 @@ export interface SignalyzedStandardInput {
   ast?: AstShadowSummary | null;
   qa?: QaShadowSummary | null;
   link?: LinkPreservationSummary | null;
+  bullet?: BulletPreservationSummary | null;
   export?: ExportValidationSummary | null;
   /** Optional DOCX export summary for PDF weak-link comparison. */
   docxExport?: ExportValidationSummary | null;

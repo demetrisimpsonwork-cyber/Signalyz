@@ -61,6 +61,7 @@ export function toSignalyzedStandardEventRow(input: {
       ast: sourceReports.ast != null,
       qa: sourceReports.qa != null,
       link: sourceReports.link != null,
+      bullet: sourceReports.bullet != null,
       export: sourceReports.export != null,
     },
     sanitizer_version: STANDARD_SANITIZER_VERSION,

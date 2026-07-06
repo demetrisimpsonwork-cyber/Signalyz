@@ -67,6 +67,7 @@ export function runSignalyzedStandardShadow(input: RunSignalyzedStandardShadowIn
       ast: cached.ast ?? null,
       qa: cached.qa ?? null,
       link: cached.link ?? null,
+      bullet: cached.bullet ?? null,
       export: exportSummary,
       docxExport: cached.docxExport ?? null,
     };

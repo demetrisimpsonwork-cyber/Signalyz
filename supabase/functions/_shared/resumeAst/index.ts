@@ -19,6 +19,11 @@ export {
   assertObservabilitySafe,
 } from "./observability.ts";
 export { applyLinkPreservationGuard, logLinkPreservationReport, assertLinkPreservationReportSafe } from "./linkPreservation.ts";
+export {
+  applyBulletPreservationGuard,
+  logBulletPreservationReport,
+  assertBulletPreservationReportSafe,
+} from "./bulletPreservation.ts";
 export { extractStructuredLinks, isImportantLinkType, normalizeLinkValue, classifyUrl } from "./linkExtraction.ts";
 export { RESUME_AST_PARSE_VERSION } from "./types.ts";
 export type {
@@ -40,6 +45,7 @@ export type {
   ParseResumeAstResult,
   ResumeAstObservabilitySummary,
   ResumeLinkPreservationReport,
+  ResumeBulletPreservationReport,
   AstConfidence,
   BulletSource,
 } from "./types.ts";

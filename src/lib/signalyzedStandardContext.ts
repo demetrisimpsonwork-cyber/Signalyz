@@ -1,5 +1,6 @@
 import type {
   AstShadowSummary,
+  BulletPreservationSummary,
   ExportValidationSummary,
   LinkPreservationSummary,
   QaShadowSummary,
@@ -9,6 +10,7 @@ export interface SignalyzedSourceReportsBundle {
   ast?: AstShadowSummary | null;
   qa?: QaShadowSummary | null;
   link?: LinkPreservationSummary | null;
+  bullet?: BulletPreservationSummary | null;
   docxExport?: ExportValidationSummary | null;
 }
 
@@ -23,6 +25,7 @@ function mergeBundle(
     ast: partial.ast ?? existing.ast,
     qa: partial.qa ?? existing.qa,
     link: partial.link ?? existing.link,
+    bullet: partial.bullet ?? existing.bullet,
     docxExport: partial.docxExport ?? existing.docxExport,
   };
 }

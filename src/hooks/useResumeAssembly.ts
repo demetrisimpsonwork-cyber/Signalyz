@@ -14,9 +14,14 @@ import {
   applyLinkPreservationGuard,
   logLinkPreservationReport,
 } from "@signalyz/resumeAst/linkPreservation";
+import {
+  applyBulletPreservationGuard,
+  logBulletPreservationReport,
+} from "@signalyz/resumeAst/bulletPreservation";
 import { rememberSignalyzedSourceReports } from "@/lib/signalyzedStandardContext";
 import {
   toAstShadowSummary,
+  toBulletPreservationSummary,
   toLinkPreservationSummary,
   toQaShadowSummary,
 } from "@/lib/signalyzedStandard/adapters";
@@ -517,6 +522,28 @@ export function useResumeAssembly(): UseResumeAssemblyReturn {
             event: "resume_link_preservation_failed",
             request_id: data?.request_id,
             error: linkErr instanceof Error ? linkErr.name : "Error",
+          }),
+        );
+      }
+
+      try {
+        const bulletPreservation = applyBulletPreservationGuard({
+          sourceResumeText: originalResume,
+          resume,
+          requestId: typeof data?.request_id === "string" ? data.request_id : undefined,
+        });
+        resume = bulletPreservation.resume;
+        logBulletPreservationReport(bulletPreservation.report);
+        rememberSignalyzedSourceReports(
+          typeof data?.request_id === "string" ? data.request_id : undefined,
+          { bullet: toBulletPreservationSummary(bulletPreservation.report) },
+        );
+      } catch (bulletErr) {
+        console.warn(
+          JSON.stringify({
+            event: "resume_bullet_preservation_failed",
+            request_id: data?.request_id,
+            error: bulletErr instanceof Error ? bulletErr.name : "Error",
           }),
         );
       }

@@ -1,22 +1,7 @@
 import type { DetectorContext, QaIssue } from "./types.ts";
 import { extractBulletsFromLines, tokenizeMeaningful } from "./types.ts";
-
-const REGRESSION_PATTERNS: Array<{
-  sourceRx: RegExp;
-  weakenedRx: RegExp;
-  label: string;
-}> = [
-  {
-    sourceRx: /converts?\s+resumes?\s+and\s+jds?\s+into\s+structured\s+outputs?/i,
-    weakenedRx: /parses?\s+resumes?/i,
-    label: "structured output conversion weakened to resume parsing only",
-  },
-  {
-    sourceRx: /production\s+ai\s+platform/i,
-    weakenedRx: /parses?\s+resumes?/i,
-    label: "production AI platform scope collapsed",
-  },
-];
+import { buildIssue } from "./issueFactory.ts";
+import { BULLET_REGRESSION_PATTERNS } from "./bulletRegressionPatterns.ts";
 
 /** Compare source strongest bullets vs generated — flag weakening. */
 export function detectBulletRegressions(ctx: DetectorContext): QaIssue[] {
@@ -24,17 +9,24 @@ export function detectBulletRegressions(ctx: DetectorContext): QaIssue[] {
   const sourceBullets = extractBulletsFromLines(ctx.sourceResumeText);
   const generatedBullets = extractBulletsFromLines(ctx.generatedResumeText);
 
-  for (const pattern of REGRESSION_PATTERNS) {
+  for (const pattern of BULLET_REGRESSION_PATTERNS) {
     const sourceHit = sourceBullets.find((b) => pattern.sourceRx.test(b));
     const genHit = generatedBullets.find((b) => pattern.weakenedRx.test(b));
     if (sourceHit && genHit && !pattern.sourceRx.test(genHit)) {
-      issues.push({
-        code: "bullet_regression",
-        severity: "critical",
-        message: `Severe bullet regression: ${pattern.label}.`,
-        evidence: `Source: ${sourceHit}\nGenerated: ${genHit}`,
-        suggestedFix: "Restore the fuller source claim instead of narrowing scope.",
-      });
+      issues.push(
+        buildIssue({
+          ruleId: pattern.ruleId,
+          detector: "bullet_regression",
+          code: "bullet_regression",
+          confidence: "very_high",
+          matchedTerms: ["parses resumes"],
+          source: "generated_resume",
+          message: `Severe bullet regression: ${pattern.label}.`,
+          evidence: `Source: ${sourceHit}\nGenerated: ${genHit}`,
+          suggestedFix: "Restore the fuller source claim instead of narrowing scope.",
+          proposedSeverity: "critical",
+        }),
+      );
     }
   }
 
@@ -44,21 +36,35 @@ export function detectBulletRegressions(ctx: DetectorContext): QaIssue[] {
 
     const regression = scoreBulletRegression(sourceBullet, genMatch);
     if (regression.severe) {
-      issues.push({
-        code: "bullet_regression",
-        severity: "critical",
-        message: `Bullet regression: generated version weakens a strong source bullet (${regression.lostTerms.slice(0, 4).join(", ")}).`,
-        evidence: `Source: ${sourceBullet}\nGenerated: ${genMatch}`,
-        suggestedFix: "Keep the stronger source phrasing and only retarget keywords for the role.",
-      });
+      issues.push(
+        buildIssue({
+          ruleId: "bullet_regression.severe_detail_loss",
+          detector: "bullet_regression",
+          code: "bullet_regression",
+          confidence: "medium",
+          matchedTerms: regression.lostTerms.slice(0, 4),
+          source: "generated_resume",
+          message: `Bullet regression: generated version weakens a strong source bullet (${regression.lostTerms.slice(0, 4).join(", ")}).`,
+          evidence: `Source: ${sourceBullet}\nGenerated: ${genMatch}`,
+          suggestedFix: "Keep the stronger source phrasing and only retarget keywords for the role.",
+          proposedSeverity: "high",
+        }),
+      );
     } else if (regression.moderate) {
-      issues.push({
-        code: "bullet_regression",
-        severity: "high",
-        message: `Bullet regression: generated version drops meaningful source detail.`,
-        evidence: `Source: ${sourceBullet}\nGenerated: ${genMatch}`,
-        suggestedFix: "Merge source specificity back into the generated bullet.",
-      });
+      issues.push(
+        buildIssue({
+          ruleId: "bullet_regression.moderate_detail_loss",
+          detector: "bullet_regression",
+          code: "bullet_regression",
+          confidence: "medium",
+          matchedTerms: regression.lostTerms.slice(0, 4),
+          source: "generated_resume",
+          message: `Bullet regression: generated version drops meaningful source detail.`,
+          evidence: `Source: ${sourceBullet}\nGenerated: ${genMatch}`,
+          suggestedFix: "Merge source specificity back into the generated bullet.",
+          proposedSeverity: "high",
+        }),
+      );
     }
   }
 
@@ -100,7 +106,7 @@ function scoreBulletRegression(
 function dedupeIssues(issues: QaIssue[]): QaIssue[] {
   const seen = new Set<string>();
   return issues.filter((i) => {
-    const key = (i.evidence ?? i.message).slice(0, 100);
+    const key = `${i.ruleId}:${(i.matchedTerms ?? []).join(",")}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

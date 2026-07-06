@@ -20,9 +20,13 @@ export const LOW_BULLET_PRESERVATION_THRESHOLD = 0.35;
 /** High-confidence QA issue codes treated as hard blockers in v0. */
 export const QA_HARD_CONFIDENCE = new Set(["high", "very_high"]);
 
-/** QA codes that are advisory-only unless high confidence. */
+/** QA codes that are advisory-only in v0 Standard (never hard blockers alone). */
 export const QA_ADVISORY_ONLY_CODES = new Set([
   "keyword_loss",
   "formatting",
   "identity_drift",
+  "identity_drift_missing_employers",
+  "identity_drift_generic_inflation",
+  "identity_drift_metric_loss",
+  "identity_drift_generic_voice",
 ]);

@@ -1,7 +1,7 @@
 import type { ResumeAstShadowLog } from "@signalyz/resumeAst/shadowIntegration";
-import type { ResumeLinkPreservationReport } from "@signalyz/resumeAst/types";
+import type { ResumeBulletPreservationReport, ResumeLinkPreservationReport } from "@signalyz/resumeAst/types";
 import type { ResumeQaShadowLog } from "@signalyz/resumeQaEngine/shadowIntegration";
-import type { AstShadowSummary, LinkPreservationSummary, QaShadowSummary } from "./types";
+import type { AstShadowSummary, BulletPreservationSummary, LinkPreservationSummary, QaShadowSummary } from "./types";
 
 export function toAstShadowSummary(log: ResumeAstShadowLog): AstShadowSummary {
   return {
@@ -39,7 +39,23 @@ export function toQaShadowSummary(log: ResumeQaShadowLog): QaShadowSummary {
       severity: issue.severity,
       matched_terms: issue.matched_terms,
       contamination_subtype: issue.contamination_subtype,
+      unsupported_claim_subtype: issue.unsupported_claim_subtype,
+      identity_drift_subtype: issue.identity_drift_subtype,
     })),
+  };
+}
+
+export function toBulletPreservationSummary(report: ResumeBulletPreservationReport): BulletPreservationSummary {
+  return {
+    event: "resume_bullet_preservation_report",
+    request_id: report.request_id,
+    protected_bullet_count: report.protected_bullet_count,
+    weakened_bullet_count: report.weakened_bullet_count,
+    restored_bullet_count: report.restored_bullet_count,
+    duplicate_bullet_count: report.duplicate_bullet_count,
+    hallucination_guard_passed: report.hallucination_guard_passed,
+    preservation_ok: report.preservation_ok,
+    affected_sections: report.affected_sections,
   };
 }
 

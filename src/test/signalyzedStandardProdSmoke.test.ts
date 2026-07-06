@@ -36,7 +36,9 @@ import {
   toAstShadowSummary,
   toQaShadowSummary,
   toLinkPreservationSummary,
+  toBulletPreservationSummary,
 } from "@/lib/signalyzedStandard/adapters";
+import { STANDARD_CODES } from "@/lib/signalyzedStandard/diagnosticCodes";
 import type { ExportValidationSummary } from "@/lib/signalyzedStandard/types";
 import type { ExportValidationReport } from "@/lib/exportValidation";
 
@@ -78,6 +80,10 @@ import {
   applyLinkPreservationGuard,
   assertLinkPreservationReportSafe,
 } from "@signalyz/resumeAst/linkPreservation";
+import {
+  applyBulletPreservationGuard,
+  assertBulletPreservationReportSafe,
+} from "@signalyz/resumeAst/bulletPreservation";
 import {
   runResumeAstShadow,
   runSourceResumeAstShadow,
@@ -188,7 +194,7 @@ function toResumeShape(raw: Record<string, unknown>): CalibratedResumeData {
   };
 }
 
-describe("Phase 3C production Signalyzed Standard smoke", () => {
+describe("Phase 3E production Signalyzed Standard smoke", () => {
   it(
     "assembles, exports, evaluates standard, and persists events for five fixtures",
     async () => {
@@ -208,6 +214,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
       const astFlag = /ENABLE_RESUME_AST_SHADOW[^;]{0,40}true/i.test(js);
       const qaFlag = /ENABLE_RESUME_QA_SHADOW[^;]{0,40}true/i.test(js);
       const linkGuard = /resume_link_preservation_report|preservation_ok/i.test(js);
+      const bulletGuard = /resume_bullet_preservation_report|bullet_preservation/i.test(js);
       const evaluatorBaked = /signalyzed_standard_report|SIGNALYZED_STANDARD|STANDARD\.EXPORT/i.test(js);
 
       console.log(
@@ -220,6 +227,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
             ast_shadow_flag: astFlag,
             qa_shadow_flag: qaFlag,
             link_preservation_baked: linkGuard,
+            bullet_preservation_baked: bulletGuard,
             evaluator_baked: evaluatorBaked,
           },
           null,
@@ -232,6 +240,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
       expect(astFlag).toBe(true);
       expect(qaFlag).toBe(true);
       expect(evaluatorBaked).toBe(true);
+      expect(bulletGuard).toBe(true);
 
       const { execSync } = await import("node:child_process");
       const getServiceRoleKey = async () => {
@@ -343,6 +352,16 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
         resume = preserved.resume as CalibratedResumeData;
         const linkSummary = toLinkPreservationSummary(preserved.report);
 
+        const bulletPreserved = applyBulletPreservationGuard({
+          sourceResumeText: c.source,
+          resume,
+          requestId,
+        });
+        assertBulletPreservationReportSafe(bulletPreserved.report);
+        resume = bulletPreserved.resume as CalibratedResumeData;
+        const bulletSummary = toBulletPreservationSummary(bulletPreserved.report);
+        console.log(`[resume_bullet_preservation_report] ${JSON.stringify(bulletPreserved.report)}`);
+
         const generatedText = calibratedResumeToPlainText(resume);
         const qaShadow = runResumeQaShadow({
           enabled: true,
@@ -391,7 +410,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
         const docxResult = await validateDocxExport(docxBytes, ctx);
         const docxSummaryVal = summarizeValidation(docxResult);
         const docxSha = await fingerprintExportBytes(docxBytes);
-        const exportId = `prod-3c-${c.id}-${requestId.slice(0, 8)}`;
+        const exportId = `prod-3e-${c.id}-${requestId.slice(0, 8)}`;
 
         const docxReport = buildExportValidationReport({
           requestId,
@@ -436,6 +455,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
           ast: astSummary,
           qa: qaSummary,
           link: linkSummary,
+          bullet: bulletSummary,
           export: docxExportSummary,
           docxExport: docxExportSummary,
         };
@@ -471,7 +491,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
           const pdfResult = await validatePdfExport(pdfBytes, ctx);
           const pdfSummaryVal = summarizeValidation(pdfResult);
           const pdfSha = await fingerprintExportBytes(pdfBytes);
-          const pdfExportId = `prod-3c-pdf-${c.id}-${requestId.slice(0, 8)}`;
+          const pdfExportId = `prod-3e-pdf-${c.id}-${requestId.slice(0, 8)}`;
           const pdfReport = buildExportValidationReport({
             requestId,
             exportId: pdfExportId,
@@ -512,6 +532,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
             ast: astSummary,
             qa: qaSummary,
             link: linkSummary,
+            bullet: bulletSummary,
             export: pdfExportSummary,
             docxExport: docxExportSummary,
           };
@@ -577,6 +598,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
           diagnostic_codes: docxStandard.diagnostic_codes,
           recommended_action: docxStandard.recommended_action,
           category_scores: docxStandard.categories,
+          bullet_preservation: bulletSummary,
           pdf: pdfBlock,
           standard_event_persisted: !!stdRow,
           export_audit_persisted: !!exportRow,
@@ -587,7 +609,7 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
         });
       }
 
-      console.log("\n=== Phase 3C production Signalyzed Standard validation ===");
+      console.log("\n=== Phase 3E production Signalyzed Standard validation ===");
       console.log(JSON.stringify({ bundle, summaries }, null, 2));
 
       expect(summaries.length).toBe(5);
@@ -597,6 +619,22 @@ describe("Phase 3C production Signalyzed Standard smoke", () => {
       expect(summaries.every((s) => s.qa_shadow_persisted && s.ast_shadow_persisted)).toBe(true);
       expect(summaries.every((s) => s.no_pii_in_standard_row)).toBe(true);
       expect(summaries.every((s) => s.link_preservation_ok !== false)).toBe(true);
+
+      const aiEngineer = summaries.find((s) => s.case === "std-1-ai-engineer");
+      const customerSuccess = summaries.find((s) => s.case === "std-2-customer-success");
+      expect((aiEngineer?.diagnostic_codes as string[]) ?? []).not.toContain(
+        STANDARD_CODES.QA_SEVERE_BULLET_REGRESSION,
+      );
+      expect((customerSuccess?.diagnostic_codes as string[]) ?? []).not.toContain(
+        STANDARD_CODES.QA_UNSUPPORTED_CLAIM,
+      );
+      expect(summaries.every((s) => s.verdict !== "unsafe" || (s.hard_blocker_count as number) > 0)).toBe(true);
+      expect(
+        summaries.filter((s) => {
+          const codes = (s.diagnostic_codes as string[]) ?? [];
+          return codes.includes(STANDARD_CODES.QA_ADVISORY_WARNING) && codes.length === 1;
+        }).every((s) => s.verdict !== "unsafe"),
+      ).toBe(true);
     },
     300_000,
   );

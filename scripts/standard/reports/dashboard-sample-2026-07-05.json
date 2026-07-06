@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-07-05T23:25:40.683Z",
+  "sample_size": 7,
+  "metrics": {
+    "average_signalyzed_score": 94,
+    "ready_pct": 0.571,
+    "needs_review_pct": 0,
+    "unsafe_pct": 0.429,
+    "top_diagnostic_codes": [
+      {
+        "code": "STANDARD.EXPORT.FAILED",
+        "count": 2
+      },
+      {
+        "code": "STANDARD.QA.CROSS_JOB_CONTAMINATION",
+        "count": 1
+      },
+      {
+        "code": "STANDARD.EXPORT.BROKEN_PLACEHOLDER",
+        "count": 1
+      },
+      {
+        "code": "STANDARD.EXPORT.SPACED_HEADING",
+        "count": 1
+      }
+    ],
+    "hard_blocker_frequency": [
+      {
+        "code": "STANDARD.EXPORT.FAILED",
+        "count": 2
+      },
+      {
+        "code": "STANDARD.QA.CROSS_JOB_CONTAMINATION",
+        "count": 1
+      },
+      {
+        "code": "STANDARD.EXPORT.BROKEN_PLACEHOLDER",
+        "count": 1
+      },
+      {
+        "code": "STANDARD.EXPORT.SPACED_HEADING",
+        "count": 1
+      }
+    ],
+    "average_score_by_export_type": [
+      {
+        "export_type": "docx",
+        "avg_score": 94,
+        "count": 7
+      }
+    ],
+    "average_score_by_template_version": [
+      {
+        "template_version": "1.0.0",
+        "avg_score": 94,
+        "count": 7
+      }
+    ],
+    "trend_by_day": [],
+    "recommendation_summary": [
+      {
+        "recommended_action": "ready_for_internal_warning",
+        "count": 4
+      },
+      {
+        "recommended_action": "do_not_enforce",
+        "count": 3
+      }
+    ]
+  },
+  "note": "Fixture-derived sample — apply migration before production dashboard"
+}

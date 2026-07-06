@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-07-05T23:34:47.149Z",
+  "window": {
+    "start": "2026-06-28T23:34:41.880Z",
+    "end": "2026-07-05T23:34:41.880Z",
+    "days": 7
+  },
+  "sample_size": 20,
+  "metrics": {
+    "average_signalyzed_score": 91,
+    "ready_pct": 0,
+    "needs_review_pct": 0.2,
+    "unsafe_pct": 0.8,
+    "top_diagnostic_codes": [
+      {
+        "code": "STANDARD.QA.ADVISORY_WARNING",
+        "count": 20
+      },
+      {
+        "code": "STANDARD.QA.CROSS_JOB_CONTAMINATION",
+        "count": 10
+      },
+      {
+        "code": "STANDARD.QA.SEVERE_BULLET_REGRESSION",
+        "count": 8
+      },
+      {
+        "code": "STANDARD.LINKS.MISSING_EXPECTED",
+        "count": 2
+      },
+      {
+        "code": "STANDARD.PDF.LINK_EXTRACTION_WEAK",
+        "count": 2
+      },
+      {
+        "code": "STANDARD.QA.UNSUPPORTED_CLAIM",
+        "count": 2
+      }
+    ],
+    "hard_blocker_frequency": [
+      {
+        "code": "STANDARD.QA.ADVISORY_WARNING",
+        "count": 16
+      },
+      {
+        "code": "STANDARD.QA.CROSS_JOB_CONTAMINATION",
+        "count": 10
+      },
+      {
+        "code": "STANDARD.QA.SEVERE_BULLET_REGRESSION",
+        "count": 8
+      },
+      {
+        "code": "STANDARD.QA.UNSUPPORTED_CLAIM",
+        "count": 2
+      },
+      {
+        "code": "STANDARD.LINKS.MISSING_EXPECTED",
+        "count": 1
+      },
+      {
+        "code": "STANDARD.PDF.LINK_EXTRACTION_WEAK",
+        "count": 1
+      }
+    ],
+    "average_score_by_export_type": [
+      {
+        "export_type": "pdf",
+        "avg_score": 90,
+        "count": 10
+      },
+      {
+        "export_type": "docx",
+        "avg_score": 91,
+        "count": 10
+      }
+    ],
+    "average_score_by_template_version": [
+      {
+        "template_version": "1.0.0",
+        "avg_score": 91,
+        "count": 20
+      }
+    ],
+    "trend_by_day": [
+      {
+        "date": "2026-07-05",
+        "avg_score": 91,
+        "count": 20,
+        "ready_pct": 0
+      }
+    ],
+    "recommendation_summary": [
+      {
+        "recommended_action": "do_not_enforce",
+        "count": 16
+      },
+      {
+        "recommended_action": "ready_for_auto_repair_candidate",
+        "count": 1
+      },
+      {
+        "recommended_action": "ready_for_internal_warning",
+        "count": 3
+      }
+    ]
+  }
+}

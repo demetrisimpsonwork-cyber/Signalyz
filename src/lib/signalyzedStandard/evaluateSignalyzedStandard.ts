@@ -69,13 +69,60 @@ function isContaminationArtifactWarning(issue: QaIssueLogEntry): boolean {
   return issue.matched_terms?.some((t) => matchedTermLooksLikeArtifact(t)) ?? false;
 }
 
+function isTrueUnsupportedClaimHardBlocker(issue: QaIssueLogEntry): boolean {
+  if (issue.code !== "unsupported_claim") return false;
+  if (!isHighConfidence(issue.confidence)) return false;
+
+  const subtype = issue.unsupported_claim_subtype;
+  if (
+    subtype === "generic_business_phrase" ||
+    subtype === "role_language_rewrite" ||
+    subtype === "transferable_rewrite" ||
+    subtype === "synonym_gap" ||
+    subtype === "parser_artifact"
+  ) {
+    return false;
+  }
+
+  if (subtype === "true_unsupported_claim") return true;
+  return issue.rule_id === "hallucination.unsupported_metric";
+}
+
+function isAdvisoryUnsupportedClaim(issue: QaIssueLogEntry): boolean {
+  if (issue.code !== "unsupported_claim") return false;
+  return !isTrueUnsupportedClaimHardBlocker(issue);
+}
+
+function isSevereBulletRegressionHardBlocker(
+  issue: QaIssueLogEntry,
+  bulletPreservation?: SignalyzedStandardInput["bullet"],
+): boolean {
+  if (issue.code !== "bullet_regression") return false;
+  if (!isHighConfidence(issue.confidence)) return false;
+
+  const severe =
+    issue.rule_id.includes("structured_to_parse") ||
+    issue.matched_terms?.some((t) => /parses resumes/i.test(t));
+  if (!severe) return false;
+
+  if (bulletPreservation?.preservation_ok && (bulletPreservation.restored_bullet_count ?? 0) > 0) {
+    return false;
+  }
+
+  return true;
+}
+
+function isIdentityDriftAdvisory(issue: QaIssueLogEntry): boolean {
+  return issue.code.startsWith("identity_drift");
+}
+
 function isHighConfidence(confidence?: string): boolean {
   return QA_HARD_CONFIDENCE.has((confidence ?? "").toLowerCase());
 }
 
 function collectFindings(input: SignalyzedStandardInput): DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = [];
-  const { ast, qa, link, export: exportReport, docxExport } = input;
+  const { ast, qa, link, bullet, export: exportReport, docxExport } = input;
 
   if (exportReport) {
     if (!exportReport.validation_passed) {
@@ -165,28 +212,28 @@ function collectFindings(input: SignalyzedStandardInput): DiagnosticFinding[] {
           severity: "hard_blocker",
           category: "grounding",
         });
-      } else if (issue.code === "unsupported_claim" && high) {
+      } else if (isTrueUnsupportedClaimHardBlocker(issue)) {
         findings.push({
           code: STANDARD_CODES.QA_UNSUPPORTED_CLAIM,
           severity: "hard_blocker",
           category: "grounding",
         });
-      } else if (issue.code === "bullet_regression" && high) {
-        const severe =
-          issue.rule_id.includes("structured_to_parse") ||
-          issue.matched_terms?.some((t) => /parses resumes/i.test(t));
-        if (severe) {
-          findings.push({
-            code: STANDARD_CODES.QA_SEVERE_BULLET_REGRESSION,
-            severity: "hard_blocker",
-            category: "grounding",
-          });
-        }
-      } else if (QA_ADVISORY_ONLY_CODES.has(issue.code) || issue.severity !== "critical") {
+      } else if (isSevereBulletRegressionHardBlocker(issue, bullet)) {
+        findings.push({
+          code: STANDARD_CODES.QA_SEVERE_BULLET_REGRESSION,
+          severity: "hard_blocker",
+          category: "grounding",
+        });
+      } else if (
+        isAdvisoryUnsupportedClaim(issue) ||
+        isIdentityDriftAdvisory(issue) ||
+        QA_ADVISORY_ONLY_CODES.has(issue.code) ||
+        issue.severity !== "critical"
+      ) {
         findings.push({
           code: STANDARD_CODES.QA_ADVISORY_WARNING,
           severity: "warning",
-          category: issue.code === "identity_drift" ? "identity" : "grounding",
+          category: issue.code.startsWith("identity_drift") ? "identity" : "grounding",
         });
       }
     }
@@ -290,6 +337,7 @@ function resolveConfidence(input: SignalyzedStandardInput): SignalyzedConfidence
     input.ast != null,
     input.qa != null,
     input.link != null,
+    input.bullet != null,
     input.export != null,
   ].filter(Boolean).length;
   if (present >= 4) return "high";

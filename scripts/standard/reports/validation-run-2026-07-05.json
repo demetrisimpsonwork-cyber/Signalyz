@@ -1,0 +1,97 @@
+{
+  "standard_version": "0.1.0",
+  "summaries": [
+    {
+      "fixture_id": "clean_demetri",
+      "label": "Demetri AI Engineer clean export",
+      "signalyzed_score": 100,
+      "verdict": "ready",
+      "confidence": "high",
+      "hard_blocker_count": 0,
+      "warning_count": 0,
+      "diagnostic_codes": [],
+      "recommended_action": "ready_for_internal_warning",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "clean_csm",
+      "label": "Customer Success clean export",
+      "signalyzed_score": 100,
+      "verdict": "ready",
+      "confidence": "high",
+      "hard_blocker_count": 0,
+      "warning_count": 0,
+      "diagnostic_codes": [],
+      "recommended_action": "ready_for_internal_warning",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "technical_links",
+      "label": "Technical export with GitHub/portfolio",
+      "signalyzed_score": 100,
+      "verdict": "ready",
+      "confidence": "high",
+      "hard_blocker_count": 0,
+      "warning_count": 0,
+      "diagnostic_codes": [],
+      "recommended_action": "ready_for_internal_warning",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "non_technical",
+      "label": "Non-technical export",
+      "signalyzed_score": 100,
+      "verdict": "ready",
+      "confidence": "high",
+      "hard_blocker_count": 0,
+      "warning_count": 0,
+      "diagnostic_codes": [],
+      "recommended_action": "ready_for_internal_warning",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "ai_sandbox",
+      "label": "Contaminated export with AI Sandbox",
+      "signalyzed_score": 93,
+      "verdict": "unsafe",
+      "confidence": "high",
+      "hard_blocker_count": 1,
+      "warning_count": 0,
+      "diagnostic_codes": [
+        "STANDARD.QA.CROSS_JOB_CONTAMINATION"
+      ],
+      "recommended_action": "do_not_enforce",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "broken_placeholder",
+      "label": "Export with broken placeholder",
+      "signalyzed_score": 83,
+      "verdict": "unsafe",
+      "confidence": "high",
+      "hard_blocker_count": 2,
+      "warning_count": 0,
+      "diagnostic_codes": [
+        "STANDARD.EXPORT.FAILED",
+        "STANDARD.EXPORT.BROKEN_PLACEHOLDER"
+      ],
+      "recommended_action": "do_not_enforce",
+      "no_pii_in_audit": true
+    },
+    {
+      "fixture_id": "spaced_headings",
+      "label": "Export with spaced headings",
+      "signalyzed_score": 79,
+      "verdict": "unsafe",
+      "confidence": "high",
+      "hard_blocker_count": 2,
+      "warning_count": 0,
+      "diagnostic_codes": [
+        "STANDARD.EXPORT.FAILED",
+        "STANDARD.EXPORT.SPACED_HEADING"
+      ],
+      "recommended_action": "do_not_enforce",
+      "no_pii_in_audit": true
+    }
+  ]
+}

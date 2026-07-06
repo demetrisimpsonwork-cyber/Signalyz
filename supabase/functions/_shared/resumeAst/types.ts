@@ -140,6 +140,19 @@ export interface ResumeLinkPreservationReport {
   run_time_ms: number;
 }
 
+export interface ResumeBulletPreservationReport {
+  event: "resume_bullet_preservation_report";
+  request_id?: string;
+  protected_bullet_count: number;
+  weakened_bullet_count: number;
+  restored_bullet_count: number;
+  duplicate_bullet_count: number;
+  hallucination_guard_passed: boolean;
+  preservation_ok: boolean;
+  affected_sections: string[];
+  run_time_ms: number;
+}
+
 export interface AwardEntry {
   id: string;
   title: string;
