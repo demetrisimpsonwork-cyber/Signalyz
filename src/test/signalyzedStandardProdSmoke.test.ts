@@ -214,22 +214,36 @@ describe("Phase 3G production repair candidate smoke", () => {
       const js = bundleMatch
         ? await fetch(`https://signalyz.ai/assets/${bundle}`).then((r) => r.text())
         : "";
+      const exportShadowMatch = js.match(/exportValidationShadow-([A-Za-z0-9_-]+)\.js/);
+      const exportShadowJs = exportShadowMatch
+        ? await fetch(`https://signalyz.ai/assets/exportValidationShadow-${exportShadowMatch[1]}.js`).then((r) =>
+            r.text(),
+          )
+        : "";
+      const stdShadowMatch = exportShadowJs.match(/signalyzedStandardShadow-([A-Za-z0-9_-]+)\.js/);
+      const shadowChunk = stdShadowMatch ? `signalyzedStandardShadow-${stdShadowMatch[1]}.js` : null;
+      const shadowJs = shadowChunk
+        ? await fetch(`https://signalyz.ai/assets/${shadowChunk}`).then((r) => r.text())
+        : "";
+      const combinedJs = `${js}\n${exportShadowJs}\n${shadowJs}`;
 
-      const standardFlag = /ENABLE_SIGNALYZED_STANDARD_SHADOW[^;]{0,40}true/i.test(js);
-      const exportShadowFlag = /ENABLE_EXPORT_VALIDATION_SHADOW[^;]{0,40}true/i.test(js);
-      const astFlag = /ENABLE_RESUME_AST_SHADOW[^;]{0,40}true/i.test(js);
-      const qaFlag = /ENABLE_RESUME_QA_SHADOW[^;]{0,40}true/i.test(js);
-      const linkGuard = /resume_link_preservation_report|preservation_ok/i.test(js);
-      const bulletGuard = /resume_bullet_preservation_report|bullet_preservation/i.test(js);
-      const evaluatorBaked = /signalyzed_standard_report|SIGNALYZED_STANDARD|STANDARD\.EXPORT/i.test(js);
-
-      const repairCandidateBaked = /signalyzed_repair_candidate_report|repair_candidate/i.test(js);
+      const standardFlag = /ENABLE_SIGNALYZED_STANDARD_SHADOW[^;]{0,40}true/i.test(combinedJs);
+      const exportShadowFlag = /ENABLE_EXPORT_VALIDATION_SHADOW[^;]{0,40}true/i.test(combinedJs);
+      const astFlag = /ENABLE_RESUME_AST_SHADOW[^;]{0,40}true/i.test(combinedJs);
+      const qaFlag = /ENABLE_RESUME_QA_SHADOW[^;]{0,40}true/i.test(combinedJs);
+      const linkGuard = /resume_link_preservation_report|preservation_ok/i.test(combinedJs);
+      const bulletGuard = /resume_bullet_preservation_report|bullet_preservation/i.test(combinedJs);
+      const evaluatorBaked = /signalyzed_standard_report|SIGNALYZED_STANDARD|STANDARD\.EXPORT/i.test(combinedJs);
+      const repairCandidateBaked = /signalyzed_repair_candidate_report|classifyRepairCandidate|preserve_high_value_bullet/i.test(
+        combinedJs,
+      );
 
       console.log(
         JSON.stringify(
           {
             deploy_url: "https://signalyz.ai",
             bundle,
+            shadow_chunk: shadowChunk,
             signalyzed_standard_flag: standardFlag,
             export_validation_shadow_flag: exportShadowFlag,
             ast_shadow_flag: astFlag,
