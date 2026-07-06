@@ -30,7 +30,7 @@
     "standard:phase3f": "vitest run src/test/signalyzedStandardPhase3f.test.ts",
     "standard:prod-smoke": "vitest run src/test/signalyzedStandardProdSmoke.test.ts",
     "repairq:dashboard": "node --experimental-strip-types scripts/repairq/dashboard.ts",
-    "repairq:validate": "vitest run src/test/repairCandidatePhase3g.test.ts src/test/repairCandidatePhase3g1.test.ts"
+    "repairq:validate": "vitest run src/test/repairCandidatePhase3g.test.ts src/test/repairCandidatePhase3g1.test.ts src/test/repairCandidatePhase3g1b.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

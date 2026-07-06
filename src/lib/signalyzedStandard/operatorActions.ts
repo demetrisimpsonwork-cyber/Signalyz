@@ -10,8 +10,10 @@ export type RecommendedOperatorAction =
   | "no_action"
   | "inspect_export"
   | "monitor_only"
+  | "needs_human_review"
   | "investigate_rule"
-  | "candidate_for_future_auto_repair";
+  | "candidate_for_future_auto_repair"
+  | "do_not_repair";
 
 export interface OperatorActionInput {
   verdict: "ready" | "needs_review" | "unsafe";
@@ -58,6 +60,29 @@ export function resolveRecommendedOperatorAction(input: OperatorActionInput): Re
   if (categories.has("grounding" as DiagnosticCategory)) return "investigate_rule";
 
   return "monitor_only";
+}
+
+export interface RepairQueueOperatorInput {
+  candidate_type: string;
+  recommended_future_action: string;
+  candidate?: boolean;
+}
+
+/** Map persisted repair queue row to internal operator action. */
+export function resolveOperatorActionFromRepairQueue(
+  repair: RepairQueueOperatorInput,
+): RecommendedOperatorAction {
+  switch (repair.recommended_future_action) {
+    case "safe_future_repair":
+      return "candidate_for_future_auto_repair";
+    case "needs_human_review":
+      return "needs_human_review";
+    case "do_not_repair":
+      return "do_not_repair";
+    case "monitor_only":
+    default:
+      return "monitor_only";
+  }
 }
 
 export function summarizeOperatorActions(

@@ -92,5 +92,7 @@ export interface RepairCandidateDashboardMetrics {
   do_not_repair_count: number;
   monitor_only_count: number;
   top_reason_codes: Array<{ reason_code: string; count: number }>;
+  top_source_diagnostic_codes: Array<{ code: string; count: number }>;
+  confidence_breakdown: Array<{ confidence: RepairConfidence; count: number }>;
   export_type_breakdown: Array<{ export_type: string; candidate_count: number; total: number }>;
 }

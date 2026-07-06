@@ -10,6 +10,7 @@ import {
   toCompactInternalWarningSummary,
 } from "../../src/lib/signalyzedStandard/internalWarningSummary.ts";
 import { evaluateInternalReadiness } from "../../src/lib/signalyzedStandard/readinessEvaluator.ts";
+import type { RepairCandidateEventRow } from "../../src/lib/signalyzedStandard/repairCandidates/types.ts";
 import { assertNoPiiInStandardPayload } from "../../src/lib/signalyzedStandard/sanitizeStandardAudit.ts";
 import { createServiceClient } from "../resumeqa/lib/env.ts";
 
@@ -28,12 +29,39 @@ if (error) {
   process.exit(1);
 }
 
+const { data: repairEvents, error: repairErr } = await sb
+  .from("signalyzed_repair_candidate_events")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .limit(Math.max(last * 2, 100));
+
+const repair_queue_available = !repairErr;
+const repairByExportId = new Map<string, RepairCandidateEventRow>();
+if (repair_queue_available) {
+  for (const row of (repairEvents ?? []) as RepairCandidateEventRow[]) {
+    if (row.export_id) repairByExportId.set(row.export_id, row);
+  }
+}
+
 const rows = filterStandardEventRows((events ?? []) as StandardEventRowWithMeta[], {
   ...options,
   last,
 });
 
+let repair_queue_rows_matched = 0;
+let standard_heuristic_rows = 0;
+
 const summaries = rows.map((row) => {
+  const repairRow = row.export_id ? repairByExportId.get(row.export_id) : undefined;
+  const classification_source =
+    repairRow && repair_queue_available ? "repair_queue" : "standard_heuristic";
+
+  if (classification_source === "repair_queue") {
+    repair_queue_rows_matched += 1;
+  } else {
+    standard_heuristic_rows += 1;
+  }
+
   const summary = buildInternalWarningSummary({
     request_id: row.request_id,
     export_id: row.export_id,
@@ -43,11 +71,16 @@ const summaries = rows.map((row) => {
     hard_blocker_count: row.hard_blocker_count,
     warning_count: row.warning_count,
     diagnostic_codes: row.diagnostic_codes ?? [],
+    repair_queue: repairRow ?? null,
   });
+
   return {
     created_at: row.created_at ?? null,
     template_version: row.template_version ?? null,
     verdict: row.verdict,
+    classification_source,
+    repair_candidate_type: repairRow?.candidate_type ?? null,
+    repair_future_action: repairRow?.recommended_future_action ?? null,
     ...toCompactInternalWarningSummary(summary),
   };
 });
@@ -73,11 +106,22 @@ const readiness = evaluateInternalReadiness({
   trueBlockerControlsPass: true,
 });
 
+const classification_source_report =
+  repair_queue_rows_matched === 0
+    ? "standard_heuristic"
+    : standard_heuristic_rows === 0
+      ? "repair_queue"
+      : "mixed";
+
 const end = new Date();
 const report = {
   generated_at: end.toISOString(),
   filters: { last, ...options },
   sample_size: summaries.length,
+  repair_queue_available,
+  repair_queue_row_count: repairEvents?.length ?? 0,
+  repair_queue_rows_matched,
+  classification_source: classification_source_report,
   label_counts: labelCounts,
   readiness: {
     status: readiness.status,
@@ -95,7 +139,10 @@ const outPath = join(outDir, `internal-review-${end.toISOString().slice(0, 10)}.
 writeFileSync(outPath, JSON.stringify(report, null, 2));
 
 console.log("=== SIGNALYZED STANDARD INTERNAL REVIEW ===");
-console.log(`Latest ${summaries.length} exports\n`);
+console.log(`Latest ${summaries.length} exports`);
+console.log(
+  `Repair queue: ${repair_queue_available ? "available" : "unavailable"} · matched ${repair_queue_rows_matched}/${summaries.length} · source: ${classification_source_report}\n`,
+);
 console.log(
   "Label counts:",
   `READY=${labelCounts.READY_INTERNAL}`,
@@ -124,6 +171,9 @@ for (const s of summaries.slice(0, 50)) {
   );
   if (s.top_diagnostic_codes.length > 0) {
     console.log(`  codes: ${s.top_diagnostic_codes.join(", ")}`);
+  }
+  if (s.classification_source === "repair_queue" && s.repair_candidate_type) {
+    console.log(`  repair: ${s.repair_candidate_type} → ${s.repair_future_action}`);
   }
 }
 

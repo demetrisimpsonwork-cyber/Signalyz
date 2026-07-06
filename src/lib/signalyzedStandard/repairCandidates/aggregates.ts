@@ -1,4 +1,8 @@
 import type { RepairCandidateDashboardMetrics, RepairCandidateResult } from "./types.ts";
+import {
+  buildConfidenceBreakdown,
+  countTopSourceDiagnosticCodes,
+} from "./dashboardSource.ts";
 
 function rate(n: number, d: number): number | null {
   if (d === 0) return null;
@@ -51,6 +55,8 @@ export function buildRepairCandidateDashboardMetrics(
       .map(([reason_code, count]) => ({ reason_code, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 15),
+    top_source_diagnostic_codes: countTopSourceDiagnosticCodes(rows),
+    confidence_breakdown: buildConfidenceBreakdown(rows),
     export_type_breakdown: [...exportTypeMap.entries()].map(([export_type, stats]) => ({
       export_type,
       candidate_count: stats.candidate,

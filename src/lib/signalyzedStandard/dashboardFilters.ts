@@ -14,13 +14,14 @@ export interface DashboardFilterOptions {
   sinceVersion?: StandardPhaseMilestone | string;
   excludeLegacy?: boolean;
   onlyNewStandardVersion?: string;
+  source?: "auto" | "repair-events" | "standard-inferred";
 }
 
 /** Pre-3E production smoke export ids (Phase 3C/3D). */
 export const LEGACY_EXPORT_ID_PREFIXES = ["prod-3c-", "prod-3d-"] as const;
 
 /** Phase 3E+ production smoke export ids. */
-export const PHASE3E_EXPORT_ID_PREFIXES = ["prod-3e-"] as const;
+export const PHASE3E_EXPORT_ID_PREFIXES = ["prod-3e-", "prod-3g-"] as const;
 
 export function isLegacyStandardRow(row: { export_id?: string | null }): boolean {
   const id = row.export_id ?? "";
@@ -70,6 +71,14 @@ export function parseDashboardCliArgs(argv: string[] = process.argv): DashboardF
   const versionArg = argv.find((a) => a.startsWith("--only-new-standard-version="));
   if (versionArg) options.onlyNewStandardVersion = versionArg.split("=")[1];
 
+  const sourceArg = argv.find((a) => a.startsWith("--source="));
+  if (sourceArg) {
+    const value = sourceArg.split("=")[1];
+    if (value === "auto" || value === "repair-events" || value === "standard-inferred") {
+      options.source = value;
+    }
+  }
+
   return options;
 }
 
@@ -85,6 +94,41 @@ export function filterStandardEventRows<T extends StandardEventRowWithMeta>(
 
   if (options.sinceVersion) {
     filtered = filtered.filter((r) => matchesSinceVersion(r, options.sinceVersion!));
+  }
+
+  if (options.excludeLegacy) {
+    filtered = filtered.filter((r) => !isLegacyStandardRow(r));
+  }
+
+  if (options.last != null && options.last > 0) {
+    filtered = filtered.slice(0, options.last);
+  }
+
+  return filtered;
+}
+
+export interface RepairEventRowFilterable {
+  export_id?: string | null;
+  created_at?: string;
+}
+
+export function filterRepairEventRows<T extends RepairEventRowFilterable>(
+  rows: T[],
+  options: DashboardFilterOptions,
+): T[] {
+  let filtered = [...rows];
+
+  if (options.sinceVersion) {
+    filtered = filtered.filter((r) =>
+      matchesSinceVersion(
+        {
+          export_id: r.export_id,
+          source_reports_present: {},
+          standard_version: SIGNALYZED_STANDARD_VERSION,
+        },
+        options.sinceVersion!,
+      ),
+    );
   }
 
   if (options.excludeLegacy) {

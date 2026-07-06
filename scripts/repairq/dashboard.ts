@@ -1,24 +1,51 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { STANDARD_CODES } from "../../src/lib/signalyzedStandard/diagnosticCodes.ts";
 import {
   parseDashboardCliArgs,
   filterStandardEventRows,
+  filterRepairEventRows,
   isPhase3eOrLaterRow,
   type StandardEventRowWithMeta,
 } from "../../src/lib/signalyzedStandard/dashboardFilters.ts";
-import { classifyRepairCandidate } from "../../src/lib/signalyzedStandard/repairCandidates/classifyRepairCandidate.ts";
 import { buildRepairCandidateDashboardMetrics } from "../../src/lib/signalyzedStandard/repairCandidates/aggregates.ts";
+import {
+  buildRepairDashboardCandidates,
+  resolveRepairDashboardSourceMode,
+  type RepairCandidateEventRowWithMeta,
+} from "../../src/lib/signalyzedStandard/repairCandidates/dashboardSource.ts";
 import { assertNoPiiInRepairCandidatePayload } from "../../src/lib/signalyzedStandard/repairCandidates/sanitizeRepairCandidate.ts";
 import { createServiceClient } from "../resumeqa/lib/env.ts";
 
 const options = parseDashboardCliArgs();
+const sourceMode = resolveRepairDashboardSourceMode(options);
 const days = options.days ?? 7;
 const last = options.last ?? 50;
 const end = new Date();
 const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
 
 const sb = createServiceClient();
+
+const { data: repairEvents, error: repairErr } = await sb
+  .from("signalyzed_repair_candidate_events")
+  .select("*")
+  .gte("created_at", start.toISOString())
+  .lte("created_at", end.toISOString())
+  .order("created_at", { ascending: false })
+  .limit(Math.max(last * 2, 100));
+
+const repairFetchError =
+  repairErr?.message?.includes("does not exist") || repairErr?.code === "42P01"
+    ? repairErr.message
+    : repairErr?.message ?? null;
+
+if (repairErr && sourceMode === "repair-events") {
+  console.error(
+    "Repair candidate table unavailable:",
+    repairErr.message,
+    "\nApply migration 20260706200000_signalyzed_repair_candidate_events or use --source=standard-inferred.",
+  );
+  process.exit(1);
+}
 
 const { data: standardEvents, error: stdErr } = await sb
   .from("signalyzed_standard_events")
@@ -33,67 +60,60 @@ if (stdErr) {
   process.exit(1);
 }
 
-let rows = filterStandardEventRows((standardEvents ?? []) as StandardEventRowWithMeta[], {
+let standardRows = filterStandardEventRows((standardEvents ?? []) as StandardEventRowWithMeta[], {
   sinceVersion: options.sinceVersion ?? "phase3e",
   excludeLegacy: options.excludeLegacy ?? true,
   last,
 });
 
-if (rows.length === 0) {
-  rows = ((standardEvents ?? []) as StandardEventRowWithMeta[]).filter(isPhase3eOrLaterRow).slice(0, last);
+if (standardRows.length === 0) {
+  standardRows = ((standardEvents ?? []) as StandardEventRowWithMeta[])
+    .filter(isPhase3eOrLaterRow)
+    .slice(0, last);
 }
 
-const candidates = rows.map((row) => {
-  const codes = row.diagnostic_codes ?? [];
-  const flags = row.source_reports_present ?? {};
-
-  const result = classifyRepairCandidate({
-    request_id: row.request_id,
-    export_id: row.export_id,
-    export_type: row.export_type,
-    verdict: row.verdict,
-    hard_blocker_count: row.hard_blocker_count,
-    diagnostic_codes: codes,
-    link:
-      flags.link && codes.includes(STANDARD_CODES.LINKS_MISSING_EXPECTED)
-        ? {
-            event: "resume_link_preservation_report",
-            source_link_count: 1,
-            generated_link_count_before: 0,
-            generated_link_count_after: 0,
-            restored_link_count: 0,
-            link_types_restored: [],
-            duplicate_link_count: 0,
-            broken_link_count: 0,
-            preservation_ok: false,
-          }
-        : null,
-    bullet:
-      flags.bullet && codes.includes(STANDARD_CODES.AST_LOW_BULLET_PRESERVATION)
-        ? {
-            event: "resume_bullet_preservation_report",
-            protected_bullet_count: 2,
-            weakened_bullet_count: 1,
-            restored_bullet_count: 1,
-            duplicate_bullet_count: 0,
-            hallucination_guard_passed: true,
-            preservation_ok: true,
-            affected_sections: ["experience"],
-          }
-        : null,
-  });
-
-  const ok = assertNoPiiInRepairCandidatePayload(result as unknown as Record<string, unknown>);
-  if (!ok) throw new Error(`PII detected in repair candidate for ${row.export_id}`);
-  return result;
+let repairRows = filterRepairEventRows((repairEvents ?? []) as RepairCandidateEventRowWithMeta[], {
+  sinceVersion: options.sinceVersion ?? "phase3e",
+  excludeLegacy: options.excludeLegacy ?? true,
+  last: sourceMode === "repair-events" ? last : undefined,
 });
+
+let buildResult;
+try {
+  buildResult = buildRepairDashboardCandidates({
+    sourceMode,
+    standardRows,
+    repairRows,
+    repairFetchError,
+  });
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
+
+const { candidates, ...sourceMeta } = buildResult;
+
+for (const row of candidates) {
+  const ok = assertNoPiiInRepairCandidatePayload(row as unknown as Record<string, unknown>);
+  if (!ok) {
+    console.error(`PII detected in repair candidate for ${row.export_id}`);
+    process.exit(1);
+  }
+}
 
 const metrics = buildRepairCandidateDashboardMetrics(candidates);
 
 const report = {
   generated_at: end.toISOString(),
-  filters: { days, last, ...options },
+  filters: { days, last, source: sourceMode, ...options },
   window: { start: start.toISOString(), end: end.toISOString() },
+  data_source: sourceMeta.data_source,
+  repair_rows_used: sourceMeta.repair_rows_used,
+  standard_rows_inferred: sourceMeta.standard_rows_inferred,
+  missing_repair_rows: sourceMeta.missing_repair_rows,
+  repair_queue_available: sourceMeta.repair_queue_available,
+  repair_queue_row_count: sourceMeta.repair_queue_row_count,
+  classification_source: sourceMeta.classification_source,
   metrics,
   candidates,
 };
@@ -106,6 +126,10 @@ writeFileSync(outPath, JSON.stringify(report, null, 2));
 const pct = (r: number | null) => (r == null ? "n/a" : `${Math.round(r * 100)}%`);
 
 console.log("=== SIGNALYZED REPAIR CANDIDATE DASHBOARD ===");
+console.log(`Source: ${sourceMode} · Data: ${sourceMeta.data_source}`);
+console.log(
+  `Repair rows used: ${sourceMeta.repair_rows_used} · Inferred: ${sourceMeta.standard_rows_inferred} · Missing repair rows: ${sourceMeta.missing_repair_rows}`,
+);
 console.log(`Window: ${days} days · Sample: ${metrics.sample_size}`);
 console.log(`Candidate rate: ${pct(metrics.candidate_rate)} (${metrics.candidate_count} candidates)`);
 console.log(`Safe future repair: ${metrics.safe_future_repair_count}`);
@@ -123,9 +147,19 @@ for (const item of metrics.risk_breakdown) {
   console.log(`  ${item.risk_level}: ${item.count}`);
 }
 
+console.log("\n--- Confidence Breakdown ---");
+for (const item of metrics.confidence_breakdown) {
+  console.log(`  ${item.confidence}: ${item.count}`);
+}
+
 console.log("\n--- Top Reason Codes ---");
 for (const item of metrics.top_reason_codes.slice(0, 8)) {
   console.log(`  ${item.reason_code}: ${item.count}`);
+}
+
+console.log("\n--- Top Source Diagnostic Codes ---");
+for (const item of metrics.top_source_diagnostic_codes.slice(0, 8)) {
+  console.log(`  ${item.code}: ${item.count}`);
 }
 
 console.log("\n--- Export Type Breakdown ---");

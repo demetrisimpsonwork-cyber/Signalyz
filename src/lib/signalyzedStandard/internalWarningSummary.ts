@@ -1,6 +1,11 @@
 import { groupDiagnosticsByCategory, topDiagnosticCodes } from "./diagnosticGrouping.ts";
 import { mapInternalQualityLabel, type InternalQualityLabel } from "./internalLabels.ts";
-import { resolveRecommendedOperatorAction, type RecommendedOperatorAction } from "./operatorActions.ts";
+import {
+  resolveRecommendedOperatorAction,
+  resolveOperatorActionFromRepairQueue,
+  type RecommendedOperatorAction,
+  type RepairQueueOperatorInput,
+} from "./operatorActions.ts";
 import type { SignalyzedVerdict } from "./types.ts";
 
 export interface InternalWarningSummary {
@@ -25,12 +30,17 @@ export interface InternalWarningSummaryInput {
   hard_blocker_count: number;
   warning_count: number;
   diagnostic_codes: string[];
+  repair_queue?: RepairQueueOperatorInput | null;
 }
 
 export function buildInternalWarningSummary(
   input: InternalWarningSummaryInput,
 ): InternalWarningSummary {
   const topCodes = topDiagnosticCodes(input.diagnostic_codes, 5);
+  const recommended_operator_action =
+    input.repair_queue != null
+      ? resolveOperatorActionFromRepairQueue(input.repair_queue)
+      : resolveRecommendedOperatorAction(input);
   return {
     request_id: input.request_id ?? null,
     export_id: input.export_id ?? null,
@@ -41,7 +51,7 @@ export function buildInternalWarningSummary(
     diagnostic_groups: groupDiagnosticsByCategory(input.diagnostic_codes),
     hard_blocker_count: input.hard_blocker_count,
     warning_count: input.warning_count,
-    recommended_operator_action: resolveRecommendedOperatorAction(input),
+    recommended_operator_action,
   };
 }
 

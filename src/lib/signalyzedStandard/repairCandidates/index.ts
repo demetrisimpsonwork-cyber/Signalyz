@@ -6,3 +6,4 @@ export * from "./sanitizeRepairCandidate.ts";
 export * from "./aggregates.ts";
 export * from "./qaAdvisorySummary.ts";
 export * from "./repairCandidateSignals.ts";
+export * from "./dashboardSource.ts";
