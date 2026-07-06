@@ -16,7 +16,7 @@ describe("Phase 3E QA triage classifiers", () => {
       sourceCorpus: "customer success retention accounts",
       evidence: "primary ownership maintaining portfolio",
     });
-    expect(subtype).toBe("generic_business_phrase");
+    expect(subtype).toBe("role_language_rewrite");
     expect(isGenericBusinessTerm("ownership")).toBe(true);
   });
 
@@ -132,7 +132,7 @@ describe("Phase 3E QA triage classifiers", () => {
     const claim = issues.find((i) => i.code === "unsupported_claim");
     expect(claim).toBeDefined();
     expect(claim!.confidence).toBe("medium");
-    expect(claim!.unsupportedClaimSubtype).toBe("generic_business_phrase");
+    expect(claim!.unsupportedClaimSubtype).toBe("role_language_rewrite");
     expect(claim!.severity).not.toBe("critical");
   });
 });

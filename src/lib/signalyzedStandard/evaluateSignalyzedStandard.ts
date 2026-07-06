@@ -23,6 +23,7 @@ import {
   isArtifactContaminationSubtype,
   matchedTermLooksLikeArtifact,
 } from "@signalyz/resumeQaEngine/contaminationArtifactClassifier";
+import { isUnsupportedClaimHardBlocker } from "@signalyz/resumeQaEngine/unsupportedClaimClassifier";
 
 function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -71,21 +72,11 @@ function isContaminationArtifactWarning(issue: QaIssueLogEntry): boolean {
 
 function isTrueUnsupportedClaimHardBlocker(issue: QaIssueLogEntry): boolean {
   if (issue.code !== "unsupported_claim") return false;
-  if (!isHighConfidence(issue.confidence)) return false;
-
-  const subtype = issue.unsupported_claim_subtype;
-  if (
-    subtype === "generic_business_phrase" ||
-    subtype === "role_language_rewrite" ||
-    subtype === "transferable_rewrite" ||
-    subtype === "synonym_gap" ||
-    subtype === "parser_artifact"
-  ) {
-    return false;
-  }
-
-  if (subtype === "true_unsupported_claim") return true;
-  return issue.rule_id === "hallucination.unsupported_metric";
+  return isUnsupportedClaimHardBlocker({
+    subtype: issue.unsupported_claim_subtype,
+    confidence: issue.confidence,
+    ruleId: issue.rule_id,
+  });
 }
 
 function isAdvisoryUnsupportedClaim(issue: QaIssueLogEntry): boolean {

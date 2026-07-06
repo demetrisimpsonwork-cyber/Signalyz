@@ -9,6 +9,9 @@ import {
   hasKeywordLossSignals,
   hasTrueUnsupportedClaimSubtype,
 } from "./qaAdvisorySummary.ts";
+import {
+  resolveUnsupportedClaimRepairAction,
+} from "../../../../supabase/functions/_shared/resumeQaEngine/unsupportedClaimClassifier.ts";
 import type { RepairCandidateSignals } from "./repairCandidateSignals.ts";
 import { hasHighRiskDiagnostic, scoreRiskForCandidateType } from "./riskScoring.ts";
 import { resolveRecommendedFutureAction } from "./repairActions.ts";
@@ -105,25 +108,109 @@ function isPdfLinkExtractionWeakOnly(codes: string[]): boolean {
   );
 }
 
-function hasRepairBlocker(input: RepairCandidateInput, codes: string[]): boolean {
-  const hardBlockers = input.hard_blocker_count ?? 0;
-  const advisory = input.signals?.qa_advisory;
+function hasUnsupportedClaimIssue(qa?: QaShadowSummary | null): boolean {
+  return (qa?.issue_logs ?? []).some((i) => i.code === "unsupported_claim");
+}
 
-  if (codes.includes(STANDARD_CODES.QA_UNSUPPORTED_CLAIM)) {
-    if (hardBlockers > 0 || input.verdict === "unsafe") {
-      if (advisory && advisory.unsupported_claim_subtypes.length > 0) {
-        if (!hasTrueUnsupportedClaimSubtype(advisory)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    if (hasTrueUnsupportedClaimSubtype(advisory)) return true;
-    return false;
+function resolveUnsupportedClaimBranch(input: RepairCandidateInput): {
+  blocked: boolean;
+  action?: ReturnType<typeof resolveUnsupportedClaimRepairAction>;
+  reason_code?: string;
+} | null {
+  const codes = input.diagnostic_codes ?? [];
+  const advisory = input.signals?.qa_advisory;
+  const hasUnsupported =
+    codes.includes(STANDARD_CODES.QA_UNSUPPORTED_CLAIM) || hasUnsupportedClaimIssue(input.qa);
+
+  if (!hasUnsupported && !hasTrueUnsupportedClaimSubtype(advisory)) {
+    return null;
   }
 
-  if (hasHighRiskDiagnostic(codes)) return true;
-  return hardBlockers > 0;
+  const primarySubtype = advisory?.unsupported_claim_subtypes[0];
+  const primaryIssue = (input.qa?.issue_logs ?? []).find((i) => i.code === "unsupported_claim");
+  const issueSubtype = primaryIssue?.unsupported_claim_subtype;
+  const bulletVerified = bulletPreserveSupported(input.bullet, input.signals);
+
+  if (
+    codes.includes(STANDARD_CODES.QA_UNSUPPORTED_CLAIM) &&
+    !primarySubtype &&
+    !issueSubtype
+  ) {
+    return {
+      blocked: true,
+      action: "do_not_repair",
+      reason_code: "high_risk_unsupported_claim",
+    };
+  }
+
+  const action = resolveUnsupportedClaimRepairAction({
+    subtype: primarySubtype ?? primaryIssue?.unsupported_claim_subtype,
+    confidence: primaryIssue?.confidence,
+    bulletGuardVerified: bulletVerified,
+  });
+
+  if (action === "do_not_repair") {
+    return {
+      blocked: true,
+      action,
+      reason_code: "high_risk_unsupported_claim",
+    };
+  }
+
+  if (action === "safe_future_repair" && primarySubtype === "protected_claim_regression") {
+    return {
+      blocked: false,
+      action,
+      reason_code: "protected_claim_regression_guard_verified",
+    };
+  }
+
+  if (action === "needs_human_review") {
+    return {
+      blocked: false,
+      action,
+      reason_code:
+        primarySubtype === "unclear_needs_human_review"
+          ? "unclear_unsupported_claim_review"
+          : "unsupported_claim_advisory_review",
+    };
+  }
+
+  return {
+    blocked: false,
+    action: "monitor_only",
+    reason_code: "unsupported_claim_advisory_only",
+  };
+}
+
+function hasRepairBlocker(input: RepairCandidateInput, codes: string[]): boolean {
+  const unsupportedBranch = resolveUnsupportedClaimBranch(input);
+  if (unsupportedBranch?.blocked) return true;
+
+  if (hasHighRiskDiagnostic(codes)) {
+    if (
+      codes.includes(STANDARD_CODES.QA_UNSUPPORTED_CLAIM) &&
+      !hasTrueUnsupportedClaimSubtype(input.signals?.qa_advisory)
+    ) {
+      const otherHighRisk = codes.some(
+        (c) => c !== STANDARD_CODES.QA_UNSUPPORTED_CLAIM && hasHighRiskDiagnostic([c]),
+      );
+      if (!otherHighRisk) return false;
+    }
+    return true;
+  }
+
+  if ((input.hard_blocker_count ?? 0) > 0) {
+    if (
+      codes.includes(STANDARD_CODES.QA_UNSUPPORTED_CLAIM) &&
+      !hasTrueUnsupportedClaimSubtype(input.signals?.qa_advisory)
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 function unsupportedClaimReasonCode(advisory?: RepairCandidateSignals["qa_advisory"]): string {
@@ -198,6 +285,7 @@ export function classifyRepairCandidate(input: RepairCandidateInput): RepairCand
 
   let candidate_type: RepairCandidateType = "none";
   let reason_code = "no_actionable_diagnostics";
+  const unsupportedBranch = resolveUnsupportedClaimBranch(input);
 
   if (
     codes.includes(STANDARD_CODES.AST_LOW_BULLET_PRESERVATION) &&
@@ -241,12 +329,41 @@ export function classifyRepairCandidate(input: RepairCandidateInput): RepairCand
 
   const candidate = candidate_type !== "none";
   const risk_level = scoreRiskForCandidateType(candidate_type, codes);
-  const recommended_future_action = resolveRecommendedFutureAction({
+  let recommended_future_action = resolveRecommendedFutureAction({
     candidate,
     candidate_type,
     risk_level,
     high_risk_blocked: false,
   });
+  let reason_code_out = reason_code;
+
+  if (!candidate && unsupportedBranch && !unsupportedBranch.blocked) {
+    if (unsupportedBranch.action === "safe_future_repair") {
+      return withObservability(
+        {
+          ...base,
+          candidate: true,
+          candidate_type: "preserve_high_value_bullet",
+          risk_level: "low",
+          confidence: "high",
+          recommended_future_action: "safe_future_repair",
+          reason_code: unsupportedBranch.reason_code ?? "protected_claim_regression_guard_verified",
+        },
+        observability,
+      );
+    }
+
+    if (unsupportedBranch.action === "needs_human_review" && candidate_type === "none") {
+      recommended_future_action = "needs_human_review";
+      reason_code_out = unsupportedBranch.reason_code ?? "unsupported_claim_advisory_review";
+    } else if (
+      unsupportedBranch.action === "monitor_only" &&
+      candidate_type === "none" &&
+      reason_code === "no_actionable_diagnostics"
+    ) {
+      reason_code_out = unsupportedBranch.reason_code ?? "unsupported_claim_advisory_only";
+    }
+  }
 
   return withObservability(
     {
@@ -256,7 +373,7 @@ export function classifyRepairCandidate(input: RepairCandidateInput): RepairCand
       risk_level,
       confidence: resolveConfidence({ candidate, candidate_type, high_risk: false }),
       recommended_future_action,
-      reason_code,
+      reason_code: reason_code_out,
     },
     observability,
   );

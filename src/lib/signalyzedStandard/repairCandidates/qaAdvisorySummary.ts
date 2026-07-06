@@ -16,6 +16,8 @@ export const ADVISORY_UNSUPPORTED_CLAIM_SUBTYPES = new Set([
   "transferable_rewrite",
   "synonym_gap",
   "parser_artifact",
+  "protected_claim_regression",
+  "unclear_needs_human_review",
 ]);
 
 export interface QaAdvisorySummary {
