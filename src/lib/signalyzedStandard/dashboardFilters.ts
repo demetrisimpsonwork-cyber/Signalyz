@@ -15,6 +15,7 @@ export interface DashboardFilterOptions {
   excludeLegacy?: boolean;
   onlyNewStandardVersion?: string;
   source?: "auto" | "repair-events" | "standard-inferred";
+  repairType?: string;
 }
 
 /** Pre-3E production smoke export ids (Phase 3C/3D). */
@@ -78,6 +79,9 @@ export function parseDashboardCliArgs(argv: string[] = process.argv): DashboardF
       options.source = value;
     }
   }
+
+  const repairTypeArg = argv.find((a) => a.startsWith("--repair-type="));
+  if (repairTypeArg) options.repairType = repairTypeArg.split("=")[1];
 
   return options;
 }

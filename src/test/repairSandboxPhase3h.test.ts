@@ -16,6 +16,11 @@ import {
   toRepairSandboxEventRow,
 } from "@/lib/signalyzedStandard/repairSandbox/sanitizeSandboxAudit";
 import { buildRepairSandboxDashboardMetrics } from "@/lib/signalyzedStandard/repairSandbox/aggregates";
+import {
+  buildRepairTypeReadinessGate,
+  buildAllRepairTypeReadinessGates,
+  REPAIR_SANDBOX_PILOT_MIN_SAMPLE,
+} from "@/lib/signalyzedStandard/repairSandbox/readinessGate";
 import { buildAndLogRepairSandbox } from "@/lib/signalyzedStandard/repairSandbox/observability";
 import type {
   AstShadowSummary,
@@ -552,5 +557,120 @@ describe("Phase 3H five production-like repair queue rows", () => {
     expect(metrics.sandbox_run_count).toBe(3);
     expect(metrics.keep_human_review_count).toBe(1);
     expect(metrics.eligible_for_future_auto_repair_count).toBe(2);
+
+    const bulletGate = metrics.repair_type_readiness.find(
+      (g) => g.sandbox_repair_type === "preserve_high_value_bullet",
+    );
+    expect(bulletGate?.readiness_status).toBe("not_enough_data");
+    expect(bulletGate?.sample_count).toBe(2);
+    expect(bulletGate?.improved_count).toBe(2);
+    expect(bulletGate?.regressed_count).toBe(0);
+    expect(bulletGate?.unsafe_to_apply_count).toBe(0);
+    expect(bulletGate?.readiness_note).toBe("promising, needs more production volume");
+  });
+});
+
+describe("Phase 3H.1 repair sandbox volume readiness gate", () => {
+  function makeRow(
+    type: "preserve_high_value_bullet",
+    result: "improved" | "no_change" | "regressed" | "unsafe_to_apply",
+    scoreDelta: number,
+    createdAt?: string,
+  ) {
+    return {
+      request_id: "req-gate",
+      export_id: `exp-gate-${Math.random()}`,
+      candidate_type: type,
+      sandbox_repair_type: type,
+      before_score: 98,
+      after_score: 98 + scoreDelta,
+      score_delta: scoreDelta,
+      before_verdict: "needs_review" as const,
+      after_verdict: "needs_review" as const,
+      hard_blocker_delta: 0,
+      warning_delta: 0,
+      risk_level: "low" as const,
+      sandbox_result: result,
+      recommended_next_step: "eligible_for_future_auto_repair" as const,
+      diagnostic_codes_before: [STANDARD_CODES.AST_LOW_BULLET_PRESERVATION],
+      diagnostic_codes_after: [],
+      source_candidate_action: "safe_future_repair" as const,
+      sanitizer_version: "1.0",
+      created_at: createdAt,
+    };
+  }
+
+  it("preserve_high_value_bullet with 2 improved samples is not_enough_data", () => {
+    const rows = [makeRow("preserve_high_value_bullet", "improved", 1), makeRow("preserve_high_value_bullet", "improved", 2)];
+    const gate = buildRepairTypeReadinessGate({
+      sandbox_repair_type: "preserve_high_value_bullet",
+      rows,
+    });
+    expect(gate.readiness_status).toBe("not_enough_data");
+    expect(gate.sample_count).toBe(2);
+    expect(gate.improved_count).toBe(2);
+    expect(gate.regressed_count).toBe(0);
+    expect(gate.unsafe_to_apply_count).toBe(0);
+    expect(gate.readiness_note).toBe("promising, needs more production volume");
+  });
+
+  it("eligible_for_internal_pilot when sample_count >= 20 and safety criteria pass", () => {
+    const rows = Array.from({ length: REPAIR_SANDBOX_PILOT_MIN_SAMPLE }, (_, i) =>
+      makeRow("preserve_high_value_bullet", "improved", 1, `2026-07-0${(i % 9) + 1}T12:00:00Z`),
+    );
+    const gate = buildRepairTypeReadinessGate({
+      sandbox_repair_type: "preserve_high_value_bullet",
+      rows,
+    });
+    expect(gate.sample_count).toBe(20);
+    expect(gate.readiness_status).toBe("eligible_for_internal_pilot");
+    expect(gate.latest_event_at).toBeTruthy();
+  });
+
+  it("hold when regressed samples appear at volume threshold", () => {
+    const rows = [
+      ...Array.from({ length: REPAIR_SANDBOX_PILOT_MIN_SAMPLE - 1 }, () =>
+        makeRow("preserve_high_value_bullet", "improved", 1),
+      ),
+      makeRow("preserve_high_value_bullet", "regressed", -3),
+    ];
+    const gate = buildRepairTypeReadinessGate({
+      sandbox_repair_type: "preserve_high_value_bullet",
+      rows,
+    });
+    expect(gate.readiness_status).toBe("hold");
+    expect(gate.readiness_note).toContain("regressed");
+  });
+
+  it("hold when true blocker rows appear in sample", () => {
+    const rows = Array.from({ length: REPAIR_SANDBOX_PILOT_MIN_SAMPLE }, () =>
+      makeRow("preserve_high_value_bullet", "improved", 1),
+    );
+    rows[0] = {
+      ...rows[0]!,
+      source_candidate_action: "do_not_repair",
+      recommended_next_step: "do_not_apply",
+      sandbox_result: "unsafe_to_apply",
+      diagnostic_codes_before: [STANDARD_CODES.QA_UNSUPPORTED_CLAIM],
+    };
+    const gate = buildRepairTypeReadinessGate({
+      sandbox_repair_type: "preserve_high_value_bullet",
+      rows,
+    });
+    expect(gate.readiness_status).toBe("hold");
+    expect(gate.true_blockers_excluded).toBe(false);
+  });
+
+  it("buildAllRepairTypeReadinessGates tracks per-type volume stats", () => {
+    const rows = [
+      ...[makeRow("preserve_high_value_bullet", "improved", 1), makeRow("preserve_high_value_bullet", "improved", 2)],
+    ];
+    const gates = buildAllRepairTypeReadinessGates({ rows });
+    const bullet = gates.find((g) => g.sandbox_repair_type === "preserve_high_value_bullet");
+    const link = gates.find((g) => g.sandbox_repair_type === "restore_source_link");
+    expect(bullet?.sample_count).toBe(2);
+    expect(link?.sample_count).toBe(0);
+    expect(link?.readiness_status).toBe("not_enough_data");
+    expect(link?.readiness_note).toBe("no production samples in window");
   });
 });

@@ -118,4 +118,32 @@ export interface RepairSandboxDashboardMetrics {
   risk_breakdown: Array<{ risk_level: RepairRiskLevel; count: number }>;
   top_diagnostic_codes_before: Array<{ code: string; count: number }>;
   top_diagnostic_codes_after: Array<{ code: string; count: number }>;
+  repair_type_readiness: RepairTypeReadinessGate[];
+}
+
+export type RepairSandboxReadinessStatus =
+  | "not_enough_data"
+  | "hold"
+  | "eligible_for_internal_pilot";
+
+export interface RepairTypeReadinessGate {
+  sandbox_repair_type: SandboxRepairType;
+  sample_count: number;
+  improved_count: number;
+  no_change_count: number;
+  regressed_count: number;
+  unsafe_to_apply_count: number;
+  avg_score_delta: number | null;
+  eligible_for_future_auto_repair_count: number;
+  keep_human_review_count: number;
+  do_not_apply_count: number;
+  latest_event_at: string | null;
+  pii_check_passed: boolean;
+  true_blockers_excluded: boolean;
+  readiness_status: RepairSandboxReadinessStatus;
+  readiness_note: string;
+}
+
+export interface RepairSandboxOutputWithMeta extends RepairSandboxOutput {
+  created_at?: string | null;
 }

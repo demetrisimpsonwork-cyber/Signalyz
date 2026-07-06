@@ -1,4 +1,5 @@
-import type { RepairSandboxOutput } from "./types.ts";
+import type { RepairSandboxOutput, RepairSandboxOutputWithMeta } from "./types.ts";
+import { buildAllRepairTypeReadinessGates } from "./readinessGate.ts";
 
 function rate(n: number, d: number): number | null {
   if (d === 0) return null;
@@ -19,7 +20,8 @@ function countTopCodes(rows: RepairSandboxOutput[], field: "diagnostic_codes_bef
 }
 
 export function buildRepairSandboxDashboardMetrics(
-  rows: RepairSandboxOutput[],
+  rows: RepairSandboxOutputWithMeta[],
+  options?: { pii_check_passed?: boolean },
 ): import("./types.ts").RepairSandboxDashboardMetrics {
   const simulated = rows.filter((r) => r.sandbox_repair_type !== "none" || r.recommended_next_step === "keep_human_review");
   const runCount = rows.length;
@@ -77,5 +79,9 @@ export function buildRepairSandboxDashboardMetrics(
     })),
     top_diagnostic_codes_before: countTopCodes(simulated, "diagnostic_codes_before"),
     top_diagnostic_codes_after: countTopCodes(simulated, "diagnostic_codes_after"),
+    repair_type_readiness: buildAllRepairTypeReadinessGates({
+      rows,
+      pii_check_passed: options?.pii_check_passed ?? true,
+    }),
   };
 }
