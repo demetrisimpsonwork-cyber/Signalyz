@@ -2,6 +2,22 @@ import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 
+function parseLimitArg(argv) {
+  const limitFlag = argv.find((a) => a.startsWith("--limit="));
+  if (limitFlag) {
+    const n = Number.parseInt(limitFlag.split("=")[1] ?? "", 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const idx = argv.indexOf("--limit");
+  if (idx >= 0) {
+    const n = Number.parseInt(argv[idx + 1] ?? "", 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 20;
+}
+
+const rowLimit = parseLimitArg(process.argv.slice(2));
+
 for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
   const m = line.match(/^([^#=]+)=(.*)$/);
   if (!m) continue;
@@ -20,11 +36,15 @@ const sb = createClient(process.env.VITE_SUPABASE_URL, key, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const tables = ["signalyzed_repair_candidate_events", "signalyzed_standard_events"];
+const tables = [
+  "signalyzed_repair_candidate_events",
+  "signalyzed_standard_events",
+  "signalyzed_repair_sandbox_events",
+];
 const results = [];
 
 for (const table of tables) {
-  const { data, error } = await sb.from(table).select("*").order("created_at", { ascending: false }).limit(20);
+  const { data, error } = await sb.from(table).select("*").order("created_at", { ascending: false }).limit(rowLimit);
   if (error) {
     results.push({ table, error: error.message, no_pii: null });
     continue;
@@ -50,5 +70,5 @@ for (const table of tables) {
 }
 
 const allOk = results.every((r) => r.no_pii !== false);
-console.log(JSON.stringify({ results, no_pii: allOk }, null, 2));
+console.log(JSON.stringify({ row_limit: rowLimit, results, no_pii: allOk }, null, 2));
 process.exitCode = allOk ? 0 : 1;

@@ -46,6 +46,12 @@ import {
   toRepairCandidateEventRow,
   assertNoPiiInRepairCandidatePayload,
 } from "@/lib/signalyzedStandard/repairCandidates/sanitizeRepairCandidate";
+import { runRepairSandbox } from "@/lib/signalyzedStandard/repairSandbox";
+import {
+  buildRepairSandboxReport,
+  toRepairSandboxEventRow,
+  assertNoPiiInSandboxPayload,
+} from "@/lib/signalyzedStandard/repairSandbox/sanitizeSandboxAudit";
 import type { ExportValidationSummary } from "@/lib/signalyzedStandard/types";
 import type { ExportValidationReport } from "@/lib/exportValidation";
 
@@ -208,6 +214,7 @@ describe("Phase 3G production repair candidate smoke", () => {
       loadEnv();
       vi.stubEnv("VITE_ENABLE_EXPORT_VALIDATION_SHADOW", "true");
       vi.stubEnv("VITE_ENABLE_SIGNALYZED_STANDARD_SHADOW", "true");
+      vi.stubEnv("VITE_ENABLE_REPAIR_SANDBOX_SHADOW", "true");
 
       const prodHtml = await fetch("https://signalyz.ai/").then((r) => r.text());
       const bundleMatch = prodHtml.match(/\/assets\/index-([A-Za-z0-9_-]+)\.js/);
@@ -540,6 +547,24 @@ describe("Phase 3G production repair candidate smoke", () => {
           .upsert(repairRow, { onConflict: "export_id" });
         expect(repairInsertErr).toBeNull();
 
+        const sandboxOutput = runRepairSandbox({
+          sourceReports: docxEvaluatorInput,
+          candidate: repairCandidate,
+          beforeResult: docxStandard,
+        });
+        let sandboxPersisted = false;
+        if (sandboxOutput) {
+          const sandboxReport = buildRepairSandboxReport(sandboxOutput);
+          console.log(`[signalyzed_repair_sandbox_report] ${JSON.stringify(sandboxReport)}`);
+          const sandboxRow = toRepairSandboxEventRow(sandboxOutput);
+          expect(assertNoPiiInSandboxPayload(sandboxRow as unknown as Record<string, unknown>)).toBe(true);
+          const { error: sandboxInsertErr } = await serviceClient
+            .from("signalyzed_repair_sandbox_events")
+            .upsert(sandboxRow, { onConflict: "export_id" });
+          expect(sandboxInsertErr).toBeNull();
+          sandboxPersisted = true;
+        }
+
         // PDF path (if available) — separate export id and standard event
         let pdfBlock: Record<string, unknown> = { pdf_validation_available: false };
         if (pdfAvailable) {
@@ -644,9 +669,18 @@ describe("Phase 3G production repair candidate smoke", () => {
           .eq("export_id", exportId)
           .maybeSingle();
 
+        const { data: sandboxRowDb } = await serviceClient
+          .from("signalyzed_repair_sandbox_events")
+          .select("*")
+          .eq("export_id", exportId)
+          .maybeSingle();
+
         const stdSerialized = JSON.stringify(stdRow ?? {});
         const repairSerialized = JSON.stringify(repairRowDb ?? {});
-        const piiLeaks = PII_BLOCKED.filter((rx) => rx.test(stdSerialized) || rx.test(repairSerialized));
+        const sandboxSerialized = JSON.stringify(sandboxRowDb ?? {});
+        const piiLeaks = PII_BLOCKED.filter(
+          (rx) => rx.test(stdSerialized) || rx.test(repairSerialized) || rx.test(sandboxSerialized),
+        );
 
         summaries.push({
           case: c.id,
@@ -664,9 +698,11 @@ describe("Phase 3G production repair candidate smoke", () => {
           category_scores: docxStandard.categories,
           bullet_preservation: bulletSummary,
           repair_candidate: repairCandidate,
+          repair_sandbox: sandboxOutput,
           pdf: pdfBlock,
           standard_event_persisted: !!stdRow,
           repair_candidate_persisted: !!repairRowDb,
+          repair_sandbox_persisted: sandboxPersisted,
           export_audit_persisted: !!exportRow,
           qa_shadow_persisted: !!qaRow,
           ast_shadow_persisted: !!astRow,
@@ -675,7 +711,7 @@ describe("Phase 3G production repair candidate smoke", () => {
         });
       }
 
-      console.log("\n=== Phase 3G production repair candidate validation ===");
+      console.log("\n=== Phase 3H production repair sandbox validation ===");
       console.log(JSON.stringify({ bundle, summaries }, null, 2));
 
       expect(summaries.length).toBe(5);
@@ -686,6 +722,28 @@ describe("Phase 3G production repair candidate smoke", () => {
       expect(summaries.every((s) => s.repair_candidate_persisted)).toBe(true);
       expect(summaries.every((s) => s.no_pii_in_standard_row)).toBe(true);
       expect(summaries.every((s) => s.link_preservation_ok !== false)).toBe(true);
+
+      const sandboxRuns = summaries.filter((s) => s.repair_sandbox != null);
+      expect(sandboxRuns.length).toBeGreaterThanOrEqual(2);
+      expect(
+        sandboxRuns.every((s) => {
+          const sb = s.repair_sandbox as { sandbox_result?: string };
+          return sb.sandbox_result === "improved" || sb.sandbox_result === "no_change";
+        }),
+      ).toBe(true);
+      expect(
+        sandboxRuns.every((s) => {
+          const sb = s.repair_sandbox as { sandbox_result?: string };
+          return sb.sandbox_result !== "unsafe_to_apply";
+        }),
+      ).toBe(true);
+      expect(summaries.filter((s) => s.repair_sandbox_persisted).length).toBe(sandboxRuns.length);
+
+      const technical = summaries.find((s) => s.case === "std-3-technical");
+      const techSandbox = technical?.repair_sandbox as { recommended_next_step?: string } | null | undefined;
+      if (techSandbox) {
+        expect(techSandbox.recommended_next_step).toBe("keep_human_review");
+      }
 
       const aiEngineer = summaries.find((s) => s.case === "std-1-ai-engineer");
       const customerSuccess = summaries.find((s) => s.case === "std-2-customer-success");

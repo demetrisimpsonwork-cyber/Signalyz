@@ -4,6 +4,7 @@ import {
 } from "@/lib/signalyzedStandard";
 import { buildAndLogSignalyzedStandard } from "@/lib/signalyzedStandard/observability";
 import { buildAndLogRepairCandidate } from "@/lib/signalyzedStandard/repairCandidates/observability";
+import { buildAndLogRepairSandbox } from "@/lib/signalyzedStandard/repairSandbox/observability";
 import type { ExportValidationReport } from "@/lib/exportValidation";
 import {
   getSignalyzedSourceReports,
@@ -12,6 +13,11 @@ import {
 
 export function isSignalyzedStandardShadowEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_SIGNALYZED_STANDARD_SHADOW === "true";
+}
+
+/** Phase 3H repair sandbox — default false; enable in Vercel Production after migration. */
+export function isRepairSandboxShadowEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_REPAIR_SANDBOX_SHADOW === "true";
 }
 
 export function toExportValidationSummary(
@@ -84,6 +90,12 @@ export function runSignalyzedStandardShadow(input: RunSignalyzedStandardShadowIn
     };
     buildAndLogSignalyzedStandard(persistInput);
     buildAndLogRepairCandidate(persistInput);
+    if (isRepairSandboxShadowEnabled()) {
+      buildAndLogRepairSandbox({
+        sourceReports: evaluatorInput,
+        beforeResult: result,
+      });
+    }
   } catch {
     /* shadow must never block */
   }
