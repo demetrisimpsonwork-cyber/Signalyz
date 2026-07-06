@@ -2,12 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSignalyzedStandardShadowEnabled } from "@/lib/signalyzedStandardShadow";
 import type { SignalyzedStandardInput, SignalyzedStandardResult } from "../types.ts";
 import { classifyRepairCandidate } from "./classifyRepairCandidate.ts";
+import { buildRepairCandidateSignals } from "./repairCandidateSignals.ts";
 import {
   assertNoPiiInRepairCandidatePayload,
   buildRepairCandidateReport,
   toRepairCandidateEventRow,
 } from "./sanitizeRepairCandidate.ts";
-import type { RepairCandidateReport } from "./types.ts";
+import type { RepairCandidateReport, RepairCandidateResult } from "./types.ts";
 
 export function logRepairCandidateReport(report: RepairCandidateReport): void {
   if (!isSignalyzedStandardShadowEnabled()) return;
@@ -23,22 +24,36 @@ export interface PersistRepairCandidateInput {
   exportType?: string;
 }
 
+function buildCandidateResult(input: PersistRepairCandidateInput): RepairCandidateResult {
+  const signals = buildRepairCandidateSignals({
+    result: input.result,
+    ast: input.sourceReports.ast,
+    qa: input.sourceReports.qa,
+    link: input.sourceReports.link,
+    bullet: input.sourceReports.bullet,
+    export: input.sourceReports.export,
+  });
+
+  return classifyRepairCandidate({
+    request_id: input.requestId,
+    export_id: input.exportId,
+    export_type: input.exportType,
+    verdict: input.result.verdict,
+    hard_blocker_count: input.result.hard_blocker_count,
+    diagnostic_codes: input.result.diagnostic_codes,
+    qa: input.sourceReports.qa,
+    link: input.sourceReports.link,
+    bullet: input.sourceReports.bullet,
+    signals,
+  });
+}
+
 /** Fire-and-forget repair candidate persistence. Never throws; never blocks export. */
 export function persistRepairCandidateObservatory(input: PersistRepairCandidateInput): void {
   if (!isSignalyzedStandardShadowEnabled()) return;
 
   try {
-    const candidateResult = classifyRepairCandidate({
-      request_id: input.requestId,
-      export_id: input.exportId,
-      export_type: input.exportType,
-      verdict: input.result.verdict,
-      hard_blocker_count: input.result.hard_blocker_count,
-      diagnostic_codes: input.result.diagnostic_codes,
-      qa: input.sourceReports.qa,
-      link: input.sourceReports.link,
-      bullet: input.sourceReports.bullet,
-    });
+    const candidateResult = buildCandidateResult(input);
 
     const row = toRepairCandidateEventRow({
       result: candidateResult,
@@ -66,18 +81,7 @@ export function buildAndLogRepairCandidate(input: PersistRepairCandidateInput): 
   if (!isSignalyzedStandardShadowEnabled()) return null;
 
   try {
-    const candidateResult = classifyRepairCandidate({
-      request_id: input.requestId,
-      export_id: input.exportId,
-      export_type: input.exportType,
-      verdict: input.result.verdict,
-      hard_blocker_count: input.result.hard_blocker_count,
-      diagnostic_codes: input.result.diagnostic_codes,
-      qa: input.sourceReports.qa,
-      link: input.sourceReports.link,
-      bullet: input.sourceReports.bullet,
-    });
-
+    const candidateResult = buildCandidateResult(input);
     const report = buildRepairCandidateReport(candidateResult);
     logRepairCandidateReport(report);
     persistRepairCandidateObservatory(input);

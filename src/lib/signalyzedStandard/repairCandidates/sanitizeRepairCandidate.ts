@@ -9,7 +9,16 @@ import type {
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const URL_RE = /https?:\/\/[^\s|]+/gi;
 
+const EMPTY_OBSERVABILITY = {
+  qa_signal_present: false,
+  keyword_loss_count: 0,
+  unsupported_claim_subtype_count: 0,
+  bullet_preservation_restored_count: 0,
+  identity_drift_subtype_count: 0,
+} as const;
+
 export function buildRepairCandidateReport(result: RepairCandidateResult): RepairCandidateReport {
+  const obs = result.observability ?? EMPTY_OBSERVABILITY;
   return {
     event: "signalyzed_repair_candidate_report",
     request_id: result.request_id,
@@ -22,6 +31,11 @@ export function buildRepairCandidateReport(result: RepairCandidateResult): Repai
     source_diagnostic_codes: result.source_diagnostic_codes,
     recommended_future_action: result.recommended_future_action,
     reason_code: result.reason_code,
+    qa_signal_present: obs.qa_signal_present,
+    keyword_loss_count: obs.keyword_loss_count,
+    unsupported_claim_subtype_count: obs.unsupported_claim_subtype_count,
+    bullet_preservation_restored_count: obs.bullet_preservation_restored_count,
+    identity_drift_subtype_count: obs.identity_drift_subtype_count,
   };
 }
 

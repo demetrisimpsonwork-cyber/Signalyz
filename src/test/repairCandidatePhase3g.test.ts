@@ -11,6 +11,7 @@ import {
   toRepairCandidateEventRow,
 } from "@/lib/signalyzedStandard/repairCandidates/sanitizeRepairCandidate";
 import { buildRepairCandidateDashboardMetrics } from "@/lib/signalyzedStandard/repairCandidates/aggregates";
+import { buildRepairCandidateSignals } from "@/lib/signalyzedStandard/repairCandidates/repairCandidateSignals";
 import type { BulletPreservationSummary, LinkPreservationSummary, QaShadowSummary } from "@/lib/signalyzedStandard/types";
 
 const bulletSupported: BulletPreservationSummary = {
@@ -279,8 +280,9 @@ describe("Phase 3G five Phase 3E production-like exports", () => {
   ];
 
   it("classifies five Phase 3E exports as expected", () => {
-    const results = cases.map((c) =>
-      classifyRepairCandidate({
+    const results = cases.map((c) => {
+      const signals = buildRepairCandidateSignals({ qa: c.qa, bullet: c.bullet });
+      return classifyRepairCandidate({
         export_id: c.export_id,
         export_type: c.export_type ?? "docx",
         verdict: c.verdict,
@@ -288,8 +290,9 @@ describe("Phase 3G five Phase 3E production-like exports", () => {
         diagnostic_codes: c.codes,
         bullet: c.bullet,
         qa: c.qa,
-      }),
-    );
+        signals,
+      });
+    });
 
     for (let i = 0; i < cases.length; i++) {
       expect(results[i].candidate_type, cases[i].label).toBe(cases[i].expected_type);

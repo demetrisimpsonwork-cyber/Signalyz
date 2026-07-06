@@ -40,6 +40,7 @@ import {
 } from "@/lib/signalyzedStandard/adapters";
 import { STANDARD_CODES } from "@/lib/signalyzedStandard/diagnosticCodes";
 import { classifyRepairCandidate } from "@/lib/signalyzedStandard/repairCandidates/classifyRepairCandidate";
+import { buildRepairCandidateSignals } from "@/lib/signalyzedStandard/repairCandidates/repairCandidateSignals";
 import {
   buildRepairCandidateReport,
   toRepairCandidateEventRow,
@@ -507,6 +508,12 @@ describe("Phase 3G production repair candidate smoke", () => {
         });
         console.log(`[signalyzed_standard_report] ${JSON.stringify(docxStandardReport)}`);
 
+        const repairSignals = buildRepairCandidateSignals({
+          qa: qaSummary,
+          link: linkSummary,
+          bullet: bulletSummary,
+          export: docxExportSummary,
+        });
         const repairCandidate = classifyRepairCandidate({
           request_id: requestId,
           export_id: exportId,
@@ -517,6 +524,7 @@ describe("Phase 3G production repair candidate smoke", () => {
           qa: qaSummary,
           link: linkSummary,
           bullet: bulletSummary,
+          signals: repairSignals,
         });
         const repairReport = buildRepairCandidateReport(repairCandidate);
         console.log(`[signalyzed_repair_candidate_report] ${JSON.stringify(repairReport)}`);

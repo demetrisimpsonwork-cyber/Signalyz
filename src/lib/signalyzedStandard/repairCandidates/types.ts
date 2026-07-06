@@ -1,7 +1,7 @@
 import type { ExportType, SignalyzedVerdict } from "../types.ts";
 import type { InternalQualityLabel } from "../internalLabels.ts";
 
-export const REPAIR_CANDIDATE_SANITIZER_VERSION = "1.0";
+export const REPAIR_CANDIDATE_SANITIZER_VERSION = "1.1";
 
 export type RepairCandidateType =
   | "preserve_high_value_bullet"
@@ -22,6 +22,14 @@ export type RecommendedFutureAction =
   | "needs_human_review"
   | "do_not_repair";
 
+export interface RepairCandidateObservabilityContext {
+  qa_signal_present: boolean;
+  keyword_loss_count: number;
+  unsupported_claim_subtype_count: number;
+  bullet_preservation_restored_count: number;
+  identity_drift_subtype_count: number;
+}
+
 export interface RepairCandidateResult {
   request_id: string | null;
   export_id: string | null;
@@ -34,6 +42,7 @@ export interface RepairCandidateResult {
   recommended_future_action: RecommendedFutureAction;
   reason_code: string;
   sanitizer_version: string;
+  observability?: RepairCandidateObservabilityContext;
 }
 
 export interface RepairCandidateReport {
@@ -48,6 +57,11 @@ export interface RepairCandidateReport {
   source_diagnostic_codes: string[];
   recommended_future_action: RecommendedFutureAction;
   reason_code: string;
+  qa_signal_present: boolean;
+  keyword_loss_count: number;
+  unsupported_claim_subtype_count: number;
+  bullet_preservation_restored_count: number;
+  identity_drift_subtype_count: number;
 }
 
 export interface RepairCandidateEventRow {

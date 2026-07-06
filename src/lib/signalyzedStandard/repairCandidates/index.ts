@@ -4,3 +4,5 @@ export * from "./riskScoring.ts";
 export * from "./repairActions.ts";
 export * from "./sanitizeRepairCandidate.ts";
 export * from "./aggregates.ts";
+export * from "./qaAdvisorySummary.ts";
+export * from "./repairCandidateSignals.ts";
