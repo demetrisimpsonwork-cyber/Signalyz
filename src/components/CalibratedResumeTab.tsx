@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Lock, RefreshCw, AlertTriangle, User } from "lucide-react";
+import { Sparkles, Lock, RefreshCw, AlertTriangle, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { DirectorCalibrationResult } from "@/components/DirectorCalibrationBlock";
 import { useResumeAssembly } from "@/hooks/useResumeAssembly";
@@ -57,6 +57,7 @@ function resumeDataToText(r: CalibratedResumeData): string {
 }
 interface CalibratedResumeTabProps {
   isPro: boolean;
+  accessLookupPending?: boolean;
   onUpgrade: () => void;
   directorResult: DirectorCalibrationResult | null;
   originalResume: string;
@@ -75,6 +76,7 @@ interface CalibratedResumeTabProps {
 
 const CalibratedResumeTab = ({
   isPro,
+  accessLookupPending = false,
   onUpgrade,
   directorResult,
   originalResume,
@@ -211,6 +213,17 @@ const CalibratedResumeTab = ({
     setShowPdfFallback(false);
     // Skip to the field confirmation step (already have pendingResume)
   };
+
+  if (accessLookupPending) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">Checking your access for this role…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isPro) {
     return <CalibratedResumeGateCTA onUpgrade={onUpgrade} />;

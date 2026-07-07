@@ -1,11 +1,12 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, AlertTriangle } from "lucide-react";
+import { Sparkles, AlertTriangle, Loader2 } from "lucide-react";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
 import type { ReportRunInvokeFields } from "@/lib/reportRunSession";
 
 interface CoverLetterTabProps {
   isPro: boolean;
+  accessLookupPending?: boolean;
   onUpgrade: () => void;
   experience: string;
   jd: string;
@@ -18,6 +19,7 @@ interface CoverLetterTabProps {
 
 const CoverLetterTab = ({
   isPro,
+  accessLookupPending = false,
   onUpgrade,
   experience,
   jd,
@@ -28,6 +30,17 @@ const CoverLetterTab = ({
   reportRunFields,
 }: CoverLetterTabProps) => {
   // Gate CTA handles upgrade prompting inline — no auto-trigger modal
+
+  if (accessLookupPending) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-3 p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">Checking your access for this role…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isPro) {
     return <CoverLetterGateCTA onUpgrade={onUpgrade} />;

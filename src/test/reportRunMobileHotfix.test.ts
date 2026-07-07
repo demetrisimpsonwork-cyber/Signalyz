@@ -10,6 +10,18 @@ import {
 } from "@/lib/reportRunSession";
 import { NJDOL_RESUME_TEXT } from "@/test/fixtures/rag/njdolResume";
 
+const maybeSingle = vi.fn();
+
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle })),
+      })),
+    })),
+  },
+}));
+
 const USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const APTASENTRY_JD = `
 Company: Aptasentry (hr@aptasentry.ai)
@@ -106,6 +118,7 @@ describe("reportRunSession storage hardening", () => {
 describe("useReportRunAccess", () => {
   beforeEach(() => {
     sessionStorage.clear();
+    maybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   afterEach(() => {

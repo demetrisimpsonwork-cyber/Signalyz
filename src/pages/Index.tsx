@@ -452,13 +452,19 @@ const Index = () => {
   const { user } = useAuth();
   const { isPro, isFree, hasOneTimeCredit, hasConsumedOneTimeCredit, dailyRunsRemaining, loading: subLoading, refresh: refreshSub } = useSubscription();
   const isAdmin = useIsAdmin();
-  const { activeRunMatch, reportRunFields, rememberActiveRun } = useReportRunAccess(
+  const { activeRunMatch, hasRedeemedCurrentRun, accessLookupPending, reportRunFields, rememberActiveRun } = useReportRunAccess(
     user?.id,
     bullet,
     jd,
   );
-  const effectiveIsPro = isPro || isAdmin || hasOneTimeCredit || activeRunMatch;
-  const planTier: PlanTier = isPro || isAdmin ? "pro" : (hasOneTimeCredit || activeRunMatch) ? "one_time" : "free";
+  const effectiveIsPro =
+    isPro || isAdmin || hasOneTimeCredit || activeRunMatch || hasRedeemedCurrentRun;
+  const planTier: PlanTier =
+    isPro || isAdmin
+      ? "pro"
+      : hasOneTimeCredit || activeRunMatch || hasRedeemedCurrentRun
+        ? "one_time"
+        : "free";
   const { remaining, limitReached, increment, DAILY_FREE_LIMIT } = useDailyUsage(effectiveIsPro);
   useResumeRetrievalIngestion(bullet, inputSource);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1590,6 +1596,7 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) {
+                    if (accessLookupPending) return;
                     openUpgradeModal({
                       feature_name: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
                       output_type: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
@@ -1625,6 +1632,7 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => {
                   if (tab.proOnly && !effectiveIsPro) {
+                    if (accessLookupPending) return;
                     openUpgradeModal({
                       feature_name: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
                       output_type: tab.id === "calibrated" ? "calibrated_resume" : "cover_letter",
@@ -1694,6 +1702,7 @@ const Index = () => {
           <CalibratedResumeTab
             key={runSessionKey}
             isPro={effectiveIsPro}
+            accessLookupPending={accessLookupPending}
             onUpgrade={() => openUpgradeModal()}
             directorResult={directorResult}
             originalResume={bullet}
@@ -1728,6 +1737,7 @@ const Index = () => {
           <CoverLetterTab
             key={runSessionKey}
             isPro={effectiveIsPro}
+            accessLookupPending={accessLookupPending}
             onUpgrade={() => openUpgradeModal()}
             experience={bullet}
             jd={jd}

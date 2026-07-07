@@ -3,6 +3,7 @@
  * Server remains source of truth; local state avoids mid-run paywall confusion.
  */
 
+import { supabase } from "@/integrations/supabase/client";
 import {
   buildReportRunFingerprint,
   normalizeReportRunText,
@@ -147,6 +148,33 @@ export async function rememberActiveReportRunForInputs(
     return fields.reportRunFingerprint;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Returns true when the signed-in user already redeemed a $9 credit for this fingerprint.
+ * RLS restricts reads to auth.uid() = user_id — no userId filter required in the query.
+ */
+export async function hasRedeemedReportRunForFingerprint(
+  runFingerprint: string,
+): Promise<boolean> {
+  const fingerprint = runFingerprint?.trim();
+  if (!fingerprint) return false;
+  try {
+    const { data, error } = await supabase
+      .from("one_time_report_redemptions")
+      .select("id")
+      .eq("run_fingerprint", fingerprint)
+      .maybeSingle();
+    if (error) {
+      if (import.meta.env.DEV) {
+        console.warn("[reportRunSession] redemption lookup failed:", error.message);
+      }
+      return false;
+    }
+    return !!data?.id;
+  } catch {
+    return false;
   }
 }
 
