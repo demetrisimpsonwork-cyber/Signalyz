@@ -529,12 +529,14 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
         }
         const parsedLetter = JSON.parse(cleaned);
         const humanizeLetterBody = (letter: string) =>
-          repairBrokenDomainSpacing(
-            letter
-              .split(/\n{2,}/)
-              .map((p: string) => humanizeProse(p))
-              .filter((p: string) => p.trim().length > 0)
-              .join("\n\n"),
+          stripMidBodyContactCta(
+            repairBrokenDomainSpacing(
+              letter
+                .split(/\n{2,}/)
+                .map((p: string) => humanizeProse(p))
+                .filter((p: string) => p.trim().length > 0)
+                .join("\n\n"),
+            ),
           );
 
         const preHumanizeLetter =

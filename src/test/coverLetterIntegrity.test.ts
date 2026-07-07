@@ -4,6 +4,7 @@ import {
   validateCoverLetterIntegrity,
   maskTimeAbbreviations,
   repairBrokenDomainSpacing,
+  stripMidBodyContactCta,
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 
 describe("splitSentencesSafe — time abbreviation protection (Phase 9.14)", () => {
@@ -78,5 +79,14 @@ describe("validateCoverLetterIntegrity (Phase 9.14)", () => {
     const { ok, issues } = validateCoverLetterIntegrity(good);
     expect(issues).toEqual([]);
     expect(ok).toBe(true);
+  });
+
+  it("rejects mid-body contact CTA and stripMidBodyContactCta removes it", () => {
+    const bad =
+      "I built Signalyz.ai for this apprenticeship. I'd welcome a conversation — feel free to reach out at 908-530-8246 or demetri@example.com. At NJDOL I managed casework.";
+    const { ok, issues } = validateCoverLetterIntegrity(bad);
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/mid-body contact CTA/i);
+    expect(stripMidBodyContactCta(bad)).not.toMatch(/feel free to reach out at/i);
   });
 });

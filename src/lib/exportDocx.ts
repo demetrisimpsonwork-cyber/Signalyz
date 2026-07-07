@@ -52,6 +52,7 @@ function experienceRoleParagraphs(exp: {
   title: string;
   company: string;
   dates: string;
+  location: string;
   bullets: string[];
 }) {
   const blocks: Paragraph[] = [];
@@ -85,10 +86,22 @@ function experienceRoleParagraphs(exp: {
   if (exp.company) {
     blocks.push(
       new Paragraph({
-        spacing: { before: 0, after: 40 },
+        spacing: { before: 0, after: exp.location ? 0 : 40 },
         keepNext: true,
         children: [
           new TextRun({ text: exp.company, bold: true, size: 22, font: "Calibri", color: "374151" }),
+        ],
+      }),
+    );
+  }
+
+  if (exp.location) {
+    blocks.push(
+      new Paragraph({
+        spacing: { before: 0, after: 40 },
+        keepNext: true,
+        children: [
+          new TextRun({ text: exp.location, italics: true, size: 21, font: "Calibri", color: "6B7280" }),
         ],
       }),
     );

@@ -1,22 +1,22 @@
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
-/** Source resume — Demetri profile for Pinterest PM apprenticeship (canonical dates). */
+/** Source resume — Demetri profile for Pinterest PM apprenticeship (canonical dates + locations). */
 export const DEMETRI_PINTEREST_RESUME = `
 Demetri Simpson
-Newark, NJ | demetri@example.com | linkedin.com/in/demetrisimpson
+Phillipsburg, NJ | demetri@example.com | linkedin.com/in/demetrisimpson
 
 Professional Summary
 Product-minded builder with experience shipping Signalyz.ai, operating in regulated service environments, and making analytical decisions under volume.
 
 Experience
 
-Signalyz.ai — Founder | 2024 – Present
+Signalyz.ai — Founder | 2024 – Present | Phillipsburg, NJ
 - Built Signalyz.ai from concept to production as an AI resume intelligence platform.
 - Made product decisions on tiered access, export quality, and evaluation guardrails.
 - Integrated Claude API workflows, Supabase/PostgreSQL, and Stripe checkout with QA observability.
 - Owned product analytics and output QA for resume and cover letter exports.
 
-New Jersey Department of Labor — Claims Examiner | Jan 2023 – Jun 2024
+New Jersey Department of Labor — Claims Examiner | Jan 2023 – Jun 2024 | Trenton, NJ
 - Managed 40–70 active Family Leave Insurance and Disability During Unemployment claims with documentation accuracy.
 - Drafted customer-facing updates and coordinated escalations across teams.
 - Reviewed eligibility documentation and compliance-sensitive processing under high volume.
@@ -63,7 +63,7 @@ export function corruptedPinterestPmCalibratedResume(): CalibratedResumeData {
       email: "demetri@example.com",
       phone: "",
       linkedin: "",
-      location: "Newark, NJ",
+      location: "Phillipsburg, NJ",
     },
     summary:
       "Product-minded builder experienced in shipping Signalyz.ai and operating in regulated environments.",
@@ -105,6 +105,63 @@ export function corruptedPinterestPmCalibratedResume(): CalibratedResumeData {
   };
 }
 
+/** Simulates live preview header layout bugs: duplicate company/title, location-only headers. */
+export function headerLayoutCorruptedPinterestPmCalibratedResume(): CalibratedResumeData {
+  return {
+    header: {
+      name: "Demetri Simpson",
+      title: "Product Builder",
+      email: "demetri@example.com",
+      phone: "",
+      linkedin: "",
+      location: "Phillipsburg, NJ",
+    },
+    summary:
+      "Product-minded builder experienced in shipping Signalyz.ai and operating in regulated environments.",
+    core_competencies: ["Product thinking", "Client communication", "Analytical decision-making"],
+    experience: [
+      {
+        title: "Founder",
+        company: "Signalyz.ai — Founder",
+        dates: "2024 – Present",
+        bullets: [
+          "Built Signalyz.ai from concept to production as an AI resume intelligence platform.",
+          "Made product decisions on tiered access, export quality, and evaluation guardrails.",
+          "Integrated Claude API workflows, Supabase/PostgreSQL, and Stripe checkout with QA observability.",
+          "Owned product analytics and output QA for resume and cover letter exports.",
+        ],
+      },
+      {
+        title: "",
+        company: "Trenton, NJ",
+        dates: "Jan 2023 – Jun 2024",
+        bullets: [
+          "Managed 40–70 active Family Leave Insurance and Disability During Unemployment claims with documentation accuracy.",
+          "Drafted customer-facing updates and coordinated escalations across teams.",
+          "Reviewed eligibility documentation and compliance-sensitive processing under high volume.",
+        ],
+      },
+      {
+        title: "Remote",
+        company: "",
+        dates: "2021 – 2023",
+        bullets: [
+          "Supported revenue cycle workflows, documentation checks, and cross-team handoffs.",
+          "Coordinated issue resolution with operations and support stakeholders.",
+          "Asted Fund Solutions — Team Lead, Proxy Voting Specialist, Client Communications.",
+          "Led a support team handling proxy voting operations and client communications.",
+          "Worked with financial-services clients on documentation routing and process checklists.",
+        ],
+      },
+    ],
+    independent_projects: [],
+    skills: [],
+    certifications: [],
+    education: [],
+    signal_keywords: [],
+  };
+}
+
 /** @deprecated Use corruptedPinterestPmCalibratedResume for structure regression. */
 export function malformedPinterestCalibratedResume(): CalibratedResumeData {
   return corruptedPinterestPmCalibratedResume();
@@ -117,29 +174,36 @@ export const PINTEREST_COVER_LETTER_WITH_DOMAIN_BUG = [
   "I would welcome a conversation about how this apprenticeship could sharpen the product instincts I have already been building.",
 ].join(" ");
 
+export const PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA =
+  "I built Signalyz.ai from concept to production for the Pinterest apprenticeship. I'd welcome a conversation about how my background fits what you're building in this program — feel free to reach out at 908-530-8246 or demetri@example.com. At NJDOL I managed documentation-heavy casework that trained my judgment on accuracy.";
+
 export const EXPECTED_PINTEREST_PM_ROLES = [
   {
     company: /Signalyz\.ai/i,
     title: /Founder/i,
     dates: /2024\s*[-–—]\s*Present/i,
+    location: /Phillipsburg,\s*NJ/i,
     bulletHint: /concept to production/i,
   },
   {
     company: /New Jersey Department of Labor/i,
     title: /Claims Examiner/i,
     dates: /Jan\s+2023\s*[-–—]\s*Jun\s+2024/i,
+    location: /Trenton,\s*NJ/i,
     bulletHint: /Family Leave Insurance/i,
   },
   {
     company: /nThrive/i,
     title: /Revenue Cycle/i,
     dates: /2021\s*[-–—]\s*2023/i,
+    location: /^Remote$/i,
     bulletHint: /revenue cycle workflows/i,
   },
   {
     company: /AST Fund Solutions/i,
     title: /Team Lead/i,
     dates: /2016\s*[-–—]\s*2020/i,
+    location: /^Remote$/i,
     bulletHint: /proxy voting/i,
   },
 ] as const;

@@ -25,6 +25,7 @@ export interface ExportExperienceEntry {
   title: string;
   company: string;
   dates: string;
+  location: string;
   /** Past-tense display bullets — full text, not truncated */
   bullets: string[];
 }
@@ -110,6 +111,7 @@ export function normalizeResumeForExport(
     title: (exp.title || "").trim(),
     company: (exp.company || "").trim(),
     dates: (exp.dates || "").trim(),
+    location: (exp.location || "").trim(),
     bullets: (exp.bullets || [])
       .map((b) => formatBulletForDisplay(b))
       .filter(Boolean),

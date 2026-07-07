@@ -174,6 +174,15 @@ function drawExperienceRole(
     ctx.y += 4;
   }
 
+  if (exp.location) {
+    ensureSpace(ctx, 4);
+    ctx.doc.setFont("helvetica", "italic");
+    ctx.doc.setFontSize(9.5);
+    ctx.doc.setTextColor("#6B7280");
+    ctx.doc.text(exp.location, ML, ctx.y);
+    ctx.y += 4;
+  }
+
   for (const bullet of exp.bullets) {
     drawBullet(ctx, bullet);
   }

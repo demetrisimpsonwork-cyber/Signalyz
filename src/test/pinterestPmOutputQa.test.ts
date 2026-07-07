@@ -3,6 +3,7 @@ import {
   repairBrokenDomainSpacing,
   splitSentencesSafe,
   validateCoverLetterIntegrity,
+  stripMidBodyContactCta,
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 import {
   detectRoleCategory,
@@ -22,18 +23,26 @@ import {
   DEMETRI_PINTEREST_RESUME,
   PINTEREST_PM_APPRENTICE_JD,
   corruptedPinterestPmCalibratedResume,
+  headerLayoutCorruptedPinterestPmCalibratedResume,
   PINTEREST_COVER_LETTER_WITH_DOMAIN_BUG,
+  PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA,
   EXPECTED_PINTEREST_PM_ROLES,
 } from "@/test/fixtures/outputQa/pinterestPmFixtures";
+
+type ExperienceRow = {
+  title: string;
+  company: string;
+  dates: string;
+  location?: string;
+  bullets: string[];
+};
 
 const sanitizeOpts = {
   jdText: PINTEREST_PM_APPRENTICE_JD,
   originalResumeText: DEMETRI_PINTEREST_RESUME,
 };
 
-function assertPinterestExperienceStructure(
-  experience: ReturnType<typeof normalizeResumeForExport>["experience"],
-) {
+function assertPinterestExperienceStructure(experience: ExperienceRow[]) {
   expect(experience).toHaveLength(4);
 
   for (const expected of EXPECTED_PINTEREST_PM_ROLES) {
@@ -42,6 +51,7 @@ function assertPinterestExperienceStructure(
     );
     expect(role, `missing role ${expected.company}`).toBeDefined();
     expect(role!.dates).toMatch(expected.dates);
+    expect(role!.location || "").toMatch(expected.location);
     expect(role!.bullets.length).toBeGreaterThanOrEqual(1);
     expect(role!.bullets.join(" ")).toMatch(expected.bulletHint);
   }
@@ -57,10 +67,16 @@ function assertPinterestExperienceStructure(
   expect(ast.bullets.join(" ")).not.toMatch(/revenue cycle workflows/i);
   expect(ast.company).toBe("AST Fund Solutions");
   expect(ast.company).not.toMatch(/Asted/i);
+  expect(signalyz.company).not.toMatch(/[—–]/);
+  expect(njdol.company).not.toMatch(/Trenton/i);
+  expect(nthrive.title).not.toMatch(/^remote$/i);
 
   for (const exp of experience) {
     expect(exp.company || exp.title).toBeTruthy();
     expect(exp.dates).toBeTruthy();
+    expect(exp.location || "").toBeTruthy();
+    expect(exp.company).not.toMatch(/^[—–]/);
+    expect(isLocationOnlyHeader(exp.company, exp.title)).toBe(false);
     for (const bullet of exp.bullets) {
       expect(isMisplacedRoleHeaderBullet(bullet)).toBe(false);
       expect(isCompanyTitleHeaderBullet(bullet, DEMETRI_PINTEREST_RESUME)).toBe(false);
@@ -69,9 +85,16 @@ function assertPinterestExperienceStructure(
   }
 }
 
-function assertCanonicalPinterestDates(
-  experience: ReturnType<typeof normalizeResumeForExport>["experience"],
-) {
+function isLocationOnlyHeader(company: string, title: string): boolean {
+  const c = (company || "").trim();
+  const t = (title || "").trim();
+  if (/^remote$/i.test(c) || /^remote$/i.test(t)) return true;
+  if (/^[A-Za-z][A-Za-z\s.'-]+,\s*[A-Z]{2}$/.test(c) && !t) return true;
+  if (/^[A-Za-z][A-Za-z\s.'-]+,\s*[A-Z]{2}$/.test(t) && !c) return true;
+  return false;
+}
+
+function assertCanonicalPinterestDates(experience: ExperienceRow[]) {
   const signalyz = experience.find((e) => /Signalyz/i.test(e.company))!;
   const njdol = experience.find((e) => /Department of Labor/i.test(e.company))!;
   const nthrive = experience.find((e) => /nThrive/i.test(e.company))!;
@@ -120,6 +143,15 @@ describe("Pinterest PM output QA — domain spacing", () => {
     expect(ok).toBe(false);
     expect(issues.join(" ")).toMatch(/broken domain spacing/i);
   });
+
+  it("strips mid-body contact CTA and flags it in integrity check", () => {
+    const stripped = stripMidBodyContactCta(PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA);
+    expect(stripped).not.toMatch(/feel free to reach out at/i);
+    expect(stripped).toContain("Signalyz.ai");
+    const { ok, issues } = validateCoverLetterIntegrity(PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA);
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/mid-body contact CTA/i);
+  });
 });
 
 describe("Pinterest PM output QA — role category", () => {
@@ -149,6 +181,7 @@ describe("Pinterest PM output QA — resume structure repair", () => {
         title: e.title,
         company: e.company,
         dates: e.dates,
+        location: e.location,
         bullets: e.bullets,
       })),
     );
@@ -157,6 +190,7 @@ describe("Pinterest PM output QA — resume structure repair", () => {
         title: e.title,
         company: e.company,
         dates: e.dates,
+        location: e.location,
         bullets: e.bullets,
       })),
     );
@@ -189,6 +223,14 @@ describe("Pinterest PM output QA — resume structure repair", () => {
     assertCanonicalPinterestDates(pdf.model.experience);
     expect(docx.blob.size).toBeGreaterThan(500);
     expect(pdf.blob.size).toBeGreaterThan(500);
+  });
+
+  it("repairs header-layout corruption into four canonical roles", () => {
+    const corrupted = headerLayoutCorruptedPinterestPmCalibratedResume();
+    const model = normalizeResumeForExport(corrupted, sanitizeOpts);
+
+    assertPinterestExperienceStructure(model.experience);
+    assertCanonicalPinterestDates(model.experience);
   });
 
   it("prefers exact company/title source dates over overlapping year-only matches", () => {

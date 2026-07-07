@@ -344,6 +344,17 @@ const ResumeCanvas = ({ resume, editMode, onUpdate, saved = false }: ResumeCanva
                       placeholder="Company"
                     />
                   )}
+                  {/* Line 3: Location */}
+                  {((exp as { location?: string }).location || editMode) && (
+                    <EditableField
+                      value={(exp as { location?: string }).location || ""}
+                      path={`experience.${ei}.location`}
+                      editMode={editMode}
+                      onUpdate={onUpdate}
+                      style={{ fontSize: "10.5px", color: "#6B7280", fontStyle: "italic", marginTop: "1px" }}
+                      placeholder="Location"
+                    />
+                  )}
                 </div>
                 <BulletEditor
                   bullets={exp.bullets}

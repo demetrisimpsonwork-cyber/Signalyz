@@ -412,7 +412,7 @@ function parseHybridExperienceLine(
     company,
     title,
     dates,
-    location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+    location: parseLocationFromLine(trimmed),
   };
 }
 
@@ -445,7 +445,7 @@ function findSourceRoleByDates(
 ): SourceRoleMetadata | null {
   if (!dates?.trim() || !originalResumeText?.trim()) return null;
 
-  if (company) {
+  if (company && !isLocationOnlyValue(company)) {
     const exact = lookupRoleMetadataFromSource(company, originalResumeText, title);
     if (exact) return exact;
   }
@@ -468,6 +468,281 @@ function findSourceRoleByDates(
   return bestScore >= 0 ? best : null;
 }
 
+function locationsMatch(a: string, b: string): boolean {
+  const na = (a || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nb = (b || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function findSourceRoleByLocationAndDates(
+  location: string,
+  dates: string,
+  originalResumeText: string,
+): SourceRoleMetadata | null {
+  if (!location?.trim() || !dates?.trim() || !originalResumeText?.trim()) return null;
+
+  let best: SourceRoleMetadata | null = null;
+  let bestScore = -1;
+
+  for (const candidate of collectSourceRoleCandidates(originalResumeText)) {
+    if (!candidate.location || !locationsMatch(location, candidate.location)) continue;
+    const dateScore = scoreDateMatch(dates, candidate.dates);
+    if (dateScore < 80) continue;
+    const combinedScore = dateScore + (candidate.company ? 10 : 0);
+    if (combinedScore > bestScore) {
+      best = candidate;
+      bestScore = combinedScore;
+    }
+  }
+
+  return best;
+}
+
+function resolveRoleFromSource(
+  company: string,
+  title: string,
+  dates: string,
+  location: string,
+  originalResumeText: string,
+): SourceRoleMetadata | null {
+  const companyLookup =
+    company && !isLocationOnlyValue(company)
+      ? lookupRoleMetadataFromSource(company, originalResumeText, title)
+      : null;
+  if (companyLookup) return companyLookup;
+
+  if (dates) {
+    const byDates = findSourceRoleByDates(dates, originalResumeText, company, title);
+    if (byDates) return byDates;
+  }
+
+  if (location && dates) {
+    return findSourceRoleByLocationAndDates(location, dates, originalResumeText);
+  }
+
+  return null;
+}
+
+function parseLocationFromLine(trimmed: string): string {
+  const pipeParts = trimmed.split("|").map((p) => p.trim()).filter(Boolean);
+  for (const part of pipeParts) {
+    if (DATE_IN_LINE_RX.test(part)) continue;
+    if (isLocationOnlyValue(part)) return part;
+  }
+  if (/\|\s*Remote\b/i.test(trimmed)) return "Remote";
+  return "";
+}
+
+function isLocationOnlyValue(value: string): boolean {
+  const t = (value || "").trim();
+  if (!t) return false;
+  if (/^remote$/i.test(t)) return true;
+  if (/^[A-Za-z][A-Za-z\s.'-]+,\s*[A-Z]{2}$/.test(t)) return true;
+  return false;
+}
+
+function splitCombinedCompanyTitle(
+  company: string,
+  title: string,
+  originalResumeText: string,
+): { company: string; title: string } {
+  const c = (company || "").trim();
+  const t = (title || "").trim();
+  if (!c || !/[—–]/.test(c)) return { company: c, title: t };
+
+  const parsed = parseCompanyTitleHeaderBullet(c, originalResumeText);
+  if (!parsed) return { company: c, title: t };
+  if (!t || titlesMatch(t, parsed.title)) {
+    return { company: parsed.company, title: t || parsed.title };
+  }
+  return { company: c, title: t };
+}
+
+function normalizeDatesAndLocation(
+  dates: string,
+  location: string,
+): { dates: string; location: string } {
+  let d = (dates || "").trim();
+  let l = (location || "").trim();
+  const parts = d.split(/\s*·\s*/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    const tail = parts[parts.length - 1];
+    if (isLocationOnlyValue(tail)) {
+      d = parts.slice(0, -1).join(" · ");
+      if (!l) l = tail;
+    }
+  }
+  return { dates: d, location: l };
+}
+
+function isTitleOnlyFragment(role: CalibratedResumeData["experience"][number]): boolean {
+  const title = (role.title || "").trim();
+  const company = (role.company || "").trim();
+  const bullets = role.bullets?.length ?? 0;
+  return Boolean(title) && !company && bullets === 0 && !/^remote$/i.test(title);
+}
+
+function isLocationFragment(role: CalibratedResumeData["experience"][number]): boolean {
+  const company = (role.company || "").trim();
+  const title = (role.title || "").trim();
+  return isLocationOnlyValue(company) && !title;
+}
+
+function isRemoteTitleFragment(role: CalibratedResumeData["experience"][number]): boolean {
+  return /^remote$/i.test((role.title || "").trim()) && !(role.company || "").trim();
+}
+
+function canonicalizeExperienceHeaders(
+  experience: CalibratedResumeData["experience"],
+  originalResumeText: string,
+): { experience: CalibratedResumeData["experience"]; repaired: string[] } {
+  const repaired: string[] = [];
+  const roles = experience.map((role) => ({
+    ...role,
+    location: role.location || "",
+    bullets: [...(role.bullets || [])],
+  }));
+
+  for (const role of roles) {
+    let company = repairEmployerTypo(role.company || "", originalResumeText);
+    let title = (role.title || "").trim();
+    let dates = (role.dates || "").trim();
+    let location = (role.location || "").trim();
+
+    ({ company, title } = splitCombinedCompanyTitle(company, title, originalResumeText));
+
+    if (isLocationOnlyValue(company) && !location) {
+      location = company;
+      company = "";
+      repaired.push(`moved location from company field: ${location}`);
+    }
+    if (/^remote$/i.test(company) && !location) {
+      location = "Remote";
+      company = "";
+    }
+    if (isRemoteTitleFragment(role) && !location) {
+      location = "Remote";
+      title = "";
+      repaired.push("moved Remote from title field into location");
+    }
+
+    ({ dates, location } = normalizeDatesAndLocation(dates, location));
+
+    if (!company && !title && dates) {
+      const fromDates = resolveRoleFromSource(company, title, dates, location, originalResumeText);
+      if (fromDates) {
+        company = fromDates.company;
+        title = fromDates.title;
+        if (!location && fromDates.location) location = fromDates.location;
+        repaired.push(`attached company/title from source dates: ${company || title}`);
+      }
+    }
+
+    if (company && !location) {
+      const fromSource = lookupRoleMetadataFromSource(company, originalResumeText, title);
+      if (fromSource?.location) location = fromSource.location;
+    }
+
+    role.company = company;
+    role.title = title;
+    role.dates = dates;
+    role.location = location;
+  }
+
+  const merged: CalibratedResumeData["experience"] = [];
+  for (let i = 0; i < roles.length; i++) {
+    const role = roles[i];
+
+    if (isTitleOnlyFragment(role)) {
+      const next = roles[i + 1];
+      const prev = merged[merged.length - 1];
+      const target = next && !next.title ? next : prev;
+      if (target) {
+        if (!target.title) target.title = role.title;
+        if (role.dates && !target.dates) target.dates = role.dates;
+        if (role.location && !target.location) target.location = role.location;
+        repaired.push(`merged title-only fragment: ${role.title}`);
+        continue;
+      }
+    }
+
+    if (isLocationFragment(role) && (role.bullets?.length ?? 0) === 0 && role.dates) {
+      const target = merged[merged.length - 1] || roles[i + 1];
+      if (target) {
+        if (!target.location) target.location = role.company;
+        if (role.dates && !target.dates) target.dates = role.dates;
+        repaired.push(`merged location-only header: ${role.company}`);
+        continue;
+      }
+    }
+
+    if (isLocationFragment(role) && (role.bullets?.length ?? 0) > 0) {
+      const target = merged[merged.length - 1];
+      if (target) {
+        if (!target.location) target.location = role.company;
+        if (role.dates && !target.dates) target.dates = role.dates;
+        target.bullets.push(...role.bullets);
+        repaired.push(`merged location fragment with bullets into ${target.company || target.title}`);
+        continue;
+      }
+    }
+
+    if (!(role.company || "").trim() && !(role.title || "").trim() && role.dates && (role.bullets?.length ?? 0) > 0) {
+      const fromSource = resolveRoleFromSource(
+        "",
+        "",
+        role.dates,
+        role.location || "",
+        originalResumeText,
+      );
+      if (fromSource) {
+        role.company = fromSource.company;
+        role.title = fromSource.title;
+        if (!role.location && fromSource.location) role.location = fromSource.location;
+        repaired.push(`resolved date-only role from source: ${fromSource.company || fromSource.title}`);
+        merged.push(role);
+        continue;
+      }
+
+      const target = merged[merged.length - 1];
+      if (target) {
+        if (!target.dates) target.dates = role.dates;
+        target.bullets.push(...role.bullets);
+        repaired.push("merged date-only bullet block into previous role");
+        continue;
+      }
+    }
+
+    merged.push(role);
+  }
+
+  const output = merged
+    .filter((role) => {
+      const company = (role.company || "").trim();
+      const title = (role.title || "").trim();
+      const bullets = role.bullets?.length ?? 0;
+      if (!company && !title && bullets === 0) return false;
+      if (isLocationOnlyValue(company) && bullets === 0) return false;
+      if (/^remote$/i.test(title) && !company && bullets === 0) return false;
+      if (DATE_IN_LINE_RX.test(company) && !title && bullets === 0) return false;
+      return bullets > 0 || (Boolean(company) && Boolean(title));
+    })
+    .map((role) => {
+      const split = splitCombinedCompanyTitle(role.company || "", role.title || "", originalResumeText);
+      const normalized = normalizeDatesAndLocation(role.dates || "", role.location || "");
+      return {
+        ...role,
+        company: split.company,
+        title: split.title,
+        dates: normalized.dates,
+        location: normalized.location,
+      };
+    });
+
+  return { experience: output, repaired };
+}
+
 function appendLocationToDates(dates: string, location: string): string {
   const d = (dates || "").trim();
   const l = (location || "").trim();
@@ -482,23 +757,28 @@ function enrichExperienceFromSource(
   originalResumeText: string,
 ): CalibratedResumeData["experience"] {
   return experience.map((role) => {
-    const next = { ...role, bullets: [...(role.bullets || [])] };
+    const next = { ...role, location: role.location || "", bullets: [...(role.bullets || [])] };
     let company = repairEmployerTypo(next.company || "", originalResumeText);
     let title = (next.title || "").trim();
     let dates = (next.dates || "").trim();
+    let location = (next.location || "").trim();
 
-    if (/^remote$/i.test(company)) {
-      dates = appendLocationToDates(dates, company);
+    if (isLocationOnlyValue(company) && !location) {
+      location = company.trim();
       company = "";
     }
 
-    const fromSource =
-      (company
-        ? lookupRoleMetadataFromSource(company, originalResumeText, title)
-        : null) ||
-      ((!company || !title) && dates
-        ? findSourceRoleByDates(dates, originalResumeText, company, title)
-        : null);
+    if (/^remote$/i.test(company)) {
+      location = location || "Remote";
+      company = "";
+    }
+
+    if (isRemoteTitleFragment(next) && !location) {
+      location = "Remote";
+      title = "";
+    }
+
+    const fromSource = resolveRoleFromSource(company, title, dates, location, originalResumeText);
 
     if (fromSource) {
       const exactCompanyTitle =
@@ -515,12 +795,16 @@ function enrichExperienceFromSource(
         }
       }
 
-      if (fromSource.location) dates = appendLocationToDates(dates, fromSource.location);
+      if (fromSource.location && !location) location = fromSource.location;
     }
+
+    ({ company, title } = splitCombinedCompanyTitle(company, title, originalResumeText));
+    ({ dates, location } = normalizeDatesAndLocation(dates, location));
 
     next.company = company;
     next.title = title;
     next.dates = dates;
+    next.location = location;
     return next;
   });
 }
@@ -594,9 +878,9 @@ function repairExperienceStructure(
     };
 
     if (/^remote$/i.test((current.company || "").trim())) {
-      current.dates = appendLocationToDates(current.dates, current.company);
+      current.location = current.location || "Remote";
       current.company = "";
-      repaired.push("moved Remote from company field into dates");
+      repaired.push("moved Remote from company field into location");
     }
 
     for (const bullet of role.bullets || []) {
@@ -857,6 +1141,12 @@ export function sanitizeCalibratedResume(
   const structureRepair = repairExperienceStructure(out.experience, originalResumeText);
   out.experience = structureRepair.experience;
   repaired.push(...structureRepair.repaired);
+
+  const headerCanon = canonicalizeExperienceHeaders(out.experience, originalResumeText);
+  out.experience = headerCanon.experience;
+  repaired.push(...headerCanon.repaired);
+
+  out.experience = enrichExperienceFromSource(out.experience, originalResumeText);
 
   out.independent_projects = out.independent_projects.map((proj) => ({
     ...proj,

@@ -115,5 +115,25 @@ export function validateCoverLetterIntegrity(text: string): IntegrityResult {
     issues.push("broken domain spacing (Signalyz.ai)");
   }
 
+  if (/feel free to reach out at/i.test(text)) {
+    issues.push("mid-body contact CTA");
+  }
+
   return { ok: issues.length === 0, issues };
+}
+
+/** Remove mid-body phone/email reach-out CTAs from cover letter prose. */
+export function stripMidBodyContactCta(text: string): string {
+  if (typeof text !== "string" || !text.trim()) return typeof text === "string" ? text : "";
+  return repairBrokenDomainSpacing(
+    text
+      .replace(
+        /\s*[—–-]?\s*feel free to reach out at[\s\S]*?(?=\.|$)/gi,
+        "",
+      )
+      .replace(/\s*[—–-]?\s*you can reach me at[\s\S]*?(?=\.|$)/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+([,.])/g, "$1")
+      .trim(),
+  );
 }
