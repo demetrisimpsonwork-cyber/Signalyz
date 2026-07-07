@@ -69,6 +69,29 @@ function assertPinterestExperienceStructure(
   }
 }
 
+function assertCanonicalPinterestDates(
+  experience: ReturnType<typeof normalizeResumeForExport>["experience"],
+) {
+  const signalyz = experience.find((e) => /Signalyz/i.test(e.company))!;
+  const njdol = experience.find((e) => /Department of Labor/i.test(e.company))!;
+  const nthrive = experience.find((e) => /nThrive/i.test(e.company))!;
+  const ast = experience.find((e) => /AST Fund Solutions/i.test(e.company))!;
+
+  expect(signalyz.dates).toMatch(/2024/i);
+  expect(signalyz.dates).toMatch(/Present/i);
+  expect(signalyz.dates).not.toMatch(/2022/i);
+
+  expect(njdol.dates).toMatch(/Jan\s+2023/i);
+  expect(njdol.dates).toMatch(/Jun\s+2024/i);
+  expect(njdol.dates).not.toMatch(/2017/i);
+
+  expect(nthrive.dates).toMatch(/2021/i);
+  expect(nthrive.dates).toMatch(/2023/i);
+
+  expect(ast.dates).toMatch(/2016/i);
+  expect(ast.dates).toMatch(/2020/i);
+}
+
 describe("Pinterest PM output QA — domain spacing", () => {
   it("does not split Signalyz.ai during sentence segmentation", () => {
     const sentences = splitSentencesSafe(
@@ -129,6 +152,14 @@ describe("Pinterest PM output QA — resume structure repair", () => {
         bullets: e.bullets,
       })),
     );
+    assertCanonicalPinterestDates(
+      cleaned.experience.map((e) => ({
+        title: e.title,
+        company: e.company,
+        dates: e.dates,
+        bullets: e.bullets,
+      })),
+    );
 
     const issues = validateCalibratedResumeIntegrity(cleaned);
     expect(
@@ -143,6 +174,7 @@ describe("Pinterest PM output QA — resume structure repair", () => {
     const model = normalizeResumeForExport(corrupted, sanitizeOpts);
 
     assertPinterestExperienceStructure(model.experience);
+    assertCanonicalPinterestDates(model.experience);
     expect(model.summary).toMatch(/Signalyz\.ai/i);
   });
 
@@ -153,7 +185,24 @@ describe("Pinterest PM output QA — resume structure repair", () => {
 
     assertPinterestExperienceStructure(docx.model.experience);
     assertPinterestExperienceStructure(pdf.model.experience);
+    assertCanonicalPinterestDates(docx.model.experience);
+    assertCanonicalPinterestDates(pdf.model.experience);
     expect(docx.blob.size).toBeGreaterThan(500);
     expect(pdf.blob.size).toBeGreaterThan(500);
+  });
+
+  it("prefers exact company/title source dates over overlapping year-only matches", () => {
+    const corrupted = corruptedPinterestPmCalibratedResume();
+    const { resume: cleaned } = sanitizeCalibratedResume(corrupted, sanitizeOpts);
+
+    const signalyz = cleaned.experience.find((e) => /Signalyz/i.test(e.company))!;
+    const njdol = cleaned.experience.find((e) => /Department of Labor/i.test(e.company))!;
+    const nthrive = cleaned.experience.find((e) => /nThrive/i.test(e.company))!;
+
+    expect(signalyz.dates).toMatch(/2024/i);
+    expect(njdol.dates).toMatch(/Jan\s+2023/i);
+    expect(nthrive.dates).toMatch(/2021/i);
+    expect(njdol.dates).not.toMatch(/2017|2021/i);
+    expect(nthrive.dates).not.toMatch(/2017/i);
   });
 });

@@ -1,6 +1,6 @@
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 
-/** Source resume — Demetri profile for Pinterest PM apprenticeship (production shape). */
+/** Source resume — Demetri profile for Pinterest PM apprenticeship (canonical dates). */
 export const DEMETRI_PINTEREST_RESUME = `
 Demetri Simpson
 Newark, NJ | demetri@example.com | linkedin.com/in/demetrisimpson
@@ -10,13 +10,13 @@ Product-minded builder with experience shipping Signalyz.ai, operating in regula
 
 Experience
 
-Signalyz.ai — Founder | 2022 – Present
+Signalyz.ai — Founder | 2024 – Present
 - Built Signalyz.ai from concept to production as an AI resume intelligence platform.
 - Made product decisions on tiered access, export quality, and evaluation guardrails.
 - Integrated Claude API workflows, Supabase/PostgreSQL, and Stripe checkout with QA observability.
 - Owned product analytics and output QA for resume and cover letter exports.
 
-New Jersey Department of Labor — Claims Examiner | 2017 – 2021
+New Jersey Department of Labor — Claims Examiner | Jan 2023 – Jun 2024
 - Managed 40–70 active Family Leave Insurance and Disability During Unemployment claims with documentation accuracy.
 - Drafted customer-facing updates and coordinated escalations across teams.
 - Reviewed eligibility documentation and compliance-sensitive processing under high volume.
@@ -121,25 +121,32 @@ export const EXPECTED_PINTEREST_PM_ROLES = [
   {
     company: /Signalyz\.ai/i,
     title: /Founder/i,
-    dates: /2022/,
+    dates: /2024\s*[-–—]\s*Present/i,
     bulletHint: /concept to production/i,
   },
   {
     company: /New Jersey Department of Labor/i,
     title: /Claims Examiner/i,
-    dates: /2017/,
+    dates: /Jan\s+2023\s*[-–—]\s*Jun\s+2024/i,
     bulletHint: /Family Leave Insurance/i,
   },
   {
     company: /nThrive/i,
     title: /Revenue Cycle/i,
-    dates: /2021/,
+    dates: /2021\s*[-–—]\s*2023/i,
     bulletHint: /revenue cycle workflows/i,
   },
   {
     company: /AST Fund Solutions/i,
     title: /Team Lead/i,
-    dates: /2016/,
+    dates: /2016\s*[-–—]\s*2020/i,
     bulletHint: /proxy voting/i,
   },
 ] as const;
+
+export const CANONICAL_PINTEREST_PM_DATES = {
+  signalyz: "2024 – Present",
+  njdol: "Jan 2023 – Jun 2024",
+  nthrive: "2021 – 2023",
+  ast: "2016 – 2020",
+} as const;

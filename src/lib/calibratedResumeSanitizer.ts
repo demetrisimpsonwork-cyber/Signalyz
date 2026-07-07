@@ -26,8 +26,12 @@ export interface CalibratedResumeSanitizeResult {
 const WHY_HEADING_RX = /^WHY\s+([A-Za-z0-9&.'\-\s]+)\s*$/i;
 const WHY_INLINE_RX = /\bWHY\s+([A-Za-z0-9&.'\-\s]{2,40})\b/gi;
 const ORPHAN_FRAGMENT_RX = /^(?:kind\s+o\.?|o\s+[A-Z][a-z]{0,2}\.?)$/i;
-const DATE_IN_LINE_RX =
-  /(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*)?(?:\d{1,2}\/)?\d{4}\s*[-–—to]+\s*(?:present|current|\d{4})/i;
+const MONTH_NAME_RX =
+  "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+const DATE_IN_LINE_RX = new RegExp(
+  `(?:${MONTH_NAME_RX}\\s*,?\\s*)?(?:\\d{1,2}\\/)?\\d{4}\\s*[-–—to]+\\s*(?:present|current|(?:${MONTH_NAME_RX}\\s+)?\\d{4})`,
+  "i",
+);
 const ROLE_TITLE_RX =
   /\b(specialist|manager|analyst|coordinator|engineer|developer|director|lead|supervisor|associate|consultant|administrator|architect|representative|technician|executive|chief|senior|junior|principal|founder|builder)\b/i;
 const COMPANY_SUFFIX_RX =
@@ -319,6 +323,60 @@ function datesOverlap(a: string, b: string): boolean {
   return false;
 }
 
+function titlesMatch(a: string, b: string): boolean {
+  const na = (a || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nb = (b || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function scoreRoleMetadataMatch(
+  role: { company?: string; title?: string },
+  candidate: SourceRoleMetadata,
+): number {
+  const companyMatch = role.company ? companiesMatch(role.company, candidate.company) : false;
+  const titleMatch = role.title ? titlesMatch(role.title, candidate.title) : false;
+  if (companyMatch && titleMatch) return 300;
+  if (companyMatch) return 100;
+  return -1;
+}
+
+function collectSourceRoleCandidates(originalResumeText: string): SourceRoleMetadata[] {
+  const candidates: SourceRoleMetadata[] = [];
+  for (const line of originalResumeText.split(/\n/)) {
+    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
+    if (!trimmed) continue;
+
+    const hybrid = parseHybridExperienceLine(trimmed, originalResumeText);
+    if (hybrid) {
+      candidates.push(hybrid);
+      continue;
+    }
+
+    const pipeParsed = parseRoleHeaderBullet(trimmed);
+    if (pipeParsed?.company) {
+      candidates.push({
+        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
+        title: pipeParsed.title,
+        dates: pipeParsed.dates || extractDatesSubstring(trimmed),
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      });
+      continue;
+    }
+
+    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
+    if (companyTitle) {
+      candidates.push({
+        company: companyTitle.company,
+        title: companyTitle.title,
+        dates: DATE_IN_LINE_RX.test(trimmed) ? extractDatesSubstring(trimmed) : "",
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      });
+    }
+  }
+  return candidates;
+}
+
 function scoreDateMatch(targetDates: string, candidateDates: string): number {
   const targetYears = extractYearTokens(targetDates);
   const candidateYears = extractYearTokens(candidateDates);
@@ -361,89 +419,49 @@ function parseHybridExperienceLine(
 function lookupRoleMetadataFromSource(
   company: string,
   originalResumeText: string,
+  title = "",
 ): SourceRoleMetadata | null {
   if (!originalResumeText?.trim() || !company?.trim()) return null;
-
-  for (const line of originalResumeText.split(/\n/)) {
-    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
-    if (!trimmed) continue;
-
-    const hybrid = parseHybridExperienceLine(trimmed, originalResumeText);
-    if (hybrid && companiesMatch(hybrid.company, company)) return hybrid;
-
-    const pipeParsed = parseRoleHeaderBullet(trimmed);
-    if (pipeParsed && companiesMatch(pipeParsed.company, company)) {
-      return {
-        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
-        title: pipeParsed.title,
-        dates: pipeParsed.dates,
-        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
-      };
-    }
-
-    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
-    if (companyTitle && companiesMatch(companyTitle.company, company)) {
-      const dates = DATE_IN_LINE_RX.test(trimmed) ? extractDatesSubstring(trimmed) : "";
-      return {
-        company: companyTitle.company,
-        title: companyTitle.title,
-        dates,
-        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
-      };
-    }
-  }
-  return null;
-}
-
-function findSourceRoleByDates(dates: string, originalResumeText: string): SourceRoleMetadata | null {
-  if (!dates?.trim() || !originalResumeText?.trim()) return null;
 
   let best: SourceRoleMetadata | null = null;
   let bestScore = -1;
 
-  for (const line of originalResumeText.split(/\n/)) {
-    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
-    if (!DATE_IN_LINE_RX.test(trimmed)) continue;
-
-    const hybrid = parseHybridExperienceLine(trimmed, originalResumeText);
-    if (hybrid) {
-      const score = scoreDateMatch(dates, hybrid.dates);
-      if (score > bestScore) {
-        best = hybrid;
-        bestScore = score;
-      }
-      continue;
+  for (const candidate of collectSourceRoleCandidates(originalResumeText)) {
+    const score = scoreRoleMetadataMatch({ company, title }, candidate);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
     }
+  }
 
-    const pipeParsed = parseRoleHeaderBullet(trimmed);
-    if (pipeParsed?.company) {
-      const candidate = {
-        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
-        title: pipeParsed.title,
-        dates: pipeParsed.dates || extractDatesSubstring(trimmed),
-        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
-      };
-      const score = scoreDateMatch(dates, candidate.dates);
-      if (score > bestScore) {
-        best = candidate;
-        bestScore = score;
-      }
-      continue;
-    }
+  return bestScore >= 0 ? best : null;
+}
 
-    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
-    if (companyTitle) {
-      const candidate = {
-        company: companyTitle.company,
-        title: companyTitle.title,
-        dates: extractDatesSubstring(trimmed),
-        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
-      };
-      const score = scoreDateMatch(dates, candidate.dates);
-      if (score > bestScore) {
-        best = candidate;
-        bestScore = score;
-      }
+function findSourceRoleByDates(
+  dates: string,
+  originalResumeText: string,
+  company = "",
+  title = "",
+): SourceRoleMetadata | null {
+  if (!dates?.trim() || !originalResumeText?.trim()) return null;
+
+  if (company) {
+    const exact = lookupRoleMetadataFromSource(company, originalResumeText, title);
+    if (exact) return exact;
+  }
+
+  let best: SourceRoleMetadata | null = null;
+  let bestScore = -1;
+
+  for (const candidate of collectSourceRoleCandidates(originalResumeText)) {
+    const roleScore = scoreRoleMetadataMatch({ company, title }, candidate);
+    const dateScore = scoreDateMatch(dates, candidate.dates);
+    if (dateScore < 0) continue;
+
+    const combinedScore = roleScore >= 300 ? roleScore : roleScore >= 100 ? roleScore + dateScore : dateScore;
+    if (combinedScore > bestScore) {
+      best = candidate;
+      bestScore = combinedScore;
     }
   }
 
@@ -474,15 +492,29 @@ function enrichExperienceFromSource(
       company = "";
     }
 
-    const lookupKey = company || title;
     const fromSource =
-      (lookupKey ? lookupRoleMetadataFromSource(lookupKey, originalResumeText) : null) ||
-      ((!company || !title) && dates ? findSourceRoleByDates(dates, originalResumeText) : null);
+      (company
+        ? lookupRoleMetadataFromSource(company, originalResumeText, title)
+        : null) ||
+      ((!company || !title) && dates
+        ? findSourceRoleByDates(dates, originalResumeText, company, title)
+        : null);
 
     if (fromSource) {
+      const exactCompanyTitle =
+        Boolean(company && title) &&
+        companiesMatch(fromSource.company, company) &&
+        titlesMatch(fromSource.title, title);
+
       if (!company) company = fromSource.company;
       if (!title) title = fromSource.title;
-      if (!dates && fromSource.dates) dates = fromSource.dates;
+
+      if (fromSource.dates) {
+        if (!dates || exactCompanyTitle) {
+          dates = fromSource.dates;
+        }
+      }
+
       if (fromSource.location) dates = appendLocationToDates(dates, fromSource.location);
     }
 
