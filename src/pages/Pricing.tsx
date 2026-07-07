@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { initiateCheckout } from "@/utils/stripe";
 import { useAuth } from "@/hooks/useAuth";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackActiveJobSearchClicked, trackFinalApplyCheckClicked } from "@/lib/analytics";
+import { authUrlForUpgradeIntent } from "@/lib/upgradeIntent";
 
 const Pricing = () => {
   const { user } = useAuth();
@@ -105,7 +106,7 @@ const Pricing = () => {
               className="mt-3 w-full"
               variant="default"
               onClick={() => {
-                trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "pricing" });
+                trackActiveJobSearchClicked({ source: "pricing" });
                 initiateCheckout("subscription");
               }}
             >
@@ -113,7 +114,12 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-8 w-full" variant="default" asChild>
-              <a href="/auth">Get Started</a>
+              <a
+                href={authUrlForUpgradeIntent("subscription")}
+                onClick={() => trackActiveJobSearchClicked({ source: "pricing", auth_state: "signed_out" })}
+              >
+                Active Job Search — $19/mo
+              </a>
             </Button>
           )}
 
@@ -151,7 +157,7 @@ const Pricing = () => {
               className="mt-4 w-full"
               variant="outline"
               onClick={() => {
-                trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "pricing" });
+                trackFinalApplyCheckClicked({ source: "pricing" });
                 initiateCheckout("one_time");
               }}
             >
@@ -159,7 +165,12 @@ const Pricing = () => {
             </Button>
           ) : (
             <Button className="mt-4 w-full" variant="outline" asChild>
-              <a href="/auth">Get Started</a>
+              <a
+                href={authUrlForUpgradeIntent("one_time")}
+                onClick={() => trackFinalApplyCheckClicked({ source: "pricing", auth_state: "signed_out" })}
+              >
+                Final Apply Check — $9
+              </a>
             </Button>
           )}
         </div>
@@ -178,22 +189,37 @@ const Pricing = () => {
         {isAuthenticated ? (
           <div className="space-y-2">
             <Button className="w-full" size="lg" onClick={() => {
-              trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "pricing_sticky" });
+              trackActiveJobSearchClicked({ source: "pricing_sticky" });
               initiateCheckout("subscription");
             }}>
               Active Job Search — $19/mo
             </Button>
             <Button className="w-full" size="sm" variant="outline" onClick={() => {
-              trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "pricing_sticky" });
+              trackFinalApplyCheckClicked({ source: "pricing_sticky" });
               initiateCheckout("one_time");
             }}>
               Final Apply Check — $9
             </Button>
           </div>
         ) : (
-          <Button className="w-full" size="lg" asChild>
-            <a href="/auth">Get Started</a>
-          </Button>
+          <div className="space-y-2">
+            <Button className="w-full" size="lg" asChild>
+              <a
+                href={authUrlForUpgradeIntent("subscription")}
+                onClick={() => trackActiveJobSearchClicked({ source: "pricing_sticky", auth_state: "signed_out" })}
+              >
+                Active Job Search — $19/mo
+              </a>
+            </Button>
+            <Button className="w-full" size="sm" variant="outline" asChild>
+              <a
+                href={authUrlForUpgradeIntent("one_time")}
+                onClick={() => trackFinalApplyCheckClicked({ source: "pricing_sticky", auth_state: "signed_out" })}
+              >
+                Final Apply Check — $9
+              </a>
+            </Button>
+          </div>
         )}
       </div>
     </div>

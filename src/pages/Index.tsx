@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
-import { trackEvent, ga4ScoreBucket, trackReliabilityError, type PlanTier } from "@/lib/analytics";
+import {
+  trackEvent,
+  ga4ScoreBucket,
+  trackReliabilityError,
+  trackAnalysisStarted,
+  trackAnalysisCompleted,
+  trackCheckoutSuccess,
+  type PlanTier,
+} from "@/lib/analytics";
+import { clearUpgradeIntent, parseUpgradeIntent, readStoredUpgradeIntent } from "@/lib/upgradeIntent";
 import {
   durationBucket,
   signalStrengthEvent,
@@ -558,8 +567,7 @@ const Index = () => {
   // Post-upgrade / post-purchase success toast + payment_completed tracking
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
-      trackEvent("payment_completed", { payment_mode: "subscription", success: true });
-      trackEvent("purchase", { payment_mode: "subscription" });
+      trackCheckoutSuccess({ payment_mode: "subscription", success: true });
       toast("Your calibrated export is unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
@@ -574,8 +582,7 @@ const Index = () => {
       }, 500);
     }
     if (searchParams.get("purchase") === "success") {
-      trackEvent("payment_completed", { payment_mode: "one_time", success: true });
-      trackEvent("purchase", { payment_mode: "one_time" });
+      trackCheckoutSuccess({ payment_mode: "one_time", success: true });
       toast("Your calibrated export is unlocked — scroll to see your changes", {
         icon: "✦",
         duration: 5000,
@@ -744,6 +751,22 @@ const Index = () => {
     },
     [planTier],
   );
+
+  // Post-auth upgrade intent — open modal with both tier options
+  useEffect(() => {
+    if (!user) return;
+    if (searchParams.get("upgrade") !== "open") return;
+
+    const intent = parseUpgradeIntent(window.location.search) ?? readStoredUpgradeIntent();
+    openUpgradeModal({
+      feature_name: intent === "one_time" ? "final_apply_check" : "active_job_search",
+      output_type: intent === "one_time" ? "one_time" : "subscription",
+    });
+    clearUpgradeIntent();
+    searchParams.delete("upgrade");
+    searchParams.delete("intent");
+    setSearchParams(searchParams, { replace: true });
+  }, [user, searchParams, setSearchParams, openUpgradeModal]);
 
   // Track whether calibrated resume was assembled in THIS session
   // This is set to true when CalibratedResumeTab signals assembly complete
@@ -1090,7 +1113,7 @@ const Index = () => {
     clearLinkedInOutputCache();
     trackEvent("analyze_clicked", { source: "alignment", plan_tier: planTier });
     const roleCategory = detectRoleCategory(jd.trim(), result?.inferred_role_title || "");
-    trackEvent("analysis_started", {
+    trackAnalysisStarted({
       source: "alignment",
       plan_tier: planTier,
       role_category: roleCategory,
@@ -1234,7 +1257,7 @@ const Index = () => {
       const completedRoleCategory = detectRoleCategory(normJd.text, res.inferred_role_title || "");
       const signalEvt = signalStrengthEvent(res.match_score);
 
-      trackEvent("analysis_completed", {
+      trackAnalysisCompleted({
         score_bucket: ga4Bucket,
         ga4_score_bucket: ga4Bucket,
         role_category: completedRoleCategory,

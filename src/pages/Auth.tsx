@@ -1,15 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { isPasswordLeaked } from "@/lib/passwordCheck";
 import { trackEvent } from "@/lib/analytics";
+import {
+  parseUpgradeIntent,
+  postAuthReturnPath,
+  readStoredUpgradeIntent,
+  rememberUpgradeIntent,
+} from "@/lib/upgradeIntent";
+
+function resolvePostAuthPath(): string {
+  const intent = readStoredUpgradeIntent();
+  if (intent) return postAuthReturnPath(intent);
+  const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
+  return hasSavedSession ? "/?tab=alignment" : "/";
+}
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,18 +31,22 @@ const Auth = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (user) {
-      // If there's a saved analysis session, redirect to alignment tab for auto-restore
-      const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
-      navigate(hasSavedSession ? "/?tab=alignment" : "/");
-    }
+    const params = new URLSearchParams(location.search);
+    if (params.get("redirect") !== "upgrade") return;
+    const intent = parseUpgradeIntent(location.search);
+    if (intent) rememberUpgradeIntent(intent);
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!user) return;
+    navigate(resolvePostAuthPath());
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    // Mark fresh login for all OAuth flows so Index won't auto-restore stale input
     try {
       localStorage.setItem("signalyz_fresh_login", String(Date.now()));
       sessionStorage.setItem("signalyz_fresh_login", "1");
@@ -49,8 +65,7 @@ const Auth = () => {
         toast.error(error.message || "Google sign-in failed");
         setGoogleLoading(false);
       }
-      // Full-page redirect to Google — loading state stays until navigation
-    } catch (err) {
+    } catch {
       toast.error("Google sign-in failed. Please try again.");
       setGoogleLoading(false);
     }
@@ -86,13 +101,11 @@ const Auth = () => {
         toast.error(error.message);
       } else {
         trackEvent("login", { method: "email" });
-        // Mark as fresh login so Index.tsx won't auto-restore stale input
         try {
           localStorage.setItem("signalyz_fresh_login", String(Date.now()));
           sessionStorage.setItem("signalyz_fresh_login", "1");
         } catch {}
-        const hasSavedSession = !!localStorage.getItem("signalyz_last_analysis");
-        navigate(hasSavedSession ? "/?tab=alignment" : "/");
+        navigate(resolvePostAuthPath());
       }
     }
     setLoading(false);
@@ -110,7 +123,6 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Google Sign-In */}
         <Button
           variant="outline"
           className="w-full gap-3 h-11"

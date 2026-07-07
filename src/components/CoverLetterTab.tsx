@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, AlertTriangle, Loader2 } from "lucide-react";
 import CoverLetterEngine from "@/components/CoverLetterEngine";
 import type { ReportRunInvokeFields } from "@/lib/reportRunSession";
+import { authUrlForUpgradeIntent } from "@/lib/upgradeIntent";
 
 interface CoverLetterTabProps {
   isPro: boolean;
@@ -83,8 +84,7 @@ const CoverLetterTab = ({
 
 function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
   const { user } = useAuth();
-  
-  const ctaLabel = "Active Job Search — $19/mo";
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card min-h-[300px] gap-4 p-8 text-center">
@@ -104,13 +104,13 @@ function CoverLetterGateCTA({ onUpgrade }: { onUpgrade: () => void }) {
         {user ? (
           <div className="space-y-3 w-full max-w-xs">
             <Button onClick={onUpgrade} size="lg" className="gap-2 w-full">
-              {ctaLabel}
+              See unlock options
             </Button>
-            
+            <p className="text-xs text-muted-foreground">Final Apply Check ($9) or Active Job Search ($19/mo)</p>
           </div>
         ) : (
           <Button size="lg" className="gap-2" asChild>
-            <a href="/auth">Get Started Free</a>
+            <a href={authUrlForUpgradeIntent("one_time")}>Get Started Free</a>
           </Button>
         )}
       </div>

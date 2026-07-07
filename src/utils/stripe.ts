@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent, trackReliabilityError } from "@/lib/analytics";
+import { authUrlForUpgradeIntent } from "@/lib/upgradeIntent";
 
 export async function initiateCheckout(mode: "subscription" | "one_time" = "subscription") {
   const {
@@ -9,7 +10,8 @@ export async function initiateCheckout(mode: "subscription" | "one_time" = "subs
 
   if (!session) {
     console.warn("[Checkout] No session — redirecting to auth");
-    window.location.href = "/auth?redirect=upgrade";
+    const intent = mode === "one_time" ? "one_time" : "subscription";
+    window.location.href = authUrlForUpgradeIntent(intent);
     return;
   }
 

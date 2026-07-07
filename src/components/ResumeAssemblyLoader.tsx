@@ -20,7 +20,7 @@ const ResumeAssemblyLoader = ({ currentStep }: ResumeAssemblyLoaderProps) => {
       aria-live="polite"
       aria-label="Building your calibrated resume"
     >
-      <span className="sr-only">{currentStep >= 3 ? "Optimized resume generated." : activeLabel}</span>
+      <span className="sr-only">{currentStep >= 3 ? "Calibrated resume ready." : activeLabel}</span>
       <div className="space-y-4 mb-4">
         {STEPS.map((label, i) => {
           const done = i < currentStep;
@@ -63,7 +63,7 @@ const ResumeAssemblyLoader = ({ currentStep }: ResumeAssemblyLoaderProps) => {
           <span>Built only from your real experience — nothing invented.</span>
         </div>
       ) : (
-        <p className="text-center text-xs text-primary font-medium">Optimized resume generated. Ready to refine.</p>
+        <p className="text-center text-xs text-primary font-medium">Calibrated resume ready. Ready to refine.</p>
       )}
     </div>
   );

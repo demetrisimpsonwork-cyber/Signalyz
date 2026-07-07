@@ -108,7 +108,14 @@ export type AnalyticsEvent =
   | "sign_up"
   | "login"
   | "begin_checkout"
-  | "purchase";
+  | "purchase"
+  // Conversion aliases (Phase B.2)
+  | "free_preview_started"
+  | "free_preview_completed"
+  | "final_apply_check_clicked"
+  | "active_job_search_clicked"
+  | "checkout_success"
+  | "export_completed";
 
 export interface EventMetadata {
   signal_score?: number;
@@ -213,8 +220,43 @@ export function trackExportEvents(input: {
   };
   trackEvent(input.legacyEvent, base);
   trackEvent(input.specificEvent, base);
+  trackEvent("export_completed", base);
   if (input.output_type === "calibrated_resume") {
     trackEvent("resume_downloaded", base);
+  }
+}
+
+export function trackAnalysisStarted(metadata: EventMetadata = {}) {
+  trackEvent("analysis_started", metadata);
+  if (metadata.plan_tier === "free") {
+    trackEvent("free_preview_started", metadata);
+  }
+}
+
+export function trackAnalysisCompleted(metadata: EventMetadata = {}) {
+  trackEvent("analysis_completed", metadata);
+  if (metadata.plan_tier === "free") {
+    trackEvent("free_preview_completed", metadata);
+  }
+}
+
+export function trackFinalApplyCheckClicked(metadata: EventMetadata = {}) {
+  const payload = { payment_mode: "one_time", ...metadata };
+  trackEvent("one_time_report_clicked", payload);
+  trackEvent("final_apply_check_clicked", payload);
+}
+
+export function trackActiveJobSearchClicked(metadata: EventMetadata = {}) {
+  const payload = { payment_mode: "subscription", ...metadata };
+  trackEvent("upgrade_clicked", payload);
+  trackEvent("active_job_search_clicked", payload);
+}
+
+export function trackCheckoutSuccess(metadata: EventMetadata = {}) {
+  trackEvent("payment_completed", metadata);
+  trackEvent("checkout_success", metadata);
+  if (metadata.payment_mode) {
+    trackEvent("purchase", { payment_mode: metadata.payment_mode });
   }
 }
 

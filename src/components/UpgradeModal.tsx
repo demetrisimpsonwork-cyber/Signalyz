@@ -6,9 +6,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { initiateCheckout } from "@/utils/stripe";
 import { Separator } from "@/components/ui/separator";
-import { trackEvent } from "@/lib/analytics";
+import { initiateCheckout } from "@/utils/stripe";
+import { trackEvent, trackActiveJobSearchClicked, trackFinalApplyCheckClicked } from "@/lib/analytics";
 import { useEffect } from "react";
 
 interface UpgradeModalProps {
@@ -131,7 +131,7 @@ const UpgradeModal = ({
               size="lg"
               className="w-full gap-2"
               onClick={() => {
-                trackEvent("upgrade_clicked", { payment_mode: "subscription", source: "upgrade_modal" });
+                trackActiveJobSearchClicked({ source: "upgrade_modal", feature_name: featureName, output_type: outputType });
                 trackEvent("paywall_cta_clicked", {
                   cta_name: "unlock_pro_subscription",
                   payment_mode: "subscription",
@@ -157,7 +157,7 @@ const UpgradeModal = ({
               size="sm"
               className="w-full gap-2"
               onClick={() => {
-                trackEvent("one_time_report_clicked", { payment_mode: "one_time", source: "upgrade_modal" });
+                trackFinalApplyCheckClicked({ source: "upgrade_modal", feature_name: featureName, output_type: outputType });
                 trackEvent("paywall_cta_clicked", {
                   cta_name: "one_time_report",
                   payment_mode: "one_time",

@@ -6,6 +6,11 @@ import {
   trackEvent,
   trackExportEvents,
   trackReliabilityError,
+  trackAnalysisStarted,
+  trackAnalysisCompleted,
+  trackFinalApplyCheckClicked,
+  trackActiveJobSearchClicked,
+  trackCheckoutSuccess,
 } from "@/lib/analytics";
 import {
   bucketReferrer,
@@ -175,6 +180,13 @@ describe("analytics — trackEvent", () => {
         export_format: "pdf",
       }),
     );
+    expect(sendGa4Event).toHaveBeenCalledWith(
+      "export_completed",
+      expect.objectContaining({
+        output_type: "calibrated_resume",
+        export_format: "pdf",
+      }),
+    );
   });
 
   it("paywall events include feature metadata without raw content", () => {
@@ -198,6 +210,58 @@ describe("analytics — trackEvent", () => {
 
   it("does not crash when gtag is unavailable", () => {
     expect(() => sendGa4Event("pricing_viewed", { plan_tier: "free" })).not.toThrow();
+  });
+});
+
+describe("analytics — conversion aliases", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.mocked(sendGa4Event).mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("maps free preview aliases from analysis events", () => {
+    trackAnalysisStarted({ plan_tier: "free", source: "alignment" });
+    trackAnalysisCompleted({ plan_tier: "free", success: true });
+
+    expect(sendGa4Event).toHaveBeenCalledWith("analysis_started", expect.objectContaining({ plan_tier: "free" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("free_preview_started", expect.objectContaining({ plan_tier: "free" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("analysis_completed", expect.objectContaining({ plan_tier: "free" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("free_preview_completed", expect.objectContaining({ plan_tier: "free" }));
+  });
+
+  it("does not emit free preview aliases for paid tiers", () => {
+    trackAnalysisStarted({ plan_tier: "pro", source: "alignment" });
+    const events = vi.mocked(sendGa4Event).mock.calls.map((call) => call[0]);
+    expect(events).toContain("analysis_started");
+    expect(events).not.toContain("free_preview_started");
+  });
+
+  it("maps tier CTA aliases alongside legacy checkout events", () => {
+    trackFinalApplyCheckClicked({ source: "pricing" });
+    trackActiveJobSearchClicked({ source: "pricing" });
+
+    expect(sendGa4Event).toHaveBeenCalledWith("one_time_report_clicked", expect.objectContaining({ payment_mode: "one_time" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("final_apply_check_clicked", expect.objectContaining({ payment_mode: "one_time" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("upgrade_clicked", expect.objectContaining({ payment_mode: "subscription" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("active_job_search_clicked", expect.objectContaining({ payment_mode: "subscription" }));
+  });
+
+  it("maps checkout_success alongside payment_completed", () => {
+    trackCheckoutSuccess({ payment_mode: "one_time", success: true });
+    expect(sendGa4Event).toHaveBeenCalledWith("payment_completed", expect.objectContaining({ payment_mode: "one_time" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("checkout_success", expect.objectContaining({ payment_mode: "one_time" }));
+    expect(sendGa4Event).toHaveBeenCalledWith("purchase", expect.objectContaining({ payment_mode: "one_time" }));
+  });
+
+  it("strips unsafe metadata from alias events", () => {
+    trackFinalApplyCheckClicked({ source: "pricing", resume_text: "SECRET" });
+    const payload = vi.mocked(sendGa4Event).mock.calls.find((call) => call[0] === "final_apply_check_clicked")?.[1] as Record<string, unknown>;
+    expect(payload.source).toBe("pricing");
+    expect(payload).not.toHaveProperty("resume_text");
   });
 });
 
