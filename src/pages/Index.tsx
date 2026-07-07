@@ -122,34 +122,34 @@ const SIGNAL_LEVEL_STYLES: Record<SignalLevel, string> = {
 
 const SAMPLE_ROLES: SampleRole[] = [
   {
-    label: "Customer Success Manager",
-    bullet: `Experience\n\nCustomer Success Manager | Acme SaaS Inc | 2022 - Present\n- Managed a portfolio of 45 SMB accounts — handling onboarding, renewal conversations, and escalation resolution for SaaS customers across e-commerce and retail verticals.\n- Led quarterly business reviews with key accounts, identifying expansion opportunities and flagging churn risk before renewal cycles.\n- Built internal playbooks for common escalation scenarios that reduced time-to-resolution by standardizing the first response protocol.\n- Collaborated with product and support teams to route recurring customer complaints into the roadmap feedback process.`,
-    jd: `We are looking for a Customer Success Manager to own a portfolio of 50-75 mid-market accounts. You will drive retention, lead QBRs, identify expansion opportunities, and serve as the primary relationship owner. Required: CRM experience, proven renewal track record, strong written communication.`,
-    sampleA: "Owned onboarding and renewal outcomes across 45 SMB accounts — running quarterly business reviews, flagging churn risk before renewal cycles, and identifying expansion opportunities tied to product adoption gaps.",
-    sampleB: "Managed a portfolio of SMB accounts across onboarding, renewal, and escalation workflows — building internal playbooks that standardized first-response protocols and reduced time-to-resolution.",
-    perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Moderate" },
-    roleWeightsMost: ["Portfolio ownership with renewal and expansion accountability", "Proactive adoption driving — not reactive support", "QBR facilitation and executive-facing communication", "Churn reduction as a measurable outcome"],
-    perceptionInsights: ['"Managed a portfolio of 45 SMB accounts" signals administrative assignment — this role expects portfolio ownership with revenue accountability.', '"Led quarterly business reviews" reads as facilitation, not strategic ownership.', '"Collaborated with product and support teams" positions you as a participant.'],
+    label: "AI Engineer",
+    bullet: `Alex Rivera\nFull Stack Engineer | Brooklyn, NY\n\nExperience\n\nSoftware Engineer | Signalyz | 2023 - Present\n- Built a production AI resume intelligence platform using React, TypeScript, Supabase, and PostgreSQL.\n- Integrated Claude API and LLM orchestration for grounded calibration workflows with evaluation guardrails.\n- Implemented Stripe subscriptions and one-time checkout for tiered product access.\n- Shipped DOCX/PDF export pipeline with QA checks, observability logging, and regression validation.\n- Added RAG/vector search for resume-to-role signal matching and shadow evaluation tooling.\n\nSkills: TypeScript, React, Supabase, PostgreSQL, Stripe, LLM APIs, DOCX/PDF export, QA automation`,
+    jd: `Applied AI Engineer / Full Stack AI Engineer\n\nWe are hiring an engineer to build LLM-powered product workflows end to end. You will ship TypeScript/React features, design reliable APIs, integrate model orchestration, and own evaluation, observability, and production quality.\n\nRequirements: TypeScript, React, API design, LLM workflow integration, testing/evaluation discipline, production reliability, PostgreSQL or similar, comfort with shipping user-facing AI features.`,
+    sampleA: "Built and shipped a production AI resume intelligence platform in React and TypeScript — integrating Claude API workflows, Stripe monetization, and DOCX/PDF export with QA and observability guardrails.",
+    sampleB: "Owned full-stack delivery for LLM calibration features — PostgreSQL data models, Supabase edge orchestration, vector/RAG matching, and evaluation tooling for production reliability.",
+    perceptionSnapshot: { "Production Engineering Signal": "High", "LLM Workflow Depth": "Moderate", "Evaluation & QA Rigor": "Moderate", "Seniority Weight": "Moderate" },
+    roleWeightsMost: ["End-to-end ownership of LLM product workflows", "TypeScript/React delivery with production reliability", "Evaluation, observability, and regression discipline", "API design and grounded output quality"],
+    perceptionInsights: ['"Built a production AI resume intelligence platform" anchors real shipped product work — strong signal for applied AI engineering.', '"Integrated Claude API and LLM orchestration" shows workflow depth but evaluation methodology could be more explicit.', '"Added RAG/vector search" is relevant — tie it more directly to hiring-manager outcomes like match quality and failure detection.'],
   },
   {
-    label: "Operations Lead",
-    bullet: `Experience\n\nOperations Lead | Vertex Solutions LLC | 2021 - Present\n- Oversaw daily operations for a 12-person remote support team — managing scheduling, workflow distribution, and SLA compliance across three product lines.\n- Redesigned the ticket routing process to reduce misassignment rate and improve first-contact resolution.\n- Maintained vendor relationships with three external service partners, negotiating SLAs and reviewing monthly performance against agreed benchmarks.\n- Reported weekly operational metrics to senior leadership and flagged process gaps with proposed solutions.`,
-    jd: `Seeking an Operations Lead to manage day-to-day team workflows, own vendor relationships, and drive process improvement across our support infrastructure. Must be comfortable with data reporting, cross-functional coordination, and managing remote teams.`,
-    sampleA: "Owned daily workflow distribution and SLA compliance for a 12-person remote support team — redesigning the ticket routing process to reduce misassignment and improve first-contact resolution.",
-    sampleB: "Managed vendor SLA negotiations and monthly performance reviews across three external service partners while reporting operational metrics and process gaps to senior leadership.",
-    perceptionSnapshot: { "Strategic Ownership Signal": "Low", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Low", "Seniority Weight": "Low" },
-    roleWeightsMost: ["Process ownership and scalable system design", "Measurable efficiency outcomes tied to KPIs", "Vendor management with negotiation accountability", "Operational reporting to senior leadership"],
-    perceptionInsights: ['"Oversaw daily operations" signals supervision rather than system ownership.', '"Redesigned the ticket routing process" lacks measurable outcomes.', '"Reported weekly operational metrics" reads as compliance, not leadership.'],
+    label: "Customer Success",
+    bullet: `Jordan Lee\nCustomer Success Manager | Austin, TX\n\nExperience\n\nCustomer Success Manager | Relay SaaS | 2021 - Present\n- Managed a SaaS customer portfolio across onboarding, adoption check-ins, renewal planning, and escalation resolution.\n- Led quarterly business reviews with account stakeholders to surface risk signals and coordinate remediation plans.\n- Partnered with product and support on recurring issue patterns, improving handoff clarity and response consistency.\n- Tracked customer health indicators in CRM and flagged at-risk accounts before renewal cycles.\n\nSkills: Customer onboarding, renewals, QBRs, CRM, escalation management, cross-functional communication`,
+    jd: `Customer Success Manager\n\nOwn a portfolio of mid-market SaaS accounts. Drive onboarding, adoption, renewals, and escalation resolution. Lead QBRs, monitor customer health, and partner with product and support on retention improvements.\n\nRequirements: portfolio ownership, renewal conversations, QBR facilitation, CRM proficiency, clear written communication, escalation judgment, customer health tracking.`,
+    sampleA: "Owned portfolio outcomes across onboarding, adoption, and renewal planning — leading QBRs that surfaced risk signals early and coordinating remediation with product and support.",
+    sampleB: "Managed SaaS account health end to end — tracking CRM indicators, flagging at-risk renewals, and tightening escalation handoffs to improve response consistency.",
+    perceptionSnapshot: { "Portfolio Ownership Signal": "Moderate", "Retention & Risk Read": "Moderate", "Executive Communication": "Low", "Seniority Weight": "Moderate" },
+    roleWeightsMost: ["Portfolio ownership with renewal accountability", "Proactive customer health and risk detection", "QBR facilitation with clear business framing", "Cross-functional escalation and adoption coaching"],
+    perceptionInsights: ['"Managed a SaaS customer portfolio" reads as scope ownership — strengthen renewal outcome language for hiring managers.', '"Led quarterly business reviews" signals facilitation; frame QBRs around risk, adoption, and renewal decisions.', '"Partnered with product and support" is collaborative — elevate to retention impact without inventing metrics.'],
   },
   {
-    label: "Marketing Manager",
-    bullet: `Experience\n\nMarketing Manager | BrightPath Corp | 2021 - Present\n- Led integrated campaigns across email, paid social, and organic channels for a B2B SaaS company targeting HR and finance decision-makers.\n- Managed a $120K quarterly campaign budget and reported ROI to VP of Marketing monthly.\n- Built and maintained the content calendar, coordinating with design, product, and sales to align messaging.\n- Tracked funnel performance in HubSpot — identifying drop-off points and testing variations to improve conversion rates.`,
-    jd: `Looking for a Marketing Manager to own demand generation strategy across digital channels. Plan and execute integrated campaigns, manage budget allocation, analyze funnel performance, partner with sales to optimize lead quality. Required: B2B demand gen, HubSpot/Marketo, budget ownership, funnel analytics.`,
-    sampleA: "Owned demand generation across paid, organic, and email channels with $120K quarterly budget — tracking funnel performance in HubSpot and testing variations to improve conversion rates at each stage.",
-    sampleB: "Planned and executed integrated B2B campaigns targeting HR and finance decision-makers, coordinating with design, product, and sales to align messaging and improve lead quality.",
-    perceptionSnapshot: { "Strategic Ownership Signal": "Moderate", "Cross-Functional Authority": "Low", "Business Impact Clarity": "Moderate", "Seniority Weight": "Low" },
-    roleWeightsMost: ["Demand generation strategy ownership", "Budget accountability with ROI measurement", "Funnel analytics and conversion optimization", "Sales partnership on lead quality"],
-    perceptionInsights: ['"Led integrated campaigns" signals execution ownership but needs strategic framing.', '"Managed a $120K quarterly campaign budget" is strong but needs outcome attribution.', '"Tracked funnel performance in HubSpot" is reporting, not analytics ownership.'],
+    label: "Career Pivot",
+    bullet: `Morgan Patel\nClaims Operations Specialist | Newark, NJ\n\nExperience\n\nClaims Operations Specialist | Horizon Benefits Group | 2019 - Present\n- Managed high-volume caseloads involving eligibility review, documentation checks, and compliance-sensitive processing.\n- Coordinated workflow handoffs across operations, support, and policy teams to resolve case blockers.\n- Drafted clear customer-facing updates and internal notes for complex claim status scenarios.\n- Identified recurring documentation gaps and proposed process checklists to reduce rework.\n\nPrior: Customer Support Associate | Horizon Benefits Group | 2017 - 2019\n- Handled inbound support requests, triaged issues, and documented resolution patterns for operations review.\n\nSkills: Case management, documentation, compliance awareness, customer communication, process improvement, cross-functional coordination`,
+    jd: `AI Operations Analyst / Technical Support Operations\n\nSupport our product operations team with process thinking, issue triage, documentation quality, and cross-functional resolution. Partner with support, engineering, and QA to improve tooling, workflows, and reliability.\n\nRequirements: operations or support background, high-volume casework, documentation discipline, QA-minded problem solving, comfort with technical products, stakeholder communication.`,
+    sampleA: "Managed high-volume eligibility and documentation casework — coordinating cross-functional handoffs and drafting customer updates that reduced confusion on complex claim statuses.",
+    sampleB: "Repositioned operations experience for technical support workflows — triaging issues, documenting resolution patterns, and proposing checklists that cut rework across support and policy teams.",
+    perceptionSnapshot: { "Process & Documentation Signal": "High", "Technical Product Fluency": "Low", "Cross-Functional Coordination": "Moderate", "Pivot Readiness": "Moderate" },
+    roleWeightsMost: ["Operations rigor with documentation discipline", "Issue triage and root-cause thinking", "QA-minded process improvement", "Clear communication across technical and non-technical teams"],
+    perceptionInsights: ['"Managed high-volume caseloads" shows operational stamina — map this to support ops throughput and queue discipline.', '"Coordinated workflow handoffs" is transferable but needs technical product vocabulary for the pivot.', '"Proposed process checklists" is a strong QA/process signal — connect it to tooling and workflow reliability language.'],
   },
 ];
 
@@ -1410,6 +1410,8 @@ const Index = () => {
     const role = SAMPLE_ROLES[roleIndex];
     sampleLoadedRef.current = true;
     trackEvent("sample_jd_clicked", { plan_tier: planTier });
+    setSelectedSampleRole(roleIndex);
+    setShowSamples(true);
     setBullet(role.bullet);
     setJd(role.jd);
     setErrors({});
@@ -1956,6 +1958,7 @@ const Index = () => {
                       </button>
                     ))}
                   </div>
+                  <p className="text-[11px] text-muted-foreground/70">Try a sample that shows how Signalyz handles technical, customer-facing, and career-pivot applications.</p>
                 </div>
 
                 {/* Free tier counter — only show when 1 remaining */}
