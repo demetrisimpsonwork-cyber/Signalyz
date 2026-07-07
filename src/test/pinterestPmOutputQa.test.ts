@@ -24,6 +24,7 @@ import {
   PINTEREST_PM_APPRENTICE_JD,
   corruptedPinterestPmCalibratedResume,
   headerLayoutCorruptedPinterestPmCalibratedResume,
+  locationBleedPinterestPmCalibratedResume,
   PINTEREST_COVER_LETTER_WITH_DOMAIN_BUG,
   PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA,
   EXPECTED_PINTEREST_PM_ROLES,
@@ -148,9 +149,21 @@ describe("Pinterest PM output QA — domain spacing", () => {
     const stripped = stripMidBodyContactCta(PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA);
     expect(stripped).not.toMatch(/feel free to reach out at/i);
     expect(stripped).toContain("Signalyz.ai");
+    expect(stripped.length).toBeGreaterThan(80);
     const { ok, issues } = validateCoverLetterIntegrity(PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA);
     expect(ok).toBe(false);
     expect(issues.join(" ")).toMatch(/mid-body contact CTA/i);
+  });
+
+  it("keeps Pinterest PM cover letter body non-empty after CTA strip + integrity pass", () => {
+    const body = stripMidBodyContactCta(PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA);
+    const { ok, issues } = validateCoverLetterIntegrity(body);
+    expect(body).toMatch(/Signalyz\.ai/i);
+    expect(body).not.toMatch(/feel free to reach out at/i);
+    expect(body).not.toMatch(/Signalyz\.\s+ai/i);
+    expect(body).not.toMatch(/product manager credentials/i);
+    expect(ok).toBe(true);
+    expect(issues).toEqual([]);
   });
 });
 
@@ -246,5 +259,29 @@ describe("Pinterest PM output QA — resume structure repair", () => {
     expect(nthrive.dates).toMatch(/2021/i);
     expect(njdol.dates).not.toMatch(/2017|2021/i);
     expect(nthrive.dates).not.toMatch(/2017/i);
+  });
+
+  it("locks source locations and prevents cross-role location bleed", () => {
+    const corrupted = locationBleedPinterestPmCalibratedResume();
+    const { resume: cleaned } = sanitizeCalibratedResume(corrupted, sanitizeOpts);
+    const model = normalizeResumeForExport(corrupted, sanitizeOpts);
+
+    assertPinterestExperienceStructure(
+      cleaned.experience.map((e) => ({
+        title: e.title,
+        company: e.company,
+        dates: e.dates,
+        location: e.location,
+        bullets: e.bullets,
+      })),
+    );
+    assertPinterestExperienceStructure(model.experience);
+
+    const signalyz = cleaned.experience.find((e) => /Signalyz/i.test(e.company))!;
+    const njdol = cleaned.experience.find((e) => /Department of Labor/i.test(e.company))!;
+    expect(signalyz.location).toMatch(/Phillipsburg,\s*NJ/i);
+    expect(njdol.location).toMatch(/Trenton,\s*NJ/i);
+    expect(signalyz.location).not.toMatch(/Trenton/i);
+    expect(njdol.location).not.toMatch(/Phillipsburg/i);
   });
 });

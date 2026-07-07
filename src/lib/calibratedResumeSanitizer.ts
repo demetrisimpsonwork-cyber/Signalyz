@@ -668,27 +668,62 @@ function canonicalizeExperienceHeaders(
     }
 
     if (isLocationFragment(role) && (role.bullets?.length ?? 0) === 0 && role.dates) {
-      const target = merged[merged.length - 1] || roles[i + 1];
-      if (target) {
-        if (!target.location) target.location = role.company;
+      const locationValue = (role.company || "").trim();
+      const next = roles[i + 1];
+      const fromSource = findSourceRoleByDates(role.dates, originalResumeText, "", "");
+      const target =
+        next && !next.location
+          ? next
+          : fromSource
+            ? null
+            : merged[merged.length - 1];
+      if (target && fromSource && companiesMatch(target.company || "", fromSource.company)) {
+        if (!target.location) target.location = locationValue;
         if (role.dates && !target.dates) target.dates = role.dates;
-        repaired.push(`merged location-only header: ${role.company}`);
+        repaired.push(`merged location-only header into matching role: ${locationValue}`);
+        continue;
+      }
+      if (fromSource) {
+        role.company = fromSource.company;
+        role.title = fromSource.title;
+        role.location = fromSource.location || locationValue;
+        repaired.push(`resolved location-only header from source: ${fromSource.company}`);
+        merged.push(role);
         continue;
       }
     }
 
     if (isLocationFragment(role) && (role.bullets?.length ?? 0) > 0) {
+      const locationValue = (role.company || "").trim();
+      const fromSource =
+        findSourceRoleByDates(role.dates, originalResumeText, "", "") ||
+        (locationValue
+          ? findSourceRoleByLocationAndDates(locationValue, role.dates, originalResumeText)
+          : null);
+      if (fromSource) {
+        role.company = fromSource.company;
+        role.title = fromSource.title;
+        role.location = fromSource.location || locationValue;
+        merged.push(role);
+        repaired.push(`resolved location fragment with bullets from source: ${fromSource.company}`);
+        continue;
+      }
+
       const target = merged[merged.length - 1];
       if (target) {
-        if (!target.location) target.location = role.company;
         if (role.dates && !target.dates) target.dates = role.dates;
         target.bullets.push(...role.bullets);
-        repaired.push(`merged location fragment with bullets into ${target.company || target.title}`);
+        repaired.push(`merged location fragment bullets into ${target.company || target.title}`);
         continue;
       }
     }
 
-    if (!(role.company || "").trim() && !(role.title || "").trim() && role.dates && (role.bullets?.length ?? 0) > 0) {
+    if (
+      !(role.company || "").trim() &&
+      !(role.title || "").trim() &&
+      role.dates &&
+      ((role.location || "").trim() || (role.bullets?.length ?? 0) > 0)
+    ) {
       const fromSource = resolveRoleFromSource(
         "",
         "",
@@ -700,17 +735,19 @@ function canonicalizeExperienceHeaders(
         role.company = fromSource.company;
         role.title = fromSource.title;
         if (!role.location && fromSource.location) role.location = fromSource.location;
-        repaired.push(`resolved date-only role from source: ${fromSource.company || fromSource.title}`);
+        repaired.push(`resolved role header from source dates: ${fromSource.company || fromSource.title}`);
         merged.push(role);
         continue;
       }
 
-      const target = merged[merged.length - 1];
-      if (target) {
-        if (!target.dates) target.dates = role.dates;
-        target.bullets.push(...role.bullets);
-        repaired.push("merged date-only bullet block into previous role");
-        continue;
+      if ((role.bullets?.length ?? 0) > 0) {
+        const target = merged[merged.length - 1];
+        if (target) {
+          if (!target.dates) target.dates = role.dates;
+          target.bullets.push(...role.bullets);
+          repaired.push("merged date-only bullet block into previous role");
+          continue;
+        }
       }
     }
 
@@ -750,6 +787,56 @@ function appendLocationToDates(dates: string, location: string): string {
   if (!d) return l;
   if (new RegExp(`\\b${l}\\b`, "i").test(d)) return d;
   return `${d} · ${l}`;
+}
+
+function hasStrongSourceRoleMatch(
+  company: string,
+  title: string,
+  dates: string,
+  candidate: SourceRoleMetadata,
+): boolean {
+  const companyTitleMatch =
+    Boolean(company && title) &&
+    companiesMatch(candidate.company, company) &&
+    titlesMatch(candidate.title, title);
+  const companyDateMatch =
+    Boolean(company && dates) &&
+    companiesMatch(candidate.company, company) &&
+    scoreDateMatch(dates, candidate.dates) >= 80;
+  return companyTitleMatch || companyDateMatch;
+}
+
+function applySourceLocationOwnership(
+  experience: CalibratedResumeData["experience"],
+  originalResumeText: string,
+  repaired: string[],
+): CalibratedResumeData["experience"] {
+  if (!originalResumeText?.trim()) return experience;
+
+  return experience.map((role) => {
+    let company = repairEmployerTypo(role.company || "", originalResumeText);
+    let title = (role.title || "").trim();
+    let dates = (role.dates || "").trim();
+    let location = (role.location || "").trim();
+
+    ({ company, title } = splitCombinedCompanyTitle(company, title, originalResumeText));
+    ({ dates, location } = normalizeDatesAndLocation(dates, location));
+
+    const fromSource = resolveRoleFromSource(company, title, dates, location, originalResumeText);
+    if (!fromSource?.location) {
+      return { ...role, company, title, dates, location };
+    }
+
+    if (
+      hasStrongSourceRoleMatch(company, title, dates, fromSource) &&
+      (!location || !locationsMatch(location, fromSource.location))
+    ) {
+      repaired.push(`locked location from source for ${company || title}: ${fromSource.location}`);
+      location = fromSource.location;
+    }
+
+    return { ...role, company, title, dates, location };
+  });
 }
 
 function enrichExperienceFromSource(
@@ -795,7 +882,15 @@ function enrichExperienceFromSource(
         }
       }
 
-      if (fromSource.location && !location) location = fromSource.location;
+      if (fromSource.location) {
+        if (
+          !location ||
+          (hasStrongSourceRoleMatch(company, title, dates, fromSource) &&
+            !locationsMatch(location, fromSource.location))
+        ) {
+          location = fromSource.location;
+        }
+      }
     }
 
     ({ company, title } = splitCombinedCompanyTitle(company, title, originalResumeText));
@@ -1147,6 +1242,8 @@ export function sanitizeCalibratedResume(
   repaired.push(...headerCanon.repaired);
 
   out.experience = enrichExperienceFromSource(out.experience, originalResumeText);
+  const locationLocked = applySourceLocationOwnership(out.experience, originalResumeText, repaired);
+  out.experience = locationLocked;
 
   out.independent_projects = out.independent_projects.map((proj) => ({
     ...proj,

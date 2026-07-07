@@ -12,7 +12,11 @@ import {
   technicalRoleStructureBlock,
   apprenticeshipRoleStructureBlock,
 } from "../_shared/coverLetterRoleStyle.ts";
-import { repairBrokenDomainSpacing, validateCoverLetterIntegrity } from "../_shared/coverLetterIntegrity.ts";
+import {
+  repairBrokenDomainSpacing,
+  stripMidBodyContactCta,
+  validateCoverLetterIntegrity,
+} from "../_shared/coverLetterIntegrity.ts";
 import {
   entitlementJsonResponse,
   evaluateProGatedAccess,
