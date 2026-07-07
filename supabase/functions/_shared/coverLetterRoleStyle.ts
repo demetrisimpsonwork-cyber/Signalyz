@@ -15,6 +15,12 @@ export type RoleCategory =
   | "admin_claims_compliance_ops"
   | "general";
 
+/** Future cover-letter tone — not exposed in UI yet. */
+export type CoverLetterTone =
+  | "standard"
+  // TODO(Output QA): expose Narrative / Founder Story tone when cover-letter mode ships.
+  | "narrative_founder_story";
+
 const PRODUCT_APPRENTICESHIP =
   /\b(product manager apprentice|product management apprentice|pm apprentice|associate product manager|product manager apprenticeship|product operations apprentice|product apprentice)\b/i;
 

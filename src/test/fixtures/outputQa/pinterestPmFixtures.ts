@@ -80,6 +80,79 @@ CERTIFICATIONS
 Google IT Support Professional Certificate — Coursera
 `.trim();
 
+/**
+ * Source resume — em-dash split layout from uploaded
+ * "Demetri Simspon Pinterest PM Resume(5).docx" (company — title, then dates | location).
+ */
+export const DEMETRI_PINTEREST_RESUME_V5_EMDASH_SOURCE = `
+Demetri Simpson
+Phillipsburg, NJ | Demetri.Simpson.work@gmail.com | 908-530-8246
+
+PROFESSIONAL SUMMARY
+Product-minded builder with experience shipping Signalyz.ai, operating in regulated service environments, and making analytical decisions under volume.
+
+EXPERIENCE
+
+Signalyz.ai — Founder
+2024–Present | Phillipsburg, NJ
+- Built Signalyz.ai from concept to production as an AI resume intelligence platform.
+- Made product decisions on tiered access, export quality, and evaluation guardrails.
+- Integrated Claude API workflows, Supabase/PostgreSQL, and Stripe checkout with QA observability.
+- Owned product analytics and output QA for resume and cover letter exports.
+
+New Jersey Department of Labor — Claims Examiner
+Jan 2023–Jun 2024 | Trenton, NJ
+- Managed 40–70 active Family Leave Insurance and Disability During Unemployment claims with documentation accuracy.
+- Drafted customer-facing updates and coordinated escalations across teams.
+- Reviewed eligibility documentation and compliance-sensitive processing under high volume.
+
+nThrive — Revenue Cycle & Compliance Support
+2021–2023 | Remote
+- Supported revenue cycle workflows, documentation checks, and cross-team handoffs.
+- Coordinated issue resolution with operations and support stakeholders.
+
+AST Fund Solutions — Team Lead, Proxy Voting Specialist, Client Communications
+2016–2020 | Remote
+- Led a support team handling proxy voting operations and client communications.
+- Worked with financial-services clients on documentation routing and process checklists.
+
+SKILLS
+Product thinking, client communication, documentation, analytical decision-making
+`.trim();
+
+/** Source resume — pipe layout from Demetri_Simpson_Kong_AI_Enablement_Resume_(3).docx */
+export const DEMETRI_KONG_AI_ENABLEMENT_RESUME = `
+Demetri Simpson
+Phillipsburg, NJ | demetri@example.com | linkedin.com/in/demetrisimpson
+
+Professional Summary
+AI enablement engineer and founder building production AI workflows for resume intelligence.
+
+Experience
+
+Signalyz.ai | Founder & AI Enablement Engineer 2024 – Present
+- Built Signalyz.ai from concept to production as an AI resume intelligence platform.
+- Integrated Claude API workflows, Supabase/PostgreSQL, and Stripe checkout with QA observability.
+- Owned product analytics and output QA for resume and cover letter exports.
+
+New Jersey Department of Labor | Claims Examiner | Trenton, NJ
+Jan 2024 – Jul 2026
+- Managed 40–70 active Family Leave Insurance and Disability During Unemployment claims with documentation accuracy.
+- Drafted customer-facing updates and coordinated escalations across teams.
+- Reviewed eligibility documentation and compliance-sensitive processing under high volume.
+
+nThrive | Revenue Cycle & Compliance Support 2021 – 2023
+- Supported revenue cycle workflows, documentation checks, and cross-team handoffs.
+- Coordinated issue resolution with operations and support stakeholders.
+
+AST Fund Solutions | Team Lead | Proxy Voting Specialist | Client Communications 2016 – 2020
+- Led a support team handling proxy voting operations and client communications.
+- Worked with financial-services clients on documentation routing and process checklists.
+
+Skills
+AI enablement, client communication, documentation, React, TypeScript, Supabase
+`.trim();
+
 export const PINTEREST_PM_APPRENTICE_JD = `
 Product Manager Apprenticeship at Pinterest
 

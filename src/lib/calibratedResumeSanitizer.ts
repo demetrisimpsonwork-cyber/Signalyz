@@ -9,6 +9,21 @@
 
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import { inferCompanyNameFromJd } from "@/lib/coverLetterSalutation";
+import {
+  enforceExperienceRenderInvariants,
+  parseSourceExperienceRolesFromText,
+  type SourceExperienceRole,
+} from "@/lib/sourceExperienceParser";
+
+export type { SourceExperienceRole };
+export {
+  buildSourceRoleId,
+  normalizeSourceDates,
+  parseSourceExperienceRolesFromText,
+  assignSourceRoleIds,
+  validateExperienceRoleShell,
+  lockExperienceToSourceTruth,
+} from "@/lib/sourceExperienceParser";
 
 export interface CalibratedResumeSanitizeOptions {
   /** Current job description — used to infer the active target company. */
@@ -61,17 +76,26 @@ export function companyKey(name: string): string {
   return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-/** Extract company from a "WHY COMPANY" heading line. */
-export function extractWhyHeadingCompany(line: string): string | null {
-  const m = line.trim().match(WHY_HEADING_RX);
-  return m ? m[1].trim() : null;
-}
-
-function companiesMatch(a: string, b: string): boolean {
+/** True when two company names refer to the same employer. */
+export function companiesMatch(a: string, b: string): boolean {
   const ka = companyKey(a);
   const kb = companyKey(b);
   if (!ka || !kb) return false;
   return ka === kb || ka.includes(kb) || kb.includes(ka);
+}
+
+/** True when two role titles refer to the same role. */
+export function titlesMatch(a: string, b: string): boolean {
+  const na = (a || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nb = (b || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+/** Extract company from a "WHY COMPANY" heading line. */
+export function extractWhyHeadingCompany(line: string): string | null {
+  const m = line.trim().match(WHY_HEADING_RX);
+  return m ? m[1].trim() : null;
 }
 
 function isStaleTargetCompany(name: string, currentTarget?: string): boolean {
@@ -304,11 +328,6 @@ interface SourceRoleMetadata {
   location: string;
 }
 
-/** Parsed source-truth experience role with bullet evidence. */
-export interface SourceExperienceRole extends SourceRoleMetadata {
-  bullets: string[];
-}
-
 const EXPERIENCE_SECTION_RX =
   /^(?:experience|professional experience|work experience|employment history)\b/i;
 const RESUME_SECTION_STOP_RX =
@@ -348,242 +367,7 @@ function datesExactlyMatch(a: string, b: string): boolean {
 
 /** Parse the uploaded resume experience section into source-truth roles. */
 export function parseSourceExperienceRoles(originalResumeText: string): SourceExperienceRole[] {
-  if (!originalResumeText?.trim()) return [];
-
-  const lines = originalResumeText.split(/\n/).map((l) => l.trim()).filter(Boolean);
-  let startIdx = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if (EXPERIENCE_SECTION_RX.test(lines[i])) {
-      startIdx = i + 1;
-      break;
-    }
-  }
-
-  const roles: SourceExperienceRole[] = [];
-  let current: SourceExperienceRole | null = null;
-
-  const flush = () => {
-    if (!current) return;
-    if (
-      current.company &&
-      !current.title &&
-      !isLikelyCompanyLine(current.company, originalResumeText)
-    ) {
-      current.title = current.company;
-      current.company = "";
-    }
-    if (current.company || current.title || current.bullets.length > 0) {
-      roles.push({
-        company: repairEmployerTypo(current.company || "", originalResumeText),
-        title: (current.title || "").trim(),
-        dates: (current.dates || "").trim(),
-        location: (current.location || "").trim(),
-        bullets: [...current.bullets],
-      });
-    }
-    current = null;
-  };
-
-  for (let i = startIdx; i < lines.length; i++) {
-    const line = lines[i];
-    if (RESUME_SECTION_STOP_RX.test(line) && !/^[-•*]/.test(line)) break;
-
-    if (/^[-•*]/.test(line)) {
-      if (!current) current = { company: "", title: "", dates: "", location: "", bullets: [] };
-      current.bullets.push(line.replace(/^[-•*]\s*/, "").trim());
-      continue;
-    }
-
-    const hybrid = parseHybridExperienceLine(line, originalResumeText);
-    if (hybrid) {
-      flush();
-      current = { ...hybrid, bullets: [] };
-      continue;
-    }
-
-    const pipeParsed = parseRoleHeaderBullet(line);
-    if (pipeParsed && (pipeParsed.company || pipeParsed.title) && DATE_IN_LINE_RX.test(line)) {
-      flush();
-      current = {
-        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
-        title: pipeParsed.title,
-        dates: pipeParsed.dates || extractDatesSubstring(line),
-        location: parseLocationFromLine(line),
-        bullets: [],
-      };
-      continue;
-    }
-
-    if (DATE_IN_LINE_RX.test(line)) {
-      const dates = extractDatesSubstring(line);
-      const remainder = line.replace(DATE_IN_LINE_RX, "").replace(/\s+/g, " ").trim();
-
-      if (!remainder || isDateOnlyValue(line)) {
-        flush();
-        current = { company: "", title: "", dates, location: "", bullets: [] };
-        continue;
-      }
-
-      if (ROLE_TITLE_RX.test(remainder) || /,\s/.test(remainder)) {
-        flush();
-        current = { company: "", title: remainder, dates, location: "", bullets: [] };
-        continue;
-      }
-    }
-
-    if (isLocationOnlyValue(line)) {
-      if (current && !current.location) {
-        current.location = line;
-      }
-      continue;
-    }
-
-    if (current) {
-      if (!current.company && isLikelyCompanyLine(line, originalResumeText)) {
-        current.company = repairEmployerTypo(line, originalResumeText);
-        continue;
-      }
-      if (!current.title && ROLE_TITLE_RX.test(line) && !isLikelyCompanyLine(line, originalResumeText)) {
-        current.title = line;
-        continue;
-      }
-      if (!current.company && !current.title && !DATE_IN_LINE_RX.test(line)) {
-        const companyTitle = parseCompanyTitleHeaderBullet(line, originalResumeText);
-        if (companyTitle) {
-          current.company = companyTitle.company;
-          current.title = companyTitle.title;
-          continue;
-        }
-        if (isLikelyCompanyLine(line, originalResumeText)) {
-          current.company = repairEmployerTypo(line, originalResumeText);
-          continue;
-        }
-      }
-    }
-
-    const companyTitle = parseCompanyTitleHeaderBullet(line, originalResumeText);
-    if (companyTitle) {
-      flush();
-      current = {
-        company: companyTitle.company,
-        title: companyTitle.title,
-        dates: DATE_IN_LINE_RX.test(line) ? extractDatesSubstring(line) : "",
-        location: parseLocationFromLine(line),
-        bullets: [],
-      };
-      continue;
-    }
-
-    if (isLikelyCompanyLine(line, originalResumeText)) {
-      flush();
-      current = {
-        company: repairEmployerTypo(line, originalResumeText),
-        title: "",
-        dates: "",
-        location: "",
-        bullets: [],
-      };
-      continue;
-    }
-  }
-
-  flush();
-
-  const deduped: SourceExperienceRole[] = [];
-  for (const role of roles) {
-    const existingIdx = deduped.findIndex(
-      (r) =>
-        companiesMatch(r.company, role.company) &&
-        titlesMatch(r.title, role.title) &&
-        datesExactlyMatch(r.dates, role.dates),
-    );
-    if (existingIdx >= 0) {
-      const existing = deduped[existingIdx];
-      if (!existing.location && role.location) existing.location = role.location;
-      if (!existing.dates && role.dates) existing.dates = role.dates;
-      existing.bullets.push(...role.bullets);
-      continue;
-    }
-    deduped.push(role);
-  }
-
-  const consolidated = mergeAdjacentBlockLayoutRoles(deduped, originalResumeText);
-
-  return consolidated.filter((r) => {
-    const hasIdentity = Boolean(r.company || r.title);
-    const hasEvidence = Boolean(r.dates || r.bullets.length > 0);
-    if (!hasIdentity || !hasEvidence) return false;
-    if (isLocationOnlyValue(r.company) && !r.title) return false;
-    if (isLocationOnlyValue(r.title) && !r.company) return false;
-    if (/^remote$/i.test(r.company) || /^remote$/i.test(r.title)) return false;
-    return true;
-  });
-}
-
-function mergeAdjacentBlockLayoutRoles(
-  roles: SourceExperienceRole[],
-  originalResumeText: string,
-): SourceExperienceRole[] {
-  const merged: SourceExperienceRole[] = [];
-  let i = 0;
-
-  while (i < roles.length) {
-    const head = { ...roles[i], bullets: [...roles[i].bullets] };
-    const tail = roles[i + 1];
-
-    if (
-      tail &&
-      !head.bullets.length &&
-      head.title &&
-      !head.company &&
-      isLikelyCompanyLine(tail.company, originalResumeText) &&
-      tail.bullets.length > 0
-    ) {
-      merged.push({
-        company: tail.company,
-        title: head.title,
-        dates: head.dates || tail.dates,
-        location: tail.location || head.location,
-        bullets: tail.bullets,
-      });
-      i += 2;
-      continue;
-    }
-
-    if (
-      tail &&
-      !head.bullets.length &&
-      head.company &&
-      !head.title &&
-      !isLikelyCompanyLine(head.company, originalResumeText) &&
-      isLikelyCompanyLine(tail.company, originalResumeText) &&
-      tail.bullets.length > 0
-    ) {
-      merged.push({
-        company: tail.company,
-        title: head.company,
-        dates: head.dates || tail.dates,
-        location: tail.location || head.location,
-        bullets: tail.bullets,
-      });
-      i += 2;
-      continue;
-    }
-
-    if (
-      head.company &&
-      !head.title &&
-      !isLikelyCompanyLine(head.company, originalResumeText)
-    ) {
-      head.title = head.company;
-      head.company = "";
-    }
-
-    merged.push(head);
-    i += 1;
-  }
-
-  return merged;
+  return parseSourceExperienceRolesFromText(originalResumeText);
 }
 
 function bulletOverlapScore(roleBullets: string[], sourceBullets: string[]): number {
@@ -775,13 +559,6 @@ function datesOverlap(a: string, b: string): boolean {
     return aStart <= bEnd && bStart <= aEnd;
   }
   return false;
-}
-
-function titlesMatch(a: string, b: string): boolean {
-  const na = (a || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const nb = (b || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (!na || !nb) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
 }
 
 function scoreRoleMetadataMatch(
@@ -1670,7 +1447,7 @@ export function sanitizeCalibratedResume(
 
   out.experience = enrichExperienceFromSource(out.experience, originalResumeText);
   const locationLocked = applySourceLocationOwnership(out.experience, originalResumeText, repaired);
-  out.experience = rehydrateExperienceFromSourceTruth(locationLocked, originalResumeText, repaired);
+  out.experience = enforceExperienceRenderInvariants(locationLocked, originalResumeText, repaired);
 
   out.independent_projects = out.independent_projects.map((proj) => ({
     ...proj,

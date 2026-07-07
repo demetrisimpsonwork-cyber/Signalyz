@@ -23,6 +23,8 @@ import { buildCalibratedPdfBlob } from "@/lib/exportPdf";
 import {
   DEMETRI_PINTEREST_RESUME,
   DEMETRI_PINTEREST_RESUME_DOCX_SOURCE,
+  DEMETRI_PINTEREST_RESUME_V5_EMDASH_SOURCE,
+  DEMETRI_KONG_AI_ENABLEMENT_RESUME,
   PINTEREST_PM_APPRENTICE_JD,
   corruptedPinterestPmCalibratedResume,
   headerLayoutCorruptedPinterestPmCalibratedResume,
@@ -50,6 +52,16 @@ const sanitizeOpts = {
 const docxSanitizeOpts = {
   jdText: PINTEREST_PM_APPRENTICE_JD,
   originalResumeText: DEMETRI_PINTEREST_RESUME_DOCX_SOURCE,
+};
+
+const v5SanitizeOpts = {
+  jdText: PINTEREST_PM_APPRENTICE_JD,
+  originalResumeText: DEMETRI_PINTEREST_RESUME_V5_EMDASH_SOURCE,
+};
+
+const kongSanitizeOpts = {
+  jdText: PINTEREST_PM_APPRENTICE_JD,
+  originalResumeText: DEMETRI_KONG_AI_ENABLEMENT_RESUME,
 };
 
 function assertSourceRolesParsed(sourceText: string) {
@@ -231,6 +243,10 @@ describe("Pinterest PM output QA — source-truth parsing", () => {
   it("parses DOCX block-layout uploaded source into exactly four roles", () => {
     assertSourceRolesParsed(DEMETRI_PINTEREST_RESUME_DOCX_SOURCE);
   });
+
+  it("parses em-dash split v5 uploaded source into exactly four roles", () => {
+    assertSourceRolesParsed(DEMETRI_PINTEREST_RESUME_V5_EMDASH_SOURCE);
+  });
 });
 
 describe("Pinterest PM output QA — resume structure repair", () => {
@@ -365,5 +381,34 @@ describe("Pinterest PM output QA — resume structure repair", () => {
 
     assertPinterestExperienceStructure(model.experience);
     assertCanonicalPinterestDates(model.experience);
+  });
+
+  it("rehydrates corrupted Pinterest PM output from em-dash v5 source", () => {
+    const corrupted = njdolDuplicateLocationCalibratedResume();
+    const model = normalizeResumeForExport(corrupted, v5SanitizeOpts);
+
+    assertPinterestExperienceStructure(model.experience);
+    assertCanonicalPinterestDates(model.experience);
+
+    const signalyz = model.experience.find((e) => /Signalyz/i.test(e.company))!;
+    expect(signalyz.location).toMatch(/Phillipsburg,\s*NJ/i);
+  });
+
+  it("keeps Kong resume export clean when using Kong source truth", () => {
+    const experience = parseSourceExperienceRoles(DEMETRI_KONG_AI_ENABLEMENT_RESUME).map((r) => ({
+      company: r.company,
+      title: r.title,
+      dates: r.dates,
+      location: r.location,
+      bullets: r.bullets,
+    }));
+    const model = normalizeResumeForExport(
+      { ...corruptedPinterestPmCalibratedResume(), experience },
+      kongSanitizeOpts,
+    );
+
+    expect(model.experience).toHaveLength(4);
+    expect(model.experience.find((e) => /Signalyz/i.test(e.company))?.title).toMatch(/AI Enablement/i);
+    expect(model.experience.find((e) => /Department of Labor/i.test(e.company))?.dates).toMatch(/Jul 2026/i);
   });
 });
