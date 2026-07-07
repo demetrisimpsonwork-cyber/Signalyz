@@ -11,6 +11,7 @@ import { antiAIFilter } from "@/lib/antiAIFilter";
 import {
   splitSentencesSafe,
   validateCoverLetterIntegrity,
+  repairBrokenDomainSpacing,
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 import { exportCoverLetterPdf } from "@/lib/exportCoverLetterPdf";
 import { handleUsageLimitError, checkUsageLimitData } from "@/lib/usageLimitError";
@@ -176,7 +177,7 @@ const CoverLetterEngine = ({ experience, jd, alignmentResult, inferredRole, isPr
       if (checkUsageLimitData(data)) { stepTimers.forEach(clearTimeout); setLoading(false); return; }
       if (data?.error) throw new Error(data.error);
       if (!data?.letter) throw new Error("No letter content returned.");
-      const filteredLetter = antiAIFilter(data.letter || "");
+      const filteredLetter = repairBrokenDomainSpacing(antiAIFilter(data.letter || ""));
       const segmentedLetter = segmentCoverLetterBody(filteredLetter);
       const segmentedIntegrity = validateCoverLetterIntegrity(segmentedLetter);
       const finalLetter =

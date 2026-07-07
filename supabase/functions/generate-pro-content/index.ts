@@ -10,8 +10,9 @@ import {
   buildSevereGapRealismBlock,
   detectSevereTechnicalGap,
   technicalRoleStructureBlock,
+  apprenticeshipRoleStructureBlock,
 } from "../_shared/coverLetterRoleStyle.ts";
-import { validateCoverLetterIntegrity } from "../_shared/coverLetterIntegrity.ts";
+import { repairBrokenDomainSpacing, validateCoverLetterIntegrity } from "../_shared/coverLetterIntegrity.ts";
 import {
   entitlementJsonResponse,
   evaluateProGatedAccess,
@@ -453,7 +454,9 @@ Return ONLY valid JSON, no markdown.`;
         const severeGapBlock = roleCategory === "technical_ai_product"
           ? buildSevereGapRealismBlock(jd, roleTitle)
           : "";
-        const structureBlock = roleCategory === "technical_ai_product"
+        const structureBlock = roleCategory === "product_apprenticeship"
+          ? apprenticeshipRoleStructureBlock()
+          : roleCategory === "technical_ai_product"
           ? technicalRoleStructureBlock()
           : `STRUCTURE — a human narrative in exactly 4 concise paragraphs. This should read like a focused person who understands the job wrote it in one sitting — NOT like a stacked list of evidence. Each paragraph flows into the next; do not label them.
 
@@ -464,6 +467,9 @@ P2 — ONE FOCUSED PROOF: Prove capability through ONE focused work example told
 P3 — HONEST GAP + BRIDGE: Name the main gap honestly in ONE plain sentence, then bridge in the same paragraph to the real, transferable strengths that matter for this role. Do NOT over-explain, dramatize, apologize, or dwell. Do NOT use the "this role requires X, I have Y" formula — just show the strength.
 
 P4 — COMPANY MOTIVATION + CLOSE: Show in one or two sentences that you understand what ${companyRef || "this company"} actually does and why it draws you, then invite a conversation in one plain, professional sentence. No onboarding plans. No "I look forward to discussing." No "this is where I belong" language.`;
+        const apprenticeshipToneBlock = roleCategory === "product_apprenticeship"
+          ? `APPRENTICESHIP TONE: Write warmer and slightly more conversational than a Staff-engineer letter. Keep sentences clear and readable — avoid stacking too many technical nouns in one sentence. Show curiosity, collaboration, and product thinking. You are applying to learn product management, not claiming a senior PM title. Target 220-240 words.`
+          : "";
         const prompt = `You are writing a cover letter as the candidate. First person. Applying for ${roleTitle}${companyRef ? ` at ${companyRef}` : ""}.
 
 CONTEXT:
@@ -473,6 +479,7 @@ CONTEXT:
 - Job description: ${jd.slice(0, 1500)}
 
 ${toneDirective}
+${apprenticeshipToneBlock ? `\n${apprenticeshipToneBlock}` : ""}
 
 ROLE-AWARE EMPHASIS (tailor the letter to this role type; emphasize only resume-supported strengths, never fabricate):
 ${roleStyleBlock}
@@ -522,11 +529,13 @@ OUTPUT: Return ONLY valid JSON: {"letter": "the full letter body — paragraphs 
         }
         const parsedLetter = JSON.parse(cleaned);
         const humanizeLetterBody = (letter: string) =>
-          letter
-            .split(/\n{2,}/)
-            .map((p: string) => humanizeProse(p))
-            .filter((p: string) => p.trim().length > 0)
-            .join("\n\n");
+          repairBrokenDomainSpacing(
+            letter
+              .split(/\n{2,}/)
+              .map((p: string) => humanizeProse(p))
+              .filter((p: string) => p.trim().length > 0)
+              .join("\n\n"),
+          );
 
         const preHumanizeLetter =
           parsedLetter && typeof parsedLetter.letter === "string"

@@ -29,6 +29,12 @@ describe("detectRoleCategory (Phase 9.12)", () => {
     expect(detectRoleCategory(jd, "Software Engineer")).toBe("technical_ai_product");
   });
 
+  it("classifies a Pinterest-style product apprenticeship before generic PM technical", () => {
+    const jd =
+      "Product Manager Apprenticeship at Pinterest. Learn product discovery, user research, and cross-functional collaboration.";
+    expect(detectRoleCategory(jd, "Product Manager Apprentice")).toBe("product_apprenticeship");
+  });
+
   it("classifies a Staff AI Engineer JD as technical_ai_product", () => {
     const jd =
       "Staff AI Engineer building agentic AI systems, LLM pipelines, RAG, vector search, and production ML infrastructure. PhD preferred.";

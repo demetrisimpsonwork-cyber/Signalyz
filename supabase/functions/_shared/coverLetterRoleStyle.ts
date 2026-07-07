@@ -10,9 +10,13 @@
 export type RoleCategory =
   | "customer_service_retail_ops"
   | "customer_success_saas"
+  | "product_apprenticeship"
   | "technical_ai_product"
   | "admin_claims_compliance_ops"
   | "general";
+
+const PRODUCT_APPRENTICESHIP =
+  /\b(product manager apprentice|product management apprentice|pm apprentice|associate product manager|product manager apprenticeship|product operations apprentice|product apprentice)\b/i;
 
 const TECHNICAL_AI_PRODUCT =
   /\b(?:staff|senior|principal|lead)\s+(?:ai|ml|machine learning|software|platform|data)\s+(?:engineer|architect|scientist)|software engineer|developer|full[-\s]?stack|back[-\s]?end|front[-\s]?end|web developer|ai engineer|ml engineer|data engineer|devops|site reliability|product manager|agentic|llm|rag|retrieval|vector search|embeddings?|computer vision|production ml|machine learning infrastructure|api integration|programming|codebase|deployment|system architecture|microservices\b/i;
@@ -58,6 +62,7 @@ export function detectRoleCategory(jd: string, roleTitle = ""): RoleCategory {
   const text = `${roleTitle}\n${jd}`;
   if (typeof text !== "string" || !text.trim()) return "general";
 
+  if (PRODUCT_APPRENTICESHIP.test(text)) return "product_apprenticeship";
   if (TECHNICAL_AI_PRODUCT.test(text)) return "technical_ai_product";
   if (CUSTOMER_SUCCESS_SAAS.test(text)) return "customer_success_saas";
   if (ADMIN_CLAIMS_COMPLIANCE.test(text)) return "admin_claims_compliance_ops";
@@ -114,6 +119,8 @@ export function roleStyleGuidance(category: RoleCategory): string {
       return `ROLE TYPE — customer service / retail / operations. EMPHASIZE (only what the resume supports): customer guidance, workflow ownership, documentation accuracy, follow-through, multitasking under volume, and process discipline. DO NOT claim direct product, sales, inventory, appraisal, repair, or retail-operations experience unless the resume explicitly supports it.`;
     case "customer_success_saas":
       return `ROLE TYPE — customer success / SaaS. EMPHASIZE (only what the resume supports): onboarding, stakeholder support, product guidance, retention-adjacent support, issue resolution, and CRM/workflow tools. DO NOT claim quota ownership, book-of-business ownership, renewals, or expansion targets unless the resume explicitly supports it.`;
+    case "product_apprenticeship":
+      return `ROLE TYPE — product apprenticeship / early-career product. EMPHASIZE (only what the resume supports): product-minded building, user/problem thinking, shipping features end-to-end, learning from feedback and data, cross-functional communication, client-facing reliability, and regulated-operations discipline as transferable proof. DO NOT claim years of formal product management, enterprise PM title, people management, or roadmap ownership at scale unless the resume explicitly supports it. Write like a curious builder who wants to learn product — not a senior PM or Staff engineer audition.`;
     case "technical_ai_product":
       return `ROLE TYPE — technical / AI / product. EMPHASIZE (only what the resume supports): shipped AI/product work, production debugging, API integration (e.g. Claude/Anthropic), Supabase/PostgreSQL/Edge Functions, reliability/output quality, evaluation, exports, auth/Stripe if resume-supported, RAG/embeddings/vector search ONLY if resume-supported. DO NOT claim production ML infrastructure, computer vision, PhD/MS, formal ML research, senior engineering leadership, managing engineers, enterprise-scale ownership, shipped agentic frameworks, shipped LLM pipelines, geospatial/aerial imagery, or repair-order/inventory experience unless the resume explicitly supports it. Write like a builder with real AI product evidence — not a claims specialist trying to sound technical.`;
     case "admin_claims_compliance_ops":
@@ -121,6 +128,15 @@ export function roleStyleGuidance(category: RoleCategory): string {
     default:
       return `ROLE TYPE — general. EMPHASIZE the candidate's strongest, most role-relevant, resume-supported strengths. DO NOT claim any domain-specific experience the resume does not explicitly support.`;
   }
+}
+
+/** Apprenticeship / early-career product letter structure — warmer, concise. */
+export function apprenticeshipRoleStructureBlock(): string {
+  return `STRUCTURE — product apprenticeship, exactly 4 concise paragraphs:
+P1 — WARM OPENING: Why this apprenticeship fits your builder mindset. Lead with Signalyz or your strongest shipped product work if resume-supported — one clear sentence, not a credential dump.
+P2 — ONE PRODUCT STORY: One concrete example of making product decisions, evaluating output quality, or shipping something users touch. Keep it readable and human.
+P3 — HONEST BRIDGE: Name one gap plainly if needed, then connect regulated operations, client communication, or analytical decision-making from prior roles.
+P4 — CLOSE: Show genuine interest in learning product at this company. One plain invitation to talk — no "I look forward to discussing."`;
 }
 
 /** Technical-role letter structure (4 paragraphs, evidence-first). */

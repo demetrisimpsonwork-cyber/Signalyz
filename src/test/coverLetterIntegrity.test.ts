@@ -3,6 +3,7 @@ import {
   splitSentencesSafe,
   validateCoverLetterIntegrity,
   maskTimeAbbreviations,
+  repairBrokenDomainSpacing,
 } from "../../supabase/functions/_shared/coverLetterIntegrity";
 
 describe("splitSentencesSafe — time abbreviation protection (Phase 9.14)", () => {
@@ -27,6 +28,19 @@ describe("splitSentencesSafe — time abbreviation protection (Phase 9.14)", () 
     const { masked, unmask } = maskTimeAbbreviations(input);
     expect(masked).not.toContain("a.m.");
     expect(unmask(masked)).toBe(input);
+  });
+
+  it("does not split Signalyz.ai when segmenting sentences", () => {
+    const text = "I built Signalyz.ai from concept to production. It ships today.";
+    const sentences = splitSentencesSafe(text);
+    expect(sentences[0]).toContain("Signalyz.ai");
+    expect(sentences).toHaveLength(2);
+  });
+
+  it("repairs Signalyz. ai spacing", () => {
+    expect(repairBrokenDomainSpacing("Built Signalyz. ai end to end.")).toBe(
+      "Built Signalyz.ai end to end.",
+    );
   });
 });
 

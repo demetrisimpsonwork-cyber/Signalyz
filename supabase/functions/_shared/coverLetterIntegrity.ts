@@ -13,6 +13,18 @@ export interface IntegrityResult {
 const TIME_ABBREV =
   /\b(\d{1,2})\s*(?:a\.?\s*m\.?|p\.?\s*m\.?)(?=\s|[.!?]|$)/gi;
 
+/** Domains/emails — keep "Signalyz.ai" intact when splitting on periods. */
+const DOMAIN_LITERAL =
+  /\b(?:[A-Za-z0-9][-A-Za-z0-9]*\.[A-Za-z]{2,6}|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,6})\b/g;
+
+export function repairBrokenDomainSpacing(text: string): string {
+  if (typeof text !== "string" || !text.trim()) return typeof text === "string" ? text : "";
+  return text
+    .replace(/\bSignalyz\.\s+ai\b/gi, "Signalyz.ai")
+    .replace(/\b([A-Za-z0-9][-A-Za-z0-9]*)\.\s+ai\b/gi, "$1.ai")
+    .replace(/\b([A-Za-z0-9][-A-Za-z0-9]*)\.\s+com\b/gi, "$1.com");
+}
+
 export function maskTimeAbbreviations(text: string): {
   masked: string;
   unmask: (value: string) => string;
@@ -22,11 +34,17 @@ export function maskTimeAbbreviations(text: string): {
   }
   const tokens = new Map<string, string>();
   let idx = 0;
-  const masked = text.replace(TIME_ABBREV, (whole, _hour, offset, full) => {
+  let masked = text.replace(TIME_ABBREV, (whole, _hour, offset, full) => {
     const key = `<<T${idx++}>>`;
     tokens.set(key, whole.replace(/\s+/g, " "));
     const after = full.slice(offset + whole.length);
     // Keep a sentence boundary when the time abbrev ends a clause before a new sentence.
+    return /^\s+[A-Z]/.test(after) ? `${key}.` : key;
+  });
+  masked = masked.replace(DOMAIN_LITERAL, (whole, offset, full) => {
+    const key = `<<D${idx++}>>`;
+    tokens.set(key, whole);
+    const after = full.slice(offset + whole.length);
     return /^\s+[A-Z]/.test(after) ? `${key}.` : key;
   });
   return {
@@ -91,6 +109,10 @@ export function validateCoverLetterIntegrity(text: string): IntegrityResult {
 
   if (/\.\s{2,}[a-z]\.\s+(And|Or)\b/i.test(text)) {
     issues.push("truncated word before orphan fragment");
+  }
+
+  if (/\bSignalyz\.\s+ai\b/i.test(text)) {
+    issues.push("broken domain spacing (Signalyz.ai)");
   }
 
   return { ok: issues.length === 0, issues };

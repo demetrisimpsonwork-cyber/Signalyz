@@ -12,6 +12,8 @@ import {
   maybeNormalizeProjectName,
   validateCalibratedResumeIntegrity,
   isWhyCompanyHeading,
+  isMisplacedRoleHeaderBullet,
+  parseRoleHeaderBullet,
 } from "@/lib/calibratedResumeSanitizer";
 import { normalizeResumeForExport } from "@/lib/resumeExportModel";
 
@@ -152,6 +154,17 @@ describe("calibratedResumeSanitizer — integrity guard (Phase 10.0)", () => {
     expect(
       isCompanyLocationOnlyBullet("Managed fund operations and reconciled daily reporting."),
     ).toBe(false);
+  });
+
+  it("promotes misplaced role header bullets into separate roles", () => {
+    expect(
+      parseRoleHeaderBullet("Founder / Product Builder | Signalyz | 2022 – Present"),
+    ).toEqual({
+      title: "Founder / Product Builder",
+      company: "Signalyz",
+      dates: "2022 – Present",
+    });
+    expect(isMisplacedRoleHeaderBullet("Built Signalyz.ai from concept to production.")).toBe(false);
   });
 
   it("does not rewrite Resumix to Signalyz without source support", () => {

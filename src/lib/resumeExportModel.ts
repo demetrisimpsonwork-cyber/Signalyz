@@ -3,6 +3,7 @@
  * Does not truncate bullet text — preserves full content from the resume model.
  */
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
+import { repairBrokenDomainSpacing } from "../../supabase/functions/_shared/coverLetterIntegrity";
 import { bulletToPastTense } from "@/lib/pastTense";
 import { polishResumeText } from "@/lib/resumeTextPolish";
 import {
@@ -60,7 +61,7 @@ export interface ExportResumeModel {
 /** Format bullet for preview/export — past tense + grammar polish, no length truncation */
 export function formatBulletForDisplay(bullet: string): string {
   if (!bullet?.trim()) return "";
-  return polishResumeText(bulletToPastTense(bullet.trim()));
+  return repairBrokenDomainSpacing(polishResumeText(bulletToPastTense(bullet.trim())));
 }
 
 /** Clean certification line for export (URLs/markdown stripped) */
@@ -139,7 +140,7 @@ export function normalizeResumeForExport(
       contactParts,
       contactLine: contactParts.join("  |  "),
     },
-    summary: polishResumeText((cleaned.summary || "").trim()),
+    summary: repairBrokenDomainSpacing(polishResumeText((cleaned.summary || "").trim())),
     competencies,
     competenciesText: competencies.join(",  "),
     experience,
