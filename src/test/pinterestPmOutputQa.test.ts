@@ -15,18 +15,22 @@ import {
   validateCalibratedResumeIntegrity,
   isMisplacedRoleHeaderBullet,
   isCompanyTitleHeaderBullet,
+  parseSourceExperienceRoles,
 } from "@/lib/calibratedResumeSanitizer";
 import { normalizeResumeForExport } from "@/lib/resumeExportModel";
 import { buildCalibratedDocxBlob } from "@/lib/exportDocx";
 import { buildCalibratedPdfBlob } from "@/lib/exportPdf";
 import {
   DEMETRI_PINTEREST_RESUME,
+  DEMETRI_PINTEREST_RESUME_DOCX_SOURCE,
   PINTEREST_PM_APPRENTICE_JD,
   corruptedPinterestPmCalibratedResume,
   headerLayoutCorruptedPinterestPmCalibratedResume,
   locationBleedPinterestPmCalibratedResume,
+  njdolDuplicateLocationCalibratedResume,
   PINTEREST_COVER_LETTER_WITH_DOMAIN_BUG,
   PINTEREST_COVER_LETTER_WITH_MIDBODY_CTA,
+  PINTEREST_COVER_LETTER_WITH_DANGLING_EMAIL_FRAGMENT,
   EXPECTED_PINTEREST_PM_ROLES,
 } from "@/test/fixtures/outputQa/pinterestPmFixtures";
 
@@ -42,6 +46,37 @@ const sanitizeOpts = {
   jdText: PINTEREST_PM_APPRENTICE_JD,
   originalResumeText: DEMETRI_PINTEREST_RESUME,
 };
+
+const docxSanitizeOpts = {
+  jdText: PINTEREST_PM_APPRENTICE_JD,
+  originalResumeText: DEMETRI_PINTEREST_RESUME_DOCX_SOURCE,
+};
+
+function assertSourceRolesParsed(sourceText: string) {
+  const roles = parseSourceExperienceRoles(sourceText);
+  expect(roles).toHaveLength(4);
+
+  const signalyz = roles.find((r) => /Signalyz/i.test(r.company))!;
+  const njdol = roles.find((r) => /Department of Labor/i.test(r.company))!;
+  const nthrive = roles.find((r) => /nThrive/i.test(r.company))!;
+  const ast = roles.find((r) => /AST Fund Solutions/i.test(r.company))!;
+
+  expect(signalyz.title).toMatch(/Founder/i);
+  expect(signalyz.dates).toMatch(/2024/i);
+  expect(signalyz.location).toMatch(/Phillipsburg,\s*NJ/i);
+
+  expect(njdol.title).toMatch(/Claims Examiner/i);
+  expect(njdol.dates).toMatch(/Jan\s+2023/i);
+  expect(njdol.location).toMatch(/Trenton,\s*NJ/i);
+
+  expect(nthrive.title).toMatch(/Revenue Cycle/i);
+  expect(nthrive.dates).toMatch(/2021/i);
+  expect(nthrive.location).toMatch(/^Remote$/i);
+
+  expect(ast.title).toMatch(/Team Lead/i);
+  expect(ast.dates).toMatch(/2016/i);
+  expect(ast.location).toMatch(/^Remote$/i);
+}
 
 function assertPinterestExperienceStructure(experience: ExperienceRow[]) {
   expect(experience).toHaveLength(4);
@@ -165,6 +200,17 @@ describe("Pinterest PM output QA — domain spacing", () => {
     expect(ok).toBe(true);
     expect(issues).toEqual([]);
   });
+
+  it("strips dangling email fragment from apprenticeship CTA sentence", () => {
+    const stripped = stripMidBodyContactCta(PINTEREST_COVER_LETTER_WITH_DANGLING_EMAIL_FRAGMENT);
+    expect(stripped).not.toMatch(/Simpson\.work@gmail\.com/i);
+    expect(stripped).not.toMatch(/right fit\./i);
+    expect(stripped).toMatch(/Signalyz\.ai/i);
+    expect(stripped.length).toBeGreaterThan(80);
+    const { ok, issues } = validateCoverLetterIntegrity(stripped);
+    expect(ok).toBe(true);
+    expect(issues).toEqual([]);
+  });
 });
 
 describe("Pinterest PM output QA — role category", () => {
@@ -174,6 +220,16 @@ describe("Pinterest PM output QA — role category", () => {
     );
     expect(roleStyleGuidance("product_apprenticeship")).toMatch(/apprenticeship/i);
     expect(apprenticeshipRoleStructureBlock()).toMatch(/WARM OPENING/i);
+  });
+});
+
+describe("Pinterest PM output QA — source-truth parsing", () => {
+  it("parses pipe-format uploaded source into exactly four roles", () => {
+    assertSourceRolesParsed(DEMETRI_PINTEREST_RESUME);
+  });
+
+  it("parses DOCX block-layout uploaded source into exactly four roles", () => {
+    assertSourceRolesParsed(DEMETRI_PINTEREST_RESUME_DOCX_SOURCE);
   });
 });
 
@@ -283,5 +339,31 @@ describe("Pinterest PM output QA — resume structure repair", () => {
     expect(njdol.location).toMatch(/Trenton,\s*NJ/i);
     expect(signalyz.location).not.toMatch(/Trenton/i);
     expect(njdol.location).not.toMatch(/Phillipsburg/i);
+  });
+
+  it("rehydrates NJDOL from DOCX source when output has duplicate Trenton location headers", () => {
+    const corrupted = njdolDuplicateLocationCalibratedResume();
+    const model = normalizeResumeForExport(corrupted, docxSanitizeOpts);
+
+    assertPinterestExperienceStructure(model.experience);
+    assertCanonicalPinterestDates(model.experience);
+
+    const njdol = model.experience.find((e) => /Department of Labor/i.test(e.company))!;
+    expect(njdol.title).toMatch(/Claims Examiner/i);
+    expect(njdol.company).not.toMatch(/Trenton/i);
+    expect(njdol.location).toMatch(/Trenton,\s*NJ/i);
+    expect(isLocationOnlyHeader(njdol.company, njdol.title)).toBe(false);
+
+    const signalyz = model.experience.find((e) => /Signalyz/i.test(e.company))!;
+    expect(signalyz.location).toMatch(/Phillipsburg,\s*NJ/i);
+    expect(signalyz.location).not.toMatch(/Trenton/i);
+  });
+
+  it("rehydrates all four roles from DOCX source for header-layout corruption", () => {
+    const corrupted = headerLayoutCorruptedPinterestPmCalibratedResume();
+    const model = normalizeResumeForExport(corrupted, docxSanitizeOpts);
+
+    assertPinterestExperienceStructure(model.experience);
+    assertCanonicalPinterestDates(model.experience);
   });
 });

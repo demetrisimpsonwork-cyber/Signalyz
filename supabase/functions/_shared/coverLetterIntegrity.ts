@@ -119,28 +119,58 @@ export function validateCoverLetterIntegrity(text: string): IntegrityResult {
     issues.push("mid-body contact CTA");
   }
 
+  if (/\.[A-Za-z][A-Za-z0-9._-]*@[A-Za-z0-9._-]+\.[A-Za-z]{2,}/.test(text)) {
+    issues.push("dangling email fragment in letter body");
+  }
+
+  if (/\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/.test(text)) {
+    issues.push("mid-body email address");
+  }
+
+  if (/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(text)) {
+    issues.push("mid-body phone number");
+  }
+
   return { ok: issues.length === 0, issues };
+}
+
+const MID_BODY_CTA_SENTENCE_RX =
+  /[^.!?]*(?:feel free to reach out|reach out at|contact me at|you can reach me at|welcome a conversation about whether|conversation about whether this(?: apprenticeship)? is the right fit|whether this apprenticeship is the right fit)[^.!?]*[.!?]+/gi;
+
+const DANGLING_EMAIL_FRAGMENT_RX =
+  /\.[A-Za-z][A-Za-z0-9._-]*@[A-Za-z0-9._-]+\.[A-Za-z]{2,}\b/g;
+
+const MID_BODY_EMAIL_RX = /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/g;
+const MID_BODY_PHONE_RX = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
+
+function stripContactArtifacts(value: string): string {
+  return value
+    .replace(MID_BODY_CTA_SENTENCE_RX, " ")
+    .replace(DANGLING_EMAIL_FRAGMENT_RX, ".")
+    .replace(MID_BODY_EMAIL_RX, "")
+    .replace(MID_BODY_PHONE_RX, "")
+    .replace(/\s*[—–-]?\s*feel free to reach out at[\s\S]*?(?=\.|$)/gi, "")
+    .replace(/\s*[—–-]?\s*you can reach me at[\s\S]*?(?=\.|$)/gi, "")
+    .replace(/\s*[—–-]?\s*contact me at[\s\S]*?(?=\.|$)/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.!?])/g, "$1")
+    .replace(/\.{2,}/g, ".")
+    .replace(/\.\s*\./g, ".")
+    .trim();
 }
 
 /** Remove mid-body phone/email reach-out CTAs from cover letter prose. */
 export function stripMidBodyContactCta(text: string): string {
   if (typeof text !== "string" || !text.trim()) return typeof text === "string" ? text : "";
 
-  const stripCtaClauses = (value: string) =>
-    value
-      .replace(/\s*[—–-]?\s*feel free to reach out at[\s\S]*?(?=\.|$)/gi, "")
-      .replace(/\s*[—–-]?\s*you can reach me at[\s\S]*?(?=\.|$)/gi, "")
-      .replace(/\s{2,}/g, " ")
-      .replace(/\s+([,.])/g, "$1")
-      .trim();
-
-  const stripped = repairBrokenDomainSpacing(stripCtaClauses(text));
+  const original = text.trim();
+  const stripped = repairBrokenDomainSpacing(stripContactArtifacts(original));
   if (stripped.trim()) return stripped;
 
   const sentenceFallback = repairBrokenDomainSpacing(
-    stripCtaClauses(text.replace(/[^.!?]+feel free to reach out at[^.!?]+[.!?]/gi, "")),
+    stripContactArtifacts(original.replace(MID_BODY_CTA_SENTENCE_RX, " ")),
   );
   if (sentenceFallback.trim()) return sentenceFallback;
 
-  return repairBrokenDomainSpacing(text.trim());
+  return repairBrokenDomainSpacing(original);
 }

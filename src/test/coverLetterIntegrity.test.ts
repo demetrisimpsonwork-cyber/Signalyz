@@ -86,7 +86,16 @@ describe("validateCoverLetterIntegrity (Phase 9.14)", () => {
       "I built Signalyz.ai for this apprenticeship. I'd welcome a conversation — feel free to reach out at 908-530-8246 or demetri@example.com. At NJDOL I managed casework.";
     const { ok, issues } = validateCoverLetterIntegrity(bad);
     expect(ok).toBe(false);
-    expect(issues.join(" ")).toMatch(/mid-body contact CTA/i);
+    expect(issues.join(" ")).toMatch(/mid-body contact CTA|mid-body email/i);
     expect(stripMidBodyContactCta(bad)).not.toMatch(/feel free to reach out at/i);
+  });
+
+  it("rejects dangling email fragments glued to sentence endings", () => {
+    const bad =
+      "I'd welcome a conversation about whether this apprenticeship is the right fit.Simpson.work@gmail.com";
+    const { ok, issues } = validateCoverLetterIntegrity(bad);
+    expect(ok).toBe(false);
+    expect(issues.join(" ")).toMatch(/dangling email|mid-body email/i);
+    expect(stripMidBodyContactCta(bad)).not.toMatch(/Simpson\.work@gmail\.com/i);
   });
 });
