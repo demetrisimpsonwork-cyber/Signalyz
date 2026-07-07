@@ -13,14 +13,61 @@ import {
   sanitizeCalibratedResume,
   validateCalibratedResumeIntegrity,
   isMisplacedRoleHeaderBullet,
+  isCompanyTitleHeaderBullet,
 } from "@/lib/calibratedResumeSanitizer";
 import { normalizeResumeForExport } from "@/lib/resumeExportModel";
+import { buildCalibratedDocxBlob } from "@/lib/exportDocx";
+import { buildCalibratedPdfBlob } from "@/lib/exportPdf";
 import {
   DEMETRI_PINTEREST_RESUME,
   PINTEREST_PM_APPRENTICE_JD,
-  malformedPinterestCalibratedResume,
+  corruptedPinterestPmCalibratedResume,
   PINTEREST_COVER_LETTER_WITH_DOMAIN_BUG,
+  EXPECTED_PINTEREST_PM_ROLES,
 } from "@/test/fixtures/outputQa/pinterestPmFixtures";
+
+const sanitizeOpts = {
+  jdText: PINTEREST_PM_APPRENTICE_JD,
+  originalResumeText: DEMETRI_PINTEREST_RESUME,
+};
+
+function assertPinterestExperienceStructure(
+  experience: ReturnType<typeof normalizeResumeForExport>["experience"],
+) {
+  expect(experience).toHaveLength(4);
+
+  for (const expected of EXPECTED_PINTEREST_PM_ROLES) {
+    const role = experience.find(
+      (e) => expected.company.test(e.company) && expected.title.test(e.title),
+    );
+    expect(role, `missing role ${expected.company}`).toBeDefined();
+    expect(role!.dates).toMatch(expected.dates);
+    expect(role!.bullets.length).toBeGreaterThanOrEqual(1);
+    expect(role!.bullets.join(" ")).toMatch(expected.bulletHint);
+  }
+
+  const signalyz = experience.find((e) => /Signalyz/i.test(e.company))!;
+  const njdol = experience.find((e) => /Department of Labor/i.test(e.company))!;
+  const nthrive = experience.find((e) => /nThrive/i.test(e.company))!;
+  const ast = experience.find((e) => /AST Fund Solutions/i.test(e.company))!;
+
+  expect(signalyz.bullets.join(" ")).not.toMatch(/Family Leave Insurance/i);
+  expect(njdol.bullets.join(" ")).not.toMatch(/Signalyz\.ai/i);
+  expect(nthrive.bullets.join(" ")).not.toMatch(/proxy voting/i);
+  expect(ast.bullets.join(" ")).not.toMatch(/revenue cycle workflows/i);
+  expect(ast.company).toBe("AST Fund Solutions");
+  expect(ast.company).not.toMatch(/Asted/i);
+
+  for (const exp of experience) {
+    expect(exp.company || exp.title).toBeTruthy();
+    expect(exp.dates).toBeTruthy();
+    for (const bullet of exp.bullets) {
+      expect(isMisplacedRoleHeaderBullet(bullet)).toBe(false);
+      expect(isCompanyTitleHeaderBullet(bullet, DEMETRI_PINTEREST_RESUME)).toBe(false);
+      expect(bullet).not.toMatch(/Asted Fund/i);
+    }
+  }
+}
 
 describe("Pinterest PM output QA — domain spacing", () => {
   it("does not split Signalyz.ai during sentence segmentation", () => {
@@ -63,54 +110,50 @@ describe("Pinterest PM output QA — role category", () => {
 });
 
 describe("Pinterest PM output QA — resume structure repair", () => {
-  it("detects misplaced role header bullets", () => {
-    expect(isMisplacedRoleHeaderBullet("Founder / Product Builder | Signalyz | 2022 – Present")).toBe(
-      true,
-    );
-    expect(isMisplacedRoleHeaderBullet("Built Signalyz.ai from concept to production.")).toBe(false);
+  it("detects company/title header bullets for promotion", () => {
+    expect(isCompanyTitleHeaderBullet("AST Fund Solutions — Team Lead, Proxy Voting Specialist", DEMETRI_PINTEREST_RESUME)).toBe(true);
+    expect(isCompanyTitleHeaderBullet("Asted Fund Solutions — Team Lead, Proxy Voting Specialist", DEMETRI_PINTEREST_RESUME)).toBe(true);
+    expect(isCompanyTitleHeaderBullet("New Jersey Department of Labor — Claims Examiner", DEMETRI_PINTEREST_RESUME)).toBe(true);
+    expect(isCompanyTitleHeaderBullet("Built Signalyz.ai from concept to production.", DEMETRI_PINTEREST_RESUME)).toBe(false);
   });
 
-  it("promotes collapsed role headers and preserves NJDOL, nThrive, AST Fund Solutions", () => {
-    const malformed = malformedPinterestCalibratedResume();
-    const { resume: cleaned } = sanitizeCalibratedResume(malformed, {
-      jdText: PINTEREST_PM_APPRENTICE_JD,
-      originalResumeText: DEMETRI_PINTEREST_RESUME,
-    });
+  it("repairs corrupted Pinterest PM experience into four structured roles", () => {
+    const corrupted = corruptedPinterestPmCalibratedResume();
+    const { resume: cleaned } = sanitizeCalibratedResume(corrupted, sanitizeOpts);
 
-    const companies = cleaned.experience.map((e) => e.company).join(" | ");
-    expect(companies).toMatch(/Signalyz/i);
-    expect(companies).toMatch(/New Jersey Department of Labor|NJDOL/i);
-    expect(companies).toMatch(/nThrive/i);
-    expect(companies).toMatch(/AST Fund Solutions/i);
-
-    expect(cleaned.experience.find((e) => /Signalyz/i.test(e.company))?.dates).toMatch(/2022/);
-    expect(cleaned.experience.find((e) => /NJDOL|Department of Labor/i.test(e.company))?.dates).toMatch(
-      /2017/,
+    assertPinterestExperienceStructure(
+      cleaned.experience.map((e) => ({
+        title: e.title,
+        company: e.company,
+        dates: e.dates,
+        bullets: e.bullets,
+      })),
     );
-
-    for (const exp of cleaned.experience) {
-      for (const bullet of exp.bullets) {
-        expect(isMisplacedRoleHeaderBullet(bullet)).toBe(false);
-        expect(bullet).not.toMatch(/^\s*2017\s*[-–—]/);
-      }
-    }
 
     const issues = validateCalibratedResumeIntegrity(cleaned);
-    expect(issues.filter((i) => /misplaced role header|company-only|detached dates/i.test(i))).toEqual(
-      [],
-    );
+    expect(
+      issues.filter((i) =>
+        /misplaced role header|company-only|company\/title header|detached dates/i.test(i),
+      ),
+    ).toEqual([]);
   });
 
-  it("normalizeResumeForExport keeps structured experience for preview/DOCX path", () => {
-    const malformed = malformedPinterestCalibratedResume();
-    const model = normalizeResumeForExport(malformed, {
-      jdText: PINTEREST_PM_APPRENTICE_JD,
-      originalResumeText: DEMETRI_PINTEREST_RESUME,
-    });
+  it("normalizeResumeForExport keeps structured experience for preview/DOCX/PDF path", () => {
+    const corrupted = corruptedPinterestPmCalibratedResume();
+    const model = normalizeResumeForExport(corrupted, sanitizeOpts);
 
-    expect(model.experience.length).toBeGreaterThanOrEqual(3);
+    assertPinterestExperienceStructure(model.experience);
     expect(model.summary).toMatch(/Signalyz\.ai/i);
-    expect(model.experience.every((e) => e.company || e.title)).toBe(true);
-    expect(model.experience.some((e) => /AST Fund Solutions/i.test(e.company))).toBe(true);
+  });
+
+  it("DOCX and PDF export use the same sanitized four-role structure", async () => {
+    const corrupted = corruptedPinterestPmCalibratedResume();
+    const docx = await buildCalibratedDocxBlob(corrupted, sanitizeOpts);
+    const pdf = await buildCalibratedPdfBlob(corrupted, sanitizeOpts);
+
+    assertPinterestExperienceStructure(docx.model.experience);
+    assertPinterestExperienceStructure(pdf.model.experience);
+    expect(docx.blob.size).toBeGreaterThan(500);
+    expect(pdf.blob.size).toBeGreaterThan(500);
   });
 });

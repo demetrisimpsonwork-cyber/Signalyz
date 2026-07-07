@@ -142,7 +142,9 @@ describe("calibratedResumeSanitizer — integrity guard (Phase 10.0)", () => {
 
     expect(cleaned.experience[0].bullets).not.toContain("Asted Fund Solutions — Remote.");
     expect(cleaned.experience.some((e) => /AST Fund Solutions/i.test(e.company))).toBe(true);
-    expect(repaired.some((r) => /re-homed employer/i.test(r))).toBe(true);
+    expect(
+      repaired.some((r) => /re-homed employer|promoted company-location/i.test(r)),
+    ).toBe(true);
   });
 
   it("repairs Asted → AST when source resume supports AST Fund Solutions", () => {

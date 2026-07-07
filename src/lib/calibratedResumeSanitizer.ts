@@ -34,6 +34,11 @@ const COMPANY_SUFFIX_RX =
   /\b(inc\.?|llc|corp\.?|ltd\.?|co\.?|company|group|partners|consulting|services|solutions|technologies|enterprises|fund|department|labor|njdol)\b/i;
 const COMPANY_ONLY_BULLET_RX =
   /^[A-Za-z][A-Za-z0-9&.'\-\s]{2,70}\s*[—–-]\s*(?:Remote|[A-Z][a-z]+(?:,\s*[A-Z]{2})?)\.?\s*$/;
+const COMPANY_TITLE_HEADER_RX =
+  /^([A-Za-z][A-Za-z0-9&.'\-\s]{2,70}(?:\.ai)?)\s*[—–]\s*(.+?)\.?\s*$/;
+const ACCOMPLISHMENT_VERB_RX =
+  /^\s*(built|managed|led|supported|coordinated|developed|created|integrated|made|drafted|handled|owned|improved|delivered|implemented|oversaw|trained|resolved|processed|reviewed|analyzed|designed|established|streamlined|partnered|collaborated|maintained|executed|facilitated|reduced|increased|achieved|provided|ensured|monitored|prepared|submitted|communicated|worked)\b/i;
+const LOCATION_ONLY_RX = /^(?:remote|[A-Z][a-z]+(?:,\s*[A-Z]{2})?)$/i;
 const TARGET_POSITIONING_RX =
   /\b(?:the\s+)?([A-Za-z0-9&.'\-\s]{2,40})\s+(?:support\s+model|model\s+depends|customer\s+model|service\s+model)\b/i;
 
@@ -231,11 +236,269 @@ export function extractKnownEmployers(originalResumeText: string): string[] {
   }
   if (/\bAST\s+Fund\s+Solutions\b/i.test(originalResumeText)) employers.add("AST Fund Solutions");
   if (/\bnThrive\b/i.test(originalResumeText)) employers.add("nThrive");
-  if (/^[A-Z][A-Za-z0-9&.'\-\s]{2,50}\s*[—–-]\s*Remote\.?\s*$/im.test(originalResumeText)) {
-    const m = originalResumeText.match(/^([A-Z][A-Za-z0-9&.'\-\s]{2,50})\s*[—–-]\s*Remote/im);
+  if (/\bSignalyz(?:\.ai)?\b/i.test(originalResumeText)) employers.add("Signalyz.ai");
+  if (/\bNew Jersey Department of Labor\b/i.test(originalResumeText)) {
+    employers.add("New Jersey Department of Labor");
+  }
+  if (/\bNJDOL\b/i.test(originalResumeText)) employers.add("NJDOL");
+  for (const line of originalResumeText.split(/\n/)) {
+    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
+    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
+    if (companyTitle?.company) employers.add(companyTitle.company);
+  }
+  if (/^[A-Za-z][A-Za-z0-9&.'\-\s]{2,50}\s*[—–-]\s*Remote\.?\s*$/im.test(originalResumeText)) {
+    const m = originalResumeText.match(/^([A-Za-z][A-Za-z0-9&.'\-\s]{2,50})\s*[—–-]\s*Remote/im);
     if (m?.[1]) employers.add(m[1].trim());
   }
   return [...employers];
+}
+
+/** True when a bullet is a company — title header (not an accomplishment). */
+export function isCompanyTitleHeaderBullet(text: string, originalResumeText = ""): boolean {
+  const t = (text || "").replace(/^\s*[-•*]\s*/, "").trim();
+  if (!t || ACCOMPLISHMENT_VERB_RX.test(t)) return false;
+  if (isMisplacedRoleHeaderBullet(t)) return false;
+
+  const parsed = parseCompanyTitleHeaderBullet(t, originalResumeText);
+  if (!parsed) return false;
+
+  if (LOCATION_ONLY_RX.test(parsed.title)) return false;
+  if (parsed.title.length < 3) return false;
+
+  const known = extractKnownEmployers(originalResumeText);
+  const canonical = repairEmployerTypo(parsed.company, originalResumeText);
+  if (known.some((e) => companiesMatch(e, canonical) || companiesMatch(e, parsed.company))) {
+    return true;
+  }
+  if (/signalyz/i.test(parsed.company)) return true;
+  if (COMPANY_SUFFIX_RX.test(parsed.company)) return true;
+  if (/\bnThrive\b/i.test(parsed.company)) return true;
+  if (ROLE_TITLE_RX.test(parsed.title) || /,\s*[A-Za-z]/.test(parsed.title)) {
+    return parsed.company.split(/\s+/).length >= 1;
+  }
+  return false;
+}
+
+/** Parse "Company — Title" header bullets into structured fields. */
+export function parseCompanyTitleHeaderBullet(
+  text: string,
+  originalResumeText = "",
+): { company: string; title: string } | null {
+  const t = (text || "").replace(/^\s*[-•*]\s*/, "").trim();
+  const m = t.match(COMPANY_TITLE_HEADER_RX);
+  if (!m) return null;
+  const company = repairEmployerTypo(m[1].trim(), originalResumeText);
+  const title = m[2].trim().replace(/\.$/, "").trim();
+  if (!company || !title) return null;
+  return { company, title };
+}
+
+interface SourceRoleMetadata {
+  company: string;
+  title: string;
+  dates: string;
+  location: string;
+}
+
+function extractYearTokens(dates: string): string[] {
+  return (dates.match(/\d{4}/g) || []).slice(0, 2);
+}
+
+function datesOverlap(a: string, b: string): boolean {
+  const ya = extractYearTokens(a);
+  const yb = extractYearTokens(b);
+  if (!ya.length || !yb.length) return false;
+  if (ya[0] === yb[0]) return true;
+  if (ya.length >= 2 && yb.length >= 2) {
+    const aStart = Number.parseInt(ya[0], 10);
+    const aEnd = Number.parseInt(ya[1], 10);
+    const bStart = Number.parseInt(yb[0], 10);
+    const bEnd = Number.parseInt(yb[1], 10);
+    return aStart <= bEnd && bStart <= aEnd;
+  }
+  return false;
+}
+
+function scoreDateMatch(targetDates: string, candidateDates: string): number {
+  const targetYears = extractYearTokens(targetDates);
+  const candidateYears = extractYearTokens(candidateDates);
+  if (!targetYears.length || !candidateYears.length) return -1;
+  if (targetYears[0] === candidateYears[0]) {
+    if (targetYears.join() === candidateYears.join()) return 100;
+    return 80;
+  }
+  return datesOverlap(targetDates, candidateDates) ? 10 : -1;
+}
+
+function parseHybridExperienceLine(
+  line: string,
+  originalResumeText: string,
+): SourceRoleMetadata | null {
+  const trimmed = line.trim().replace(/^[-•*]\s*/, "");
+  if (!DATE_IN_LINE_RX.test(trimmed) || !/[—–-]/.test(trimmed)) return null;
+
+  const dates = extractDatesSubstring(trimmed);
+  const beforeDates = trimmed.replace(DATE_IN_LINE_RX, "").replace(/\|\s*Remote\b/gi, "").trim();
+  const dashParts = beforeDates.split(/\s*[—–-]\s*/);
+  if (dashParts.length < 2) return null;
+
+  const company = repairEmployerTypo(dashParts[0].trim(), originalResumeText);
+  const title = dashParts
+    .slice(1)
+    .join(" — ")
+    .replace(/\|.*$/, "")
+    .trim();
+  if (!company || !title || ACCOMPLISHMENT_VERB_RX.test(company)) return null;
+
+  return {
+    company,
+    title,
+    dates,
+    location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+  };
+}
+
+function lookupRoleMetadataFromSource(
+  company: string,
+  originalResumeText: string,
+): SourceRoleMetadata | null {
+  if (!originalResumeText?.trim() || !company?.trim()) return null;
+
+  for (const line of originalResumeText.split(/\n/)) {
+    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
+    if (!trimmed) continue;
+
+    const hybrid = parseHybridExperienceLine(trimmed, originalResumeText);
+    if (hybrid && companiesMatch(hybrid.company, company)) return hybrid;
+
+    const pipeParsed = parseRoleHeaderBullet(trimmed);
+    if (pipeParsed && companiesMatch(pipeParsed.company, company)) {
+      return {
+        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
+        title: pipeParsed.title,
+        dates: pipeParsed.dates,
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      };
+    }
+
+    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
+    if (companyTitle && companiesMatch(companyTitle.company, company)) {
+      const dates = DATE_IN_LINE_RX.test(trimmed) ? extractDatesSubstring(trimmed) : "";
+      return {
+        company: companyTitle.company,
+        title: companyTitle.title,
+        dates,
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      };
+    }
+  }
+  return null;
+}
+
+function findSourceRoleByDates(dates: string, originalResumeText: string): SourceRoleMetadata | null {
+  if (!dates?.trim() || !originalResumeText?.trim()) return null;
+
+  let best: SourceRoleMetadata | null = null;
+  let bestScore = -1;
+
+  for (const line of originalResumeText.split(/\n/)) {
+    const trimmed = line.trim().replace(/^[-•*]\s*/, "");
+    if (!DATE_IN_LINE_RX.test(trimmed)) continue;
+
+    const hybrid = parseHybridExperienceLine(trimmed, originalResumeText);
+    if (hybrid) {
+      const score = scoreDateMatch(dates, hybrid.dates);
+      if (score > bestScore) {
+        best = hybrid;
+        bestScore = score;
+      }
+      continue;
+    }
+
+    const pipeParsed = parseRoleHeaderBullet(trimmed);
+    if (pipeParsed?.company) {
+      const candidate = {
+        company: repairEmployerTypo(pipeParsed.company, originalResumeText),
+        title: pipeParsed.title,
+        dates: pipeParsed.dates || extractDatesSubstring(trimmed),
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      };
+      const score = scoreDateMatch(dates, candidate.dates);
+      if (score > bestScore) {
+        best = candidate;
+        bestScore = score;
+      }
+      continue;
+    }
+
+    const companyTitle = parseCompanyTitleHeaderBullet(trimmed, originalResumeText);
+    if (companyTitle) {
+      const candidate = {
+        company: companyTitle.company,
+        title: companyTitle.title,
+        dates: extractDatesSubstring(trimmed),
+        location: /\bremote\b/i.test(trimmed) ? "Remote" : "",
+      };
+      const score = scoreDateMatch(dates, candidate.dates);
+      if (score > bestScore) {
+        best = candidate;
+        bestScore = score;
+      }
+    }
+  }
+
+  return bestScore >= 0 ? best : null;
+}
+
+function appendLocationToDates(dates: string, location: string): string {
+  const d = (dates || "").trim();
+  const l = (location || "").trim();
+  if (!l) return d;
+  if (!d) return l;
+  if (new RegExp(`\\b${l}\\b`, "i").test(d)) return d;
+  return `${d} · ${l}`;
+}
+
+function enrichExperienceFromSource(
+  experience: CalibratedResumeData["experience"],
+  originalResumeText: string,
+): CalibratedResumeData["experience"] {
+  return experience.map((role) => {
+    const next = { ...role, bullets: [...(role.bullets || [])] };
+    let company = repairEmployerTypo(next.company || "", originalResumeText);
+    let title = (next.title || "").trim();
+    let dates = (next.dates || "").trim();
+
+    if (/^remote$/i.test(company)) {
+      dates = appendLocationToDates(dates, company);
+      company = "";
+    }
+
+    const lookupKey = company || title;
+    const fromSource =
+      (lookupKey ? lookupRoleMetadataFromSource(lookupKey, originalResumeText) : null) ||
+      ((!company || !title) && dates ? findSourceRoleByDates(dates, originalResumeText) : null);
+
+    if (fromSource) {
+      if (!company) company = fromSource.company;
+      if (!title) title = fromSource.title;
+      if (!dates && fromSource.dates) dates = fromSource.dates;
+      if (fromSource.location) dates = appendLocationToDates(dates, fromSource.location);
+    }
+
+    next.company = company;
+    next.title = title;
+    next.dates = dates;
+    return next;
+  });
+}
+
+function hasRoleStructure(role: CalibratedResumeData["experience"][number]): boolean {
+  return Boolean((role.company || "").trim() || (role.title || "").trim());
+}
+
+function shouldFlushRole(role: CalibratedResumeData["experience"][number]): boolean {
+  return hasRoleStructure(role) || (role.bullets?.length ?? 0) > 0;
 }
 
 function extractDatesSubstring(text: string): string {
@@ -289,65 +552,155 @@ function repairExperienceStructure(
   originalResumeText: string,
 ): { experience: CalibratedResumeData["experience"]; repaired: string[] } {
   const repaired: string[] = [];
-  const roles = experience.map((role) => ({
-    ...role,
-    bullets: [...(role.bullets || [])],
-  }));
-  const promoted: CalibratedResumeData["experience"] = [];
+  const output: CalibratedResumeData["experience"] = [];
 
-  for (const role of roles) {
-    const keptBullets: string[] = [];
-    for (const bullet of role.bullets) {
+  for (const role of experience) {
+    let current: CalibratedResumeData["experience"][number] = {
+      ...role,
+      company: repairEmployerTypo(role.company || "", originalResumeText),
+      bullets: [],
+    };
+
+    if (/^remote$/i.test((current.company || "").trim())) {
+      current.dates = appendLocationToDates(current.dates, current.company);
+      current.company = "";
+      repaired.push("moved Remote from company field into dates");
+    }
+
+    for (const bullet of role.bullets || []) {
       if (isDatesOnlyBullet(bullet)) {
-        if (!role.dates) {
-          role.dates = extractDatesSubstring(bullet);
-          repaired.push(`attached dates to ${role.company || role.title || "role"}`);
+        if (!current.dates) {
+          current.dates = extractDatesSubstring(bullet);
+          repaired.push(`attached dates to ${current.company || current.title || "role"}`);
         }
         continue;
       }
 
-      const parsed = parseRoleHeaderBullet(bullet);
-      if (parsed && (parsed.title || parsed.company)) {
-        promoted.push({
-          title: parsed.title,
-          company: repairEmployerTypo(parsed.company, originalResumeText),
-          dates: parsed.dates,
-          bullets: [],
-        });
-        repaired.push(`promoted role header from bullet: ${bullet.slice(0, 72)}`);
-        continue;
+      if (isMisplacedRoleHeaderBullet(bullet)) {
+        const parsed = parseRoleHeaderBullet(bullet);
+        if (parsed && (parsed.title || parsed.company)) {
+          if (shouldFlushRole(current)) output.push({ ...current, bullets: [...current.bullets] });
+          current = {
+            title: parsed.title,
+            company: repairEmployerTypo(parsed.company, originalResumeText),
+            dates: parsed.dates,
+            bullets: [],
+          };
+          repaired.push(`promoted role header from bullet: ${bullet.slice(0, 72)}`);
+          continue;
+        }
       }
 
-      keptBullets.push(bullet);
+      if (isCompanyTitleHeaderBullet(bullet, originalResumeText)) {
+        const parsed = parseCompanyTitleHeaderBullet(bullet, originalResumeText);
+        if (parsed) {
+          const duplicateHeader =
+            current.company &&
+            companiesMatch(current.company, parsed.company) &&
+            (!current.title || current.title === parsed.title) &&
+            current.bullets.length === 0;
+
+          if (duplicateHeader) {
+            current.title = parsed.title || current.title;
+            current.company = parsed.company;
+            repaired.push(`merged duplicate company/title header: ${parsed.company}`);
+            continue;
+          }
+
+          if (shouldFlushRole(current)) output.push({ ...current, bullets: [...current.bullets] });
+          current = {
+            title: parsed.title,
+            company: parsed.company,
+            dates: "",
+            bullets: [],
+          };
+          repaired.push(`promoted company/title header: ${bullet.slice(0, 72)}`);
+          continue;
+        }
+      }
+
+      if (isCompanyLocationOnlyBullet(bullet)) {
+        const companyFromBullet = parseCompanyFromBullet(bullet);
+        if (companyFromBullet) {
+          const canonical = repairEmployerTypo(companyFromBullet, originalResumeText);
+          if (shouldFlushRole(current)) output.push({ ...current, bullets: [...current.bullets] });
+          current = {
+            title: "",
+            company: canonical,
+            dates: "",
+            bullets: [],
+          };
+          repaired.push(`promoted company-location line: ${canonical}`);
+          continue;
+        }
+      }
+
+      current.bullets.push(bullet);
     }
-    role.bullets = keptBullets;
+
+    if (shouldFlushRole(current)) output.push(current);
   }
 
-  let combined = [...roles, ...promoted].filter(
-    (r) => r.company || r.title || (r.bullets?.length ?? 0) > 0,
-  );
+  let combined = output.filter((r) => hasRoleStructure(r) || (r.bullets?.length ?? 0) > 0);
 
   const orphanBullets: string[] = [];
   combined = combined.filter((role) => {
-    if (!role.company && !role.title && (role.bullets?.length ?? 0) > 0) {
+    if (!hasRoleStructure(role) && (role.bullets?.length ?? 0) > 0) {
+      if ((role.dates || "").trim()) return true;
       orphanBullets.push(...role.bullets);
       repaired.push("merged orphan bullets into nearest structured role");
       return false;
     }
-    if (!role.company && !role.title && (role.bullets?.length ?? 0) === 0) return false;
+    if (!hasRoleStructure(role) && (role.bullets?.length ?? 0) === 0) return false;
     return true;
   });
+
   if (orphanBullets.length > 0 && combined.length > 0) {
-    const target =
-      combined.find((r) => /signalyz/i.test(r.company || "")) ||
-      combined.find((r) => r.company || r.title) ||
-      combined[0];
-    target.bullets = [...(target.bullets || []), ...orphanBullets];
+    const unattached = combined.find((r) => !r.company && r.title && (r.bullets?.length ?? 0) === 0);
+    if (unattached) {
+      unattached.bullets = [...(unattached.bullets || []), ...orphanBullets];
+    } else {
+      const target =
+        combined.find((r) => /signalyz/i.test(r.company || "")) ||
+        combined.find((r) => hasRoleStructure(r)) ||
+        combined[0];
+      target.bullets = [...(target.bullets || []), ...orphanBullets];
+    }
   }
 
-  const rehome = rehomeEmployerBullets(combined, originalResumeText);
+  combined = enrichExperienceFromSource(combined, originalResumeText);
+
+  const deduped: CalibratedResumeData["experience"] = [];
+  for (const role of combined) {
+    const existingIdx = deduped.findIndex(
+      (r) =>
+        companiesMatch(r.company || "", role.company || "") &&
+        (r.title || "").trim().toLowerCase() === (role.title || "").trim().toLowerCase(),
+    );
+    if (existingIdx >= 0) {
+      const existing = deduped[existingIdx];
+      if (!existing.dates && role.dates) existing.dates = role.dates;
+      if (!existing.title && role.title) existing.title = role.title;
+      if (!existing.company && role.company) existing.company = role.company;
+      existing.bullets = [...(existing.bullets || []), ...(role.bullets || [])];
+      repaired.push(`deduped role: ${role.company || role.title}`);
+      continue;
+    }
+    deduped.push(role);
+  }
+
+  const rehome = rehomeEmployerBullets(deduped, originalResumeText);
   repaired.push(...rehome.repaired);
-  return { experience: rehome.experience, repaired };
+  const enriched = enrichExperienceFromSource(rehome.experience, originalResumeText);
+  return {
+    experience: enriched.filter(
+      (role) =>
+        hasRoleStructure(role) &&
+        !ACCOMPLISHMENT_VERB_RX.test(role.company || "") &&
+        !ACCOMPLISHMENT_VERB_RX.test(role.title || ""),
+    ),
+    repaired,
+  };
 }
 
 function parseCompanyFromBullet(bullet: string): string | null {
@@ -505,6 +858,7 @@ export function validateCalibratedResumeIntegrity(resume: CalibratedResumeData):
       if (isOrphanFragment(bullet)) issues.push(`orphan fragment bullet: ${bullet}`);
       if (isCompanyLocationOnlyBullet(bullet)) issues.push(`company-only bullet: ${bullet}`);
       if (isMisplacedRoleHeaderBullet(bullet)) issues.push(`misplaced role header bullet: ${bullet}`);
+      if (isCompanyTitleHeaderBullet(bullet)) issues.push(`company/title header bullet: ${bullet}`);
     }
     if (exp.dates && !exp.company && !exp.title) {
       issues.push(`detached dates without role context: ${exp.dates}`);

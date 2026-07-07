@@ -19,6 +19,7 @@ import { exportCalibratedDocx } from "@/lib/exportDocx";
 import { exportCalibratedPdf } from "@/lib/exportPdf";
 import { trackEvent, trackExportEvents } from "@/lib/analytics";
 import { extractContactFromText } from "@/lib/contactExtractor";
+import { sanitizeCalibratedResume } from "@/lib/calibratedResumeSanitizer";
 import type { ResumeInputSource } from "@/components/ResumeUpload";
 import type { CalibratedResumeData } from "@/hooks/useResumeAssembly";
 import type { ReportRunInvokeFields } from "@/lib/reportRunSession";
@@ -159,6 +160,12 @@ const CalibratedResumeTab = ({
     () => ({ jdText: jdText || "", originalResumeText: originalResume }),
     [jdText, originalResume],
   );
+
+  const previewResume = useMemo(() => {
+    if (!currentResume) return null;
+    if (editMode) return currentResume;
+    return sanitizeCalibratedResume(currentResume, exportSanitizeOptions).resume;
+  }, [currentResume, editMode, exportSanitizeOptions]);
 
   const handleExportDocx = () => {
     if (!currentResume) return;
@@ -345,7 +352,7 @@ const CalibratedResumeTab = ({
           >
             <div id="resume-canvas">
               <ResumeCanvas
-                resume={currentResume}
+                resume={previewResume || currentResume}
                 editMode={editMode}
                 onUpdate={updateField}
                 saved={saved}
