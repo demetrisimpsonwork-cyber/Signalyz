@@ -13,6 +13,7 @@ import {
   durationBucket,
   signalStrengthEvent,
 } from "@/lib/analyticsHelpers";
+import { consumeHistoryAnalyzeHandoff } from "@/lib/alignmentHistoryHandoff";
 import { detectRoleCategory } from "@signalyz/coverLetterRoleStyle";
 import { clearLinkedInOutputCache } from "@/lib/linkedInOutputCache";
 import { sanitizeResumeText } from "@/lib/sanitize";
@@ -626,6 +627,16 @@ const Index = () => {
     // If user already typed something before this effect runs, don't overwrite
     if (userDirtyRef.current) return;
     if (bullet.trim() || jd.trim()) return; // user already has input in fields
+
+    const historyHandoff = consumeHistoryAnalyzeHandoff();
+    if (historyHandoff) {
+      setBullet(historyHandoff.resume_text);
+      setJd(historyHandoff.jd_text);
+      setTimeout(() => {
+        document.getElementById("alignment-tool")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+      return;
+    }
 
     // Fresh login flag: don't auto-restore stale input on fresh sign-in
     // Check both sessionStorage (survives same-tab nav) and localStorage (survives OAuth redirect)

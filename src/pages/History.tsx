@@ -11,6 +11,7 @@ import UpgradeModal from "@/components/UpgradeModal";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
+import { setHistoryAnalyzeHandoff } from "@/lib/alignmentHistoryHandoff";
 import ScoreEvidencePanel from "@/components/ScoreEvidencePanel";
 import {
   SCORE_BREAKDOWN_DIMENSIONS,
@@ -52,6 +53,8 @@ interface ExpandedResult {
   breakdown: BreakdownRow[];
   scoringBreakdown: ScoringBreakdown | null;
   scoring_evidence: ScoringEvidence | null;
+  resume_text: string | null;
+  jd_text: string | null;
 }
 
 const HISTORY_BREAKDOWN_LABELS = SCORE_BREAKDOWN_DIMENSIONS.map((d) => ({
@@ -196,6 +199,13 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
 
     const scoring_evidence = parseStoredScoringEvidence(r.scoring_evidence);
 
+    let resume_text: string | null = null;
+    let jd_text: string | null = null;
+    try {
+      if (typeof r.resume_text === "string" && r.resume_text.trim()) resume_text = r.resume_text;
+      if (typeof r.jd_text === "string" && r.jd_text.trim()) jd_text = r.jd_text;
+    } catch { /* */ }
+
     // Must have at least one real field
     if (optimized_bullet === UNAVAILABLE && match_score === UNAVAILABLE) return null;
 
@@ -213,6 +223,8 @@ function safeParseExpandedResult(raw: any): ExpandedResult | null {
       breakdown,
       scoringBreakdown,
       scoring_evidence,
+      resume_text,
+      jd_text,
     };
   } catch {
     return null;
@@ -289,7 +301,15 @@ function filterMatch(score: number, filter: FilterKey) {
 }
 
 /* ── expanded section component ── */
-function ExpandedResultView({ result, isPro }: { result: ExpandedResult; isPro: boolean }) {
+function ExpandedResultView({
+  result,
+  isPro,
+  onOpenInAnalyze,
+}: {
+  result: ExpandedResult;
+  isPro: boolean;
+  onOpenInAnalyze?: () => void;
+}) {
   const { toast } = useToast();
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -316,6 +336,13 @@ function ExpandedResultView({ result, isPro }: { result: ExpandedResult; isPro: 
 
     return (
       <div className="mt-2 space-y-2">
+        {onOpenInAnalyze && (
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={onOpenInAnalyze} className="text-xs">
+              Open in Analyze
+            </Button>
+          </div>
+        )}
         {sections.map((s) => (
           <div key={s.label} className="rounded-lg border border-l-[3px] border-l-primary bg-card p-3">
             <div className="flex items-start justify-between gap-2">
@@ -441,6 +468,15 @@ const History = () => {
     return Math.round(displayEntries.reduce((s, e) => s + e.score, 0) / displayEntries.length);
   }, [displayEntries]);
 
+  const handleOpenInAnalyze = (result: ExpandedResult) => {
+    if (!result.resume_text || !result.jd_text) return;
+    setHistoryAnalyzeHandoff({
+      resume_text: result.resume_text,
+      jd_text: result.jd_text,
+    });
+    navigate("/?tab=alignment");
+  };
+
   const handleViewResult = async (entry: HistoryEntry) => {
     if (expandedId === entry.id) { setExpandedId(null); setExpandedResult(null); return; }
     trackEvent("history_item_opened", { plan_tier: isPro ? "pro" : "free" });
@@ -468,7 +504,7 @@ const History = () => {
       <div className="mb-8 flex items-start justify-between">
         <div>
           <p className="section-label">Alignment History</p>
-          <p className="text-xs text-muted-foreground mt-1">Your signal trajectory over time</p>
+          <p className="text-xs text-muted-foreground mt-1">Archive of your alignment runs.</p>
         </div>
         {isPro && displayEntries.length > 0 && (
           <div className="text-right">
@@ -596,7 +632,17 @@ const History = () => {
 
               {/* Single entry expanded result */}
               {!isMulti && expandedId === latest.id && (
-                expandedResult ? <ExpandedResultView result={expandedResult} isPro={isPro} /> : (
+                expandedResult ? (
+                  <ExpandedResultView
+                    result={expandedResult}
+                    isPro={isPro}
+                    onOpenInAnalyze={
+                      expandedResult.resume_text && expandedResult.jd_text
+                        ? () => handleOpenInAnalyze(expandedResult)
+                        : undefined
+                    }
+                  />
+                ) : (
                   <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
                     <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
                   </div>
@@ -623,7 +669,17 @@ const History = () => {
                         </Button>
                       </div>
                       {expandedId === entry.id && (
-                        expandedResult ? <ExpandedResultView result={expandedResult} isPro={isPro} /> : (
+                        expandedResult ? (
+                          <ExpandedResultView
+                            result={expandedResult}
+                            isPro={isPro}
+                            onOpenInAnalyze={
+                              expandedResult.resume_text && expandedResult.jd_text
+                                ? () => handleOpenInAnalyze(expandedResult)
+                                : undefined
+                            }
+                          />
+                        ) : (
                           <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-center">
                             <p className="text-xs text-muted-foreground">Result unavailable — re-run alignment</p>
                           </div>

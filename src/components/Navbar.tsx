@@ -54,11 +54,11 @@ const Navbar = () => {
           <div className="hidden items-center gap-6 md:flex">
             <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Analyze</Link>
             <Link to="/position" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Report</Link>
-            <Link to="/history" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">History</Link>
-            <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
             {user && (
               <Link to="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Dashboard</Link>
             )}
+            <Link to="/history" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">History</Link>
+            <Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
             {loading ? null : user ? (
               <div className="flex items-center gap-3">
                 {showProBadge && (
@@ -118,6 +118,9 @@ const Navbar = () => {
             <div className="flex flex-col gap-3">
               <Link to="/?tab=alignment" onClick={handleAlignClick} className="text-sm font-medium text-muted-foreground">Analyze</Link>
               <Link to="/position" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Report</Link>
+              {!loading && user && (
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
+              )}
               <Link to="/history" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">History</Link>
               <Link to="/pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Pricing</Link>
               {!loading && !user && (
@@ -128,7 +131,6 @@ const Navbar = () => {
               )}
               {!loading && user && (
                 <>
-                  <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-muted-foreground">Dashboard</Link>
                   {isPro && (
                     <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
                       Paid
