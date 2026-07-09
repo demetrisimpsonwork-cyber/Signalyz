@@ -78,33 +78,62 @@ const InterviewIntelligence = ({ experience, jd, alignmentResult, isPro, onUpgra
 
   useEffect(() => {
     if (!experience || !jd) return;
+    let cancelled = false;
     setLoading(true);
     setErrored(false);
+    setQuestions([]);
     supabase.functions
       .invoke("generate-pro-content", {
         body: withReportRunFields({ type: "interview_intelligence", experience, jd, alignmentResult }, reportRunFields),
       })
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) throw error;
         if (checkUsageLimitData(data)) return;
-        if (Array.isArray(data)) setQuestions(data);
+        if (!Array.isArray(data)) {
+          setQuestions([]);
+          return;
+        }
+        const safe = data.filter(
+          (q): q is IQuestion =>
+            !!q &&
+            typeof q === "object" &&
+            typeof (q as IQuestion).question === "string" &&
+            typeof (q as IQuestion).why_asking === "string" &&
+            typeof (q as IQuestion).signal_angle === "string",
+        );
+        setQuestions(safe);
       })
       .catch((e) => {
+        if (cancelled) return;
         // If it wasn't a usage-limit error (which renders its own gate), show a
         // visible, recoverable message instead of failing silently.
-        if (!handleUsageLimitError(e)) setErrored(true);
+        try {
+          if (!handleUsageLimitError(e)) setErrored(true);
+        } catch {
+          setErrored(true);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [experience, jd]);
 
   const handleCopy = async (q: IQuestion, idx: number) => {
-    const fw = q.answer_framework;
-    const fwText = fw ? `\nANSWER FRAMEWORK:\n  S: ${fw.situation}\n  A: ${fw.action}\n  R: ${fw.result}` : "";
-    const text = `QUESTION: ${q.question}\nWHY THEY'RE ASKING THIS: ${q.why_asking}\nSIGNAL ANGLE TO HIT: ${q.signal_angle}${fwText}`;
-    await navigator.clipboard.writeText(text);
-    setCopiedIdx(idx);
-    toast.success("Copied to clipboard");
-    setTimeout(() => setCopiedIdx(null), 1500);
+    try {
+      const fw = q.answer_framework;
+      const fwText = fw ? `\nANSWER FRAMEWORK:\n  S: ${fw.situation}\n  A: ${fw.action}\n  R: ${fw.result}` : "";
+      const text = `QUESTION: ${q.question}\nWHY THEY'RE ASKING THIS: ${q.why_asking}\nSIGNAL ANGLE TO HIT: ${q.signal_angle}${fwText}`;
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopiedIdx(null), 1500);
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
   };
 
   if (loading) {

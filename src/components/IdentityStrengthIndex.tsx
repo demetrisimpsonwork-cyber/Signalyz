@@ -105,9 +105,13 @@ const PillarCard = ({ pillar, roleTitle }: { pillar: ISIPillar; roleTitle: strin
 );
 
 const IdentityStrengthIndex = ({ data, isPro, onUpgrade, inferredRoleTitle }: IdentityStrengthIndexProps) => {
+  if (!data || typeof data.total_score !== "number") return null;
+  const pillars = Array.isArray(data.pillars) ? data.pillars.filter(Boolean) : [];
+  if (pillars.length === 0) return null;
+
   const { label, color, bg } = totalScoreLabel(data.total_score);
-  const visiblePillars = isPro ? data.pillars : data.pillars.slice(0, 1);
-  const lockedPillars = isPro ? [] : data.pillars.slice(1);
+  const visiblePillars = isPro ? pillars : pillars.slice(0, 1);
+  const lockedPillars = isPro ? [] : pillars.slice(1);
   const roleTitle = inferredRoleTitle || "Target Role";
   const animatedTotal = useCountUp(data.total_score, 1200);
 

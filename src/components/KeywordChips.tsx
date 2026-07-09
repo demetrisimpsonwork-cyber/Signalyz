@@ -9,17 +9,26 @@ import {
 } from "@/components/ui/tooltip";
 
 interface KeywordChipsProps {
-  keywords: string[];
+  keywords?: string[] | null;
 }
 
 const KeywordChips = ({ keywords }: KeywordChipsProps) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const safeKeywords = Array.isArray(keywords)
+    ? keywords.filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+    : [];
+
+  if (safeKeywords.length === 0) return null;
 
   const handleCopy = async (keyword: string, index: number) => {
-    await navigator.clipboard.writeText(keyword);
-    setCopiedIndex(index);
-    toast.success(`Copied "${keyword}"`);
-    setTimeout(() => setCopiedIndex(null), 1500);
+    try {
+      await navigator.clipboard.writeText(keyword);
+      setCopiedIndex(index);
+      toast.success(`Copied "${keyword}"`);
+      setTimeout(() => setCopiedIndex(null), 1500);
+    } catch {
+      toast.error("Could not copy keyword");
+    }
   };
 
   return (
@@ -38,7 +47,7 @@ const KeywordChips = ({ keywords }: KeywordChipsProps) => {
         </TooltipProvider>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {keywords.map((keyword, i) => (
+        {safeKeywords.map((keyword, i) => (
           <button
             key={i}
             onClick={() => handleCopy(keyword, i)}

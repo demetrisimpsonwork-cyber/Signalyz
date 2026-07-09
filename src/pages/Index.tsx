@@ -1276,14 +1276,18 @@ const Index = () => {
         success: true,
         duration_bucket: durBucket,
       });
-      trackEvent("analysis_duration_bucketed", { duration_bucket: durBucket, plan_tier: planTier });
-      trackEvent("score_bucket_recorded", {
-        score_bucket: ga4Bucket,
-        ga4_score_bucket: ga4Bucket,
-        plan_tier: planTier,
-      });
-      if (signalEvt) {
-        trackEvent(signalEvt, { score_bucket: ga4Bucket, plan_tier: planTier });
+      try {
+        trackEvent("analysis_duration_bucketed", { duration_bucket: durBucket, plan_tier: planTier });
+        trackEvent("score_bucket_recorded", {
+          score_bucket: ga4Bucket,
+          ga4_score_bucket: ga4Bucket,
+          plan_tier: planTier,
+        });
+        if (signalEvt) {
+          trackEvent(signalEvt, { score_bucket: ga4Bucket, plan_tier: planTier });
+        }
+      } catch {
+        // Analytics must never crash the result UI
       }
 
       // Session persistence: save last analysis for returning users
@@ -1341,19 +1345,27 @@ const Index = () => {
           ts: Date.now(),
         }));
       } catch {}
-      increment();
+      try {
+        increment();
+      } catch {}
       // Server-side edge functions consume one-time credits; refresh subscription state after runs.
       if (user) {
-        refreshSub();
+        try {
+          refreshSub();
+        } catch {}
       }
-      saveToHistory(res);
+      try {
+        void saveToHistory(res);
+      } catch {}
       if (!user) {
-        toast("Save your results and track your progress", {
-          description: "Create a free account to keep your alignment history.",
-          action: { label: "Sign up", onClick: () => { window.location.href = "/auth"; } },
-          duration: 5000,
-          position: "top-center",
-        });
+        try {
+          toast("Save your results and track your progress", {
+            description: "Create a free account to keep your alignment history.",
+            action: { label: "Sign up", onClick: () => { window.location.href = "/auth"; } },
+            duration: 5000,
+            position: "top-center",
+          });
+        } catch {}
       }
     };
 
@@ -2212,9 +2224,23 @@ const Index = () => {
                             strengths.push(cleaned);
                           }
                         }
-                        const hiringManagersSee = result.signal_model?.interview_gap_diagnosis?.what_hiring_managers_see;
-                        const whatThisCreates = result.signal_model?.interview_gap_diagnosis?.what_this_creates;
-                        const primaryBlocker = result.signal_model?.interview_gap_diagnosis?.primary_blocker || result.signal_model?.interview_gap_diagnosis?.primary_issue || (gaps.length > 0 ? gaps[0] : null);
+                        const hiringManagersSee = Array.isArray(result.signal_model?.interview_gap_diagnosis?.what_hiring_managers_see)
+                          ? result.signal_model.interview_gap_diagnosis.what_hiring_managers_see.filter(
+                              (s): s is string => typeof s === "string" && s.trim().length > 0,
+                            )
+                          : [];
+                        const whatThisCreates =
+                          typeof result.signal_model?.interview_gap_diagnosis?.what_this_creates === "string"
+                            ? result.signal_model.interview_gap_diagnosis.what_this_creates
+                            : null;
+                        const rawPrimaryBlocker =
+                          result.signal_model?.interview_gap_diagnosis?.primary_blocker ||
+                          result.signal_model?.interview_gap_diagnosis?.primary_issue ||
+                          (gaps.length > 0 ? gaps[0] : null);
+                        const primaryBlocker =
+                          typeof rawPrimaryBlocker === "string" && rawPrimaryBlocker.trim()
+                            ? rawPrimaryBlocker
+                            : null;
                         // Deduplicate: remove the primary blocker from gaps list
                         const secondaryGaps = gaps.filter((g, i) => {
                           if (i === 0) return false; // first gap is the primary blocker
@@ -2232,7 +2258,7 @@ const Index = () => {
                                     ? primaryBlocker.replace(/^you are being screened out because/i, "At this signal level, the remaining constraint is")
                                     : primaryBlocker}
                                 </p>
-                                {hiringManagersSee && hiringManagersSee.length > 0 && (
+                                {hiringManagersSee.length > 0 && (
                                   <div className="pt-2 mt-1 border-t border-destructive/10">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">How this reads to hiring managers</p>
                                     <ul className="space-y-1 pl-2.5 border-l-2 border-destructive/20">
@@ -2516,7 +2542,7 @@ const Index = () => {
                       </div>
                     )}
 
-                    <KeywordChips keywords={result.missing_keywords} />
+                    <KeywordChips keywords={result.missing_keywords ?? []} />
 
                     {result.match_score < 60 && (
                       <WeakAlignmentNudge

@@ -183,19 +183,23 @@ export { scoreBucket, ga4ScoreBucket, safeErrorCode };
  * Console logging is development-only; GA4 fires when gtag is available.
  */
 export function trackEvent(event: AnalyticsEvent, metadata: EventMetadata = {}) {
-  const safe = sanitizeEventMetadata({ ...sessionContext, ...metadata });
-  const payload = {
-    event,
-    ...safe,
-    timestamp: new Date().toISOString(),
-  };
+  try {
+    const safe = sanitizeEventMetadata({ ...sessionContext, ...metadata });
+    const payload = {
+      event,
+      ...safe,
+      timestamp: new Date().toISOString(),
+    };
 
-  if (import.meta.env.DEV) {
-    console.log(`[Analytics] ${event}`, payload);
+    if (import.meta.env.DEV) {
+      console.log(`[Analytics] ${event}`, payload);
+    }
+
+    sendGa4Event(event, payload as Record<string, unknown>);
+    void persistEvent(event, payload);
+  } catch {
+    // Analytics must never crash the UI
   }
-
-  sendGa4Event(event, payload as Record<string, unknown>);
-  persistEvent(event, payload);
 }
 
 /** Fire legacy + granular export events together. */
@@ -303,15 +307,26 @@ function getOrCreateAnalyticsRunId(userId: string): string {
   if (analyticsRunId) return analyticsRunId;
 
   const sessionKey = `signalyz_analytics_run_${new Date().toISOString().slice(0, 10)}`;
-  const cached = sessionStorage.getItem(sessionKey);
-  if (cached) {
-    analyticsRunId = cached;
-    return cached;
+  try {
+    const cached = sessionStorage.getItem(sessionKey);
+    if (cached) {
+      analyticsRunId = cached;
+      return cached;
+    }
+  } catch {
+    // Private mode / storage blocked — continue with in-memory id
   }
 
-  const id = crypto.randomUUID();
+  const id =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `analytics_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   analyticsRunId = id;
-  sessionStorage.setItem(sessionKey, id);
+  try {
+    sessionStorage.setItem(sessionKey, id);
+  } catch {
+    // ignore
+  }
 
   (async () => {
     try {
