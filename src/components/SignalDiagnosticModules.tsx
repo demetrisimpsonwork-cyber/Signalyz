@@ -14,6 +14,48 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  resolveCalibrationProjectionDisplay,
+  type CalibrationProjectionDisplay,
+} from "@/lib/calibrationProjectionDisplay";
+
+function CalibrationProjectionTeaser({
+  projection,
+  title,
+  lockedHint,
+}: {
+  projection: Extract<CalibrationProjectionDisplay, { kind: "numeric" | "fallback" }>;
+  title: string;
+  lockedHint?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
+      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">{title}</p>
+      <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+        <div className="text-center">
+          <p className="text-[10px] text-muted-foreground">Current</p>
+          <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums">{projection.currentScore}%</p>
+        </div>
+        <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+        <div className="text-center min-w-0">
+          <p className="text-[10px] text-muted-foreground">Projected</p>
+          {projection.kind === "numeric" ? (
+            <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">
+              {projection.projectedScore}%
+            </p>
+          ) : (
+            <p className="text-sm sm:text-base font-semibold text-muted-foreground leading-snug">
+              {projection.projectedLabel}
+            </p>
+          )}
+        </div>
+      </div>
+      {lockedHint && (
+        <p className="text-[10px] text-muted-foreground/70 italic">{lockedHint}</p>
+      )}
+    </div>
+  );
+}
 
 /* ─── Dimension display label map ─── */
 const DIMENSION_DISPLAY_LABELS: Record<string, string> = {
@@ -760,12 +802,11 @@ function HiringSignalBenchmark({ data }: { data: NonNullable<SignalDiagnosticDat
 /* ─── MODULE 11: Strategic Fixes + Predicted Improvement (consolidated) ─── */
 function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibratedRun }: { data: NonNullable<SignalDiagnosticData["interview_gap_diagnosis"]>; overrideScore?: number; isPro?: boolean; onUpgrade?: () => void; isCalibratedRun?: boolean }) {
   const currentScore = overrideScore ?? data.current_score ?? 0;
-  const predictedScoreRaw = data.predicted_score ?? 0;
-  const predictedScore = Math.min(predictedScoreRaw, 89);
+  const projection = resolveCalibrationProjectionDisplay(currentScore, data.predicted_score);
 
   // Only render if there are strategic fixes or predicted improvement — blocker is shown inline above
   const hasFixesContent = (isPro && data.strategic_fixes && data.strategic_fixes.length > 0) || !isPro;
-  const hasScoreProjection = currentScore > 0 && predictedScore > 0;
+  const hasScoreProjection = !isCalibratedRun && projection.kind !== "hidden";
 
   if (!hasFixesContent && !hasScoreProjection) return null;
 
@@ -807,39 +848,16 @@ function InterviewGapDiagnosis({ data, overrideScore, isPro, onUpgrade, isCalibr
       )}
 
       {/* Predicted Signal Improvement — hidden on calibrated re-runs */}
-      {!isCalibratedRun && hasScoreProjection && (
-        isPro ? (
-          <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground">Current</p>
-                <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
-              </div>
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground">Projected</p>
-                <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Predicted After Calibration</p>
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground">Current</p>
-                <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums">{currentScore}%</p>
-              </div>
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground">Projected</p>
-                <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground/70 italic">Unlock calibrated export with Active Job Search to see the exact changes.</p>
-          </div>
-        )
+      {hasScoreProjection && projection.kind !== "hidden" && (
+        <CalibrationProjectionTeaser
+          projection={projection}
+          title="Predicted After Calibration"
+          lockedHint={
+            isPro
+              ? undefined
+              : "Unlock calibrated export with Active Job Search to see the exact changes."
+          }
+        />
       )}
     </div>
   );
@@ -869,8 +887,7 @@ function PredictedSignalLift({
 }) {
   const [showWhy, setShowWhy] = useState(false);
   const currentScore = overrideScore ?? data.current_score ?? 0;
-  const predictedScoreRaw = data.predicted_score ?? 0;
-  const predictedScore = Math.min(predictedScoreRaw, 89);
+  const projection = resolveCalibrationProjectionDisplay(currentScore, data.predicted_score);
   const dims = (data.dimensions ?? [])
     .slice()
     .sort((a, b) => (b.lift ?? 0) - (a.lift ?? 0))
@@ -905,22 +922,12 @@ function PredictedSignalLift({
         ))}
       </div>
 
-      {/* Score projection */}
-      {currentScore > 0 && predictedScore > 0 && (
-        <div className="rounded-lg border border-t-[2px] border-t-primary bg-background p-3 space-y-2">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Signal Diagnosis After Calibration</p>
-          <div className="flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground">Current Signal Score</p>
-              <p className="text-xl font-bold text-muted-foreground tabular-nums">{currentScore}%</p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-primary" />
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground">Predicted Score</p>
-              <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{predictedScore}%</p>
-            </div>
-          </div>
-        </div>
+      {/* Score projection — never advertise a lower projected % */}
+      {projection.kind !== "hidden" && (
+        <CalibrationProjectionTeaser
+          projection={projection}
+          title="Signal Diagnosis After Calibration"
+        />
       )}
 
       {/* Why this projection — evidence basis from current run */}

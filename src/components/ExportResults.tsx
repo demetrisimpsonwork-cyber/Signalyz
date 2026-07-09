@@ -2,6 +2,7 @@ import { ClipboardCopy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { SignalModel } from "@/types/SignalModel";
+import { resolveCalibrationProjectionDisplay } from "@/lib/calibrationProjectionDisplay";
 
 interface ExportResultsProps {
   result: {
@@ -68,12 +69,16 @@ const buildExportText = (r: ExportResultsProps["result"]): string => {
     r.gap_suggestions.split(/\n|;/).map(s => s.trim()).filter(s => s.length > 10).slice(0, 3).forEach(s => strategicFixes.push(s));
   }
 
-  // Predicted signal improvement
+  // Predicted signal improvement — only advertise a higher projected % (display-only guard)
   let predicted = "";
-  if (sm?.predicted_signal_lift) {
-    predicted = `Current: ${sm.predicted_signal_lift.current_score}% → Predicted: ${sm.predicted_signal_lift.predicted_score}%`;
-  } else if (sm?.interview_gap_diagnosis) {
-    predicted = `Current: ${sm.interview_gap_diagnosis.current_score}% → Predicted: ${sm.interview_gap_diagnosis.predicted_score}%`;
+  const psl = sm?.predicted_signal_lift;
+  const igd = sm?.interview_gap_diagnosis;
+  const rawPredicted = psl?.predicted_score ?? igd?.predicted_score;
+  const projection = resolveCalibrationProjectionDisplay(score, rawPredicted);
+  if (projection.kind === "numeric") {
+    predicted = `Current: ${projection.currentScore}% → Predicted: ${projection.projectedScore}%`;
+  } else if (projection.kind === "fallback") {
+    predicted = `Current: ${projection.currentScore}% → Predicted: ${projection.projectedLabel}`;
   }
 
   const lines: string[] = [
